@@ -37,17 +37,17 @@ function UserNavbarHeader(props) {
             color: 'text.secondary',
           }}
           className="avatar text-32 font-bold w-96 h-96"
-          src={user.data.photoURL}
-          alt={user.data.displayName}
+          src={user.photoURL}
+          alt={user.firstName}
         >
-          {user.data.displayName.charAt(0)}
+          {user.firstName?.charAt(0)}
         </Avatar>
       </div>
       <Typography className="username text-14 whitespace-nowrap font-medium">
-        {user.data.displayName}
+        {user.firstName}
       </Typography>
       <Typography className="email text-13 whitespace-nowrap font-medium" color="text.secondary">
-        {user.data.email}
+        {user.email}
       </Typography>
     </Root>
   );

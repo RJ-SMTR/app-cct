@@ -49,7 +49,8 @@ const navigationSlice = createSlice({
 
 export const { setNavigation, resetNavigation } = navigationSlice.actions;
 
-const getUserRole = (state) => state.user.role;
+const getUserRole = (state) => state.user.role?.name;
+
 
 export const selectNavigation = createSelector(
   [selectNavigationAll, ({ i18n }) => i18n.language, getUserRole],

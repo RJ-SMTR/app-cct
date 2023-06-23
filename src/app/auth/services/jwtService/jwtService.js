@@ -31,7 +31,6 @@ class JwtService extends FuseUtils.EventEmitter {
 
   handleAuthentication = () => {
     const access_token = this.getAccessToken();
-
     if (!access_token) {
       this.emit('onNoAccessToken');
 
@@ -64,15 +63,13 @@ class JwtService extends FuseUtils.EventEmitter {
   signInWithEmailAndPassword = (email, password) => {
     return new Promise((resolve, reject) => {
       axios
-        .get(jwtServiceConfig.signIn, {
-          data: {
-            email,
-            password,
-          },
+        .post(jwtServiceConfig.signIn, {
+          email,
+          password,
         })
         .then((response) => {
           if (response.data.user) {
-            this.setSession(response.data.access_token);
+            this.setSession(response.data.token);
             resolve(response.data.user);
             this.emit('onLogin', response.data.user);
           } else {
@@ -85,15 +82,12 @@ class JwtService extends FuseUtils.EventEmitter {
   signInWithToken = () => {
     return new Promise((resolve, reject) => {
       axios
-        .get(jwtServiceConfig.accessToken, {
-          data: {
-            access_token: this.getAccessToken(),
-          },
-        })
+        .get(jwtServiceConfig.accessToken)
         .then((response) => {
-          if (response.data.user) {
-            this.setSession(response.data.access_token);
-            resolve(response.data.user);
+          if (response.data) {
+            const token = this.getAccessToken();
+            this.setSession(token);
+            resolve(response.data);
           } else {
             this.logout();
             reject(new Error('Failed to login with token.'));
@@ -142,6 +136,7 @@ class JwtService extends FuseUtils.EventEmitter {
   };
 
   getAccessToken = () => {
+    console.log('rodou');
     return window.localStorage.getItem('jwt_access_token');
   };
 }
