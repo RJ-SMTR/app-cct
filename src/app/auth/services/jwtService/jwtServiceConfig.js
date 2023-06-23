@@ -4,6 +4,7 @@ const jwtServiceConfig = {
   signUp: 'api/auth/sign-up',
   accessToken: 'http://localhost:3001/api/v1/auth/me',
   updateUser: 'api/auth/user/update',
+  forgotPassword: "http://localhost:3001/api/v1/auth/forgot/password"
 };
 
 export default jwtServiceConfig;

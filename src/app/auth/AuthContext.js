@@ -1,14 +1,15 @@
-import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, createContext } from 'react';
 import { useDispatch } from 'react-redux';
 import FuseSplashScreen from '@fuse/core/FuseSplashScreen';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import { logoutUser, setUser } from 'app/store/userSlice';
+import axios from 'axios';
+import jwtServiceConfig from './services/jwtService/jwtServiceConfig';
 import jwtService from './services/jwtService';
 
-const AuthContext = React.createContext();
+export const AuthContext = createContext();
 
-function AuthProvider({ children }) {
+export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(undefined);
   const [waitAuthCheck, setWaitAuthCheck] = useState(true);
   const dispatch = useDispatch();
@@ -75,20 +76,30 @@ function AuthProvider({ children }) {
       setIsAuthenticated(false);
     }
   }, [dispatch]);
+  
+  function forgotPasswordFunction(email) {
+    return new Promise((reject) => {
+      axios
+        .post(jwtServiceConfig.forgotPassword, {
+          email,
+        })
+        .then((response) => {
+          if (response) {
+            dispatch(showMessage({ message: 'E-mail enviado!' }));
+          } 
+        })
+        .catch((error) => {
+          dispatch(showMessage({ message: 'Houve um erro com o envio.' }));
+        });
+    });
+  }
 
   return waitAuthCheck ? (
     <FuseSplashScreen />
   ) : (
-    <AuthContext.Provider value={{ isAuthenticated }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ isAuthenticated, forgotPasswordFunction }}>
+      {children}
+    </AuthContext.Provider>
   );
 }
 
-function useAuth() {
-  const context = React.useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within a AuthProvider');
-  }
-  return context;
-}
-
-export { AuthProvider, useAuth };

@@ -1,62 +1,31 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Controller, useForm } from 'react-hook-form';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
-import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { Link } from 'react-router-dom';
 import * as yup from 'yup';
 import _ from '@lodash';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
-import { useEffect } from 'react';
-import jwtService from '../../auth/services/jwtService';
-
-/**
- * Form Validation Schema
- */
+import { Link } from 'react-router-dom';
+import { useContext } from 'react';
+import { AuthContext } from 'src/app/auth/AuthContext';
 
 const schema = yup.object().shape({
   email: yup.string().email('Insira um e-mail válido').required('Insira seu e-mail'),
-  password: yup.string().required('Por favor insira sua senha.').min(4, 'Senha muito curta'),
 });
 
-const defaultValues = {
-  email: '',
-  password: '',
-  remember: true,
-};
-
-function SignInPage() {
-  const { control, formState, handleSubmit, setError, setValue } = useForm({
+function ForgotPassword() {
+  const { forgotPasswordFunction } = useContext(AuthContext);
+  const { control, formState, handleSubmit } = useForm({
     mode: 'onChange',
-    defaultValues,
     resolver: yupResolver(schema),
   });
 
   const { isValid, dirtyFields, errors } = formState;
 
-  useEffect(() => {
-    setValue('email', 'test1@example.com', { shouldDirty: true, shouldValidate: true });
-    setValue('password', '123456', { shouldDirty: true, shouldValidate: true });
-  }, [setValue]);
-
-  function onSubmit({ email, password }) {
-    jwtService
-      .signInWithEmailAndPassword(email, password)
-      .then((user) => {
-        // No need to do anything, user data will be set at app/auth/AuthContext
-      })
-      .catch((_errors) => {
-        _errors.forEach((error) => {
-          setError(error.type, {
-            type: 'manual',
-            message: error.message,
-          });
-        });
-      });
+  function onSubmit({ email }) {
+    forgotPasswordFunction(email);
   }
 
   return (
@@ -64,19 +33,21 @@ function SignInPage() {
       <Paper className="h-full sm:h-auto flex items-center md:flex md:items-center md:justify-end w-full sm:w-auto md:h-full md:w-1/2 py-8 px-16 sm:p-48 md:p-64 sm:rounded-2xl md:rounded-none sm:shadow md:shadow-none ltr:border-r-1 rtl:border-l-1 relative">
         <div className="w-full max-w-320 h-5/6 md:h-1/2  sm:w-320 mx-auto sm:mx-0">
           <Typography className="mt-32 text-4xl font-extrabold tracking-tight leading-tight">
-            Login
+            Recuperação de senha
           </Typography>
           <div className="flex items-baseline mt-2 font-medium">
-            <Typography>Não tem uma conta?</Typography>
-            <Link className="ml-4" to="/sign-up">
-              Faça seu cadastro
-            </Link>
+            <Typography>
+              Digite seu e-mail para te enviarmos o link de recuperação, ou{' '}
+              <Link className="ml-4" to="/sign-in">
+                tente novamente
+              </Link>{' '}
+            </Typography>
           </div>
 
           <form
             name="loginForm"
             noValidate
-            className="flex flex-col justify-center w-full mt-32"
+            className="flex flex-col justify-center w-full mt-16"
             onSubmit={handleSubmit(onSubmit)}
           >
             <Controller
@@ -98,43 +69,6 @@ function SignInPage() {
               )}
             />
 
-            <Controller
-              name="password"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  className="mb-24"
-                  label="Senha"
-                  type="password"
-                  error={!!errors.password}
-                  helperText={errors?.password?.message}
-                  variant="outlined"
-                  required
-                  fullWidth
-                />
-              )}
-            />
-
-            <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between">
-              <Controller
-                name="remember"
-                control={control}
-                render={({ field }) => (
-                  <FormControl>
-                    <FormControlLabel
-                      label="Remember me"
-                      control={<Checkbox size="small" {...field} />}
-                    />
-                  </FormControl>
-                )}
-              />
-
-              <Link className="text-md font-medium" to="/pages/auth/forgot-password">
-                Forgot password?
-              </Link>
-            </div>
-
             <Button
               variant="contained"
               color="secondary"
@@ -144,7 +78,7 @@ function SignInPage() {
               type="submit"
               size="large"
             >
-              Sign in
+              Enviar
             </Button>
           </form>
         </div>
@@ -176,4 +110,4 @@ function SignInPage() {
   );
 }
 
-export default SignInPage;
+export default ForgotPassword;

@@ -1,5 +1,7 @@
-import SignInPage from './SignInPage';
-import authRoles from '../../auth/authRoles';
+import authRoles from '../../../../../auth/authRoles';
+import ForgotPassword from './ForgotPassword';
+
+
 
 const SignInConfig = {
   settings: {
@@ -26,8 +28,8 @@ const SignInConfig = {
   auth: authRoles.onlyGuest,
   routes: [
     {
-      path: 'sign-in',
-      element: <SignInPage />,
+      path: 'forgot-password',
+      element: <ForgotPassword />,
     },
   ],
 };
