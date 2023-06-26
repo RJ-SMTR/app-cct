@@ -1,0 +1,69 @@
+import { Controller } from 'react-hook-form';
+import TextField from '@mui/material/TextField';
+
+// eslint-disable-next-line import/prefer-default-export
+export function StepOne({ type, control, values, label, name }) {
+  return (
+    <Controller
+      name={name}
+      control={control}
+      render={({ field }) => (
+        <TextField
+          {...field}
+          className="mb-24"
+          label={label}
+          type={type}
+          error={!!values}
+          helperText={values?.message}
+          variant="outlined"
+          required
+          fullWidth
+        />
+      )}
+    />
+  );
+}
+
+export function StepTwo({ type, control, values, label, name }) {
+  return (
+    <Controller
+      name={name}
+      control={control}
+      render={({ field }) => (
+        <TextField
+          {...field}
+          className="mb-24"
+          label={label}
+          type={type}
+          error={!!values}
+          helperText={values?.message}
+          variant="outlined"
+          required
+          fullWidth
+        />
+      )}
+    />
+  );
+}
+
+export function StepThree({ type, control, values, label, name }) {
+  return (
+    <Controller
+      name={name}
+      control={control}
+      render={({ field }) => (
+        <TextField
+          {...field}
+          className="mb-24"
+          label={label}
+          type={type}
+          error={!!values}
+          helperText={values?.message}
+          variant="outlined"
+          required
+          fullWidth
+        />
+      )}
+    />
+  );
+}

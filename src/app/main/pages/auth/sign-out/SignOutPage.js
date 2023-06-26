@@ -1,7 +1,7 @@
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import { useEffect } from 'react';
-import JwtService from '../../auth/services/jwtService';
+import JwtService from '../../../../auth/services/jwtService';
 
 function SignOutPage() {
   useEffect(() => {

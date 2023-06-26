@@ -1,7 +1,9 @@
-import SignInPage from './SignInPage';
-import authRoles from '../../auth/authRoles';
+import authRoles from '../../../../../auth/authRoles';
+import ResetPassword from './ResetPassword';
 
-const SignInConfig = {
+
+
+const ResetPasswordConfig = {
   settings: {
     layout: {
       config: {
@@ -26,10 +28,10 @@ const SignInConfig = {
   auth: authRoles.onlyGuest,
   routes: [
     {
-      path: 'sign-in',
-      element: <SignInPage />,
+      path: 'reset-password',
+      element: <ResetPassword />,
     },
   ],
 };
 
-export default SignInConfig;
+export default ResetPasswordConfig;

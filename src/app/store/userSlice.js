@@ -37,7 +37,7 @@ export const updateUserShortcuts = createAsyncThunk(
     const newUser = {
       ...user,
       data: {
-        ...user.data,
+        ...user,
         shortcuts,
       },
     };
@@ -51,7 +51,7 @@ export const updateUserShortcuts = createAsyncThunk(
 export const logoutUser = () => async (dispatch, getState) => {
   const { user } = getState();
 
-  if (!user.role || user.role.length === 0) {
+  if (!user.role?.name || user.role.length === 0) {
     // is guest
     return null;
   }
@@ -66,7 +66,7 @@ export const logoutUser = () => async (dispatch, getState) => {
 };
 
 export const updateUserData = (user) => async (dispatch, getState) => {
-  if (!user.role || user.role.length === 0) {
+  if (!user.role?.name || user.role.length === 0) {
     // is guest
     return;
   }
@@ -92,7 +92,7 @@ const initialState = {
 };
 
 const userSlice = createSlice({
-  name: 'user',
+  name: 'User',
   initialState,
   reducers: {
     userLoggedOut: (state, action) => initialState,
@@ -108,6 +108,6 @@ export const { userLoggedOut } = userSlice.actions;
 
 export const selectUser = ({ user }) => user;
 
-export const selectUserShortcuts = ({ user }) => user.data.shortcuts;
+export const selectUserShortcuts = ({ user }) => user.shortcuts;
 
 export default userSlice.reducer;
