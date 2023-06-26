@@ -1,7 +1,9 @@
 import authRoles from '../../../../../auth/authRoles';
-import ForgotPassword from './ForgotPassword';
+import ResetPassword from './ResetPassword';
 
-const ForgotPasswordConfig = {
+
+
+const ResetPasswordConfig = {
   settings: {
     layout: {
       config: {
@@ -26,10 +28,10 @@ const ForgotPasswordConfig = {
   auth: authRoles.onlyGuest,
   routes: [
     {
-      path: 'forgot-password',
-      element: <ForgotPassword />,
+      path: 'reset-password',
+      element: <ResetPassword />,
     },
   ],
 };
 
-export default ForgotPasswordConfig;
+export default ResetPasswordConfig;

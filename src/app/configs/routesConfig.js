@@ -5,11 +5,19 @@ import settingsConfig from 'app/configs/settingsConfig';
 import SignInConfig from '../main/pages/auth/sign-in/SignInConfig';
 import SignUpConfig from '../main/pages/auth/sign-up/SignUpConfig';
 import SignOutConfig from '../main/pages/auth/sign-out/SignOutConfig';
+import ForgotPasswordConfig from '../main/pages/auth/password/forgot/ForgotPasswordConfig';
+import ResetPasswordConfig from '../main/pages/auth/password/reset/ResetPasswordConfig';
 import Error404Page from '../main/404/Error404Page';
 import ExampleConfig from '../main/example/ExampleConfig';
-import ForgotPasswordConfig from '../main/pages/auth/password/forgot/ForgotPasswordConfig';
 
-const routeConfigs = [ExampleConfig, SignOutConfig, SignInConfig, SignUpConfig,ForgotPasswordConfig ];
+const routeConfigs = [
+  ExampleConfig,
+  SignOutConfig,
+  SignInConfig,
+  SignUpConfig,
+  ForgotPasswordConfig,
+  ResetPasswordConfig,
+];
 
 const routes = [
   ...FuseUtils.generateRoutesFromConfigs(routeConfigs, settingsConfig.defaultAuth),

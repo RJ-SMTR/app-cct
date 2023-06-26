@@ -76,7 +76,8 @@ export function AuthProvider({ children }) {
       setIsAuthenticated(false);
     }
   }, [dispatch]);
-  
+
+  // CUSTOM FUNCTIONS
   function forgotPasswordFunction(email) {
     return new Promise((reject) => {
       axios
@@ -86,10 +87,27 @@ export function AuthProvider({ children }) {
         .then((response) => {
           if (response) {
             dispatch(showMessage({ message: 'E-mail enviado!' }));
-          } 
+          }
         })
         .catch((error) => {
           dispatch(showMessage({ message: 'Houve um erro com o envio.' }));
+        });
+    });
+  }
+  function resetPasswordFunction(password, hash) {
+    return new Promise((reject) => {
+      axios
+        .post(jwtServiceConfig.resetPassword, {
+          password,
+          hash,
+        })
+        .then((response) => {
+          if (response) {
+            dispatch(showMessage({ message: 'Senha redefinida com sucesso!' }));
+          }
+        })
+        .catch((error) => {
+          dispatch(showMessage({ message: 'Houve um problema, tente novamente mais tarde!' }));
         });
     });
   }
@@ -97,9 +115,10 @@ export function AuthProvider({ children }) {
   return waitAuthCheck ? (
     <FuseSplashScreen />
   ) : (
-    <AuthContext.Provider value={{ isAuthenticated, forgotPasswordFunction }}>
+    <AuthContext.Provider
+      value={{ isAuthenticated, forgotPasswordFunction, resetPasswordFunction }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
-
