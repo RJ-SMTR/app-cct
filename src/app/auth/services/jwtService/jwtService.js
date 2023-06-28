@@ -137,7 +137,6 @@ class JwtService extends FuseUtils.EventEmitter {
   };
 
   getAccessToken = () => {
-    console.log('rodou');
     return window.localStorage.getItem('jwt_access_token');
   };
 }
