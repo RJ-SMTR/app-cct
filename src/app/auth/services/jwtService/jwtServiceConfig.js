@@ -1,5 +1,5 @@
 
-const baseUrl = 'http://localhost:3001/api/v1/'
+const baseUrl = 'http://localhost:3000/api/v1/'
 
 const jwtServiceConfig = {
   // AJUSTAR URL DA API DE ACORDO COM A PORT DO SEU SISTEMA
