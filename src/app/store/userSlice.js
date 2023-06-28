@@ -1,4 +1,4 @@
-/* eslint import/no-extraneous-dependencies: off */
+
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import history from '@history';
 import _ from '@lodash';

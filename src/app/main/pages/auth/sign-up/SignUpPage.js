@@ -1,7 +1,7 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useForm } from 'react-hook-form';
 import Button from '@mui/material/Button';
-import { useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import Typography from '@mui/material/Typography';
 import { Link } from 'react-router-dom';
 import * as yup from 'yup';
@@ -12,18 +12,19 @@ import StepLabel from '@mui/material/StepLabel';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import { cpf } from 'cpf-cnpj-validator';
-import { StepOne, StepThree, StepTwo } from './formFields/FormFields';
+import { StepOne, StepThree } from './formFields/FormFields';
+import { makeStyles } from '@mui/styles';
+import { AuthContext } from 'src/app/auth/AuthContext';
 
 /**
  * Form Validation Schema
  */
-const steps = ['', '', ''];
+const steps = ['', ''];
 const schema = yup.object().shape({
   permissionCode: yup.string().required('You must enter display name'),
   CPF: yup
     .string()
     .required('CPF is required')
-
     .test('CPF inválido', 'CPF inválido', (value) => cpf.isValid(value)),
   // password: yup
   //   .string()
@@ -37,10 +38,6 @@ const defaultValues = {
   permissionCode: '',
   CPF: '',
   name: '',
-  bank: '',
-  agency: '',
-  account: '',
-  number: '',
   email: '',
   password: '',
   passwordConfirm: '',
@@ -48,46 +45,34 @@ const defaultValues = {
 };
 
 function SignUpPage() {
-  const { control, formState, handleSubmit, reset } = useForm({
+    const [activeStep, setActiveStep] = useState(0);
+     const [confirmData, setConfirmData] = useState({});
+  const [skipped, setSkipped] = useState(new Set());
+  const {handlePreRegister, validPermissionCode} = useContext(AuthContext)
+ const useStyles = makeStyles(() => ({
+  root: {
+   
+    "& .muiltr-1k3l4nl-MuiSvgIcon-root-MuiStepIcon-root.Mui-active": { color: "#0DB1E3" },
+    "& .muiltr-1k3l4nl-MuiSvgIcon-root-MuiStepIcon-root.Mui-completed": { color: "#0DB1E3" },
+  },
+}));
+  const c = useStyles()
+  const { control, formState, handleSubmit, getValues, setError } = useForm({
     mode: 'onChange',
     defaultValues,
     resolver: yupResolver(schema),
   });
 
-  const { isValid, dirtyFields, errors, setError } = formState;
+  const { isValid, dirtyFields, errors } = formState;
 
   function onSubmit({
     permissionCode,
     CPF,
     name,
-    bank,
-    account,
-    number,
     email,
     cellphone,
     password,
-    agency,
   }) {
-    console.log([
-      {
-        1: {
-          permissionCode,
-          CPF,
-        },
-        2: {
-          name,
-          bank,
-          agency,
-          account,
-          number,
-        },
-        3: {
-          email,
-          cellphone,
-          password,
-        },
-      },
-    ]);
     // jwtService
     //   .createUser({
     //     permissionCode,
@@ -106,25 +91,37 @@ function SignUpPage() {
     //   });
   }
 
-  const [activeStep, setActiveStep] = useState(0);
-  const [skipped, setSkipped] = useState(new Set());
+
 
   const isStepSkipped = (step) => {
     return skipped.has(step);
   };
 
-  const handleNext = () => {
-    let newSkipped = skipped;
-    if (isStepSkipped(activeStep)) {
-      newSkipped = new Set(newSkipped.values());
-      newSkipped.delete(activeStep);
-    }
-    console.log(steps.length);
-    if (isValid) {
+  const handleNext = (e) => {
+    const values = getValues()
+    const { permissionCode, CPF } = values;
+
+    if (isValid && validPermissionCode) {
       setActiveStep((prevActiveStep) => prevActiveStep + 1);
     }
-    setSkipped(newSkipped);
+    
+  if (permissionCode && CPF) {
+     handlePreRegister(permissionCode, CPF)
+     .then(() => {})
+     .catch((_errors) => {
+       if (_errors.licensee) {
+          setError(_errors.licensee, {
+            message: 'Código de Permissionário não encontrado',
+          });
+        } else if (_errors.cpfCnpj) {
+          setError(_errors.cpfCnpj, {
+            message: 'CPF/CNPJ não corresponde com o nosso sistema',
+          });
+        }
+     })
+  }
   };
+
 
   const handleBack = () => {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
@@ -140,52 +137,12 @@ function SignUpPage() {
               label="Código de permissão"
               name="permissionCode"
               control={control}
-              values={errors.permissionCode}
+              values={errors.licenseeProfileNotFound}
             />
-            <StepOne type="string" label="CPF" name="CPF" control={control} values={errors.CPF} />
+            <StepOne type="string" label="CPF" name="CPF" control={control} values={errors.cpfCnpjDoesNotMatch} />
           </>
         );
       case 1:
-        return (
-          <>
-            <StepTwo
-              type="string"
-              label="Nome"
-              name="name"
-              control={control}
-              values={errors.name}
-            />
-            <StepTwo
-              type="string"
-              label="Banco"
-              name="bank"
-              control={control}
-              values={errors.bank}
-            />
-            <StepTwo
-              type="string"
-              label="Agência"
-              name="agency"
-              control={control}
-              values={errors.agency}
-            />
-            <StepTwo
-              type="string"
-              label="Conta"
-              name="account"
-              control={control}
-              values={errors.account}
-            />
-            <StepTwo
-              type="string"
-              label="Dígito"
-              name="number"
-              control={control}
-              values={errors.number}
-            />
-          </>
-        );
-      case 2:
         return (
           <>
             <StepThree
@@ -219,7 +176,12 @@ function SignUpPage() {
           </>
         );
       default:
-        return <h3>Confirme seus dados:</h3>;
+        return (
+          <>
+            <h3>Confrime seus dados: </h3>
+           
+          </>
+        );
     }
   };
 
@@ -244,7 +206,7 @@ function SignUpPage() {
             onSubmit={handleSubmit(onSubmit)}
           >
             <Box className="my-16">
-              <Stepper activeStep={activeStep}>
+              <Stepper activeStep={activeStep} className={c.root} >
                 {steps.map((label, index) => {
                   const stepProps = {};
                   const labelProps = {};
@@ -261,43 +223,8 @@ function SignUpPage() {
             </Box>
 
             {renderFields()}
-            {/* <Controller
-              name="password"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  className="mb-24"
-                  label="Password"
-                  type="password"
-                  error={!!errors.password}
-                  helperText={errors?.password?.message}
-                  variant="outlined"
-                  required
-                  fullWidth
-                />
-              )}
-            />
 
-            <Controller
-              name="passwordConfirm"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  className="mb-24"
-                  label="Password (Confirm)"
-                  type="password"
-                  error={!!errors.passwordConfirm}
-                  helperText={errors?.passwordConfirm?.message}
-                  variant="outlined"
-                  required
-                  fullWidth
-                />
-              )}
-            /> */}
-            {/* 
-            <Controller
+            {/* <Controller
               name="acceptTermsConditions"
               control={control}
               render={({ field }) => (
@@ -309,7 +236,7 @@ function SignUpPage() {
                   <FormHelperText>{errors?.acceptTermsConditions?.message}</FormHelperText>
                 </FormControl>
               )}
-            /> */}
+            />  */}
 
             <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
               <Button

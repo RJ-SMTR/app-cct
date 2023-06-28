@@ -11,6 +11,7 @@ export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(undefined);
+  const [validPermissionCode, setValidPermissionCode] = useState(false)
   const [waitAuthCheck, setWaitAuthCheck] = useState(true);
   const dispatch = useDispatch();
 
@@ -79,7 +80,7 @@ export function AuthProvider({ children }) {
 
   // CUSTOM FUNCTIONS
   function forgotPasswordFunction(email) {
-    return new Promise((reject) => {
+    return new Promise((resolve, reject) => {
       axios
         .post(jwtServiceConfig.forgotPassword, {
           email,
@@ -87,6 +88,7 @@ export function AuthProvider({ children }) {
         .then((response) => {
           if (response) {
             dispatch(showMessage({ message: 'E-mail enviado!' }));
+            resolve(response)
           }
         })
         .catch((error) => {
@@ -103,6 +105,7 @@ export function AuthProvider({ children }) {
         })
         .then((response) => {
           if (response) {
+            resolve(response)
             dispatch(showMessage({ message: 'Senha redefinida com sucesso!' }));
           }
         })
@@ -111,12 +114,30 @@ export function AuthProvider({ children }) {
         });
     });
   }
+  function handlePreRegister(licensee, cpfCnpj){
+    return new Promise((resolve, reject) => {
+      axios.post(jwtServiceConfig.preRegister, {
+        licensee,
+        cpfCnpj
+      })
+      .then((response) => {
+        if(response){
+          setValidPermissionCode(true)
+          resolve(response)
+        }
+      })
+      .catch((error) => {
+        reject(error.response.data.errors)
+        
+      })
+    })
+  }
 
   return waitAuthCheck ? (
     <FuseSplashScreen />
   ) : (
     <AuthContext.Provider
-      value={{ isAuthenticated, forgotPasswordFunction, resetPasswordFunction }}
+      value={{ isAuthenticated, forgotPasswordFunction, resetPasswordFunction, handlePreRegister, validPermissionCode }}
     >
       {children}
     </AuthContext.Provider>

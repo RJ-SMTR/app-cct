@@ -1,7 +1,7 @@
 import { Controller } from 'react-hook-form';
 import TextField from '@mui/material/TextField';
 
-// eslint-disable-next-line import/prefer-default-export
+
 export function StepOne({ type, control, values, label, name }) {
   return (
     <Controller

@@ -9,6 +9,7 @@ const jwtServiceConfig = {
   updateUser: 'api/auth/user/update',
   forgotPassword: `${baseUrl}auth/forgot/password`,
   resetPassword: `${baseUrl}auth/reset/password`,
+  preRegister: `${baseUrl}auth/licensee/pre-register`
 };
 
 export default jwtServiceConfig;

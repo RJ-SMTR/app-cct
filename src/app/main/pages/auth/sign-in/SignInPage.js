@@ -98,7 +98,6 @@ function SignInPage() {
                 />
               )}
             />
-            {console.log(errors)}
 
             <Controller
               name="password"
