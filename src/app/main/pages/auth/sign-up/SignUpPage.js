@@ -101,25 +101,29 @@ function SignUpPage() {
     e.preventDefault();
     const values = getValues()
     const { permissionCode, CPF } = values;
-    
+    setConfirmData(values);
     if (permissionCode && CPF) {
-      handlePreRegister(permissionCode, CPF)
-      .then(() => {
+      if(activeStep === 0) {
+        handlePreRegister(permissionCode, CPF)
+        .then(() => {
+          setActiveStep((prevActiveStep) => prevActiveStep + 1);
+        })
+        .catch((_errors) => {
+          if (_errors.licensee) {
+              setError(_errors.licensee, {
+                message: 'Código de Permissionário não encontrado',
+              });
+            } else if (_errors.cpfCnpj) {
+              setError(_errors.cpfCnpj, {
+                message: 'CPF/CNPJ não corresponde com o nosso sistema',
+              });
+            }
+        })
+      } else {
         setActiveStep((prevActiveStep) => prevActiveStep + 1);
-      })
-      .catch((_errors) => {
-        if (_errors.licensee) {
-            setError(_errors.licensee, {
-              message: 'Código de Permissionário não encontrado',
-            });
-          } else if (_errors.cpfCnpj) {
-            setError(_errors.cpfCnpj, {
-              message: 'CPF/CNPJ não corresponde com o nosso sistema',
-            });
-          }
-      })
+      }
+      
     }
-    return;
   };
 
 
@@ -178,8 +182,12 @@ function SignUpPage() {
       default:
         return (
           <>
-            <h3>Confrime seus dados: </h3>
-           
+            <h3 className="mb-4">Confirme seus dados: </h3>
+            
+              <p>Nome:  {confirmData.name}</p>
+              <p>CPF:  {confirmData.CPF}</p>
+              <p>E-mail:  {confirmData.email}</p>
+              <p>Celular:  {confirmData.cellphone}</p>
           </>
         );
     }
