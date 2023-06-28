@@ -46,7 +46,7 @@ const defaultValues = {
 
 function SignUpPage() {
     const [activeStep, setActiveStep] = useState(0);
-     const [confirmData, setConfirmData] = useState({});
+    const [confirmData, setConfirmData] = useState({});
   const [skipped, setSkipped] = useState(new Set());
   const {handlePreRegister, validPermissionCode} = useContext(AuthContext)
  const useStyles = makeStyles(() => ({
@@ -98,28 +98,28 @@ function SignUpPage() {
   };
 
   const handleNext = (e) => {
+    e.preventDefault();
     const values = getValues()
     const { permissionCode, CPF } = values;
-
-    if (isValid && validPermissionCode) {
-      setActiveStep((prevActiveStep) => prevActiveStep + 1);
-    }
     
-  if (permissionCode && CPF) {
-     handlePreRegister(permissionCode, CPF)
-     .then(() => {})
-     .catch((_errors) => {
-       if (_errors.licensee) {
-          setError(_errors.licensee, {
-            message: 'Código de Permissionário não encontrado',
-          });
-        } else if (_errors.cpfCnpj) {
-          setError(_errors.cpfCnpj, {
-            message: 'CPF/CNPJ não corresponde com o nosso sistema',
-          });
-        }
-     })
-  }
+    if (permissionCode && CPF) {
+      handlePreRegister(permissionCode, CPF)
+      .then(() => {
+        setActiveStep((prevActiveStep) => prevActiveStep + 1);
+      })
+      .catch((_errors) => {
+        if (_errors.licensee) {
+            setError(_errors.licensee, {
+              message: 'Código de Permissionário não encontrado',
+            });
+          } else if (_errors.cpfCnpj) {
+            setError(_errors.cpfCnpj, {
+              message: 'CPF/CNPJ não corresponde com o nosso sistema',
+            });
+          }
+      })
+    }
+    return;
   };
 
 
