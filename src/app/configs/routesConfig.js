@@ -7,6 +7,8 @@ import SignUpConfig from '../main/pages/auth/sign-up/SignUpConfig';
 import SignOutConfig from '../main/pages/auth/sign-out/SignOutConfig';
 import ForgotPasswordConfig from '../main/pages/auth/password/forgot/ForgotPasswordConfig';
 import ResetPasswordConfig from '../main/pages/auth/password/reset/ResetPasswordConfig';
+import EmailSentConfig from '../main/pages/auth/email/sent/EmailSentConfig';
+import ConfirmEmailConfig from '../main/pages/auth/email/confirm/ConfirmEmailConfig';
 import Error404Page from '../main/404/Error404Page';
 import ExampleConfig from '../main/example/ExampleConfig';
 
@@ -15,8 +17,10 @@ const routeConfigs = [
   SignOutConfig,
   SignInConfig,
   SignUpConfig,
+  EmailSentConfig,
   ForgotPasswordConfig,
   ResetPasswordConfig,
+  ConfirmEmailConfig
 ];
 
 const routes = [
