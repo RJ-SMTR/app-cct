@@ -1,9 +1,10 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useForm } from 'react-hook-form';
 import Button from '@mui/material/Button';
-import { useContext, useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useContext, useState } from 'react';
 import Typography from '@mui/material/Typography';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import * as yup from 'yup';
 import _ from '@lodash';
 import Stepper from '@mui/material/Stepper';
@@ -12,9 +13,10 @@ import StepLabel from '@mui/material/StepLabel';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import { cpf } from 'cpf-cnpj-validator';
-import { StepOne, StepThree } from './formFields/FormFields';
+import { StepOne, StepTwo } from './formFields/FormFields';
 import { makeStyles } from '@mui/styles';
 import { AuthContext } from 'src/app/auth/AuthContext';
+import { setActiveStep, setButtonType } from 'app/store/formStepSlice';
 
 /**
  * Form Validation Schema
@@ -26,12 +28,7 @@ const schema = yup.object().shape({
     .string()
     .required('CPF is required')
     .test('CPF inválido', 'CPF inválido', (value) => cpf.isValid(value)),
-  // password: yup
-  //   .string()
-  //   .required('Please enter your password.')
-  //   .min(8, 'Password is too short - should be 8 chars minimum.'),
-  // passwordConfirm: yup.string().oneOf([yup.ref('password'), null], 'Passwords must match'),
-  // acceptTermsConditions: yup.boolean().oneOf([true], 'The terms and conditions must be accepted.'),
+
 });
 
 const defaultValues = {
@@ -45,17 +42,23 @@ const defaultValues = {
 };
 
 function SignUpPage() {
-    const [activeStep, setActiveStep] = useState(0);
-    const [confirmData, setConfirmData] = useState({});
+
+  const navigate = useNavigate()
+// Gerenciamento dos steps e tipagem do botão com redux ao invés do useState
+  const dispatch = useDispatch();
+  const activeStep = useSelector((state) => state.steps.activeStep);
+  const buttonType = useSelector((state) => state.steps.buttonType);
+
+  const [confirmData, setConfirmData] = useState({});
   const [skipped, setSkipped] = useState(new Set());
-  const {handlePreRegister, validPermissionCode} = useContext(AuthContext)
- const useStyles = makeStyles(() => ({
-  root: {
-   
-    "& .muiltr-1k3l4nl-MuiSvgIcon-root-MuiStepIcon-root.Mui-active": { color: "#0DB1E3" },
-    "& .muiltr-1k3l4nl-MuiSvgIcon-root-MuiStepIcon-root.Mui-completed": { color: "#0DB1E3" },
-  },
-}));
+  const { handlePreRegister, handleRegister } = useContext(AuthContext)
+
+  const useStyles = makeStyles(() => ({
+    root: {
+      "& .muiltr-1k3l4nl-MuiSvgIcon-root-MuiStepIcon-root.Mui-active": { color: "#0DB1E3" },
+      "& .muiltr-1k3l4nl-MuiSvgIcon-root-MuiStepIcon-root.Mui-completed": { color: "#0DB1E3" },
+    },
+  }));
   const c = useStyles()
   const { control, formState, handleSubmit, getValues, setError } = useForm({
     mode: 'onChange',
@@ -73,24 +76,17 @@ function SignUpPage() {
     cellphone,
     password,
   }) {
-    // jwtService
-    //   .createUser({
-    //     permissionCode,
-    //     email,
-    //   })
-    //   .then((user) => {
-    //     // No need to do anything, registered user data will be set at app/auth/AuthContext
-    //   })
-    //   .catch((_errors) => {
-    //     _errors.forEach((error) => {
-    //       setError(error.type, {
-    //         type: 'manual',
-    //         message: error.message,
-    //       });
-    //     });
-    //   });
+    handleRegister(email, password, CPF, permissionCode, cellphone)
+    .then((response) => {
+      if(response.status === 200){
+        navigate('/email-sent')
+      }
+    })
+    .catch((_errors) => {
+      console.log(_errors)
+    })
+    
   }
-
 
 
   const isStepSkipped = (step) => {
@@ -100,16 +96,19 @@ function SignUpPage() {
   const handleNext = (e) => {
     e.preventDefault();
     const values = getValues()
-    const { permissionCode, CPF } = values;
-    setConfirmData(values);
+    const { permissionCode, CPF, name, email, cellphone } = values;
+    
     if (permissionCode && CPF) {
-      if(activeStep === 0) {
+      if (activeStep === 0) {
+        
         handlePreRegister(permissionCode, CPF)
-        .then(() => {
-          setActiveStep((prevActiveStep) => prevActiveStep + 1);
-        })
-        .catch((_errors) => {
-          if (_errors.licensee) {
+          .then((response) => {
+            dispatch(setActiveStep(activeStep + 1));
+            setConfirmData(response.data.name)
+          })
+          .catch((_errors) => {
+            console.log(_errors)
+            if (_errors.licensee) {
               setError(_errors.licensee, {
                 message: 'Código de Permissionário não encontrado',
               });
@@ -118,17 +117,31 @@ function SignUpPage() {
                 message: 'CPF/CNPJ não corresponde com o nosso sistema',
               });
             }
-        })
+          })
       } else {
-        setActiveStep((prevActiveStep) => prevActiveStep + 1);
+        dispatch(setActiveStep(activeStep + 1));
+        setConfirmData((name) => ({
+          name,
+          values, 
+        }));
+
+      }
+      if (activeStep === steps.length) {
+        dispatch(setButtonType('submit'));
+        handleSubmit(onSubmit)()
+      } else {
+        dispatch(setButtonType('button'));
       }
       
+
+
     }
+
   };
 
 
   const handleBack = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    dispatch(setActiveStep(activeStep - 1));
   };
 
   const renderFields = () => {
@@ -149,28 +162,28 @@ function SignUpPage() {
       case 1:
         return (
           <>
-            <StepThree
+            <StepTwo
               type="email"
               label="E-mail"
               name="email"
               control={control}
               values={errors.email}
             />
-            <StepThree
+            <StepTwo
               type="string"
               label="Celular"
               name="cellphone"
               control={control}
               values={errors.cellphone}
             />
-            <StepThree
+            <StepTwo
               type="password"
               label="Senha"
               name="password"
               control={control}
               values={errors.password}
             />
-            <StepThree
+            <StepTwo
               type="password"
               label="Confirmação da senha"
               name="passwordConfirm"
@@ -182,12 +195,13 @@ function SignUpPage() {
       default:
         return (
           <>
+          {/* {console.log(confirmData)}
             <h3 className="mb-4">Confirme seus dados: </h3>
-            
-              <p>Nome:  {confirmData.name}</p>
-              <p>CPF:  {confirmData.CPF}</p>
-              <p>E-mail:  {confirmData.email}</p>
-              <p>Celular:  {confirmData.cellphone}</p>
+
+            <p>Nome:  {confirmData.name}</p>
+            <p>CPF:  {confirmData.CPF}</p>
+            <p>E-mail:  {confirmData.email}</p>
+            <p>Celular:  {confirmData.cellphone}</p> */}
           </>
         );
     }
@@ -195,9 +209,11 @@ function SignUpPage() {
 
   return (
     <div className="flex flex-col sm:flex-row items-center md:items-start sm:justify-center md:justify-start flex-1 min-w-0">
-      <Paper className="h-full sm:h-auto md:flex md:items-center md:justify-end w-full sm:w-auto md:h-full md:w-1/2 py-8 px-16 sm:p-48 md:p-64 sm:rounded-2xl md:rounded-none sm:shadow md:shadow-none ltr:border-r-1 rtl:border-l-1">
+      <Paper className="h-full sm:h-auto md:flex md:items-center md:justify-end w-full sm:w-auto md:h-full md:w-1/2 py-8 px-16 sm:p-48 md:p-64 sm:rounded-2xl md:rounded-none sm:shadow md:shadow-none ltr:border-r-1 rtl:border-l-1 relative">
         <div className="w-full max-w-320 sm:w-320 mx-auto sm:mx-0">
-          <Typography className="mt-32 text-4xl font-extrabold tracking-tight leading-tight">
+          <Typography className="mt-48 text-4xl font-extrabold tracking-tight leading-tight">
+            <img src="assets/icons/logo.svg" className='mb-10' alt='logo CCT' />
+
             Registre-se
           </Typography>
           <div className="flex items-baseline mt-2 font-medium">
@@ -260,17 +276,37 @@ function SignUpPage() {
             <Button
               variant="contained"
               color="secondary"
-              className="w-full mt-24"
+              className="w-full mt-24 z-10"
               aria-label="Register"
               disabled={_.isEmpty(dirtyFields)}
-              type={activeStep === steps.length + 1 ? 'submit' : 'button'}
+              type={buttonType}
               size="large"
               onClick={handleNext}
             >
               {activeStep === steps.length ? 'Criar conta' : 'Avançar'}
             </Button>
           </form>
+          
         </div>
+        <svg
+          className="absolute inset-0 pointer-events-none md:hidden"
+          viewBox="0 0 960 540"
+          width="100%"
+          height="100%"
+          preserveAspectRatio="xMidYMax slice"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <Box
+            component="g"
+            sx={{ color: 'primary.light' }}
+            className="opacity-20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="100"
+          >
+            <circle r="234" cx="720" cy="491" />
+          </Box>
+        </svg>
       </Paper>
 
       <Box className="relative hidden md:flex flex-auto items-center justify-center h-screen  overflow-hidden ">

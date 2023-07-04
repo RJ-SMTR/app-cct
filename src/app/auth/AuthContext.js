@@ -132,12 +132,58 @@ export function AuthProvider({ children }) {
       })
     })
   }
+  function handleRegister(email, password, cpf, permissionCode, cellphone){
+    return new Promise((resolve, reject) => {
+      axios.post(jwtServiceConfig.register, {
+        email,
+        password,
+        cpf,
+        cellphone, 
+        permissionCode,
+        // ACHO Q AINDA TÃO COMO NECESSÁRIOS ENTÃO FIZ SÓ PRA PODER ENVIAR 
+        firstName: "firstName should not be empty",
+        lastName: "lastName should not be empty",
+        fullName: "fullName should not be empty",
+        agency: "2134",
+        bankAccount: "1231231",
+        bankAccountDigit: "1"
+      })
+        .then((response) => {
+          if (response) {
+            setValidPermissionCode(true)
+            resolve(response)
+          }
+        })
+        .catch((error) => {
+          reject(error.response.data.errors)
+
+        })
+    })
+  } 
+  function confirmEmail(hash){
+    return new Promise((resolve, reject) => {
+      axios.post(jwtServiceConfig.confirm, {
+        hash,
+      })
+        .then((response) => {
+          if (response) {
+            resolve(response)
+          }
+        })
+        .catch((error) => {
+          console.log("erroerror")
+          
+
+        })
+    })
+
+  }
 
   return waitAuthCheck ? (
     <FuseSplashScreen />
   ) : (
     <AuthContext.Provider
-      value={{ isAuthenticated, forgotPasswordFunction, resetPasswordFunction, handlePreRegister, validPermissionCode }}
+      value={{ isAuthenticated, forgotPasswordFunction, resetPasswordFunction, handlePreRegister, validPermissionCode, handleRegister, confirmEmail }}
     >
       {children}
     </AuthContext.Provider>

@@ -45,25 +45,3 @@ export function StepTwo({ type, control, values, label, name }) {
     />
   );
 }
-
-export function StepThree({ type, control, values, label, name }) {
-  return (
-    <Controller
-      name={name}
-      control={control}
-      render={({ field }) => (
-        <TextField
-          {...field}
-          className="mb-24"
-          label={label}
-          type={type}
-          error={!!values}
-          helperText={values?.message}
-          variant="outlined"
-          required
-          fullWidth
-        />
-      )}
-    />
-  );
-}

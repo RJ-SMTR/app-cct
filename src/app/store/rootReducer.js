@@ -2,11 +2,14 @@ import { combineReducers } from '@reduxjs/toolkit';
 import fuse from './fuse';
 import i18n from './i18nSlice';
 import user from './userSlice';
+import steps from './formStepSlice'
+
 
 const createReducer = (asyncReducers) => (state, action) => {
   const combinedReducer = combineReducers({
     fuse,
     i18n,
+    steps,
     user,
     ...asyncReducers,
   });
