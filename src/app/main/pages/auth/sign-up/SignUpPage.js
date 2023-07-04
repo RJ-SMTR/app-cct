@@ -13,22 +13,26 @@ import StepLabel from '@mui/material/StepLabel';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import { cpf } from 'cpf-cnpj-validator';
-import { StepOne, StepTwo } from './formFields/FormFields';
+import { StepOne, StepTwo, CellPhonePhield } from './formFields/FormFields';
 import { makeStyles } from '@mui/styles';
 import { AuthContext } from 'src/app/auth/AuthContext';
 import { setActiveStep, setButtonType } from 'app/store/formStepSlice';
 
-/**
- * Form Validation Schema
- */
+
+
 const steps = ['', ''];
 const schema = yup.object().shape({
+  // O PADRÃO DO YUP DE EMAIL ACEITA FORMATOS INVÁLIDOS QUE A API NÃO ACEITA, POR ISSO O REGEX
+  email: yup.string().matches(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/ ,'Insira um e-mail válido').required('Insira seu e-mail'),
   permissionCode: yup.string().required('You must enter display name'),
   CPF: yup
     .string()
     .required('CPF is required')
     .test('CPF inválido', 'CPF inválido', (value) => cpf.isValid(value)),
-
+  password: yup
+    .string()
+    .required('Digite sua senha'),
+  passwordConfirm: yup.string().oneOf([yup.ref('password'), null], 'As senhas devem ser iguais'),
 });
 
 const defaultValues = {
@@ -42,9 +46,8 @@ const defaultValues = {
 };
 
 function SignUpPage() {
-
+  const [name, setName] = useState('');
   const navigate = useNavigate()
-// Gerenciamento dos steps e tipagem do botão com redux ao invés do useState
   const dispatch = useDispatch();
   const activeStep = useSelector((state) => state.steps.activeStep);
   const buttonType = useSelector((state) => state.steps.buttonType);
@@ -52,15 +55,15 @@ function SignUpPage() {
   const [confirmData, setConfirmData] = useState({});
   const [skipped, setSkipped] = useState(new Set());
   const { handlePreRegister, handleRegister } = useContext(AuthContext)
-
   const useStyles = makeStyles(() => ({
     root: {
+
       "& .muiltr-1k3l4nl-MuiSvgIcon-root-MuiStepIcon-root.Mui-active": { color: "#0DB1E3" },
       "& .muiltr-1k3l4nl-MuiSvgIcon-root-MuiStepIcon-root.Mui-completed": { color: "#0DB1E3" },
     },
   }));
   const c = useStyles()
-  const { control, formState, handleSubmit, getValues, setError } = useForm({
+  const { control, formState, handleSubmit, getValues, setError, clearErrors } = useForm({
     mode: 'onChange',
     defaultValues,
     resolver: yupResolver(schema),
@@ -71,7 +74,6 @@ function SignUpPage() {
   function onSubmit({
     permissionCode,
     CPF,
-    name,
     email,
     cellphone,
     password,
@@ -88,7 +90,6 @@ function SignUpPage() {
     
   }
 
-
   const isStepSkipped = (step) => {
     return skipped.has(step);
   };
@@ -99,12 +100,11 @@ function SignUpPage() {
     const { permissionCode, CPF, name, email, cellphone } = values;
     
     if (permissionCode && CPF) {
-      if (activeStep === 0) {
-        
+      if(activeStep === 0) {
         handlePreRegister(permissionCode, CPF)
           .then((response) => {
             dispatch(setActiveStep(activeStep + 1));
-            setConfirmData(response.data.name)
+            setName(response.data.name)
           })
           .catch((_errors) => {
             console.log(_errors)
@@ -113,35 +113,62 @@ function SignUpPage() {
                 message: 'Código de Permissionário não encontrado',
               });
             } else if (_errors.cpfCnpj) {
-              setError(_errors.cpfCnpj, {
-                message: 'CPF/CNPJ não corresponde com o nosso sistema',
-              });
+              if (_errors.cpfCnpj == 'invalidCpfCnpj') {
+                setError(_errors.cpfCnpj, {
+                  message: 'CPF/CNPJ inválido'
+                })
+              } else if (_errors.cpfCnpj == 'cpfCnpjDoesNotMatch') {
+                setError(_errors.cpfCnpj, {
+                  message: 'CPF/CNPJ não corresponde com o nosso sistema',
+                });
+              }
+
             }
           })
       } else {
-        dispatch(setActiveStep(activeStep + 1));
-        setConfirmData((name) => ({
-          name,
-          values, 
-        }));
+        if (isValid) {
+          dispatch(setActiveStep(activeStep + 1));
+          setConfirmData(values)
+        } else {
+          setError('email', {
+            type: 'manual',
+            message: 'Insira um e-mail válido',
+          })
+          setError('cellphone', {
+            type: 'manual',
+            message: 'Insira um número de celular válido',
+          })
+          setError('password', {
+            type: 'manual',
+            message: 'Digite sua senha',
+          })
+          setError('passwordConfirm', {
+            type: 'manual',
+            message: 'Confirme sua senha',
+          })
+        }
 
       }
       if (activeStep === steps.length) {
         dispatch(setButtonType('submit'));
+        dispatch(setActiveStep(activeStep));
         handleSubmit(onSubmit)()
       } else {
         dispatch(setButtonType('button'));
-      }
       
-
-
+  }
+  
     }
-
-  };
-
+  }
 
   const handleBack = () => {
+    setActiveStep((prevActiveStep) => prevActiveStep - 1);
     dispatch(setActiveStep(activeStep - 1));
+    clearErrors('cpfCnpjDoesNotMatch')
+    clearErrors('invalidCpfCnpj')
+    clearErrors('licenseeProfileNotFOund')
+
+
   };
 
   const renderFields = () => {
@@ -156,7 +183,7 @@ function SignUpPage() {
               control={control}
               values={errors.licenseeProfileNotFound}
             />
-            <StepOne type="string" label="CPF" name="CPF" control={control} values={errors.cpfCnpjDoesNotMatch} />
+            <StepOne type="string" label="CPF" name="CPF" control={control} values={errors.cpfCnpjDoesNotMatch || errors.invalidCpfCnpj} />
           </>
         );
       case 1:
@@ -169,7 +196,7 @@ function SignUpPage() {
               control={control}
               values={errors.email}
             />
-            <StepTwo
+            <CellPhonePhield
               type="string"
               label="Celular"
               name="cellphone"
@@ -195,13 +222,12 @@ function SignUpPage() {
       default:
         return (
           <>
-          {/* {console.log(confirmData)}
             <h3 className="mb-4">Confirme seus dados: </h3>
 
-            <p>Nome:  {confirmData.name}</p>
+            <p>Nome: {name}</p>
             <p>CPF:  {confirmData.CPF}</p>
             <p>E-mail:  {confirmData.email}</p>
-            <p>Celular:  {confirmData.cellphone}</p> */}
+            <p>Celular:  {confirmData.cellphone}</p>
           </>
         );
     }
@@ -278,12 +304,12 @@ function SignUpPage() {
               color="secondary"
               className="w-full mt-24 z-10"
               aria-label="Register"
-              disabled={_.isEmpty(dirtyFields)}
+              disabled={_.isEmpty(dirtyFields) || activeStep === steps.length + 1}
               type={buttonType}
               size="large"
               onClick={handleNext}
             >
-              {activeStep === steps.length ? 'Criar conta' : 'Avançar'}
+              {activeStep === steps.length || activeStep > steps.length ? 'Criar conta' : 'Avançar'}
             </Button>
           </form>
           
@@ -315,5 +341,6 @@ function SignUpPage() {
     </div>
   );
 }
+
 
 export default SignUpPage;
