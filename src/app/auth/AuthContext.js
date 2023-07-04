@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     jwtService.on('onAutoLogin', () => {
-      dispatch(showMessage({ message: 'Signing in with JWT' }));
+      dispatch(showMessage({ message: 'Bem-vindo de volta!' }));
 
       /**
        * Sign in and retrieve user data with stored token
@@ -25,7 +25,7 @@ export function AuthProvider({ children }) {
       jwtService
         .signInWithToken()
         .then((user) => {
-          success(user, 'Signed in with JWT');
+          success(user, 'Bem-vindo de volta!');
         })
         .catch((error) => {
           pass(error.message);
@@ -33,7 +33,7 @@ export function AuthProvider({ children }) {
     });
 
     jwtService.on('onLogin', (user) => {
-      success(user, 'Signed in');
+      success(user, 'Bem-vindo!');
     });
 
     jwtService.on('onLogout', () => {
@@ -156,6 +156,11 @@ export function AuthProvider({ children }) {
         })
         .catch((error) => {
           reject(error.response.data.errors)
+          if(error.response.data.errors.email == 'emailAlreadyExists'){
+            dispatch(showMessage({ message: 'Esse e-mail já está sendo usado' }));
+          }
+          
+          
 
         })
     })

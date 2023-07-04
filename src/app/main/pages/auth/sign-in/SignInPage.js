@@ -146,7 +146,7 @@ function SignInPage() {
               type="submit"
               size="large"
             >
-              Sign in
+              Fazer login
             </Button>
           </form>
         </div>
