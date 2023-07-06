@@ -69,9 +69,9 @@ function SignInPage() {
             Login
           </Typography>
           <div className="flex items-baseline mt-2 font-medium">
-            <Typography>Não tem uma conta?</Typography>
-            <Link className="ml-4" to="/sign-up">
-              Faça seu cadastro
+            <Typography>Não foi registrado?</Typography>
+            <Link className="ml-4" to="/support">
+              Fale conosco
             </Link>
           </div>
 

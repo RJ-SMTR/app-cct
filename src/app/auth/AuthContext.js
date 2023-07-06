@@ -127,6 +127,7 @@ export function AuthProvider({ children }) {
         }
       })
       .catch((error) => {
+        dispatch(showMessage({ message: 'Houve um problema, tente novamente mais tarde!' }));
         reject(error.response.data.errors)
         
       })
@@ -140,7 +141,6 @@ export function AuthProvider({ children }) {
         cpf,
         cellphone, 
         permissionCode,
-        // ACHO Q AINDA TÃO COMO NECESSÁRIOS ENTÃO FIZ SÓ PRA PODER ENVIAR 
         firstName: "firstName should not be empty",
         lastName: "lastName should not be empty",
         fullName: "fullName should not be empty",
@@ -150,7 +150,9 @@ export function AuthProvider({ children }) {
       })
         .then((response) => {
           if (response) {
-            setValidPermissionCode(true)
+            setTimeout(() => {
+              jwtService.signInWithEmailAndPassword(email, password)
+            }, 3000)
             resolve(response)
           }
         })

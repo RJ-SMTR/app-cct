@@ -1,7 +1,7 @@
-import ConfirmEmailPage from './ConfirmEmailPage';
-import authRoles from '../../../../../auth/authRoles';
+import ConcludePage from './ConcludePage';
+import authRoles from '../../../../auth/authRoles';
 
-const ConfirmEmailConfig = {
+const ConcludeConfig = {
     settings: {
         layout: {
             config: {
@@ -26,10 +26,10 @@ const ConfirmEmailConfig = {
     auth: authRoles.onlyGuest,
     routes: [
         {
-            path: 'confirm-email/:hash',
-            element: <ConfirmEmailPage />,
+            path: 'conclude-registration/:hash',
+            element: <ConcludePage />,
         },
     ],
 };
 
-export default ConfirmEmailConfig;
+export default ConcludeConfig;
