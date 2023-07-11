@@ -3,15 +3,17 @@ import { useDispatch } from 'react-redux';
 import FuseSplashScreen from '@fuse/core/FuseSplashScreen';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import { logoutUser, setUser } from 'app/store/userSlice';
-import axios from 'axios';
 import jwtServiceConfig from './services/jwtService/jwtServiceConfig';
 import jwtService from './services/jwtService';
+import { api } from 'app/configs/api/api';
+import { redirect } from 'react-router-dom';
 
 export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
+  
   const [isAuthenticated, setIsAuthenticated] = useState(undefined);
-  const [validPermissionCode, setValidPermissionCode] = useState(false)
+  const [validPermitCode, setValidPermitCode] = useState(false)
   const [waitAuthCheck, setWaitAuthCheck] = useState(true);
   const dispatch = useDispatch();
 
@@ -98,7 +100,7 @@ export function AuthProvider({ children }) {
   }
   function resetPasswordFunction(password, hash) {
     return new Promise((reject) => {
-      axios
+      api
         .post(jwtServiceConfig.resetPassword, {
           password,
           hash,
@@ -116,13 +118,13 @@ export function AuthProvider({ children }) {
   }
   function handlePreRegister(licensee, cpfCnpj){
     return new Promise((resolve, reject) => {
-      axios.post(jwtServiceConfig.preRegister, {
+      api.post(jwtServiceConfig.preRegister, {
         licensee,
         cpfCnpj
       })
       .then((response) => {
         if(response){
-          setValidPermissionCode(true)
+          setValidPermitCode(true)
           resolve(response)
         }
       })
@@ -133,25 +135,20 @@ export function AuthProvider({ children }) {
       })
     })
   }
-  function handleRegister(email, password, cpf, permissionCode, cellphone){
+  function handleRegister(hash,permitCode, password){
     return new Promise((resolve, reject) => {
-      axios.post(jwtServiceConfig.register, {
-        email,
+      api.post(`auth/licensee/register/${hash}`, {
         password,
-        cpf,
-        cellphone, 
-        permissionCode,
-        firstName: "firstName should not be empty",
-        lastName: "lastName should not be empty",
-        fullName: "fullName should not be empty",
-        agency: "2134",
-        bankAccount: "1231231",
-        bankAccountDigit: "1"
+        permitCode
       })
         .then((response) => {
           if (response) {
             setTimeout(() => {
-              jwtService.signInWithEmailAndPassword(email, password)
+              jwtService
+                .signInWithPermitCodeAndPasswrod(permitCode, password)
+                .then(() => {
+                  redirect('/')
+                })
             }, 3000)
             resolve(response)
           }
@@ -167,20 +164,16 @@ export function AuthProvider({ children }) {
         })
     })
   } 
-  function confirmEmail(hash){
+  function handleInvite(hash){
     return new Promise((resolve, reject) => {
-      axios.post(jwtServiceConfig.confirm, {
-        hash,
-      })
+      api.post(`auth/licensee/invite/${hash}`)
         .then((response) => {
           if (response) {
             resolve(response)
           }
         })
         .catch((error) => {
-          console.log("erroerror")
-          
-
+          reject(error)
         })
     })
 
@@ -190,7 +183,7 @@ export function AuthProvider({ children }) {
     <FuseSplashScreen />
   ) : (
     <AuthContext.Provider
-      value={{ isAuthenticated, forgotPasswordFunction, resetPasswordFunction, handlePreRegister, validPermissionCode, handleRegister, confirmEmail }}
+      value={{ isAuthenticated, forgotPasswordFunction, resetPasswordFunction, handlePreRegister, validPermitCode, handleRegister, handleInvite }}
     >
       {children}
     </AuthContext.Provider>

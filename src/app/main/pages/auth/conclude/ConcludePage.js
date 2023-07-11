@@ -4,7 +4,7 @@ import Button from '@mui/material/Button';
 import { useDispatch, useSelector } from 'react-redux';
 import { useContext, useState } from 'react';
 import Typography from '@mui/material/Typography';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import * as yup from 'yup';
 import _ from '@lodash';
 import Stepper from '@mui/material/Stepper';
@@ -17,13 +17,13 @@ import { makeStyles } from '@mui/styles';
 import { AuthContext } from 'src/app/auth/AuthContext';
 import { setActiveStep, setButtonType } from 'app/store/formStepSlice';
 import { useParams } from 'react-router-dom'
+import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 
 
 
 
 const steps = ['', ''];
 const schema = yup.object().shape({
-    permissionCode: yup.string().required('You must enter display name'),
     password: yup
         .string()
         .required('Digite sua senha'),
@@ -31,7 +31,7 @@ const schema = yup.object().shape({
 });
 
 const defaultValues = {
-    permissionCode: '',
+    permitCode: '',
     password: '',
     passwordConfirm: '',
 };
@@ -43,37 +43,47 @@ function ConcludePage() {
     const activeStep = useSelector((state) => state.steps.activeStep);
     const buttonType = useSelector((state) => state.steps.buttonType);
     const [skipped, setSkipped] = useState(new Set());
-    const { handlePreRegister, handleRegister } = useContext(AuthContext)
+    const [info, setInfo] = useState({})
+    const [isInviteInfoCalled, setIsInviteInfoCalled] = useState(false);
+    const { handleInvite, handleRegister } = useContext(AuthContext)
     const useStyles = makeStyles(() => ({
         root: {
 
             "& .muiltr-1k3l4nl-MuiSvgIcon-root-MuiStepIcon-root.Mui-active": { color: "#0DB1E3" },
             "& .muiltr-1k3l4nl-MuiSvgIcon-root-MuiStepIcon-root.Mui-completed": { color: "#0DB1E3" },
+            "& .muiltr-1d3z3hw-MuiOutlinedInput-notchedOutline": { background: "#f5f5f5" },
+            "& .muiltr-1soyadh-MuiInputBase-input-MuiOutlinedInput-input.Mui-disabled": { zIndex: "1", color: '#5a5a5a', "-webkit-text-fill-color": "#5a5a5a !important", },
+
+
         },
     }));
     const c = useStyles()
-    const { control, formState, handleSubmit, getValues, setError, clearErrors } = useForm({
+    const { control, formState, handleSubmit, setError, clearErrors, getValues, setValue } = useForm({
         mode: 'onChange',
         defaultValues,
         resolver: yupResolver(schema),
-    });
+    })
 
-    const { isValid, dirtyFields, errors } = formState;
+    const { isValid, dirtyFields, errors,  } = formState;
 
-    function onSubmit({
-        permissionCode,
-        password,
-    }) {
-        handleRegister( password, permissionCode)
-            .then((response) => {
-                if (response.status === 200) {
-                    navigate('/email-sent')
-                }
-            })
-            .catch((_errors) => {
-                console.log(_errors)
-            })
+    function inviteInfo(hash){
+    handleInvite(hash) 
+        .then((response) => {
+            if (response.status === 200){
+                setInfo(response.data)
+                setIsInviteInfoCalled(true);
 
+            }
+        })
+        .catch((_error)=> {
+        })
+    }
+    if (hash && !isInviteInfoCalled) {
+        inviteInfo(hash);
+    }
+    
+    function onSubmit({ permitCode, password, email }) {
+        handleRegister(hash, permitCode, password, email)
     }
 
     const isStepSkipped = (step) => {
@@ -82,59 +92,29 @@ function ConcludePage() {
 
     const handleNext = (e) => {
         e.preventDefault();
-        const values = getValues()
-        const { permissionCode, CPF} = values;
-
-        if (permissionCode) {
+        setValue('permitCode', info.permitCode)
             if (activeStep === 0) {
-                console.log('click')
-                
                 dispatch(setActiveStep(activeStep + 1));
-                handlePreRegister(permissionCode)
-                .then((response) => {
-                        // setName(response.data.name)
-                    })
-                    .catch((_errors) => {
-                        console.log(_errors)
-                        if (_errors.licensee) {
-                            setError(_errors.licensee, {
-                                message: 'Código de Permissionário não encontrado',
-                            });
-                        } else if (_errors.cpfCnpj) {
-                            if (_errors.cpfCnpj == 'invalidCpfCnpj') {
-                                setError(_errors.cpfCnpj, {
-                                    message: 'CPF/CNPJ inválido'
-                                })
-                            } else if (_errors.cpfCnpj == 'cpfCnpjDoesNotMatch') {
-                                setError(_errors.cpfCnpj, {
-                                    message: 'CPF/CNPJ não corresponde com o nosso sistema',
-                                });
-                            }
-
-                        }
-                    })
-            } else if (activeStep === steps.length - 1) {
+            } else {
                 if(isValid){
-                    dispatch(setButtonType('submit'));
                     dispatch(setActiveStep(activeStep + 1));
+                    dispatch(setButtonType('submit'));
                     handleSubmit(onSubmit)()
-                } else {
-                    setError('password', {
-                        type: 'manual',
-                        message: 'Digite sua senha',
-                    })
-                    setError('passwordConfirm', {
-                        type: 'manual',
-                        message: 'Confirme sua senha',
-                    })
+                    } else {
+                        setError('password', {
+                            type: 'manual',
+                            message: 'Digite sua senha',
+                        })
+                        setError('passwordConfirm', {
+                            type: 'manual',
+                            message: 'Confirme sua senha',
+                        })
+                    }
                 }
-            } 
+            }
 
-        }
-    }
 
     const handleBack = () => {
-        setActiveStep((prevActiveStep) => prevActiveStep - 1);
         dispatch(setActiveStep(activeStep - 1));
         clearErrors('cpfCnpjDoesNotMatch')
         clearErrors('invalidCpfCnpj')
@@ -143,17 +123,27 @@ function ConcludePage() {
 
     };
 
-    const renderFields = () => {
+    const renderFields = (email, permitCode) => {
+        if (email && permitCode) {
         switch (activeStep) {
             case 0:
-                return (
+                    return (
                     <>
                         <StepOne
+                            customClass={c.root}
                             type="name"
                             label="Código de permissão"
-                            name="permissionCode"
+                            name="permitCode"
                             control={control}
-                            values={errors.licenseeProfileNotFound}
+                            value={permitCode}
+                        />
+                        <StepOne
+                            customClass={c.root}
+                            type="email"
+                            label="E-mail"
+                            name="email"
+                            control={control}
+                            value={email}
                         />
                     </>
                 );
@@ -180,60 +170,62 @@ function ConcludePage() {
                 return (
                     <>
                     </>
-                  
                 );
         }
+        } 
     };
 
-    return (
-        <div className="flex flex-col sm:flex-row items-center md:items-start sm:justify-center md:justify-start flex-1 min-w-0">
-            <Paper className="h-full sm:h-auto md:flex md:items-center md:justify-end w-full sm:w-auto md:h-full md:w-1/2 py-8 px-16 sm:p-48 md:p-64 sm:rounded-2xl md:rounded-none sm:shadow md:shadow-none ltr:border-r-1 rtl:border-l-1 relative">
-                <div className="w-full max-w-320 sm:w-320 mx-auto sm:mx-0">
-                    <Typography className="mt-48 text-4xl font-extrabold tracking-tight leading-tight">
-                        <img src="assets/icons/logo.svg" className='mb-10' alt='logo CCT' />
-                        Registre-se
-                    </Typography>
-                    {activeStep === steps.length ? <>
-                      <Box className="flex flex-col items-center mt-40">
-                        <img src='assets/icons/check.svg' alt='confirmado' />
-                        <h1 className='text-center'> Obrigado por finalizar seu cadastro! Logo iremos te redirecionar, se não acontecer nada <Link to='/sign-in'>clique aqui</Link></h1>
-                    </Box>
-                    
-                    </> : <>
-                        <div className="items-baseline mt-10 font-medium">
-                            <Typography>Olá, Operador X.<br></br> Precisamos finalizar seu cadastro! Se por acaso esse não for seu nome
-                                <Link className="ml-4" to="/support">
-                                    fale conosco
-                                </Link></Typography>
+    if (isInviteInfoCalled){
+       return (
+    
+           <div className="flex flex-col sm:flex-row items-center md:items-start sm:justify-center md:justify-start flex-1 min-w-0">
+               <Paper className="h-full sm:h-auto md:flex md:items-center md:justify-end w-full sm:w-auto md:h-full md:w-1/2 py-8 px-16 sm:p-48 md:p-64 sm:rounded-2xl md:rounded-none sm:shadow md:shadow-none ltr:border-r-1 rtl:border-l-1 relative">
+                   <div className="w-full max-w-320 sm:w-320 mx-auto sm:mx-0">
+                       <Typography className="mt-48 text-4xl font-extrabold tracking-tight leading-tight">
+                           <img src="assets/icons/logoPrefeitura.png" width="155" className='mb-10' alt='logo CCT' />
+                           Registre-se
+                       </Typography>
+                       {activeStep === steps.length ? <>
+                           <Box className="flex flex-col items-center mt-40">
+                               <img src='assets/icons/check.svg' alt='confirmado' />
+                               <h2 className='text-center'> Obrigado por finalizar seu cadastro! Logo iremos te redirecionar, se não acontecer nada <Link to='/'>clique aqui</Link></h2>
+                           </Box>
 
-                        </div>
+                       </> : <>
+                           <div className="items-baseline mt-10 font-medium">
+                               <Typography>Olá, {info.fullName}.<br></br> Confirme seus dados abaixo! Se por acaso estiverem incorretos
+                                   <Link className="ml-4" to="/support">
+                                       fale conosco
+                                   </Link></Typography>
 
-                        <form
-                            name="registerForm"
-                            noValidate
-                            className="flex flex-col justify-center w-full mt-16"
-                            onSubmit={handleSubmit(onSubmit)}
-                        >
-                            <Box className="my-16">
-                                <Stepper activeStep={activeStep} className={c.root} >
-                                    {steps.map((label, index) => {
-                                        const stepProps = {};
-                                        const labelProps = {};
-                                        if (isStepSkipped(index)) {
-                                            stepProps.completed = false;
-                                        }
-                                        return (
-                                            <Step key={label} {...stepProps}>
-                                                <StepLabel {...labelProps}>{label}</StepLabel>
-                                            </Step>
-                                        );
-                                    })}
-                                </Stepper>
-                            </Box>
+                           </div>
 
-                            {renderFields()}
+                           <form
+                               name="registerForm"
+                               noValidate
+                               className="flex flex-col justify-center w-full mt-16"
+                               onSubmit={handleSubmit(onSubmit)}
+                           >
+                               <Box className="my-16">
+                                   <Stepper activeStep={activeStep} className={c.root} >
+                                       {steps.map((label, index) => {
+                                           const stepProps = {};
+                                           const labelProps = {};
+                                           if (isStepSkipped(index)) {
+                                               stepProps.completed = false;
+                                           }
+                                           return (
+                                               <Step key={label} {...stepProps}>
+                                                   <StepLabel {...labelProps}>{label}</StepLabel>
+                                               </Step>
+                                           );
+                                       })}
+                                   </Stepper>
+                               </Box>
 
-                            {/* <Controller
+                               {renderFields(info.email, info.permitCode)}
+
+                               {/* <Controller
               name="acceptTermsConditions"
               control={control}
               render={({ field }) => (
@@ -247,35 +239,75 @@ function ConcludePage() {
               )}
             />  */}
 
-                            <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
-                                <Button
-                                    color="inherit"
-                                    disabled={activeStep === 0}
-                                    onClick={handleBack}
-                                    sx={{ mr: 1 }}
-                                >
-                                    Voltar
-                                </Button>
-                            </Box>
+                               <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
+                                   <Button
+                                       color="inherit"
+                                       disabled={activeStep === 0}
+                                       onClick={handleBack}
+                                       sx={{ mr: 1 }}
+                                   >
+                                       Voltar
+                                   </Button>
+                               </Box>
 
-                            <Button
-                                variant="contained"
-                                color="secondary"
-                                className="w-full mt-24 z-10"
-                                aria-label="Register"
-                                disabled={_.isEmpty(dirtyFields) || activeStep === steps.length + 1}
-                                type={buttonType}
-                                size="large"
-                                onClick={handleNext}
-                            >
-                                {activeStep === steps.length || activeStep > steps.length ? 'Criar conta' : 'Avançar'}
-                            </Button>
-                        </form></> }
-               
+                               <Button
+                                   variant="contained"
+                                   color="secondary"
+                                   className="w-full z-10"
+                                   aria-label="Register"
+                                   type={buttonType}
+                                   size="large"
+                                   onClick={handleNext}
+                               >
+                                   {activeStep === steps.length || activeStep > steps.length ? 'Criar conta' : 'Avançar'}
+                               </Button>
+                           </form></>}
+
+
+                   </div>
+                   <svg
+                       className="absolute inset-0 pointer-events-none md:hidden z-0"
+                       viewBox="0 0 960 540"
+                       width="100%"
+                       height="100%"
+                       preserveAspectRatio="xMidYMax slice"
+                       xmlns="http://www.w3.org/2000/svg"
+                   >
+                       <Box
+                           component="g"
+                           sx={{ color: 'primary.light' }}
+                           className="opacity-20"
+                           fill="none"
+                           stroke="currentColor"
+                           strokeWidth="100"
+                       >
+                           <circle r="234" cx="720" cy="491" />
+                       </Box>
+                   </svg>
+               </Paper>
+
+               <Box className="relative hidden md:flex flex-auto items-center justify-center h-screen  overflow-hidden ">
+                   <img src="assets/images/etc/BRT.jpg" className="w-full" alt="BRT" />
+               </Box>
+           </div>
+       );
+   } else {
+    return (
+        <div className="flex flex-col sm:flex-row items-center md:items-start sm:justify-center md:justify-start flex-1 min-w-0">
+            <Paper className="h-full sm:h-auto md:flex md:items-center md:justify-end w-full sm:w-auto md:h-full md:w-1/2 py-8 px-16 sm:p-48 md:p-64 sm:rounded-2xl md:rounded-none sm:shadow md:shadow-none ltr:border-r-1 rtl:border-l-1 relative">
+                <div className="w-full max-w-320 sm:w-320 mx-auto sm:mx-0">
+                    <Typography className="mt-48 text-4xl font-extrabold tracking-tight leading-tight">
+                        <img src="assets/icons/logoPrefeitura.png" width="155" className='mb-10' alt='logo CCT' />
+                    </Typography>
+                   
+                        <Box className="flex flex-col items-center mt-40">
+                        <FuseSvgIcon className="text-48" size={48} color="action">material-outline:link_off</FuseSvgIcon>
+                        <h2 className='text-center'> Aparentemente esse link já expirou para que<br></br>  possamos te ajudar <Link to='/sign-in'>clique aqui</Link></h2>
+                        </Box>
 
                 </div>
                 <svg
-                    className="absolute inset-0 pointer-events-none md:hidden"
+                    className="absolute inset-0 pointer-events-none md:hidden z-0"
                     viewBox="0 0 960 540"
                     width="100%"
                     height="100%"
@@ -299,7 +331,8 @@ function ConcludePage() {
                 <img src="assets/images/etc/BRT.jpg" className="w-full" alt="BRT" />
             </Box>
         </div>
-    );
+    )
+   }
 }
 
 

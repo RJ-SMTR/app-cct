@@ -1,4 +1,5 @@
 import FuseUtils from '@fuse/utils/FuseUtils';
+import { api } from 'app/configs/api/api';
 import axios from 'axios';
 import jwtDecode from 'jwt-decode';
 import jwtServiceConfig from './jwtServiceConfig';
@@ -48,7 +49,7 @@ class JwtService extends FuseUtils.EventEmitter {
 
   createUser = (data) => {
     return new Promise((resolve, reject) => {
-      axios.post(jwtServiceConfig.signUp, data).then((response) => {
+      api.post(jwtServiceConfig.signUp, data).then((response) => {
         if (response.data.user) {
           this.setSession(response.data.access_token);
           resolve(response.data.user);
@@ -60,11 +61,11 @@ class JwtService extends FuseUtils.EventEmitter {
     });
   };
 
-  signInWithEmailAndPassword = (email, password) => {
+  signInWithPermitCodeAndPasswrod = (permitCode, password) => {
     return new Promise((resolve, reject) => {
-      axios
+      api
         .post(jwtServiceConfig.signIn, {
-          email,
+          permitCode,
           password,
         })
         .then((response) => {
@@ -81,12 +82,12 @@ class JwtService extends FuseUtils.EventEmitter {
   };
 
   signInWithToken = () => {
+    const token = this.getAccessToken();
     return new Promise((resolve, reject) => {
-      axios
-        .get(jwtServiceConfig.accessToken)
+      api
+        .get(jwtServiceConfig.accessToken, { headers: { "Authorization": `Bearer ${token}` } })
         .then((response) => {
           if (response.data) {
-            const token = this.getAccessToken();
             this.setSession(token);
             resolve(response.data);
           } else {
