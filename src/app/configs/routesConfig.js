@@ -14,11 +14,9 @@ const routeConfigs = [
   ExampleConfig,
   SignOutConfig,
   SignInConfig,
-  EmailSentConfig,
   ForgotPasswordConfig,
   ResetPasswordConfig,
   ConcludeConfig,
-  ConfirmEmailConfig
 ];
 
 const routes = [

@@ -1,7 +1,7 @@
 import FuseUtils from '@fuse/utils';
 import AppContext from 'app/AppContext';
 import { Component } from 'react';
-import { matchRoutes } from 'react-router-dom';
+import { matchPath, matchRoutes } from 'react-router-dom';
 import withRouter from '@fuse/core/withRouter';
 import history from '@history';
 import {
@@ -41,14 +41,16 @@ class FuseAuthorization extends Component {
     const { pathname } = location;
 
     const matchedRoutes = matchRoutes(state.routes, pathname);
+    // Verifica se a url contém conclude-registration
+    const matchedPath = matchPath({path: '/conclude-registration/:hash'},pathname)
 
     const matched = matchedRoutes ? matchedRoutes[0] : false;
 
     const userHasPermission = FuseUtils.hasPermission(matched.route.auth, userRole);
 
-    const ignoredPaths = ['/', '/callback', '/sign-in', '/sign-out', '/logout', '/404'];
+    const ignoredPaths = ['/', '/callback', '/sign-in', '/sign-out', '/logout', '/404', matchedPath?.pathname];
 
-    if (matched && !userHasPermission && !ignoredPaths.includes(pathname)) {
+    if (matched && !userHasPermission && !ignoredPaths.includes(pathname) ) {
       setSessionRedirectUrl(pathname);
     }
 

@@ -3,7 +3,7 @@ import TextField from '@mui/material/TextField';
 import { PatternFormat } from 'react-number-format';
 
 
-export function StepOne({ type, control, values, label, name }) {
+export function StepOne({ type, control, value, label, name, customClass}) {
   return (
     <Controller
       name={name}
@@ -11,14 +11,14 @@ export function StepOne({ type, control, values, label, name }) {
       render={({ field }) => (
         <TextField
           {...field}
-          className="mb-24"
+          className={`mb-24 z-[1]  ${customClass}`}
           label={label}
           type={type}
-          error={!!values}
-          helperText={values?.message}
           variant="outlined"
           required
+          value={value}
           fullWidth
+          disabled
         />
       )}
     />

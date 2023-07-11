@@ -11,7 +11,6 @@ import * as yup from 'yup';
 import _ from '@lodash';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
-import { useEffect } from 'react';
 import jwtService from '../../../../auth/services/jwtService';
 
 /**
@@ -19,12 +18,12 @@ import jwtService from '../../../../auth/services/jwtService';
  */
 
 const schema = yup.object().shape({
-  email: yup.string().email('Insira um e-mail válido').required('Insira seu e-mail'),
+  permitCode: yup.string().required('Insira seu código de permissão'),
   password: yup.string().required('Por favor insira sua senha.').min(4, 'Senha muito curta'),
 });
 
 const defaultValues = {
-  email: '',
+  permitCode: '',
   password: '',
   remember: true,
 };
@@ -38,19 +37,14 @@ function SignInPage() {
 
   const { isValid, dirtyFields, errors } = formState;
 
-  useEffect(() => {
-    setValue('email', 'test1@example.com', { shouldDirty: true, shouldValidate: true });
-    setValue('password', '123456', { shouldDirty: true, shouldValidate: true });
-  }, [setValue]);
-
-  function onSubmit({ email, password }) {
+  function onSubmit({ permitCode, password }) {
     jwtService
-      .signInWithEmailAndPassword(email, password)
+      .signInWithPermitCodeAndPasswrod(permitCode, password)
       .then((user) => {})
       .catch((_errors) => {
-        if (_errors.email) {
-          setError(_errors.email, {
-            message: 'E-mail não encontrado',
+        if (_errors.permitCode) {
+          setError(_errors.permitCode, {
+            message: 'Código de Permissão não encontrado',
           });
         } else if (_errors.password) {
           setError(_errors.password, {
@@ -65,7 +59,7 @@ function SignInPage() {
       <Paper className="h-full sm:h-auto flex items-center md:flex md:items-center md:justify-end w-full sm:w-auto md:h-full md:w-1/2 py-8 px-16 sm:p-48 md:p-64 sm:rounded-2xl md:rounded-none sm:shadow md:shadow-none ltr:border-r-1 rtl:border-l-1 relative">
         <div className="w-full max-w-320 h-5/6 md:h-1/2  sm:w-320 mx-auto sm:mx-0">
           <Typography className="mt-48 text-4xl font-extrabold tracking-tight leading-tight">
-            <img src="assets/icons/logo.svg" className='mb-10' alt='logo CCT' />
+            <img src="assets/icons/logoPrefeitura.png" width="155" className='mb-10' alt='logo CCT' />
             Login
           </Typography>
           <div className="flex items-baseline mt-2 font-medium">
@@ -82,17 +76,17 @@ function SignInPage() {
             onSubmit={handleSubmit(onSubmit)}
           >
             <Controller
-              name="email"
+              name="permitCode"
               control={control}
               render={({ field }) => (
                 <TextField
                   {...field}
                   className="mb-24"
-                  label="E-mail"
+                  label="Código de Permissão"
                   autoFocus
-                  type="email"
-                  error={!!errors.emailNotExists}
-                  helperText={errors?.emailNotExists?.message}
+                  type="string"
+                  error={!!errors.permitCodeNotExists}
+                  helperText={errors?.permitCodeNotExists?.message}
                   variant="outlined"
                   required
                   fullWidth
