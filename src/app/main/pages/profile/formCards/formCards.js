@@ -71,7 +71,6 @@ export function PersonalInfo({user}) {
                                 {...field}
                                 className="mb-24"
                                 label="Código de Permissão"
-                                autoFocus
                                 type="string"
                                 variant="outlined"
                                 disabled
@@ -88,7 +87,6 @@ export function PersonalInfo({user}) {
                                 {...field}
                                 className="mb-24"
                                 label="Nome"
-                                autoFocus
                                 type="string"
                                 variant="outlined"
                                 disabled
@@ -105,7 +103,6 @@ export function PersonalInfo({user}) {
                                 {...field}
                                 className="mb-24"
                                 label="E-mail"
-                                autoFocus
                                 type="string"
                                 variant="outlined"
                                 disabled
@@ -122,7 +119,6 @@ export function PersonalInfo({user}) {
                                 {...field}
                                 className="mb-24"
                                 label="Celular"
-                                autoFocus
                                 type="string"
                                 variant="outlined"
                                 fullWidth
@@ -190,7 +186,6 @@ export function BankInfo() {
                                 {...field}
                                 className="mb-24"
                                 label="Celular"
-                                autoFocus
                                 type="string"
                                 variant="outlined"
                                 fullWidth
@@ -205,7 +200,6 @@ export function BankInfo() {
                                 {...field}
                                 className="mb-24"
                                 label="Agência"
-                                autoFocus
                                 type="string"
                                 variant="outlined"
                                 fullWidth
@@ -220,7 +214,6 @@ export function BankInfo() {
                                 {...field}
                                 className="mb-24"
                                 label="Conta"
-                                autoFocus
                                 type="string"
                                 variant="outlined"
                                 fullWidth
@@ -235,7 +228,6 @@ export function BankInfo() {
                                 {...field}
                                 className="mb-24"
                                 label="Dígito"
-                                autoFocus
                                 type="string"
                                 variant="outlined"
                                 fullWidth
