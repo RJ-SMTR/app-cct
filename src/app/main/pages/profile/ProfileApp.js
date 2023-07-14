@@ -3,7 +3,9 @@ import { styled } from '@mui/material/styles';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useSelector } from 'react-redux';
+import { selectUser } from 'app/store/userSlice';
+import {BankInfo, PersonalInfo} from './formCards/formCards';
 
 import useThemeMediaQuery from '../../../../@fuse/hooks/useThemeMediaQuery';
 
@@ -20,12 +22,8 @@ const Root = styled(FusePageSimple)(({ theme }) => ({
 }));
 
 function ProfileApp() {
-  const [selectedTab, setSelectedTab] = useState(0);
+  const user = useSelector(selectUser);
   const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
-
-  function handleTabChange(event, value) {
-    setSelectedTab(value);
-  }
 
   return (
     <Root
@@ -37,7 +35,7 @@ function ProfileApp() {
             alt="Profile Cover"
           />
 
-          <div className="flex flex-col flex-0 lg:flex-row items-center max-w-5xl w-full mx-auto px-32 lg:h-72">
+          <div className="flex flex-col flex-0 lg:flex-row items-center max-w-[95%] w-full mx-auto px-32 lg:h-72">
             <div className="-mt-96 lg:-mt-88 rounded-full">
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1, transition: { delay: 0.1 } }}>
                 <Avatar
@@ -49,30 +47,19 @@ function ProfileApp() {
               </motion.div>
             </div>
 
-            <div className="flex flex-col items-center lg:items-start mt-16 lg:mt-0 lg:ml-32">
-              <Typography className="text-lg font-bold leading-none">Brian Hughes</Typography>
-              <Typography color="text.secondary">London, UK</Typography>
+            <div className="flex flex-col items-center lg:items-start my-16 lg:mt-0 lg:ml-32">
+              <Typography className="text-lg font-bold leading-none">{user.fullName}</Typography>
+              <Typography color="text.secondary">#{user.permitCode}</Typography>
             </div>
-
-            <div className="hidden lg:flex h-32 mx-32 border-l-2" />
-
-            <div className="flex items-center mt-24 lg:mt-0 space-x-24">
-              <div className="flex flex-col items-center">
-                <Typography className="font-bold">200k</Typography>
-                <Typography className="text-sm font-medium" color="text.secondary">
-                  FOLLOWERS
-                </Typography>
-              </div>
-              <div className="flex flex-col items-center">
-                <Typography className="font-bold">1.2k</Typography>
-                <Typography className="text-sm font-medium" color="text.secondary">
-                  FOLLOWING
-                </Typography>
-              </div>
-            </div>
-
-           
           </div>
+          
+        </div>
+      }
+      content={
+        <div className="flex flex-col md:flex-row max-w-[95%] w-full mx-auto my-32">
+          <PersonalInfo user={user}/>
+
+          <BankInfo/>
         </div>
       }
     

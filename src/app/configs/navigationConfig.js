@@ -16,6 +16,14 @@ const navigationConfig = [
     icon: 'heroicons-outline:star',
     url: 'example',
   },
+  {
+    id: 'profile',
+    title: 'Perfil',
+    translate: 'Perfil',
+    type: 'item',
+    icon: 'heroicons-outline:user-circle',
+    url: 'profile',
+  },
 ];
 
 export default navigationConfig;
