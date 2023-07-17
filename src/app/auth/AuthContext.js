@@ -179,11 +179,11 @@ export function AuthProvider({ children }) {
     })
 
   }
-  function patchInfo(bankCode, bankAgency, bankAccount, bankAccountDigit, phone){
+  function patchInfo(info){
     const token = window.localStorage.getItem('jwt_access_token');
     return new Promise((resolve, reject) => {
       api.patch(jwtServiceConfig.userInfo, 
-       { bankCode, bankAgency, bankAccount, bankAccountDigit, phone}, {
+       info, {
           headers: { "Authorization": `Bearer ${token}` },
         }
       )

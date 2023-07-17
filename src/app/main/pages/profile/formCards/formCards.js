@@ -17,7 +17,7 @@ export function PersonalInfo({user}) {
             permitCode: user.permitCode,
             email: user.email,
             fullName: user.fullName,
-            phone: '',
+            phone: user.phone ?? '',
             bankAccount: '',
             bankCode: '',
             bankAccountDigit: '',
@@ -28,7 +28,7 @@ export function PersonalInfo({user}) {
     const [isEditable, setIsEditable] = useState(false)
     function onSubmit({ phone }){
         console.log(phone)
-        patchInfo(phone)
+        patchInfo({phone})
             .then(setIsEditable(false))
 
     }
@@ -122,6 +122,7 @@ export function PersonalInfo({user}) {
                         render={({ field }) => (
                             <TextField
                                 {...field}
+                                disabled={!isEditable}
                                 className="mb-24"
                                 label="Celular"
                                 type="string"
@@ -142,17 +143,24 @@ export function PersonalInfo({user}) {
 
 export function BankInfo({user}) {
     
-    const { handleSubmit, control} = useForm({});
     const [isEditable, setIsEditable] = useState(false)
     const [selectedBankCode, setSelectedBankCode] = useState('');
     const {patchInfo} = useContext(AuthContext)
     const [bankOptions, setBankOptions] = useState([]);
+    const { handleSubmit, control, register } = useForm({
+        defaultValues: {
+            bankCode: user.bankCode ?? '',
+            bankAgency: user.bankAgency ?? '',
+            bankAccount: user.bankAccount ?? '',
+            bankAccountDigit: user.bankAccountDigit ?? ''
+        }
+    });
 
     useEffect(() => {
         fetchBankOptions();
-      }, []);
+    }, []);
 
-      const fetchBankOptions = async () => {
+    const fetchBankOptions = async () => {
         try {
             const response = await api.get('/banks');
             response.dara = response.data.sort((a, b) => a.name.localeCompare(b.name));
@@ -160,16 +168,16 @@ export function BankInfo({user}) {
         } catch (error) {
             console.error('Error fetching bank options:', error);
         }
-      };
-    
+    };
+
 
     const handleChange = (event) => {
         setSelectedBankCode(event.target.value)
     };
 
-    function onSubmit({ bankAgency, bankAccount, bankAccountDigit }){
-        patchInfo(selectedBankCode, bankAgency, bankAccount, bankAccountDigit)
-                .then(setIsEditable(false))
+    function onSubmit(info){
+        patchInfo(info)
+            .then(setIsEditable(false))
         
     }
     const renderButton = () => {
@@ -208,74 +216,53 @@ export function BankInfo({user}) {
                     <div className='absolute right-8 top-8'>
                         {renderButton()}
                     </div>
-                    <Controller
-                        name="bankCode"
-                        control={control}
-                        render={({ field }) => (
-                            <FormControl fullWidth>
-                                <InputLabel id="demo-simple-select-label">Banco</InputLabel>
-                                <Select
-                                    {...field}
-                                    className="mb-24"
-                                    id="demo-simple-select"
-                                    label="Banco"
-                                    value={user?.bankCode ?? selectedBankCode}
-                                    onChange={handleChange}
-                                >
-                                    {bankOptions.map((bank) => (
-                                        <MenuItem key={bank.code} value={bank.code}>
-                                        {bank.code} - {bank.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        )}
+
+                    <FormControl fullWidth>
+                        <InputLabel id="demo-simple-select-label">Banco</InputLabel>
+                        <Select
+                            {...register("bankCode")}
+                            className="mb-24"
+                            id="demo-simple-select"
+                            label="Banco"
+                            value={user?.bankCode ?? selectedBankCode}
+                            onChange={handleChange}
+                            disabled={!isEditable}
+                        >
+                            {bankOptions.map((bank) => (
+                                <MenuItem key={bank.code} value={bank.code}>
+                                {bank.code} - {bank.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+
+                    <TextField
+                        {...register("bankAgency")}
+                        className="mb-24"
+                        label="Agência"
+                        type="string"
+                        variant="outlined"
+                        fullWidth
+                        disabled={!isEditable}
+                    />
+                    <TextField
+                        {...register("bankAccount")}
+                        className="mb-24"
+                        label="Conta"
+                        type="string"
+                        variant="outlined"
+                        fullWidth
+                        disabled={!isEditable}
                     />
 
-                    <Controller
-                        name="bankAgency"
-                        control={control}
-                        render={({ field }) => (
-                            <TextField
-                                {...field}
-                                className="mb-24"
-                                label="Agência"
-                                type="string"
-                                value={user.bankAgency ?? ''}
-                                variant="outlined"
-                                fullWidth
-                            />
-                        )}
-                    />
-                    <Controller
-                        name="bankAccount"
-                        control={control}
-                        render={({ field }) => (
-                            <TextField
-                                {...field}
-                                value={user.bankAccount ?? ''}
-                                className="mb-24"
-                                label="Conta"
-                                type="string"
-                                variant="outlined"
-                                fullWidth
-                            />
-                        )}
-                    />
-                    <Controller
-                        name="bankAccountDigit"
-                        control={control}
-                        render={({ field }) => (
-                            <TextField
-                                {...field}
-                                value={user.bankAccountDigit ?? ''}
-                                className="mb-24"
-                                label="Dígito"
-                                type="string"
-                                variant="outlined"
-                                fullWidth
-                            />
-                        )}
+                    <TextField
+                        {...register("bankAccountDigit")}
+                        className="mb-24"
+                        label="Dígito"
+                        type="string"
+                        variant="outlined"
+                        fullWidth
+                        disabled={!isEditable}
                     />
                    
                 </form>
