@@ -1,30 +1,36 @@
 import { Card } from "@mui/material"
 import { useState } from "react";
 import { Controller, useForm } from 'react-hook-form';
+import {FormControl, Select, MenuItem, InputLabel} from "@mui/material";
 import TextField from '@mui/material/TextField';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
+import { useContext } from "react";
+import { AuthContext } from "src/app/auth/AuthContext";
 
-
+// CRIAR SET PARA PODER ENVIAR TUDO
 export function PersonalInfo({user}) {
-    console.log(user)
+    const { patchInfo } = useContext(AuthContext)
+    // if(user.a)
     const { handleSubmit, control } = useForm({
         defaultValues: {
             permitCode: user.permitCode,
             email: user.email,
             fullName: user.fullName,
-            cellphone: '',
-            account: '',
-            bank: '',
-            digit: '',
-            agency: ''
+            phone: '',
+            bankAccount: '',
+            bankCode: '',
+            bankAccountDigit: '',
+            bankAgency: ''
             
 
         }
     });
 
     const [isEditable, setIsEditable] = useState(false)
-    function onSubmit({permitCode}){
-        console.log(permitCode)
+    function onSubmit({ phone }){
+        console.log(phone)
+        patchInfo(phone)
+            .then(setIsEditable(false))
 
     }
     const renderButton = () => {
@@ -112,7 +118,7 @@ export function PersonalInfo({user}) {
                         )}
                     />
                     <Controller
-                        name="cellphone"
+                        name="phone"
                         control={control}
                         render={({ field }) => (
                             <TextField
@@ -135,12 +141,22 @@ export function PersonalInfo({user}) {
 
 
 
-export function BankInfo() {
+export function BankInfo({user}) {
+    
     const { handleSubmit, control} = useForm({});
     const [isEditable, setIsEditable] = useState(false)
-    function onSubmit({permitCode}){
-        
+    const [selectedBankCode, setSelectedBankCode] = useState('');
+    const {patchInfo} = useContext(AuthContext)
+    
 
+    const handleChange = (event) => {
+        setSelectedBankCode(event.target.value)
+    };
+
+    function onSubmit({ bankAgency, bankAccount, bankAccountDigit }){
+        patchInfo(selectedBankCode, bankAgency, bankAccount, bankAccountDigit)
+                .then(setIsEditable(false))
+        
     }
     const renderButton = () => {
         if (!isEditable) {
@@ -179,21 +195,29 @@ export function BankInfo() {
                         {renderButton()}
                     </div>
                     <Controller
-                        name="bank"
+                        name="bankCode"
                         control={control}
                         render={({ field }) => (
-                            <TextField
-                                {...field}
-                                className="mb-24"
-                                label="Celular"
-                                type="string"
-                                variant="outlined"
-                                fullWidth
-                            />
+                            <FormControl fullWidth>
+                                <InputLabel id="demo-simple-select-label">Banco</InputLabel>
+                                <Select
+                                    {...field}
+                                    className="mb-24"
+                                    id="demo-simple-select"
+                                    label="Banco"
+                                    value={user?.bankCode ?? selectedBankCode}
+                                    onChange={handleChange}
+                                >
+                                    <MenuItem value={101}>101 - Banco X</MenuItem>
+                                    <MenuItem value={220}>Twenty</MenuItem>
+                                    <MenuItem value={330}>Thirty</MenuItem>
+                                </Select>
+                            </FormControl>
                         )}
                     />
+
                     <Controller
-                        name="agency"
+                        name="bankAgency"
                         control={control}
                         render={({ field }) => (
                             <TextField
@@ -201,17 +225,19 @@ export function BankInfo() {
                                 className="mb-24"
                                 label="Agência"
                                 type="string"
+                                value={user.bankAgency ?? ''}
                                 variant="outlined"
                                 fullWidth
                             />
                         )}
                     />
                     <Controller
-                        name="account"
+                        name="bankAccount"
                         control={control}
                         render={({ field }) => (
                             <TextField
                                 {...field}
+                                value={user.bankAccount ?? ''}
                                 className="mb-24"
                                 label="Conta"
                                 type="string"
@@ -221,11 +247,12 @@ export function BankInfo() {
                         )}
                     />
                     <Controller
-                        name="digit"
+                        name="bankAccountDigit"
                         control={control}
                         render={({ field }) => (
                             <TextField
                                 {...field}
+                                value={user.bankAccountDigit ?? ''}
                                 className="mb-24"
                                 label="Dígito"
                                 type="string"

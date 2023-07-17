@@ -59,7 +59,7 @@ function ProfileApp() {
         <div className="flex flex-col md:flex-row max-w-[95%] w-full mx-auto my-32">
           <PersonalInfo user={user}/>
 
-          <BankInfo/>
+          <BankInfo user={user}/>
         </div>
       }
     

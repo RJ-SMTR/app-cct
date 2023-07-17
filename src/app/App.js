@@ -39,6 +39,7 @@ const emotionCacheOptions = {
 
 function App() {
   const user = useSelector(selectUser);
+  console.log(user)
   const langDirection = useSelector(selectCurrentLanguageDirection);
   const mainTheme = useSelector(selectMainTheme);
 
