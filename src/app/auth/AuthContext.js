@@ -78,6 +78,7 @@ export function AuthProvider({ children }) {
       setWaitAuthCheck(false);
       setIsAuthenticated(false);
     }
+    
   }, [dispatch]);
 
   // CUSTOM FUNCTIONS
@@ -178,12 +179,27 @@ export function AuthProvider({ children }) {
     })
 
   }
+  function patchInfo(info){
+    const token = window.localStorage.getItem('jwt_access_token');
+    return new Promise((resolve, reject) => {
+      api.patch(jwtServiceConfig.userInfo, 
+       info, {
+          headers: { "Authorization": `Bearer ${token}` },
+        }
+      )
+        .then((response) => {
+          console.log(response)
+          resolve(response.data)
+        })
+
+    })
+  }
 
   return waitAuthCheck ? (
     <FuseSplashScreen />
   ) : (
     <AuthContext.Provider
-      value={{ isAuthenticated, forgotPasswordFunction, resetPasswordFunction, handlePreRegister, validPermitCode, handleRegister, handleInvite }}
+      value={{ isAuthenticated, forgotPasswordFunction, resetPasswordFunction, handlePreRegister, validPermitCode, handleRegister, handleInvite, patchInfo }}
     >
       {children}
     </AuthContext.Provider>

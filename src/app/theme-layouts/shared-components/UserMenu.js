@@ -23,6 +23,8 @@ function UserMenu(props) {
   const userMenuClose = () => {
     setUserMenu(null);
   };
+  const fullName = user.fullName
+  const [first] = fullName.split(' ');
 
   return (
     <>
@@ -33,11 +35,11 @@ function UserMenu(props) {
       >
         <div className="hidden md:flex flex-col mx-4 items-end">
           <Typography component="span" className="font-semibold flex">
-            {user.firstName}
+            {first}
           </Typography>
           <Typography className="text-11 font-medium capitalize" color="text.secondary">
-            {user.role?.name}
-            {(!user.role?.name || (Array.isArray(user.role) && user.role.length === 0)) && 'Guest'}
+            #{user.permitCode}
+         
           </Typography>
         </div>
         <Avatar className="md:mx-4" alt={user.firstName?.charAt(0)} />
@@ -76,7 +78,7 @@ function UserMenu(props) {
           </>
         ) : (
           <>
-            <MenuItem component={Link} to="/apps/profile" onClick={userMenuClose} role="button">
+            <MenuItem component={Link} to="/profile" onClick={userMenuClose} role="button">
               <ListItemIcon className="min-w-40">
                 <FuseSvgIcon>heroicons-outline:user-circle</FuseSvgIcon>
               </ListItemIcon>

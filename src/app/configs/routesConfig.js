@@ -9,6 +9,7 @@ import ResetPasswordConfig from '../main/pages/auth/password/reset/ResetPassword
 import ConcludeConfig from '../main/pages/auth/conclude/ConcludeConfig';
 import Error404Page from '../main/404/Error404Page';
 import ExampleConfig from '../main/example/ExampleConfig';
+import profileAppConfig from '../main/pages/profile/profileAppConfig';
 
 const routeConfigs = [
   ExampleConfig,
@@ -17,13 +18,14 @@ const routeConfigs = [
   ForgotPasswordConfig,
   ResetPasswordConfig,
   ConcludeConfig,
+  profileAppConfig
 ];
 
 const routes = [
   ...FuseUtils.generateRoutesFromConfigs(routeConfigs, settingsConfig.defaultAuth),
   {
     path: '/',
-    element: <Navigate to="/example" />,
+    element: <Navigate to="/profile" />,
     auth: settingsConfig.defaultAuth,
   },
   {

@@ -5,7 +5,7 @@ const jwtServiceConfig = {
   
   signIn: `auth/licensee/login`,
   signUp: 'api/auth/sign-up',
-  accessToken: `auth/me`,
+  userInfo: `auth/me`,
   updateUser: 'api/auth/user/update',
   forgotPassword: `auth/forgot/password`,
   resetPassword: `auth/reset/password`,
