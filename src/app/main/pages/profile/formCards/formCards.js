@@ -1,11 +1,12 @@
 import { Card } from "@mui/material"
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Controller, useForm } from 'react-hook-form';
 import {FormControl, Select, MenuItem, InputLabel} from "@mui/material";
 import TextField from '@mui/material/TextField';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { useContext } from "react";
 import { AuthContext } from "src/app/auth/AuthContext";
+import { api } from 'app/configs/api/api';
 
 // CRIAR SET PARA PODER ENVIAR TUDO
 export function PersonalInfo({user}) {
@@ -21,8 +22,6 @@ export function PersonalInfo({user}) {
             bankCode: '',
             bankAccountDigit: '',
             bankAgency: ''
-            
-
         }
     });
 
@@ -147,6 +146,21 @@ export function BankInfo({user}) {
     const [isEditable, setIsEditable] = useState(false)
     const [selectedBankCode, setSelectedBankCode] = useState('');
     const {patchInfo} = useContext(AuthContext)
+    const [bankOptions, setBankOptions] = useState([]);
+
+    useEffect(() => {
+        fetchBankOptions();
+      }, []);
+
+      const fetchBankOptions = async () => {
+        try {
+            const response = await api.get('/banks');
+            response.dara = response.data.sort((a, b) => a.name.localeCompare(b.name));
+            setBankOptions(response.data);
+        } catch (error) {
+            console.error('Error fetching bank options:', error);
+        }
+      };
     
 
     const handleChange = (event) => {
@@ -208,9 +222,11 @@ export function BankInfo({user}) {
                                     value={user?.bankCode ?? selectedBankCode}
                                     onChange={handleChange}
                                 >
-                                    <MenuItem value={101}>101 - Banco X</MenuItem>
-                                    <MenuItem value={220}>Twenty</MenuItem>
-                                    <MenuItem value={330}>Thirty</MenuItem>
+                                    {bankOptions.map((bank) => (
+                                        <MenuItem key={bank.code} value={bank.code}>
+                                        {bank.code} - {bank.name}
+                                        </MenuItem>
+                                    ))}
                                 </Select>
                             </FormControl>
                         )}
