@@ -1,4 +1,5 @@
-import { Card } from "@mui/material"
+import { Card, Modal, Box, Typography } from "@mui/material"
+import _ from '@lodash';
 import { useState, useEffect } from "react";
 import { Controller, useForm } from 'react-hook-form';
 import {FormControl, Select, MenuItem, InputLabel} from "@mui/material";
@@ -7,12 +8,22 @@ import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { useContext } from "react";
 import { AuthContext } from "src/app/auth/AuthContext";
 import { api } from 'app/configs/api/api';
+import * as yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
 
-// CRIAR SET PARA PODER ENVIAR TUDO
+const schema = yup.object().shape({
+    phone: yup.string().required('Insira um telefone válido'),
+    bankCode: yup.string().required('Por favor insira um banco'),
+    bankAgency: yup.string().required('erro'),
+    bankAccount: yup.string().required('ero'),
+    bankAccountDigit: yup.string().required('Insira um dígito válido')
+    
+});
+
 export function PersonalInfo({user}) {
+
     const { patchInfo } = useContext(AuthContext)
-    // if(user.a)
-    const { handleSubmit, control } = useForm({
+    const { handleSubmit, control, setError, formState } = useForm({
         defaultValues: {
             permitCode: user.permitCode,
             email: user.email,
@@ -22,14 +33,28 @@ export function PersonalInfo({user}) {
             bankCode: '',
             bankAccountDigit: '',
             bankAgency: ''
-        }
+        },
+        resolver: yupResolver(schema),
     });
+    const { isValid, errors } = formState;
+
 
     const [isEditable, setIsEditable] = useState(false)
-    function onSubmit({ phone }){
+    const [saved, setSaved] = useState(false)
+    function onSubmit({ phone }) {
         console.log(phone)
-        patchInfo({phone})
-            .then(setIsEditable(false))
+        patchInfo({ phone })
+            .then(() => {
+                if(isValid) {
+                    setIsEditable(false)
+                    setSaved(true)
+                }
+            })
+            .catch((_errors) => {
+                setError(_errors.phone, {
+                    message: 'Telefone inválido'
+                });
+            });
 
     }
     const renderButton = () => {
@@ -54,7 +79,7 @@ export function PersonalInfo({user}) {
     }
     return (
         <>
-            <Card className=" w-full md:mx-9 p-12 relative">
+            <Card className=" w-full md:mx-9 p-24 relative">
                 <header className="flex justify-between items-center">
                     <h1 className="font-semibold">
                         Dados Cadastrais
@@ -125,12 +150,14 @@ export function PersonalInfo({user}) {
                                 disabled={!isEditable}
                                 className="mb-24"
                                 label="Celular"
-                                type="string"
                                 variant="outlined"
                                 fullWidth
+                                error={!!errors.invalidPhone}
+                                helperText={errors?.invalidPhone?.message}
                             />
                         )}
                     />
+
                 </form>
             </Card>
         </>
@@ -142,12 +169,18 @@ export function PersonalInfo({user}) {
 
 
 export function BankInfo({user}) {
-    
+  
     const [isEditable, setIsEditable] = useState(false)
     const [selectedBankCode, setSelectedBankCode] = useState('');
     const {patchInfo} = useContext(AuthContext)
     const [bankOptions, setBankOptions] = useState([]);
-    const { handleSubmit, control, register } = useForm({
+    const [saved, setSaved] = useState(false)
+    const [open, setOpen] = useState(false);
+    const handleOpen = () => setOpen(true);
+    const handleClose = () => setOpen(false);
+
+    
+    const { handleSubmit, register, setError, formState, clearErrors } = useForm({
         defaultValues: {
             bankCode: user.bankCode ?? '',
             bankAgency: user.bankAgency ?? '',
@@ -155,9 +188,24 @@ export function BankInfo({user}) {
             bankAccountDigit: user.bankAccountDigit ?? ''
         }
     });
+    const { isValid, errors } = formState;
+
+    const style = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 400,
+        bgcolor: 'background.paper',
+        boxShadow: 24,
+        p: 4,
+    };
+
 
     useEffect(() => {
         fetchBankOptions();
+        setSaved(false)
+
     }, []);
 
     const fetchBankOptions = async () => {
@@ -177,8 +225,39 @@ export function BankInfo({user}) {
 
     function onSubmit(info){
         patchInfo(info)
-            .then(setIsEditable(false))
-        
+            .then(() => {
+                if (isValid) {
+                    setIsEditable(false)
+                    setSaved(true)
+                }
+            })
+            .catch((_errors) => {
+                if (_errors.bankAccountDigit) {
+                    setError('bankAccountDigit', {
+                        message: 'Insira uma agência válida (deve ser maior ou igual a 4 dígitos)',
+                    });
+                } 
+                if (_errors.bankAgency) {
+                    setError('bankAgency', {
+                        message: 'Insira uma agência válida (deve ser maior ou igual a 4 dígitos)'
+                    });
+                }
+                if (_errors.bankAccount) {
+                    setError('bankAccount', {
+                        message: 'Insira um dígito válido',
+                    });
+                }
+            });
+    }
+
+    function clear(){
+        if(isValid && saved){
+        clearErrors()
+        setIsEditable(false)
+        } else {
+            handleOpen()
+            
+        }
     }
     const renderButton = () => {
         if (!isEditable) {
@@ -190,7 +269,7 @@ export function BankInfo({user}) {
         } else {
             return (
                 <div className='flex'>
-                    <button className='flex items-center rounded p-3 uppercase text-white bg-[#707070] hover:bg-[#4a4a4a ]  mr-2 h-[27px] min-h-[27px]' onClick={() => setIsEditable(false)}>
+                    <button type="button" className='flex items-center rounded p-3 uppercase text-white bg-[#707070] hover:bg-[#4a4a4a ]  mr-2 h-[27px] min-h-[27px]' onClick={() => clear()}>
                         <FuseSvgIcon className="text-48 text-white" size={24} color="action">heroicons-outline:x</FuseSvgIcon>
                     </button>
                     <button type='submit' className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10' onClick={() => setIsEditable(true)}>
@@ -202,7 +281,26 @@ export function BankInfo({user}) {
     }
     return (
         <>
-            <Card className=" w-full md:mx-9 p-8 relative mt-24 md:m-auto">
+            <Modal
+                open={open}
+                onClose={handleClose}
+                aria-labelledby="modal-modal-title"
+                aria-describedby="modal-modal-description"
+            >
+                <Box sx={style}>
+                    <Box className="text-center flex flex-col content-center items-center">
+                        <Box className="bg-red rounded-[100%]">
+                            <FuseSvgIcon className="text-48 text-white " size={48} color="action">heroicons-outline:x</FuseSvgIcon>
+
+                        </Box>
+                        <Typography id="modal-modal-title" variant="h6" component="h2">
+                            Seus dados não foram salvos!
+                        </Typography>
+                       
+                    </Box>
+                </Box>
+            </Modal>
+            <Card className=" w-full md:mx-9 p-24 relative mt-24 md:m-auto">
                 <header className="flex justify-between items-center">
                     <h1 className="font-semibold">
                         Dados Bancários
@@ -244,6 +342,8 @@ export function BankInfo({user}) {
                         variant="outlined"
                         fullWidth
                         disabled={!isEditable}
+                        error={!!errors.bankAgency}
+                        helperText={errors?.bankAgency?.message}
                     />
                     <TextField
                         {...register("bankAccount")}
@@ -252,6 +352,8 @@ export function BankInfo({user}) {
                         type="string"
                         variant="outlined"
                         fullWidth
+                        error={!!errors.bankAccount}
+                        helperText={errors?.bankAccount?.message}
                         disabled={!isEditable}
                     />
 
@@ -263,6 +365,8 @@ export function BankInfo({user}) {
                         variant="outlined"
                         fullWidth
                         disabled={!isEditable}
+                        error={!!errors.bankAccountDigit}
+                        helperText={errors?.bankAccountDigit?.message}
                     />
                    
                 </form>

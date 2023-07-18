@@ -16,6 +16,7 @@ export function AuthProvider({ children }) {
   const [validPermitCode, setValidPermitCode] = useState(false)
   const [waitAuthCheck, setWaitAuthCheck] = useState(true);
   const dispatch = useDispatch();
+  
 
   useEffect(() => {
     jwtService.on('onAutoLogin', () => {
@@ -188,8 +189,10 @@ export function AuthProvider({ children }) {
         }
       )
         .then((response) => {
-          console.log(response)
           resolve(response.data)
+        })
+        .catch((error) => {
+          reject(error.response.data.errors)
         })
 
     })
