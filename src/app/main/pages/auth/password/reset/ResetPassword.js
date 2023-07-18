@@ -38,7 +38,7 @@ function ResetPassword() {
   const { isValid, dirtyFields, errors } = formState;
 
   function onSubmit( password ) {
-    resetPasswordFunction(password, hash)
+    resetPasswordFunction(password.passwordConfirm, hash)
       .then(  setTimeout(() => {
              return navigate('/sign-in')
             }, 3000))
