@@ -152,3 +152,6 @@ input:-webkit-autofill:active
 .fc-scrollgrid-section-liquid {
     height: 1px !important;
 }
+.muiltr-1eged98-MuiButtonBase-root-MuiButton-root.Mui-disabled{
+    background-color: #B3B3B3 !important;
+}

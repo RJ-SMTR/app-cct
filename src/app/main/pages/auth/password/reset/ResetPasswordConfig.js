@@ -28,7 +28,7 @@ const ResetPasswordConfig = {
   auth: authRoles.onlyGuest,
   routes: [
     {
-      path: 'reset-password',
+      path: 'reset-password/:hash',
       element: <ResetPassword />,
     },
   ],
