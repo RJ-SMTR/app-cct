@@ -61,6 +61,7 @@ export function PersonalInfo({ user }) {
                 if (isValid) {
                     setIsEditable(false)
                     setSaved(true)
+                    handleOpen()
                 }
             })
             .catch((_errors) => {
@@ -109,13 +110,28 @@ export function PersonalInfo({ user }) {
             >
                 <Box sx={style}>
                     <Box className="text-center flex flex-col content-center items-center">
-                        <Box className="bg-red rounded-[100%]">
-                            <FuseSvgIcon className="text-48 text-white " size={48} color="action">heroicons-outline:x</FuseSvgIcon>
+                        {saved ?
+                            <>
+                               
+                                <Box className="bg-green rounded-[100%]">
+                                    <FuseSvgIcon className="text-48 text-white " size={48} color="action">heroicons-solid:check</FuseSvgIcon>
 
-                        </Box>
-                        <Typography id="modal-modal-title" variant="h6" component="h2">
-                            Seus dados não foram salvos!
-                        </Typography>
+                                </Box>
+                                <Typography id="modal-modal-title" variant="h6" component="h2">
+                                    Seus dados foram salvos!
+                                </Typography>
+                            </> : 
+                        <>
+                                <Box className="bg-red rounded-[100%]">
+                                    <FuseSvgIcon className="text-48 text-white " size={48} color="action">heroicons-outline:x</FuseSvgIcon>
+
+                                </Box>
+                                <Typography id="modal-modal-title" variant="h6" component="h2">
+                                    Seus dados não foram salvos!
+                                </Typography>
+                                </>
+                        }
+                        
 
                     </Box>
                 </Box>
@@ -260,6 +276,7 @@ export function BankInfo({ user }) {
                 if (isValid) {
                     setIsEditable(false)
                     setSaved(true)
+                    handleOpen()
                 }
             })
             .catch((_errors) => {
@@ -320,13 +337,27 @@ export function BankInfo({ user }) {
             >
                 <Box sx={style}>
                     <Box className="text-center flex flex-col content-center items-center">
-                        <Box className="bg-red rounded-[100%]">
-                            <FuseSvgIcon className="text-48 text-white " size={48} color="action">heroicons-outline:x</FuseSvgIcon>
+                        {saved ?
+                            <>
+                                <Box className="bg-green rounded-[100%]">
+                                    <FuseSvgIcon className="text-48 text-white " size={48} color="action">heroicons-solid:check</FuseSvgIcon>
 
-                        </Box>
-                        <Typography id="modal-modal-title" variant="h6" component="h2">
-                            Seus dados não foram salvos!
-                        </Typography>
+                                </Box>
+                                <Typography id="modal-modal-title" variant="h6" component="h2">
+                                    Seus dados foram salvos!
+                                </Typography>
+                            </> :
+                            <>
+                                <Box className="bg-red rounded-[100%]">
+                                    <FuseSvgIcon className="text-48 text-white " size={48} color="action">heroicons-outline:x</FuseSvgIcon>
+
+                                </Box>
+                                <Typography id="modal-modal-title" variant="h6" component="h2">
+                                    Seus dados não foram salvos!
+                                </Typography>
+                            </>
+                        }
+
 
                     </Box>
                 </Box>
