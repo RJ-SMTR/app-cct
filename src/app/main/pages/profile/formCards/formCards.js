@@ -2,7 +2,7 @@ import { Card, Modal, Box, Typography } from "@mui/material"
 import _ from '@lodash';
 import { useState, useEffect } from "react";
 import { Controller, useForm } from 'react-hook-form';
-import {FormControl, Select, MenuItem, InputLabel} from "@mui/material";
+import { FormControl, Select, MenuItem, InputLabel } from "@mui/material";
 import TextField from '@mui/material/TextField';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { useContext } from "react";
@@ -11,18 +11,33 @@ import { api } from 'app/configs/api/api';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 
-const schema = yup.object().shape({
-    phone: yup.string().required('Insira um telefone válido'),
-    bankCode: yup.string().required('Por favor insira um banco'),
-    bankAgency: yup.string().required('erro'),
-    bankAccount: yup.string().required('ero'),
-    bankAccountDigit: yup.string().required('Insira um dígito válido')
-    
+
+const personalInfoSchema = yup.object().shape({
+    phone: yup.string().required("Insira um telefone válido"),
 });
 
-export function PersonalInfo({user}) {
+const style = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 400,
+    bgcolor: 'background.paper',
+    boxShadow: 24,
+    p: 4,
+};
+
+
+export function PersonalInfo({ user }) {
 
     const { patchInfo } = useContext(AuthContext)
+    const [isEditable, setIsEditable] = useState(false)
+    const [saved, setSaved] = useState(false)
+    const [open, setOpen] = useState(false);
+    const handleOpen = () => setOpen(true);
+    const handleClose = () => setOpen(false);
+
+
     const { handleSubmit, control, setError, formState } = useForm({
         defaultValues: {
             permitCode: user.permitCode,
@@ -34,18 +49,16 @@ export function PersonalInfo({user}) {
             bankAccountDigit: '',
             bankAgency: ''
         },
-        resolver: yupResolver(schema),
+        resolver: yupResolver(personalInfoSchema),
     });
     const { isValid, errors } = formState;
 
 
-    const [isEditable, setIsEditable] = useState(false)
-    const [saved, setSaved] = useState(false)
     function onSubmit({ phone }) {
         console.log(phone)
         patchInfo({ phone })
             .then(() => {
-                if(isValid) {
+                if (isValid) {
                     setIsEditable(false)
                     setSaved(true)
                 }
@@ -57,17 +70,26 @@ export function PersonalInfo({user}) {
             });
 
     }
+    function clear() {
+        if (isValid && saved) {
+            clearErrors()
+            setIsEditable(false)
+        } else {
+            handleOpen()
+
+        }
+    }
     const renderButton = () => {
         if (!isEditable) {
             return (
-                <button className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-12' onClick={() => setIsEditable(true)}>
+                <button className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-12' onClick={() => { setIsEditable(true), setSaved(false) }}>
                     Editar
                 </button>
             );
         } else {
             return (
                 <div className='flex'>
-                    <button className='flex items-center rounded p-3 uppercase text-white bg-[#707070] hover:bg-[#4a4a4a ]  mr-2 h-[27px] min-h-[27px]' onClick={() => setIsEditable(false)}>
+                    <button type="button" className='flex items-center rounded p-3 uppercase text-white bg-[#707070] hover:bg-[#4a4a4a ]  mr-2 h-[27px] min-h-[27px]' onClick={() => clear()}>
                         <FuseSvgIcon className="text-48 text-white" size={24} color="action">heroicons-outline:x</FuseSvgIcon>
                     </button>
                     <button type='submit' className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10' onClick={() => setIsEditable(true)}>
@@ -79,12 +101,31 @@ export function PersonalInfo({user}) {
     }
     return (
         <>
+            <Modal
+                open={open}
+                onClose={handleClose}
+                aria-labelledby="modal-modal-title"
+                aria-describedby="modal-modal-description"
+            >
+                <Box sx={style}>
+                    <Box className="text-center flex flex-col content-center items-center">
+                        <Box className="bg-red rounded-[100%]">
+                            <FuseSvgIcon className="text-48 text-white " size={48} color="action">heroicons-outline:x</FuseSvgIcon>
+
+                        </Box>
+                        <Typography id="modal-modal-title" variant="h6" component="h2">
+                            Seus dados não foram salvos!
+                        </Typography>
+
+                    </Box>
+                </Box>
+            </Modal>
             <Card className=" w-full md:mx-9 p-24 relative">
                 <header className="flex justify-between items-center">
                     <h1 className="font-semibold">
                         Dados Cadastrais
                     </h1>
-                 
+
                 </header>
                 <form name="Personal"
                     noValidate
@@ -168,18 +209,18 @@ export function PersonalInfo({user}) {
 
 
 
-export function BankInfo({user}) {
-  
+export function BankInfo({ user }) {
+
     const [isEditable, setIsEditable] = useState(false)
     const [selectedBankCode, setSelectedBankCode] = useState('');
-    const {patchInfo} = useContext(AuthContext)
+    const { patchInfo } = useContext(AuthContext)
     const [bankOptions, setBankOptions] = useState([]);
     const [saved, setSaved] = useState(false)
     const [open, setOpen] = useState(false);
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
 
-    
+
     const { handleSubmit, register, setError, formState, clearErrors } = useForm({
         defaultValues: {
             bankCode: user.bankCode ?? '',
@@ -190,16 +231,6 @@ export function BankInfo({user}) {
     });
     const { isValid, errors } = formState;
 
-    const style = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 400,
-        bgcolor: 'background.paper',
-        boxShadow: 24,
-        p: 4,
-    };
 
 
     useEffect(() => {
@@ -223,7 +254,7 @@ export function BankInfo({user}) {
         setSelectedBankCode(event.target.value)
     };
 
-    function onSubmit(info){
+    function onSubmit(info) {
         patchInfo(info)
             .then(() => {
                 if (isValid) {
@@ -236,7 +267,7 @@ export function BankInfo({user}) {
                     setError('bankAccountDigit', {
                         message: 'Insira uma agência válida (deve ser maior ou igual a 4 dígitos)',
                     });
-                } 
+                }
                 if (_errors.bankAgency) {
                     setError('bankAgency', {
                         message: 'Insira uma agência válida (deve ser maior ou igual a 4 dígitos)'
@@ -250,19 +281,19 @@ export function BankInfo({user}) {
             });
     }
 
-    function clear(){
-        if(isValid && saved){
-        clearErrors()
-        setIsEditable(false)
+    function clear() {
+        if (isValid && saved) {
+            clearErrors()
+            setIsEditable(false)
         } else {
             handleOpen()
-            
+
         }
     }
     const renderButton = () => {
         if (!isEditable) {
             return (
-                <button className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-12' onClick={() => setIsEditable(true)}>
+                <button className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-12' onClick={() => { setIsEditable(true), setSaved(false) }}>
                     Editar
                 </button>
             );
@@ -296,7 +327,7 @@ export function BankInfo({user}) {
                         <Typography id="modal-modal-title" variant="h6" component="h2">
                             Seus dados não foram salvos!
                         </Typography>
-                       
+
                     </Box>
                 </Box>
             </Modal>
@@ -305,7 +336,7 @@ export function BankInfo({user}) {
                     <h1 className="font-semibold">
                         Dados Bancários
                     </h1>
-                 
+
                 </header>
                 <form name="Bank"
                     noValidate
@@ -328,7 +359,7 @@ export function BankInfo({user}) {
                         >
                             {bankOptions.map((bank) => (
                                 <MenuItem key={bank.code} value={bank.code}>
-                                {bank.code} - {bank.name}
+                                    {bank.code} - {bank.name}
                                 </MenuItem>
                             ))}
                         </Select>
@@ -368,10 +399,9 @@ export function BankInfo({user}) {
                         error={!!errors.bankAccountDigit}
                         helperText={errors?.bankAccountDigit?.message}
                     />
-                   
+
                 </form>
             </Card>
         </>
     )
 }
-
