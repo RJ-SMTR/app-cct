@@ -152,7 +152,7 @@ export function AuthProvider({ children }) {
               jwtService
                 .signInWithPermitCodeAndPasswrod(permitCode, password)
                 .then(() => {
-                  redirect('/')
+                  redirect('/profile')
                 })
             }, 3000)
             resolve(response)

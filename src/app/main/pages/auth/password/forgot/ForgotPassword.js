@@ -29,7 +29,7 @@ function ForgotPassword() {
     forgotPasswordFunction(email)
       .then((response) => {
         setTimeout(() => {
-          navigate(`/reset-password/${response}`)
+          navigate(`/reset-password/${response.data.hash}`)
         }, 3000)
       })
   }
