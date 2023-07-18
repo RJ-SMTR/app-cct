@@ -147,7 +147,7 @@ export function PersonalInfo({ user }) {
                     noValidate
                     className="flex flex-col justify-center w-full mt-32"
                     onSubmit={handleSubmit(onSubmit)}>
-                    <div className='absolute right-12 top-12'>
+                    <div className='absolute right-24 top-24'>
                         {renderButton()}
                     </div>
                     <Controller
@@ -362,7 +362,7 @@ export function BankInfo({ user }) {
                     </Box>
                 </Box>
             </Modal>
-            <Card className=" w-full md:mx-9 p-24 relative mt-24 md:m-auto">
+            <Card className=" w-full md:mx-9 p-24 relative mt-24 md:mt-0">
                 <header className="flex justify-between items-center">
                     <h1 className="font-semibold">
                         Dados Bancários
@@ -373,7 +373,7 @@ export function BankInfo({ user }) {
                     noValidate
                     className="flex flex-col justify-center w-full mt-32"
                     onSubmit={handleSubmit(onSubmit)}>
-                    <div className='absolute right-8 top-8'>
+                    <div className='absolute right-24 top-24'>
                         {renderButton()}
                     </div>
 
@@ -407,30 +407,33 @@ export function BankInfo({ user }) {
                         error={!!errors.bankAgency}
                         helperText={errors?.bankAgency?.message}
                     />
-                    <TextField
-                        {...register("bankAccount")}
-                        className="mb-24"
-                        label="Conta"
-                        type="string"
-                        variant="outlined"
-                        fullWidth
-                        error={!!errors.bankAccount}
-                        helperText={errors?.bankAccount?.message}
-                        disabled={!isEditable}
-                    />
+                    <Box className="flex justify-between">
+                        <TextField
+                            {...register("bankAccount")}
+                            className="mb-24 w-[68%]"
+                            label="Conta"
+                            type="string"
+                            variant="outlined"
+                            fullWidth
+                            error={!!errors.bankAccount}
+                            helperText={errors?.bankAccount?.message}
+                            disabled={!isEditable}
+                        />
 
-                    <TextField
-                        {...register("bankAccountDigit")}
-                        className="mb-24"
-                        label="Dígito"
-                        type="string"
-                        variant="outlined"
-                        fullWidth
-                        disabled={!isEditable}
-                        error={!!errors.bankAccountDigit}
-                        helperText={errors?.bankAccountDigit?.message}
-                    />
+                        <TextField
+                            {...register("bankAccountDigit")}
+                            className="mb-24 w-[30%]"
+                            label="Dígito"
+                            type="string"
+                            variant="outlined"
+                            fullWidth
+                            disabled={!isEditable}
+                            error={!!errors.bankAccountDigit}
+                            helperText={errors?.bankAccountDigit?.message}
+                        />
 
+                    </Box>
+                 
                 </form>
             </Card>
         </>
