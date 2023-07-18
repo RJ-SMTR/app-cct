@@ -265,17 +265,17 @@ export function BankInfo({ user }) {
             .catch((_errors) => {
                 if (_errors.bankAccountDigit) {
                     setError('bankAccountDigit', {
-                        message: 'Insira uma agência válida (deve ser maior ou igual a 4 dígitos)',
+                        message: 'O dígito deve ser maior ou igual a 1 caractere',
                     });
                 }
                 if (_errors.bankAgency) {
                     setError('bankAgency', {
-                        message: 'Insira uma agência válida (deve ser maior ou igual a 4 dígitos)'
+                        message: 'A agência deve ser maior ou igual a 4 dígitos)'
                     });
                 }
                 if (_errors.bankAccount) {
                     setError('bankAccount', {
-                        message: 'Insira um dígito válido',
+                        message: 'A conta bancária deve ser maior ou igual a 5 dígitos',
                     });
                 }
             });
