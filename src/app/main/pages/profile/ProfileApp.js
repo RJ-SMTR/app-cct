@@ -41,7 +41,7 @@ function ProfileApp() {
                 <Avatar
                   sx={{ borderColor: 'background.paper' }}
                   className="w-128 h-128 border-4"
-                  src="assets/images/avatars/male-04.jpg"
+                  src="assets/images/pages/profile/pfp.png"
                   alt="User avatar"
                 />
               </motion.div>
