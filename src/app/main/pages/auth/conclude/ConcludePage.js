@@ -183,7 +183,7 @@ function ConcludePage() {
                    <div className="w-full max-w-320 sm:w-320 mx-auto sm:mx-0">
                        <Typography className="mt-48 text-4xl font-extrabold tracking-tight leading-tight">
                            <img src="assets/icons/logoPrefeitura.png" width="155" className='mb-10' alt='logo CCT' />
-                           Registre-se
+                           {activeStep == '1' ? <> Crie sua senha </> : <> Registre-se</>}
                        </Typography>
                        {activeStep === steps.length ? <>
                            <Box className="flex flex-col items-center mt-40">

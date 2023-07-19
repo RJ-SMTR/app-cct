@@ -7,16 +7,12 @@ import { memo } from 'react';
 import { useSelector } from 'react-redux';
 import { selectFuseCurrentLayoutConfig, selectToolbarTheme } from 'app/store/fuse/settingsSlice';
 import { selectFuseNavbar } from 'app/store/fuse/navbarSlice';
-import AdjustFontSize from '../../shared-components/AdjustFontSize';
-import FullScreenToggle from '../../shared-components/FullScreenToggle';
-import LanguageSwitcher from '../../shared-components/LanguageSwitcher';
 import NotificationPanelToggleButton from '../../shared-components/notificationPanel/NotificationPanelToggleButton';
-import NavigationShortcuts from '../../shared-components/NavigationShortcuts';
-import NavigationSearch from '../../shared-components/NavigationSearch';
 import NavbarToggleButton from '../../shared-components/NavbarToggleButton';
 import UserMenu from '../../shared-components/UserMenu';
-import QuickPanelToggleButton from '../../shared-components/quickPanel/QuickPanelToggleButton';
-import ChatPanelToggleButton from '../../shared-components/chatPanel/ChatPanelToggleButton';
+import { Box } from '@mui/material';
+import { Link } from 'react-router-dom';
+
 
 function ToolbarLayout1(props) {
   const config = useSelector(selectFuseCurrentLayoutConfig);
@@ -38,32 +34,38 @@ function ToolbarLayout1(props) {
         position="static"
       >
         <Toolbar className="p-0 min-h-48 md:min-h-64">
-          <div className="flex flex-1 px-16">
+          <div className="flex flex-1 justify-center">
             {config.navbar.display && config.navbar.position === 'left' && (
               <>
                 <Hidden lgDown>
-                  {(config.navbar.style === 'style-3' ||
-                    config.navbar.style === 'style-3-dense') && (
-                    <NavbarToggleButton className="w-40 h-40 p-0 mx-0" />
-                  )}
-
                   {config.navbar.style === 'style-1' && !navbar.open && (
-                    <NavbarToggleButton className="w-40 h-40 p-0 mx-0" />
+                    <>
+                      <NavbarToggleButton className="w-40 h-40 p-0 mx-0 absolute left-16" />
+                      <Box >
+                        <Link to='/example'>
+                          <img className="w-full max-w-64" src="assets/icons/logoPrefeitura.png" alt="footer logo" />
+                        </Link>
+                      </Box>
+                    </>
+                
                   )}
                 </Hidden>
 
-                <Hidden lgUp>
-                  <NavbarToggleButton className="w-40 h-40 p-0 mx-0 sm:mx-8" />
-                </Hidden>
+                 <Hidden lgUp>
+                  <NavbarToggleButton className="w-40 h-40 p-0 mx-0 absolute left-16 sm:mx-8 " />
+                  <Box >
+                    <Link to='/example'>
+                      <img className="w-full max-w-64" src="assets/icons/logoPrefeitura.png" alt="footer logo" />
+                    </Link>
+                  </Box>
+                </Hidden> 
+               
               </>
             )}
-
-            <Hidden lgDown>
-              <NavigationShortcuts />
-            </Hidden>
+     
           </div>
 
-          <div className="flex items-center px-8 h-full overflow-x-auto">
+          <div className="flex items-center px-8 h-full overflow-x-auto absolute right-16">
 
             <NotificationPanelToggleButton />
 
