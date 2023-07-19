@@ -42,15 +42,9 @@ function SignInPage() {
       .signInWithPermitCodeAndPasswrod(permitCode, password)
       .then((user) => {})
       .catch((_errors) => {
-        if (_errors.permitCode) {
-          setError(_errors.permitCode, {
-            message: 'Código de Permissão não encontrado',
+          setError('password', {
+            message: 'Senha ou código de permissionário incorretos',
           });
-        } else if (_errors.password) {
-          setError(_errors.password, {
-            message: 'Senha incorreta',
-          });
-        }
       });
   }
 
@@ -103,8 +97,8 @@ function SignInPage() {
                   className="mb-24"
                   label="Senha"
                   type="password"
-                  error={!!errors.incorrectPassword}
-                  helperText={errors?.incorrectPassword?.message}
+                  error={!!errors.password}
+                  helperText={errors?.password?.message}
                   variant="outlined"
                   required
                   fullWidth
