@@ -85,7 +85,7 @@ export function AuthProvider({ children }) {
   // CUSTOM FUNCTIONS
   function forgotPasswordFunction(email) {
     return new Promise((resolve, reject) => {
-      axios
+      api
         .post(jwtServiceConfig.forgotPassword, {
           email,
         })
@@ -96,12 +96,13 @@ export function AuthProvider({ children }) {
           }
         })
         .catch((error) => {
+          reject(error)
           dispatch(showMessage({ message: 'Houve um erro com o envio.' }));
         });
     });
   }
   function resetPasswordFunction(password, hash) {
-    return new Promise((reject) => {
+    return new Promise((resolve, reject) => {
       api
         .post(jwtServiceConfig.resetPassword, {
           password,
@@ -111,9 +112,11 @@ export function AuthProvider({ children }) {
           if (response) {
             resolve(response)
             dispatch(showMessage({ message: 'Senha redefinida com sucesso!' }));
+          
           }
         })
         .catch((error) => {
+          reject(error)
           dispatch(showMessage({ message: 'Houve um problema, tente novamente mais tarde!' }));
         });
     });
@@ -149,7 +152,7 @@ export function AuthProvider({ children }) {
               jwtService
                 .signInWithPermitCodeAndPasswrod(permitCode, password)
                 .then(() => {
-                  redirect('/')
+                  redirect('/profile')
                 })
             }, 3000)
             resolve(response)

@@ -7,7 +7,7 @@ import * as yup from 'yup';
 import _ from '@lodash';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { AuthContext } from 'src/app/auth/AuthContext';
 
@@ -16,6 +16,7 @@ const schema = yup.object().shape({
 });
 
 function ForgotPassword() {
+  const navigate = useNavigate()
   const { forgotPasswordFunction } = useContext(AuthContext);
   const { control, formState, handleSubmit } = useForm({
     mode: 'onChange',
@@ -25,7 +26,12 @@ function ForgotPassword() {
   const { isValid, dirtyFields, errors } = formState;
 
   function onSubmit({ email }) {
-    forgotPasswordFunction(email);
+    forgotPasswordFunction(email)
+      .then((response) => {
+        setTimeout(() => {
+          navigate(`/reset-password/${response.data.hash}`)
+        }, 3000)
+      })
   }
 
   return (

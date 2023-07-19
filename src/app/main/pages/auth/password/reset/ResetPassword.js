@@ -9,6 +9,7 @@ import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import { useContext } from 'react';
 import { AuthContext } from 'src/app/auth/AuthContext';
+import {  useNavigate, useParams } from 'react-router-dom'
 
 const getCharacterValidationError = (str) => {
   return `Sua senha deve conter 1 ${str}`;
@@ -26,6 +27,8 @@ const schema = yup.object().shape({
 });
 
 function ResetPassword() {
+  const navigate = useNavigate()
+  let { hash } = useParams();
   const { resetPasswordFunction } = useContext(AuthContext);
   const { control, formState, handleSubmit } = useForm({
     mode: 'onChange',
@@ -34,8 +37,11 @@ function ResetPassword() {
 
   const { isValid, dirtyFields, errors } = formState;
 
-  function onSubmit({ password, hash }) {
-    resetPasswordFunction(password, hash);
+  function onSubmit( password ) {
+    resetPasswordFunction(password.passwordConfirm, hash)
+      .then(  setTimeout(() => {
+             return navigate('/sign-in')
+            }, 3000))
   }
 
   return (
