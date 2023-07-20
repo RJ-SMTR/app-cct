@@ -38,11 +38,7 @@ const inputGlobalStyles = (
       'table.simple thead tr th': {
         borderColor: theme.palette.divider,
       },
-      'a:not([role=button]):not(.MuiButtonBase-root)': {
-        color: theme.palette.secondary.main,
-        textDecoration: 'underline',
-        '&:hover': {},
-      },
+      
       'a.link, a:not([role=button])[target=_blank]': {
         background: alpha(theme.palette.secondary.main, 0.2),
         color: 'inherit',
