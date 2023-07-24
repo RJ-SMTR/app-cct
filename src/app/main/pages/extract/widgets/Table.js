@@ -28,7 +28,7 @@ function TableTransactions() {
         setFilterMenu(null);
     };
     return (
-        <Paper className="flex flex-col flex-auto p-24 mt-24 shadow rounded-2xl overflow-hidden">
+        <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
             <div className="flex flex-row justify-between">
                 <Typography className="mr-16 text-lg font-medium tracking-tight leading-6 truncate">
                    Transações Recentes

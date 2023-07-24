@@ -8,8 +8,8 @@ import { ExtractContext } from 'src/app/hooks/ExtractContext';
 function Chart() {
     const {chartOptions} = useContext(ExtractContext)
   return (
-      <Paper className="flex flex-col flex-auto shadow rounded-2xl overflow-hidden">
-          <div className="flex flex-col p-24 pb-16">
+      <Paper className="flex flex-col flex-auto shadow rounded-2xl overflow-hidden md:w-[60%]">
+          <div className="flex flex-col p-12 pb-16">
               <div className="flex items-start justify-between">
                   <div className="flex flex-col">
                       <Typography className="mr-16 text-lg font-medium tracking-tight leading-6 truncate">
