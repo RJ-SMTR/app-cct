@@ -2,6 +2,7 @@ import { Typography,Box, Button } from '@mui/material';
 
 import React from 'react'
 import { Link } from 'react-router-dom';
+import Chart from './widgets/Chart';
 import TableTransactions from './widgets/Table'
 
 
@@ -17,6 +18,9 @@ function ExtractApp() {
         <Typography className='font-medium text-3xl'>Extrato Financeiro</Typography>
         <Box className='flex flex-col md:flex-row justify-around'>
               <TableTransactions/>   
+        </Box>
+        <Box className='flex flex-col md:flex-row justify-around mt-24'>
+              <Chart/>   
         </Box>
         <br />
       </div>

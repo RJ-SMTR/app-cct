@@ -15,6 +15,7 @@ import FuseAuthorization from '@fuse/core/FuseAuthorization';
 import settingsConfig from 'app/configs/settingsConfig';
 import withAppProviders from './withAppProviders';
 import { AuthProvider } from './auth/AuthContext';
+import { ExtractProvider } from './hooks/ExtractContext';
 
 // import axios from 'axios';
 /**
@@ -47,6 +48,7 @@ function App() {
     <CacheProvider value={createCache(emotionCacheOptions[langDirection])}>
       <FuseTheme theme={mainTheme} direction={langDirection}>
         <AuthProvider>
+          <ExtractProvider>
           <BrowserRouter>
             <FuseAuthorization
               userRole={user.role?.name}
@@ -66,6 +68,7 @@ function App() {
               </SnackbarProvider>
             </FuseAuthorization>
           </BrowserRouter>
+          </ExtractProvider>
         </AuthProvider>
       </FuseTheme>
     </CacheProvider>
