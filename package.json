@@ -75,6 +75,7 @@
         "react-window": "1.8.9",
         "redoc": "2.0.0",
         "redux-logger": "4.0.0",
+        "rsuite": "^5.37.1",
         "styled-components": "5.3.11",
         "stylis": "4.3.0",
         "stylis-plugin-rtl": "2.1.1",

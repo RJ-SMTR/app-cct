@@ -16,6 +16,7 @@ import settingsConfig from 'app/configs/settingsConfig';
 import withAppProviders from './withAppProviders';
 import { AuthProvider } from './auth/AuthContext';
 import { ExtractProvider } from './hooks/ExtractContext';
+import 'rsuite/dist/rsuite.min.css';
 
 // import axios from 'axios';
 /**

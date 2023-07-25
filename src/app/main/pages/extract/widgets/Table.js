@@ -11,6 +11,7 @@ import ListItemText from '@mui/material/ListItemText';
 import MenuItem from '@mui/material/MenuItem';
 import { memo, useContext, useEffect } from 'react';
 import { useState } from 'react';
+import DateRangePicker from 'rsuite/DateRangePicker';
 
 import Button from '@mui/material/Button';
 import { Hidden, Skeleton } from '@mui/material';
@@ -22,7 +23,7 @@ import { makeStyles } from '@mui/styles';
 
 function TableTransactions() {
     const [filterMenu, setFilterMenu] = useState(null);
-    const { getStatements, previousDays, setPreviousDays, statements } = useContext(ExtractContext);
+    const { getStatements, previousDays, setPreviousDays, statements, setDateRange, dateRange } = useContext(ExtractContext);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(8);
     const useStyles = makeStyles(() => ({
@@ -43,9 +44,9 @@ function TableTransactions() {
     };
 
     useEffect(() => {
-        getStatements(previousDays)
-    }, [previousDays])
-
+        getStatements(previousDays,dateRange)
+    }, [previousDays, dateRange])
+   
     const filterMenuClick = (event) => {
         setFilterMenu(event.currentTarget);
     }
@@ -55,18 +56,18 @@ function TableTransactions() {
     }
     const handleDays = (event) => {
         setPreviousDays(parseInt(event.currentTarget.dataset.value))
-        setFilterMenu(null);
+        setFilterMenu(null)
+        setDateRange([])
     }
 
     function getDayOfWeek(dateString) {
         const daysOfWeek = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado']
-
         const date = new Date(dateString)
         const dayOfWeek = date.getUTCDay()
-
         return daysOfWeek[dayOfWeek]
     }
-
+    const { afterToday } = DateRangePicker;
+ 
 
     return (
         <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
@@ -74,10 +75,28 @@ function TableTransactions() {
                 <Typography className="mr-16 text-lg font-medium tracking-tight leading-6 truncate">
                     Transações Recentes
                 </Typography>
-                <Hidden smUp>
+                 
+                <Hidden smUp >
+                    <div className="flex align-center">
                     <Button onClick={filterMenuClick}>
                         <FuseSvgIcon className="text-48" size={24} color="action">feather:filter</FuseSvgIcon>
                     </Button>
+
+                    <label for="custom-date-input" className='py-6 px-8' >
+                        <FuseSvgIcon className="text-48" size={24} color="action">material-outline:edit_calendar</FuseSvgIcon>
+                    </label>
+                    <DateRangePicker
+                        id="custom-date-input"
+                        showOneCalendar
+                        placeholder="Selecionar Data"
+                        appearance='subtle'
+                        disabledDate={afterToday()}
+                        format='dd/MM/yy'
+                        character=' - '
+                        onChange={(newValue) => setDateRange(newValue)}
+
+                    />
+                    </div>
                 </Hidden>
                 <Popover
                     open={Boolean(filterMenu)}
@@ -108,6 +127,15 @@ function TableTransactions() {
 
                 <Hidden smDown>
                     <div>
+                        <DateRangePicker
+                            showOneCalendar
+                            placeholder="Selecionar datas"
+                            disabledDate={afterToday()}
+                            format='dd/MM/yy'
+                            character=' - '
+                            onChange={(newValue) => console.log(newValue)}
+
+                        />
                         <Button className={previousDays == 7 ? 'active' : ''} variant="contained" onClick={handleDays} data-value={7}>7 dias</Button>
                         <Button className={`${previousDays == 14 ? 'active' : ''} mx-5 ` } variant="contained" onClick={handleDays} data-value={14}>14 dias</Button>
                         <Button className={previousDays !== 7 && previousDays !== 14 ? 'active' : ''} variant="contained" onClick={handleDays} data-value=''>Mês todo</Button>

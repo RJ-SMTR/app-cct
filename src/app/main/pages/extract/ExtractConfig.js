@@ -5,7 +5,11 @@ const ExtractApp = lazy(() => import('./ExtractApp'));
 const ExtractConfig = {
     settings: {
         layout: {
-            config: {},
+            config: {
+                footer: {
+                    display: false,
+                },
+},
         },
     },
     routes: [
