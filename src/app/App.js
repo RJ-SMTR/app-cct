@@ -41,6 +41,8 @@ const emotionCacheOptions = {
 function App() {
   const user = useSelector(selectUser);
   console.log(user)
+  const token = window.localStorage.getItem('jwt_access_token');
+  console.log(token)
   const langDirection = useSelector(selectCurrentLanguageDirection);
   const mainTheme = useSelector(selectMainTheme);
 

@@ -12,6 +12,7 @@ function ExtractApp() {
   const user = useSelector(selectUser);
   const fullName = user.fullName
   const [first] = fullName.split(' ');
+
   return (
     <>
 
@@ -25,7 +26,7 @@ function ExtractApp() {
           <Entries />
         </Box>
         <Box className='flex flex-col md:flex-row  justify-around'>
-              <TableTransactions/>   
+              <TableTransactions />   
         </Box>
         <Box className='flex flex-col md:flex-row justify-around mt-24'>
               <Chart/>   

@@ -155,3 +155,11 @@ input:-webkit-autofill:active
 .muiltr-1eged98-MuiButtonBase-root-MuiButton-root.Mui-disabled{
     background-color: #B3B3B3 !important;
 }
+.active{
+    background: #0B4A80;
+        color: white;
+}
+.active:hover, .muiltr-370b5p-MuiButtonBase-root-MuiButton-root:hover{
+    background: #5480A6;
+        color: white;
+}

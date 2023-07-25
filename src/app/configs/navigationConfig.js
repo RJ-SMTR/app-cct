@@ -24,6 +24,14 @@ const navigationConfig = [
     icon: 'heroicons-outline:user-circle',
     url: 'profile',
   },
+  {
+    id: 'extract',
+    title: 'Financeiro',
+    translate: 'Financeiro',
+    type: 'item',
+    icon: 'heroicons-outline:user-circle',
+    url: 'extract',
+  },
 ];
 
 export default navigationConfig;

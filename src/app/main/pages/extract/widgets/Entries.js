@@ -1,22 +1,26 @@
-import { Paper, Typography } from "@mui/material"
+import { Paper, Skeleton, Typography } from "@mui/material"
 import FuseSvgIcon from "@fuse/core/FuseSvgIcon"
+import { useContext } from "react"
+import { ExtractContext } from "src/app/hooks/ExtractContext"
 
 function Entries() {
+    const {statements} = useContext(ExtractContext)
+        const date = new Date(`${statements[0]?.date}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
   return (
-      <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden">
+      <>{statements.length  ? <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden">
           <div className="flex items-center justify-between">
               <div className="flex flex-col">
                   <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
                       Valores a receber
                   </Typography>
-                  <Typography className="text-green-600 font-medium text-sm">1 a 6 de agosto</Typography>
+                  <Typography className="text-green-600 font-medium text-sm">{date}</Typography>
 
               </div>
 
           </div>
           <div className="flex flex-row flex-wrap mt-8 ">
               <Typography className="mt-8 font-medium text-3xl leading-none">
-                  R$ 9.450,00
+                  R$ {statements[0]?.receivable}
               </Typography>
           </div>
 
@@ -26,7 +30,11 @@ function Entries() {
               </FuseSvgIcon>
 
           </div>
-      </Paper>
+      </Paper> : 
+          <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden">
+            <Skeleton variant="rectangular" width={342} height={50} />
+          </Paper>}
+                </>
   )
 }
 
