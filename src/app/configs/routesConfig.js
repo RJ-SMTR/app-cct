@@ -19,6 +19,7 @@ const routeConfigs = [
   ForgotPasswordConfig,
   ResetPasswordConfig,
   ConcludeConfig,
+  profileAppConfig,
   ExtractConfig
 ];
 
