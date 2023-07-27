@@ -42,7 +42,7 @@ function ToolbarLayout1(props) {
                     <>
                       <NavbarToggleButton className="w-40 h-40 p-0 mx-0 absolute left-16" />
                       <Box >
-                        <Link to='/example'>
+                        <Link to='/'>
                           <img className="w-full max-w-64" src="assets/icons/logoPrefeitura.png" alt="footer logo" />
                         </Link>
                       </Box>
@@ -54,7 +54,7 @@ function ToolbarLayout1(props) {
                  <Hidden lgUp>
                   <NavbarToggleButton className="w-40 h-40 p-0 mx-0 absolute left-16 sm:mx-8 " />
                   <Box >
-                    <Link to='/example'>
+                    <Link to='/'>
                       <img className="w-full max-w-64" src="assets/icons/logoPrefeitura.png" alt="footer logo" />
                     </Link>
                   </Box>

@@ -155,3 +155,8 @@ input:-webkit-autofill:active
 .muiltr-1eged98-MuiButtonBase-root-MuiButton-root.Mui-disabled{
     background-color: #B3B3B3 !important;
 }
+.leaflet-touch .leaflet-control-attribution,
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar{
+    display: none;
+}

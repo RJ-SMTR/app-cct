@@ -8,11 +8,11 @@ import ForgotPasswordConfig from '../main/pages/auth/password/forgot/ForgotPassw
 import ResetPasswordConfig from '../main/pages/auth/password/reset/ResetPasswordConfig';
 import ConcludeConfig from '../main/pages/auth/conclude/ConcludeConfig';
 import Error404Page from '../main/404/Error404Page';
-import ExampleConfig from '../main/example/ExampleConfig';
+import HomeConifg from '../main/pages/home/HomeConfig';
 import profileAppConfig from '../main/pages/profile/profileAppConfig';
 
 const routeConfigs = [
-  ExampleConfig,
+  HomeConifg,
   SignOutConfig,
   SignInConfig,
   ForgotPasswordConfig,
