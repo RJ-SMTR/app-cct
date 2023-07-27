@@ -9,14 +9,15 @@ export function ExtractProvider({ children }) {
     const [statements, setStatements] = useState([])
     const [previousDays, setPreviousDays] = useState(7)
     const [dateRange, setDateRange] = useState([])
+
     function getStatements(previousDays, dateRange){
-       
-        if(dateRange.length > 0){
+     
+        if(dateRange?.length > 0){
             var separateDate = dateRange.map((i) => {
                 const inputDateString = i;
                 const dateObj = new Date(inputDateString);
                 const year = dateObj.getFullYear();
-                const month = String(dateObj.getMonth() + 1).padStart(2, "0"); // Months are zero-based, so add 1
+                const month = String(dateObj.getMonth() + 1).padStart(2, "0"); 
                 const day = String(dateObj.getDate()).padStart(2, "0");
                 const formattedDate = `${year}-${month}-${day}`;
                 return formattedDate;

@@ -16,7 +16,8 @@ import settingsConfig from 'app/configs/settingsConfig';
 import withAppProviders from './withAppProviders';
 import { AuthProvider } from './auth/AuthContext';
 import { ExtractProvider } from './hooks/ExtractContext';
-import 'rsuite/dist/rsuite.min.css';
+import "rsuite/dist/rsuite-no-reset.min.css";
+
 
 // import axios from 'axios';
 /**
@@ -41,9 +42,7 @@ const emotionCacheOptions = {
 
 function App() {
   const user = useSelector(selectUser);
-  console.log(user)
-  const token = window.localStorage.getItem('jwt_access_token');
-  console.log(token)
+
   const langDirection = useSelector(selectCurrentLanguageDirection);
   const mainTheme = useSelector(selectMainTheme);
 

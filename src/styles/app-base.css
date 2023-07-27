@@ -176,7 +176,7 @@ input:-webkit-autofill:active
 .rs-picker-toolbar-ranges{
     display: none !important;
 }
-.rs-picker-toggle{
+.mobile .rs-picker-toggle{
 display: none !important;
 }
 

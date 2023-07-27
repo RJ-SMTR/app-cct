@@ -19,6 +19,7 @@ import Popover from '@mui/material/Popover';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { ExtractContext } from 'src/app/hooks/ExtractContext';
 import { makeStyles } from '@mui/styles';
+import {locale} from '../utils/locale';
 
 
 function TableTransactions() {
@@ -57,6 +58,7 @@ function TableTransactions() {
     const handleDays = (event) => {
         setPreviousDays(parseInt(event.currentTarget.dataset.value))
         setFilterMenu(null)
+        setPage(0)
         setDateRange([])
     }
 
@@ -82,16 +84,18 @@ function TableTransactions() {
                         <FuseSvgIcon className="text-48" size={24} color="action">feather:filter</FuseSvgIcon>
                     </Button>
 
-                    <label for="custom-date-input" className='py-6 px-8' >
+                    <label htmlFor="custom-date-input" className='py-6 px-8' >
                         <FuseSvgIcon className="text-48" size={24} color="action">material-outline:edit_calendar</FuseSvgIcon>
                     </label>
                     <DateRangePicker
                         id="custom-date-input"
                         showOneCalendar
+                        className='mobile'
                         placeholder="Selecionar Data"
                         appearance='subtle'
                         disabledDate={afterToday()}
                         format='dd/MM/yy'
+                        locale={locale}
                         character=' - '
                         onChange={(newValue) => setDateRange(newValue)}
 
@@ -130,10 +134,12 @@ function TableTransactions() {
                         <DateRangePicker
                             showOneCalendar
                             placeholder="Selecionar datas"
+                            className='mr-5'
                             disabledDate={afterToday()}
                             format='dd/MM/yy'
                             character=' - '
-                            onChange={(newValue) => console.log(newValue)}
+                            locale={locale}
+                            onChange={(newValue) => setDateRange(newValue)}
 
                         />
                         <Button className={previousDays == 7 ? 'active' : ''} variant="contained" onClick={handleDays} data-value={7}>7 dias</Button>

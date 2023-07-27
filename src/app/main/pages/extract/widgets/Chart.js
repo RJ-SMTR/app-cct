@@ -6,7 +6,9 @@ import { useContext } from 'react';
 import { ExtractContext } from 'src/app/hooks/ExtractContext';
 
 function Chart() {
-    const {chartOptions, average} = useContext(ExtractContext)
+    const {chartOptions, average, statements} = useContext(ExtractContext)
+    const firstDate = new Date(`${statements[0]?.date}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
+    const lastDate = new Date(`${statements[statements.length - 1 ]?.date}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
   return (
       <Paper className="flex flex-col flex-auto shadow rounded-2xl overflow-hidden md:w-[60%]">
           <div className="flex flex-col p-12 pb-16">
@@ -14,6 +16,9 @@ function Chart() {
                   <div className="flex flex-col">
                       <Typography className="mr-16 text-lg font-medium tracking-tight leading-6 truncate">
                           Média das entradas
+                      </Typography>
+                      <Typography className="font-medium text-sm">
+                        {firstDate} - {lastDate}
                       </Typography>
                   </div>
 

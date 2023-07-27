@@ -4,16 +4,16 @@ import { useContext } from "react"
 import { ExtractContext } from "src/app/hooks/ExtractContext"
 
 function Entries() {
-    const {statements} = useContext(ExtractContext)
+        const {statements, dateRange} = useContext(ExtractContext)
         const date = new Date(`${statements[0]?.date}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
   return (
       <>{statements.length  ? <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden">
           <div className="flex items-center justify-between">
               <div className="flex flex-col">
                   <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
-                      Valores a receber
+                      {dateRange.length ? <>Valor Recebido</> : <>Valores a receber</>}
                   </Typography>
-                  <Typography className="text-green-600 font-medium text-sm">{date}</Typography>
+                  <Typography className="font-medium text-sm">{date}</Typography>
 
               </div>
 
@@ -32,7 +32,7 @@ function Entries() {
           </div>
       </Paper> : 
           <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden">
-            <Skeleton variant="rectangular" width={342} height={50} />
+            <Skeleton variant="rectangular" width={318} height={50} />
           </Paper>}
                 </>
   )
