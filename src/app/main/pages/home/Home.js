@@ -22,7 +22,7 @@ function Home(props) {
         </div>
         <div className="p-24 pt-10">
           <Typography className='font-medium text-3xl'>Extrato</Typography>
-          <Box className='flex flex-col md:flex-row justify-around'>
+          <Box className='flex flex-col  justify-around'>
           <CurrentStatementWidget/>
           <Button
             variant="contained"
@@ -41,7 +41,7 @@ function Home(props) {
         </div>
         <div className="p-24 pt-10">
           <Typography className='font-medium text-3xl'>Resumo das Viagens</Typography>
-          <Box className='flex flex-col md:flex-row justify-around md:justify-start'>
+          <Box className='flex flex-col  justify-around md:justify-start'>
             <TripsResume/>
           <Button
             variant="contained"

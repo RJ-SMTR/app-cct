@@ -13,7 +13,8 @@ const jwtServiceConfig = {
   register: `auth/email/register`,
   confirm: `auth/email/confirm`,
   invite: `auth/licensee/invite`,
-  bankStatement: 'bank-statements/me'
+  bankStatement: 'bank-statements/me',
+  resumeTrips: '/trips-income/me'
 };
 
 export default jwtServiceConfig;

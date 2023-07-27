@@ -39,7 +39,7 @@ import { Box } from '@mui/system';
         </Paper>
     );
 }
-export function TripsResume(){
+export function TripsResume({ date, amount}){
     const blackOptions = { color: 'black' }
     shape.sort((a, b) => a.shape_pt_sequence - b.shape_pt_sequence);
     const points = shape.map(i => [i.shape_pt_lat, i.shape_pt_lon]);
@@ -64,12 +64,12 @@ export function TripsResume(){
             </Box>
 
         
-                    <Typography className="px-20 my-8  font-semibold">20/07/23</Typography>
+                <Typography className="px-20 my-8  font-semibold">{date ?? '20/07/23'}</Typography>
 
 
                     <Typography className="px-20  text-2xl font-bold" component="div">
                      
-                        R$ 1.250,00
+                    {amount ?? 'R$ 1.250,00'}
                     </Typography>
 
            

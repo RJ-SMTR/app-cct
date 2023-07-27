@@ -19,6 +19,7 @@ import 'leaflet/dist/leaflet.css';
 import { HomeProvider } from './hooks/HomeContext';
 import { ExtractProvider } from './hooks/ExtractContext';
 import "rsuite/dist/rsuite-no-reset.min.css";
+import { ResumeProvider } from './hooks/ResumeContext';
 
 
 // import axios from 'axios';
@@ -53,6 +54,7 @@ function App() {
       <FuseTheme theme={mainTheme} direction={langDirection}>
         <AuthProvider>
           <ExtractProvider>
+            <ResumeProvider/>
           <BrowserRouter>
             <FuseAuthorization
               userRole={user.role?.name}
