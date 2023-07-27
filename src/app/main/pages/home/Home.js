@@ -36,7 +36,6 @@ function Home(props) {
               Ver extrato completo 
             </Link>
           </Button>
-          {/* <CurrentStatementWidget classes={'md:mt-auto mt-24'}/> */}
           </Box>
           <br />
         </div>
@@ -52,7 +51,7 @@ function Home(props) {
             size="large"
             role="button"
           >
-            <Link className='text-white no-underline' to="/resume">
+            <Link className='text-white no-underline' to="/resumo">
               Ver resumo completo
             </Link>
           </Button>
