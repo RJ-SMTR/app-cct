@@ -29,8 +29,8 @@ const navigationConfig = [
     title: 'Financeiro',
     translate: 'Financeiro',
     type: 'item',
-    icon: 'heroicons-outline:user-circle',
-    url: 'extract',
+    icon: 'heroicons-outline:currency-dollar',
+    url: 'extrato',
   },
 ];
 

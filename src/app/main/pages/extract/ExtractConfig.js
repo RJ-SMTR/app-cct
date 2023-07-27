@@ -14,7 +14,7 @@ const ExtractConfig = {
     },
     routes: [
         {
-            path: 'extract',
+            path: 'extrato',
             element: <ExtractApp />,
         },
     ],
