@@ -17,6 +17,9 @@ import { AuthProvider } from './auth/AuthContext';
 import 'leaflet/dist/leaflet.css';
 
 import { HomeProvider } from './hooks/HomeContext';
+import { ExtractProvider } from './hooks/ExtractContext';
+import "rsuite/dist/rsuite-no-reset.min.css";
+
 
 // import axios from 'axios';
 /**
@@ -41,7 +44,7 @@ const emotionCacheOptions = {
 
 function App() {
   const user = useSelector(selectUser);
-  console.log(user)
+
   const langDirection = useSelector(selectCurrentLanguageDirection);
   const mainTheme = useSelector(selectMainTheme);
 
@@ -49,7 +52,7 @@ function App() {
     <CacheProvider value={createCache(emotionCacheOptions[langDirection])}>
       <FuseTheme theme={mainTheme} direction={langDirection}>
         <AuthProvider>
-          {/* <HomeProvider> */}
+          <ExtractProvider>
           <BrowserRouter>
             <FuseAuthorization
               userRole={user.role?.name}
@@ -69,7 +72,7 @@ function App() {
               </SnackbarProvider>
             </FuseAuthorization>
           </BrowserRouter>
-          {/* </HomeProvider> */}
+          </ExtractProvider>
         </AuthProvider>
       </FuseTheme>
     </CacheProvider>

@@ -10,6 +10,7 @@ import ConcludeConfig from '../main/pages/auth/conclude/ConcludeConfig';
 import Error404Page from '../main/404/Error404Page';
 import HomeConifg from '../main/pages/home/HomeConfig';
 import profileAppConfig from '../main/pages/profile/profileAppConfig';
+import ExtractConfig from '../main/pages/extract/ExtractConfig';
 
 const routeConfigs = [
   HomeConifg,
@@ -18,7 +19,8 @@ const routeConfigs = [
   ForgotPasswordConfig,
   ResetPasswordConfig,
   ConcludeConfig,
-  profileAppConfig
+  profileAppConfig,
+  ExtractConfig
 ];
 
 const routes = [

@@ -160,3 +160,28 @@ input:-webkit-autofill:active
 .leaflet-touch .leaflet-bar{
     display: none;
 }
+.active{
+    background: #0B4A80;
+        color: white;
+}
+.active:hover, .muiltr-370b5p-MuiButtonBase-root-MuiButton-root:hover{
+    background: #5480A6;
+        color: white;
+}
+.rs-picker-daterange-menu{
+    z-index: 10 !important;
+    @media screen and (max-width: 768px) 
+    {
+        
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+    }
+}
+.rs-picker-toolbar-ranges{
+    display: none !important;
+}
+.mobile .rs-picker-toggle{
+display: none !important;
+}
+

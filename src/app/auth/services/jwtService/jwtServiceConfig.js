@@ -12,7 +12,8 @@ const jwtServiceConfig = {
   preRegister: `auth/licensee/pre-register`,
   register: `auth/email/register`,
   confirm: `auth/email/confirm`,
-  invite: `auth/licensee/invite`
+  invite: `auth/licensee/invite`,
+  bankStatement: 'bank-statements/me'
 };
 
 export default jwtServiceConfig;
