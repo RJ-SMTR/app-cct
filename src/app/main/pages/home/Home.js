@@ -20,7 +20,7 @@ function Home(props) {
           <h2 className='fw-black'>Bem vindo, {first}</h2>
           <p className='w-[100%] md:w-[35%]'>Esse é seu dashboard, aqui você pode conferir os valores que deve receber nos próximos dias e um resumo das vaigens realizadas.</p>
         </div>
-        <div className="p-24 pt-10">
+        <div className="p-24 pt-10 max-w-[342px]">
           <Typography className='font-medium text-3xl'>Extrato</Typography>
           <Box className='flex flex-col  justify-around'>
           <CurrentStatementWidget/>
@@ -39,7 +39,7 @@ function Home(props) {
           </Box>
           <br />
         </div>
-        <div className="p-24 pt-10">
+      <div className="p-24 pt-10 max-w-[342px]" >
           <Typography className='font-medium text-3xl'>Resumo das Viagens</Typography>
           <Box className='flex flex-col  justify-around md:justify-start'>
             <TripsResume/>

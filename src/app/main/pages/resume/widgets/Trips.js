@@ -6,7 +6,7 @@ function Trips({count, resume}) {
     const firstDate = new Date(`${resume[0]?.date}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
     const lastDate = new Date(`${resume[resume.length - 1]?.date}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
   return (
-      <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden">
+      <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden max-w-[342px]">
           <div className="flex items-center justify-between">
               <div className="flex flex-col">
                   <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
