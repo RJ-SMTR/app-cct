@@ -54,7 +54,7 @@ function App() {
       <FuseTheme theme={mainTheme} direction={langDirection}>
         <AuthProvider>
           <ExtractProvider>
-            <ResumeProvider/>
+            <ResumeProvider>
           <BrowserRouter>
             <FuseAuthorization
               userRole={user.role?.name}
@@ -74,6 +74,7 @@ function App() {
               </SnackbarProvider>
             </FuseAuthorization>
           </BrowserRouter>
+          </ResumeProvider>
           </ExtractProvider>
         </AuthProvider>
       </FuseTheme>

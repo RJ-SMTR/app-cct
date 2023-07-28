@@ -172,9 +172,9 @@ input:-webkit-autofill:active
     z-index: 10 !important;
     @media screen and (max-width: 768px) 
     {
-        
-        top: 50% !important;
-        left: 50% !important;
+
+        /* top: 50% !important; */
+        left: 50% !important; 
         transform: translate(-50%, -50%) !important;
     }
 }
@@ -183,5 +183,5 @@ input:-webkit-autofill:active
 }
 .mobile .rs-picker-toggle{
 display: none !important;
-}
+} 
 

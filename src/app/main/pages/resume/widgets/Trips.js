@@ -2,7 +2,9 @@ import React from 'react'
 import { Paper, Skeleton, Typography } from "@mui/material"
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon'
 
-function Trips() {
+function Trips({count, resume}) {
+    const firstDate = new Date(`${resume[0]?.date}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
+    const lastDate = new Date(`${resume[resume.length - 1]?.date}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
   return (
       <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden">
           <div className="flex items-center justify-between">
@@ -10,14 +12,14 @@ function Trips() {
                   <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
                     Viagens feitas
                   </Typography>
-                  <Typography className="font-medium text-sm">12-07</Typography>
+                  <Typography className="font-medium text-sm">{firstDate} - {lastDate}</Typography>
 
               </div>
 
           </div>
           <div className="flex flex-row flex-wrap mt-8 ">
               <Typography className="mt-8 font-medium text-3xl leading-none">
-                 Count
+                 {count}
               </Typography>
           </div>
 
