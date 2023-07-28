@@ -55,7 +55,6 @@ export function PersonalInfo({ user }) {
 
 
     function onSubmit({ phone }) {
-        console.log(phone)
         patchInfo({ phone })
             .then(() => {
                 if (isValid) {

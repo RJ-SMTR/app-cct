@@ -46,8 +46,12 @@ function TableTransactions() {
 
     useEffect(() => {
         getStatements(previousDays,dateRange)
-        console.log('table')
     }, [previousDays, dateRange])
+    useEffect(() => {
+        if (dateRange.length != 0) {
+            setDateRange([])
+        }
+    }, [])
    
     const filterMenuClick = (event) => {
         setFilterMenu(event.currentTarget);

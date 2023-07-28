@@ -36,7 +36,6 @@ export function ResumeProvider({ children }) {
             )
                 .then((response) => {
                     setResume(response.data)
-                    console.log(response.data)
                     resolve(response.data)
                 })
                 .catch((error) => {

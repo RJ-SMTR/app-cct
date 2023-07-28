@@ -28,6 +28,12 @@ function ResumeApp() {
     useEffect(() => {
       getResume(previousDays, dateRange)
     }, [previousDays, dateRange])
+  useEffect(() => {
+    if(dateRange.length != 0){
+      setDateRange([])
+    }
+  }, [])
+    
 
   const filterMenuClick = (event) => {
     setFilterMenu(event.currentTarget);
