@@ -5,7 +5,11 @@ const ProfileApp = lazy(() => import('./ProfileApp'));
 const profileAppConfig = {
   settings: {
     layout: {
-      config: {},
+      config: {
+        footer: {
+          display: false,
+        },
+      },
     },
   },
   routes: [

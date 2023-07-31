@@ -39,7 +39,7 @@ import { Box } from '@mui/system';
         </Paper>
     );
 }
-export function TripsResume(){
+export function TripsResume({id, permitCode, date, amount}){
     const blackOptions = { color: 'black' }
     shape.sort((a, b) => a.shape_pt_sequence - b.shape_pt_sequence);
     const points = shape.map(i => [i.shape_pt_lat, i.shape_pt_lon]);
@@ -64,26 +64,27 @@ export function TripsResume(){
             </Box>
 
         
-                    <Typography className="px-20 my-8  font-semibold">20/07/23</Typography>
+                <Typography className="px-20 my-4  font-semibold" color='text.secondary'>#00{id ?? '0001'}</Typography>
 
 
                     <Typography className="px-20  text-2xl font-bold" component="div">
                      
-                        R$ 1.250,00
+                   R$ {amount ?? 'R$ 1.250,00'}
                     </Typography>
 
            
+                <Typography className="px-20 my-4  font-semibold">{date ?? '20/07/23'}</Typography>
 
-                    <ul className="px-20 my-8 flex flex-wrap list-reset">
+                    <ul className="px-[15px] my-4 flex flex-wrap list-reset">
                             <li  className="flex items-center w-full">
-                                <FuseSvgIcon color='secondary' size={20}>
+                                <FuseSvgIcon color='success' size={20}>
                                     heroicons-outline:check-circle
                                 </FuseSvgIcon>
                                 <Typography
-                                    className='truncate mx-8'
+                                    className='truncate mx-2'
                                     color='text.secondary'
                                 >
-                                    content
+                                    Recebida
                                 </Typography>
                             </li>
                     </ul>

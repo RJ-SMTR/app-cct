@@ -20,9 +20,9 @@ function Home(props) {
           <h2 className='fw-black'>Bem vindo, {first}</h2>
           <p className='w-[100%] md:w-[35%]'>Esse é seu dashboard, aqui você pode conferir os valores que deve receber nos próximos dias e um resumo das vaigens realizadas.</p>
         </div>
-        <div className="p-24 pt-10">
+        <div className="p-24 pt-10 max-w-[342px]">
           <Typography className='font-medium text-3xl'>Extrato</Typography>
-          <Box className='flex flex-col md:flex-row justify-around'>
+          <Box className='flex flex-col  justify-around'>
           <CurrentStatementWidget/>
           <Button
             variant="contained"
@@ -36,13 +36,12 @@ function Home(props) {
               Ver extrato completo 
             </Link>
           </Button>
-          {/* <CurrentStatementWidget classes={'md:mt-auto mt-24'}/> */}
           </Box>
           <br />
         </div>
-        <div className="p-24 pt-10">
+      <div className="p-24 pt-10 max-w-[342px]" >
           <Typography className='font-medium text-3xl'>Resumo das Viagens</Typography>
-          <Box className='flex flex-col md:flex-row justify-around md:justify-start'>
+          <Box className='flex flex-col  justify-around md:justify-start'>
             <TripsResume/>
           <Button
             variant="contained"
@@ -52,7 +51,7 @@ function Home(props) {
             size="large"
             role="button"
           >
-            <Link className='text-white no-underline' to="/resume">
+            <Link className='text-white no-underline' to="/resumo">
               Ver resumo completo
             </Link>
           </Button>
