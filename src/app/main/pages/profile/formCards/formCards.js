@@ -2,7 +2,7 @@ import { Card, Modal, Box, Typography } from "@mui/material"
 import _ from '@lodash';
 import { useState, useEffect } from "react";
 import { Controller, useForm } from 'react-hook-form';
-import { FormControl, Select, MenuItem, InputLabel } from "@mui/material";
+import { FormControl,Autocomplete } from "@mui/material";
 import TextField from '@mui/material/TextField';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { useContext } from "react";
@@ -227,7 +227,7 @@ export function PersonalInfo({ user }) {
 export function BankInfo({ user }) {
 
     const [isEditable, setIsEditable] = useState(false)
-    const [selectedBankCode, setSelectedBankCode] = useState('');
+    const [selectedBankCode, setSelectedBankCode] = useState(user.bankCode ?? '');
     const { patchInfo } = useContext(AuthContext)
     const [bankOptions, setBankOptions] = useState([]);
     const [saved, setSaved] = useState(false)
@@ -236,7 +236,7 @@ export function BankInfo({ user }) {
     const handleClose = () => setOpen(false);
 
 
-    const { handleSubmit, register, setError, formState, clearErrors } = useForm({
+    const { handleSubmit, register, setError, formState, clearErrors, setValue } = useForm({
         defaultValues: {
             bankCode: user.bankCode ?? '',
             bankAgency: user.bankAgency ?? '',
@@ -251,7 +251,6 @@ export function BankInfo({ user }) {
     useEffect(() => {
         fetchBankOptions();
         setSaved(false)
-
     }, []);
 
     const fetchBankOptions = async () => {
@@ -265,9 +264,11 @@ export function BankInfo({ user }) {
     };
 
 
-    const handleChange = (event) => {
-        setSelectedBankCode(event.target.value)
-    };
+    const handleAutocompleteChange = (_, newValue) => {
+        setValue('bankCode', newValue ? newValue.code : '')
+        setSelectedBankCode(newValue ? newValue.code : '')
+    }
+
 
     function onSubmit(info) {
         patchInfo(info)
@@ -376,23 +377,28 @@ export function BankInfo({ user }) {
                         {renderButton()}
                     </div>
 
+
                     <FormControl fullWidth>
-                        <InputLabel id="demo-simple-select-label">Banco</InputLabel>
-                        <Select
-                            {...register("bankCode")}
-                            className="mb-24"
-                            id="demo-simple-select"
-                            label="Banco"
-                            value={user?.bankCode ?? selectedBankCode}
-                            onChange={handleChange}
+                        <Autocomplete
+                            {...register('bankCode')}
+                            id='bank-code-autocomplete'
+                            options={bankOptions}
+                            getOptionLabel={(option) => `${option.code} - ${option.name}`}
+                            value={bankOptions.find((bank) => bank.code === selectedBankCode) || null}
+                            onChange={handleAutocompleteChange}
                             disabled={!isEditable}
-                        >
-                            {bankOptions.map((bank) => (
-                                <MenuItem key={bank.code} value={bank.code}>
-                                    {bank.code} - {bank.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label='Banco'
+                                    className="mb-24"
+                                    id="bank-autocomplete"
+                                    variant='outlined'
+                                    error={!!errors.bankCode}
+                                    helperText={errors?.bankCode?.message}
+                                />
+                            )}
+                        />
                     </FormControl>
 
                     <TextField
