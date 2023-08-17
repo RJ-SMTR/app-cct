@@ -162,14 +162,7 @@ function TableTransactions() {
                         <TableHead>
 
                             <TableRow>
-                                <TableCell>
-                                    <Typography
-                                        color="text.secondary"
-                                        className="font-semibold text-12 whitespace-nowrap"
-                                    >
-                                        ID da transação
-                                    </Typography>
-                                </TableCell>
+                             
                                 <TableCell>
                                     <Typography
                                         color="text.secondary"
@@ -183,7 +176,7 @@ function TableTransactions() {
                                         color="text.secondary"
                                         className="font-semibold text-12 whitespace-nowrap"
                                     >
-                                        Dia da semana
+                                        Valor
                                     </Typography>
                                 </TableCell>
                                 <TableCell>
@@ -191,7 +184,7 @@ function TableTransactions() {
                                         color="text.secondary"
                                         className="font-semibold text-12 whitespace-nowrap"
                                     >
-                                        Valor
+                                        Status
                                     </Typography>
                                 </TableCell>
                             </TableRow>
@@ -206,23 +199,18 @@ function TableTransactions() {
 
                                     return <TableRow key={i.id}>
                                         <TableCell component="th" scope="row">
-                                            <Typography className="" color="text.secondary">
-                                                #{i.id}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell component="th" scope="row">
                                             <Typography className="whitespace-nowrap">
                                                 {date}
                                             </Typography>
                                         </TableCell>
                                         <TableCell component="th" scope="row">
                                             <Typography className="whitespace-nowrap">
-                                                {getDayOfWeek(i.date)}
+                                                R$ {i.receivable}
                                             </Typography>
                                         </TableCell>
                                         <TableCell component="th" scope="row">
-                                            <Typography className="whitespace-nowrap">
-                                                R$ {i.receivable}
+                                            <Typography className="whitespace-nowrap" color='text.success'>
+                                               Pago
                                             </Typography>
                                         </TableCell>
                                     </TableRow>
