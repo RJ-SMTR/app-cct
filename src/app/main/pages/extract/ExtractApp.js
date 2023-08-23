@@ -21,7 +21,7 @@ function ExtractApp() {
         <p className='w-[100%] md:w-[35%]'>Esse é seu painel financeiro, aqui você pode conferir os valores que deve receber nos próximos dias, a lista de transações recentes e uma média das suas entradas.</p>
       </div>
       <div className="p-24 pt-10">
-        <Typography className='font-medium text-3xl'>Extrato Financeiro</Typography>
+        <Typography className='font-medium text-3xl'>Resumo dos Valores</Typography>
         <Box className='flex flex-col md:flex-row mt-24 justify-around max-w-[342px]'>
           <Entries />
         </Box>

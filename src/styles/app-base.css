@@ -185,3 +185,9 @@ input:-webkit-autofill:active
 display: none !important;
 } 
 
+.muiltr-1c32n2y-MuiBadge-root{
+    display: inline-block !important;
+}
+.muiltr-1h02ol9-MuiTablePagination-displayedRows{
+    display: none !important;
+}

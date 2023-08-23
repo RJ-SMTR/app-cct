@@ -19,40 +19,70 @@ import Popover from '@mui/material/Popover';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { ExtractContext } from 'src/app/hooks/ExtractContext';
 import { makeStyles } from '@mui/styles';
-import {locale} from '../utils/locale';
+import { locale } from '../utils/locale';
+import { Badge } from '@mui/material';
+import { setDate } from 'date-fns';
 
 
 function TableTransactions() {
+    const [currentWeekStart, setCurrentWeekStart] = useState(new Date())
+    const [searchingWeek, setSearchingWeek] = useState(false)
     const [filterMenu, setFilterMenu] = useState(null);
     const { getStatements, previousDays, setPreviousDays, statements, setDateRange, dateRange } = useContext(ExtractContext);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(8);
+    // CUSTOM STYLES
     const useStyles = makeStyles(() => ({
         root: {
 
             "& .muiltr-1psng7p-MuiTablePagination-spacer": { display: "none" },
+            "& .muiltr-1oaobgk-MuiBadge-badge": {display: "inline", position: 'relative', padding: '3px'},
+            "& .muiltr-1nnvbx6-MuiBadge-badge": {display: "inline", position: 'relative', padding: '3px'},
         },
     }));
     const c = useStyles()
+    // <----------------------->
+
+    // PAGINANTION
+    const handleNextWeek = () => {
+        const nextWeekStart = new Date(currentWeekStart)
+        nextWeekStart.setDate(nextWeekStart.getDate() + 7)
+        setCurrentWeekStart(nextWeekStart)
+        setPage(0)
+    }
+
+    const handlePreviousWeek = () => {
+        const previousWeekStart = new Date(currentWeekStart)
+        previousWeekStart.setDate(previousWeekStart.getDate() - 7)
+        setCurrentWeekStart(previousWeekStart)
+        setPage(0)
+    }
+
+
+        useEffect(() => {
+            const startDate = new Date(currentWeekStart)
+            const endDate = new Date(currentWeekStart)
+            endDate.setDate(endDate.getDate() + 6)
+            console.log(startDate, endDate)
+            setDateRange([startDate, endDate])
+        }, [currentWeekStart])
 
     const handleChangePage = (event, newPage) => {
-        setPage(newPage);
-    };
+        setPage(newPage)
+    }
 
     const handleChangeRowsPerPage = (event) => {
-        setRowsPerPage(+event.target.value);
-        setPage(0);
-    };
+        setRowsPerPage(+event.target.value)
+        setPage(0)
+    }
 
     useEffect(() => {
-        getStatements(previousDays,dateRange)
+        getStatements(previousDays, dateRange)
     }, [previousDays, dateRange])
     useEffect(() => {
-        if (dateRange.length != 0) {
             setDateRange([])
-        }
     }, [])
-   
+
     const filterMenuClick = (event) => {
         setFilterMenu(event.currentTarget);
     }
@@ -65,46 +95,52 @@ function TableTransactions() {
         setFilterMenu(null)
         setPage(0)
         setDateRange([])
+        setSearchingWeek(false)
     }
 
-    function getDayOfWeek(dateString) {
-        const daysOfWeek = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado']
-        const date = new Date(dateString)
-        const dayOfWeek = date.getUTCDay()
-        return daysOfWeek[dayOfWeek]
-    }
+   
     const { afterToday } = DateRangePicker;
- 
+
+   
+
+    const handleClickRow = (event) => {
+        const start = event.target.innerText
+        const [day, month, year] = start.split('/')
+         const transformedDate =   `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+        setCurrentWeekStart(new Date(transformedDate))
+        setSearchingWeek(true)
+        setPage(0)
+    }
 
     return (
         <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
             <div className="flex flex-row justify-between">
                 <Typography className="mr-16 text-lg font-medium tracking-tight leading-6 truncate">
-                    Transações Recentes
+                    Valores recebidos
                 </Typography>
-                 
+
                 <Hidden smUp >
                     <div className="flex align-center">
-                    <Button onClick={filterMenuClick}>
-                        <FuseSvgIcon className="text-48" size={24} color="action">feather:filter</FuseSvgIcon>
-                    </Button>
+                        <Button onClick={filterMenuClick}>
+                            <FuseSvgIcon className="text-48" size={24} color="action">feather:filter</FuseSvgIcon>
+                        </Button>
 
-                    <label htmlFor="custom-date-input" className='py-6 px-8' >
-                        <FuseSvgIcon className="text-48" size={24} color="action">material-outline:edit_calendar</FuseSvgIcon>
-                    </label>
-                    <DateRangePicker
-                        id="custom-date-input"
-                        showOneCalendar
-                        className='mobile'
-                        placeholder="Selecionar Data"
-                        appearance='subtle'
-                        disabledDate={afterToday()}
-                        format='dd/MM/yy'
-                        locale={locale}
-                        character=' - '
-                        onChange={(newValue) => setDateRange(newValue)}
+                        <label htmlFor="custom-date-input" className='py-6 px-8' >
+                            <FuseSvgIcon className="text-48" size={24} color="action">material-outline:edit_calendar</FuseSvgIcon>
+                        </label>
+                        <DateRangePicker
+                            id="custom-date-input"
+                            showOneCalendar
+                            className='mobile'
+                            placeholder="Selecionar Data"
+                            appearance='subtle'
+                            disabledDate={afterToday()}
+                            format='dd/MM/yy'
+                            locale={locale}
+                            character=' - '
+                            onChange={(newValue) => setDateRange(newValue)}
 
-                    />
+                        />
                     </div>
                 </Hidden>
                 <Popover
@@ -148,7 +184,7 @@ function TableTransactions() {
 
                         />
                         <Button className={previousDays == 7 ? 'active' : ''} variant="contained" onClick={handleDays} data-value={7}>7 dias</Button>
-                        <Button className={`${previousDays == 14 ? 'active' : ''} mx-5 ` } variant="contained" onClick={handleDays} data-value={14}>14 dias</Button>
+                        <Button className={`${previousDays == 14 ? 'active' : ''} mx-5 `} variant="contained" onClick={handleDays} data-value={14}>14 dias</Button>
                         <Button className={previousDays !== 7 && previousDays !== 14 ? 'active' : ''} variant="contained" onClick={handleDays} data-value=''>Mês todo</Button>
 
                     </div>
@@ -162,14 +198,7 @@ function TableTransactions() {
                         <TableHead>
 
                             <TableRow>
-                                <TableCell>
-                                    <Typography
-                                        color="text.secondary"
-                                        className="font-semibold text-12 whitespace-nowrap"
-                                    >
-                                        ID da transação
-                                    </Typography>
-                                </TableCell>
+
                                 <TableCell>
                                     <Typography
                                         color="text.secondary"
@@ -183,7 +212,7 @@ function TableTransactions() {
                                         color="text.secondary"
                                         className="font-semibold text-12 whitespace-nowrap"
                                     >
-                                        Dia da semana
+                                        Valor
                                     </Typography>
                                 </TableCell>
                                 <TableCell>
@@ -191,41 +220,37 @@ function TableTransactions() {
                                         color="text.secondary"
                                         className="font-semibold text-12 whitespace-nowrap"
                                     >
-                                        Valor
+                                        Status
                                     </Typography>
                                 </TableCell>
                             </TableRow>
                         </TableHead>
 
                         <TableBody>
-
                             {statements
                                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                 .map((i) => {
                                     const date = new Date(`${i.date}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' })
+                                    return <TableRow key={i.id} className="hover:bg-gray-100 cursor-pointer">
+                                            <TableCell component="th" scope="row" onClick={handleClickRow}>
+                                                <Typography className="whitespace-nowrap">
+                                                    {date}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell component="th" scope="row">
+                                                <Typography className="whitespace-nowrap">
+                                                    R$ {i.amount}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell component="th" scope="row">
+                                                <Badge className={c.root}
+                                                    color={i.status === 'falha' ? 'error' : i.status === 'sucesso' ? 'success' : 'default'}
+                                                    badgeContent={i.status}
+                                                />
 
-                                    return <TableRow key={i.id}>
-                                        <TableCell component="th" scope="row">
-                                            <Typography className="" color="text.secondary">
-                                                #{i.id}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell component="th" scope="row">
-                                            <Typography className="whitespace-nowrap">
-                                                {date}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell component="th" scope="row">
-                                            <Typography className="whitespace-nowrap">
-                                                {getDayOfWeek(i.date)}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell component="th" scope="row">
-                                            <Typography className="whitespace-nowrap">
-                                                R$ {i.receivable}
-                                            </Typography>
-                                        </TableCell>
-                                    </TableRow>
+
+                                            </TableCell>
+                                        </TableRow>
                                 })}
 
                         </TableBody>
@@ -244,6 +269,27 @@ function TableTransactions() {
 
                             </TableFooter>
                             : <></>}
+                        {searchingWeek ? <TablePagination
+                            className={`overflow-visible  ${c.root}`}
+                            rowsPerPageOptions={[5]}
+                            component="div"
+                            count={statements.length}
+                            rowsPerPage={rowsPerPage}
+                            page={page}
+                            onPageChange={handleChangePage}
+                            onRowsPerPageChange={handleChangeRowsPerPage}
+                            ActionsComponent={() => (
+                                <div className='my-24 flex'>
+                                    <Button variant="contained" onClick={handlePreviousWeek} className="mr-5">
+                                        Anterior
+                                    </Button>
+                                    <Button variant="contained" onClick={handleNextWeek}>
+                                      Próxima
+                                    </Button>
+                                </div>
+                            )}
+                        />
+                        : null}
                     </>
                         : <Skeleton variant='rounded' width={1044} height={342} />}
                 </Table>

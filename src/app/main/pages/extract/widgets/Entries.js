@@ -11,9 +11,9 @@ function Entries() {
           <div className="flex items-center justify-between">
               <div className="flex flex-col">
                   <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
-                      {dateRange.length ? <>Valor Recebido</> : <>Valores a receber</>}
+                      Valor a receber
                   </Typography>
-                  <Typography className="font-medium text-sm">{date}</Typography>
+                  <Typography className="font-medium text-sm">{date} - 3 semana</Typography>
 
               </div>
 
