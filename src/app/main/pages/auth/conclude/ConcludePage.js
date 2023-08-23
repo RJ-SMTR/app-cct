@@ -194,7 +194,7 @@ function ConcludePage() {
                        </> : <>
                            <div className="items-baseline mt-10 font-medium">
                                <Typography>Olá, {info.fullName}.<br></br> Confirme seus dados abaixo! Se por acaso estiverem incorretos
-                                   <Link className="ml-4" to="/support">
+                                       <Link className="ml-4" to="https://secretariamunicipaldetransportes.movidesk.com/form/6594/">
                                        fale conosco
                                    </Link></Typography>
 
