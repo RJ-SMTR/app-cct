@@ -1,17 +1,20 @@
 import { Typography,Box, Button } from '@mui/material';
 
-import React from 'react'
+import React, { useContext } from 'react'
 import { useSelector } from 'react-redux';
 import { selectUser } from 'app/store/userSlice';
 import Chart from './widgets/Chart';
 import Entries from './widgets/Entries';
 import TableTransactions from './widgets/Table'
+import { TripsResume } from '../home/widgets/Widgets';
+import { ExtractContext } from 'src/app/hooks/ExtractContext';
 
 
 function ExtractApp() {
   const user = useSelector(selectUser);
   const fullName = user.fullName
   const [first] = fullName.split(' ');
+  const {mapInfo, searchingWeek, statements, searchingDay} = useContext(ExtractContext)
 
   return (
     <>
@@ -29,7 +32,10 @@ function ExtractApp() {
               <TableTransactions />   
         </Box>
         <Box className='flex flex-col md:flex-row justify-around mt-24'>
-              <Chart/>   
+          {searchingDay ?
+          <TripsResume mapInfo={mapInfo} statements={statements} />
+            : <Chart />
+}
         </Box>
         
         <br />

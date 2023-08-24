@@ -42,7 +42,7 @@ function Home(props) {
       <div className="p-24 pt-10 max-w-[342px]" >
           <Typography className='font-medium text-3xl'>Resumo das Viagens</Typography>
           <Box className='flex flex-col  justify-around md:justify-start'>
-            <TripsResume/>
+            {/* <TripsResume/> */}
           <Button
             variant="contained"
             color="secondary"
