@@ -1,10 +1,10 @@
 import { Paper, Skeleton, Typography } from "@mui/material"
 import FuseSvgIcon from "@fuse/core/FuseSvgIcon"
-import { useContext } from "react"
-import { ExtractContext } from "src/app/hooks/ExtractContext"
+import { useDispatch, useSelector } from 'react-redux';
 
 function Entries() {
-        const {statements, dateRange} = useContext(ExtractContext)
+    const dateRange = useSelector(state => state.extract.dateRange);
+    const statements = useSelector(state => state.extract.statements);
         const date = new Date(`${statements[0]?.date}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
   return (
       <>{statements.length  ? <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden">

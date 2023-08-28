@@ -7,14 +7,16 @@ import Chart from './widgets/Chart';
 import Entries from './widgets/Entries';
 import TableTransactions from './widgets/Table'
 import { TripsResume } from '../home/widgets/Widgets';
-import { ExtractContext } from 'src/app/hooks/ExtractContext';
+
 
 
 function ExtractApp() {
   const user = useSelector(selectUser);
   const fullName = user.fullName
   const [first] = fullName.split(' ');
-  const {mapInfo, searchingWeek, statements, searchingDay} = useContext(ExtractContext)
+  const mapInfo = useSelector(state => state.extract.mapInfo)
+  const searchingDay = useSelector(state => state.extract.searchingDay)
+  const statements = useSelector(state => state.extract.statements)
 
   return (
     <>
@@ -31,7 +33,7 @@ function ExtractApp() {
         <Box className='flex flex-col md:flex-row  justify-around'>
               <TableTransactions />   
         </Box>
-        <Box className='flex flex-col md:flex-row justify-around mt-24'>
+        <Box className='flex flex-col  justify-around mt-24'>
           {searchingDay ?
           <TripsResume mapInfo={mapInfo} statements={statements} />
             : <Chart />

@@ -8,6 +8,7 @@ import { format, parseISO } from 'date-fns';
 
 import { Box } from '@mui/system';
 import {HeatmapLayer} from 'react-leaflet-heatmap-layer-v3';
+import { useEffect, useRef, useState } from 'react';
 
  export  function CurrentStatementWidget({classes}) {
 
@@ -41,8 +42,16 @@ import {HeatmapLayer} from 'react-leaflet-heatmap-layer-v3';
 export function TripsResume({mapInfo, statements}){
     const points = mapInfo.map(i => [i.lat, i.lon, i.amount])
     const transactions = statements.reduce((a,b) => a + b.transactions, 0)
- 
-  const state = {
+    const mapRef = useRef(null)
+    const [zoom, setZoom] = useState(9)
+    useEffect(() => {
+        if (mapInfo.length > 0 && mapRef.current) {
+            const averageLat = mapInfo.reduce((sum, point) => sum + point.lat, 0) / mapInfo.length;
+            const averageLon = mapInfo.reduce((sum, point) => sum + point.lon, 0) / mapInfo.length;
+            mapRef.current.setView([averageLat,averageLon], zoom);
+        }
+    }, [mapInfo])
+    const state = {
         mapHidden: false,
         layerHidden: false,
         points,
@@ -68,7 +77,7 @@ export function TripsResume({mapInfo, statements}){
             >
               
             <Box className="overflow-hidden">
-                    <MapContainer className='h-[220px]' center={[0, 0]} zoom={12}>
+                    <MapContainer ref={mapRef} className='h-[220px]' center={[0, 0]} zoom={zoom}>
                         {!state.layerHidden &&
                             <HeatmapLayer
                                 fitBoundsOnLoad

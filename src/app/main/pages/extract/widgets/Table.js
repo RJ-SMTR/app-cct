@@ -1,7 +1,7 @@
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
-import TableFooter from '@mui/material/TableFooter';
+import TableContainer from '@mui/material/TableContainer';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
@@ -9,12 +9,12 @@ import TablePagination from '@mui/material/TablePagination';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
 import MenuItem from '@mui/material/MenuItem';
-import { memo, useContext, useEffect } from 'react';
+import { memo, useContext, useEffect, useRef } from 'react';
 import { useState } from 'react';
 import DateRangePicker from 'rsuite/DateRangePicker';
 
 import Button from '@mui/material/Button';
-import { Hidden, Skeleton } from '@mui/material';
+import { Box, Hidden, Skeleton } from '@mui/material';
 import Popover from '@mui/material/Popover';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { ExtractContext } from 'src/app/hooks/ExtractContext';
@@ -22,15 +22,27 @@ import { makeStyles } from '@mui/styles';
 import { locale } from '../utils/locale';
 
 import { CustomTable } from 'src/app/main/components/TableComponents';
-
-import { format, parseISO, startOfWeek, endOfWeek, addDays } from 'date-fns';
+import { format, parseISO, startOfWeek, endOfWeek, addDays, isAfter, startOfDay } from 'date-fns';
 import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz';
 
+import { useDispatch, useSelector } from 'react-redux';
+
+import { getStatements, setPreviousDays,  setDateRange,  setSearchingWeek, setSearchingDay } from 'app/store/extractSlice';
+
 function TableTransactions() {
+    const dispatch = useDispatch()
+    const statements = useSelector(state => state.extract.statements)
+    const previousDays = useSelector(state => state.extract.previousDays)
+    const dateRange = useSelector(state => state.extract.dateRange)
+    const searchingDay = useSelector(state => state.extract.searchingDay)
+    const searchingWeek = useSelector(state => state.extract.searchingWeek)
+ 
+
     const [currentWeekStart, setCurrentWeekStart] = useState()
+    const [isGreaterThanToday, setIsGreaterThanToday] = useState(false)
     const [filterMenu, setFilterMenu] = useState(null);
-    const { getStatements, previousDays, setPreviousDays, statements, setDateRange, dateRange, searchingWeek, setSearchingWeek, setSearchingDay, searchingDay } = useContext(ExtractContext);
     const [page, setPage] = useState(0);
+    const [lastDate, setLastDate] = useState([])
     const [rowsPerPage, setRowsPerPage] = useState(8);
     const useStyles = makeStyles(() => ({
         root: {
@@ -41,13 +53,22 @@ function TableTransactions() {
         },
     }));
     const c = useStyles()
-   
+
+    const previousStatementsRef = useRef([]);
+    useEffect(() => {
+        if (dateRange !== previousStatementsRef.current) {
+            setLastDate([previousStatementsRef.current[0], previousStatementsRef.current[previousStatementsRef.current.length - 1]]);
+            previousStatementsRef.current = dateRange;
+        }
+    }, [dateRange])
+
     const handleNextWeek = () => {
         const nextWeekStart = new Date(currentWeekStart)
         nextWeekStart.setDate(nextWeekStart.getDate() + 7) 
         setCurrentWeekStart(nextWeekStart)
-
+ 
     }
+ 
 
     const handlePreviousWeek = () => {
         const previousWeekStart = new Date(currentWeekStart)
@@ -55,13 +76,20 @@ function TableTransactions() {
         setCurrentWeekStart(previousWeekStart)
     }
 
+    function isEndDateGreaterThanToday(endDate) {
+        const today = new Date();
+        const startOfToday = startOfDay(today)
 
+        return isAfter(endDate, startOfToday)
+    }
     useEffect(() => {
         const startDate = new Date(currentWeekStart)
         const endDate = new Date(currentWeekStart)
         endDate.setDate(endDate.getDate() + 6) 
-        setDateRange([startDate, endDate])
-        
+        if(currentWeekStart){
+           setIsGreaterThanToday(isEndDateGreaterThanToday(endDate))
+            dispatch(setDateRange([startDate, endDate]))
+        }
     }, [currentWeekStart])
 
 
@@ -75,13 +103,10 @@ function TableTransactions() {
     }
 
     useEffect(() => {
-        getStatements(previousDays, dateRange)
+        dispatch(getStatements(previousDays, dateRange, searchingDay, searchingWeek))
     }, [previousDays, dateRange])
 
-    useEffect(() => {
-            setDateRange([])
-            setSearchingWeek(false)
-    }, [])
+    
 
     const filterMenuClick = (event) => {
         setFilterMenu(event.currentTarget);
@@ -91,12 +116,12 @@ function TableTransactions() {
         setFilterMenu(null);
     }
     const handleDays = (event) => {
-        setPreviousDays(parseInt(event.currentTarget.dataset.value))
+        const previousDays = parseInt(event.currentTarget.dataset.value)
+        dispatch(setPreviousDays(previousDays))
         setFilterMenu(null)
         setPage(0)
-        setDateRange([])
-        setSearchingWeek(false)
-
+        dispatch(setDateRange([]))
+        dispatch(setSearchingWeek(false))
     }
 
    
@@ -110,39 +135,45 @@ function TableTransactions() {
         const transformedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
         const tz = 'America/Sao_Paulo';
 
-       if(searchingWeek){
-        setSearchingDay(true)
-           const givenDate = new Date(transformedDate);
-           const givenDateZoned = utcToZonedTime(givenDate, tz);
-           const nextDayZoned = addDays(givenDateZoned, 1);
-           const nextDayUtc = zonedTimeToUtc(nextDayZoned, tz);
-           const transformedEndDate = nextDayUtc.toISOString().slice(0, 10)
-           setDateRange([transformedDate, transformedEndDate])
+        if (searchingWeek) {
+            dispatch(setSearchingDay(true));
+            const givenDate = new Date(transformedDate);
+            const givenDateZoned = utcToZonedTime(givenDate, tz);
+            const nextDayZoned = addDays(givenDateZoned, 1);
+            const nextDayUtc = zonedTimeToUtc(nextDayZoned, tz);
+            const transformedEndDate = nextDayUtc.toISOString().slice(0, 10);
+            dispatch(setDateRange([transformedDate, transformedEndDate]));
+        } else {
+            const clickedDate = parseISO(transformedDate);
+            const clickedDateToday = utcToZonedTime(clickedDate, tz);
+            const startDate = startOfWeek(clickedDateToday, { weekStartsOn: 5 });
+            const today = utcToZonedTime(new Date(), tz);
+            const endDate = today.getDay() >= 4 ? endOfWeek(today, { weekStartsOn: 5 }) : today;
 
-
-       } else {
-      
-           const clickedDate = parseISO(transformedDate);
-           const clickedDateToday = utcToZonedTime(clickedDate, tz);
-           const startDate = startOfWeek(clickedDateToday, { weekStartsOn: 5 });
-           const today = utcToZonedTime(new Date(), tz);
-           const endDate = today.getDay() >= 4
-               ? endOfWeek(today, { weekStartsOn: 5 })
-               : today;
-
-           setCurrentWeekStart(clickedDateToday);
-           setSearchingWeek(true)
-           setDateRange([startDate, endDate]);
-           setPage(0);
-       }
-     
+            setCurrentWeekStart(clickedDateToday);
+            dispatch(setSearchingWeek(true));
+            dispatch(setDateRange([startDate, endDate]));
+            setPage(0);
+        }
     }
+    const handleBack = () => {
+        if(searchingDay){
+            dispatch(setDateRange(lastDate))
+            setPage(0)
+            dispatch(setSearchingDay(false))
+        } else {
+            dispatch(setDateRange([]))
+            setPage(0)
+            dispatch(setSearchingWeek(false))
+        }
+    }
+
 
     return (
         <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
             <div className="flex flex-row justify-between">
                 <Typography className="mr-16 text-lg font-medium tracking-tight leading-6 truncate">
-                    {searchingWeek ? <p>Catracadas da semana</p> : (searchingDay ? <p>Catracadas do dia</p> : <p>Valores recebidos</p>)}
+                    {searchingDay ? <p>Catracadas durante o dia</p> : (searchingWeek ? <p>Catracadas da semana</p> : <p>Valores recebidos</p>)}
                 </Typography>
 
                 <Hidden smUp >
@@ -164,7 +195,7 @@ function TableTransactions() {
                             format='dd/MM/yy'
                             locale={locale}
                             character=' - '
-                            onChange={(newValue) => setDateRange(newValue)}
+                            onChange={(newValue) => dispatch(setDateRange(newValue))}
 
                         />
                     </div>
@@ -206,7 +237,7 @@ function TableTransactions() {
                             format='dd/MM/yy'
                             character=' - '
                             locale={locale}
-                            onChange={(newValue) => setDateRange(newValue)}
+                            onChange={(newValue) => dispatch(setDateRange(newValue))}
 
                         />
                         <Button className={previousDays == 7 ? 'active' : ''} variant="contained" onClick={handleDays} data-value={7}>7 dias</Button>
@@ -218,61 +249,55 @@ function TableTransactions() {
 
             </div>
 
-            <div className="table-responsive mt-24">
-                <Table className="simple w-full min-w-full">
-                    {statements ? <>
-                        <TableHead>
+            <Box className="flex flex-col flex-auto mt-24  overflow-hidden">
+                <div className="flex flex-row justify-between items-center mb-4">
+                    {searchingWeek && (
+                        <Button onClick={handleBack} variant="outlined">
+                            Voltar
+                        </Button>
+                    )}
+                </div>
 
-                            <TableRow>
-                             
-                                <TableCell>
-                                    <Typography
-                                        color="text.secondary"
-                                        className="font-semibold text-12 whitespace-nowrap"
-                                    >
-                                        Data
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography
-                                        color="text.secondary"
-                                        className="font-semibold text-12 whitespace-nowrap"
-                                    >
-                                        Valor
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography
-                                        color="text.secondary"
-                                        className="font-semibold text-12 whitespace-nowrap"
-                                    >
-                                        {searchingWeek
-                                            ? "Catracadas"
-                                            : searchingDay
-                                                ? "Arrecadado na parada"
-                                                : "Status"}
-                                    </Typography>
-                                </TableCell>
-                            </TableRow>
-                        </TableHead>
+                <TableContainer>
+                    <Table className="min-w-full">
+                        {statements ? (
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>
+                                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                            Data
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                            {searchingWeek ? 'Arrecadado' : 'Valor'}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                            {searchingWeek ? 'Catracadas' : 'Status'}
+                                        </Typography>
+                                    </TableCell>
+                                </TableRow>
+                            </TableHead>
+                        ) : (
+                            <Skeleton variant="rounded" width={1044} height={42} />
+                        )}
 
                         <TableBody>
-                            {statements
-                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                .map((i) => {
+                            {statements &&
+                                statements.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
                                     const date = parseISO(i.date ?? i.dateTime);
                                     const formattedDate = format(date, 'dd/MM/yyyy', { timeZone: 'Etc/UTC' });
-                                    return <CustomTable data={i} c={c} date={formattedDate} handleClickRow={handleClickRow} />
-                                })}
-
+                                   return  <CustomTable data={i} c={c} date={formattedDate} handleClickRow={handleClickRow} />
+                            })}
                         </TableBody>
-                       
-                    </>
-                        : <Skeleton variant='rounded' width={1044} height={342} />}
-                </Table>
-                {statements.length > 8 ?
+                    </Table>
+                </TableContainer>
+
+                {statements.length > 8 && (
                     <TablePagination
-                        className={`overflow-visible  ${c.root}`}
+                        className={`overflow-visible ${c.root}`}
                         rowsPerPageOptions={[5]}
                         component="div"
                         count={statements.length}
@@ -281,34 +306,30 @@ function TableTransactions() {
                         onPageChange={handleChangePage}
                         onRowsPerPageChange={handleChangeRowsPerPage}
                     />
+                )}
 
-                    : <></>}
-                {searchingWeek && !searchingDay ?
+                {searchingWeek && !searchingDay && (
                     <TablePagination
-                        className={`overflow-visible  ${c.root}`}
+                        className={`overflow-visible ${c.root}`}
                         rowsPerPageOptions={[5]}
                         component="div"
-                        count={statements.length}
                         rowsPerPage={rowsPerPage}
                         page={page}
                         onPageChange={handleChangePage}
                         onRowsPerPageChange={handleChangeRowsPerPage}
                         ActionsComponent={() => (
-                            <div className='my-24 flex'>
-                                <Button variant="text" onClick={handlePreviousWeek} className="mr-5">
+                            <div className="my-4 flex space-x-2">
+                                <Button variant="text" onClick={handlePreviousWeek}>
                                     &lt; Semana Anterior
                                 </Button>
-                                <Button variant="text" onClick={handleNextWeek}>
+                                <Button disabled={isGreaterThanToday} variant="text" onClick={handleNextWeek}>
                                     Próxima Semana &gt;
                                 </Button>
                             </div>
                         )}
-                        
                     />
-                    
-                    : null}
-
-            </div>
+                )}
+            </Box>
         </Paper>
     );
 }
