@@ -101,6 +101,21 @@ class JwtService extends FuseUtils.EventEmitter {
         });
     });
   };
+  
+  adminSignIn = (email) => {
+    return new Promise((resolve, reject) => {
+      api.post(jwtServiceConfig.adminSignIn, {
+        email
+      })
+        .then((response) => {
+          resolve(response)
+        })
+        .catch((error) => {
+          reject(error);
+        });
+    })
+
+  }
 
   updateUserData = (user) => {
     return axios.post(jwtServiceConfig.updateUser, {

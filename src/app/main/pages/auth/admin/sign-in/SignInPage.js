@@ -11,24 +11,24 @@ import * as yup from 'yup';
 import _ from '@lodash';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
-import JwtService from 'src/app/auth/services/jwtService';
+import jwtService from 'src/app/auth/services/jwtService';
+import { useState } from 'react';
 
 /**
  * Form Validation Schema
  */
 
 const schema = yup.object().shape({
-    permitCode: yup.string().required('Insira seu código de permissão'),
-    password: yup.string().required('Por favor insira sua senha.').min(4, 'Senha muito curta'),
+    email: yup.string().required('Insira seu e-mail'),
 });
 
 const defaultValues = {
-    permitCode: '',
-    password: '',
+    email: '',
     remember: true,
 };
 
 function SignInPage() {
+    const [sent, setSent] = useState(false)
     const { control, formState, handleSubmit, setError, setValue } = useForm({
         mode: 'onChange',
         defaultValues,
@@ -37,14 +37,16 @@ function SignInPage() {
 
     const { isValid, dirtyFields, errors } = formState;
 
-    function onSubmit({ permitCode, password }) {
+    function onSubmit({ email }) {
         jwtService
-            .signInWithPermitCodeAndPasswrod(permitCode, password)
-            .then((user) => { })
+            .adminSignIn(email)
+            .then((response) => {
+                const link = response.data.link
+                console.log(link)
+                setSent(true)
+            })
             .catch((_errors) => {
-                setError('password', {
-                    message: 'Senha ou código de permissionário incorretos',
-                });
+              
             });
     }
 
@@ -54,9 +56,10 @@ function SignInPage() {
                 <div className="w-full max-w-320 h-5/6 md:h-1/2  sm:w-320 mx-auto sm:mx-0">
                     <Typography className="mt-48 text-4xl font-extrabold tracking-tight leading-tight">
                         <img src="assets/icons/logoPrefeitura.png" width="155" className='mb-10' alt='logo CCT' />
-                        Login de Administrador
+                        {sent ? "Enviado com sucesso!" : "Login de Administrador"}
                     </Typography>
                     
+                    {sent ? <Box>Foi enviado um email para que você possa prosseguir com seu login!</Box> : 
                     <form
                         name="loginForm"
                         noValidate
@@ -64,61 +67,23 @@ function SignInPage() {
                         onSubmit={handleSubmit(onSubmit)}
                     >
                         <Controller
-                            name="permitCode"
+                            name="email"
                             control={control}
                             render={({ field }) => (
                                 <TextField
                                     {...field}
                                     className="mb-24"
-                                    label="Código de Permissão"
+                                    label="E-mail"
                                     autoFocus
                                     type="string"
-                                    error={!!errors.permitCodeNotExists}
-                                    helperText={errors?.permitCodeNotExists?.message}
+                                    error={!!errors.email}
+                                    helperText={errors?.email?.message}
                                     variant="outlined"
                                     required
                                     fullWidth
                                 />
                             )}
                         />
-
-                        <Controller
-                            name="password"
-                            control={control}
-                            render={({ field }) => (
-                                <TextField
-                                    {...field}
-                                    className="mb-24"
-                                    label="Senha"
-                                    type="password"
-                                    error={!!errors.password}
-                                    helperText={errors?.password?.message}
-                                    variant="outlined"
-                                    required
-                                    fullWidth
-                                />
-                            )}
-                        />
-
-                        <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between">
-                            <Controller
-                                name="remember"
-                                control={control}
-                                render={({ field }) => (
-                                    <FormControl>
-                                        <FormControlLabel
-                                            label="Manter conectado"
-                                            control={<Checkbox size="small" {...field} />}
-                                        />
-                                    </FormControl>
-                                )}
-                            />
-
-                            <Link className="text-md font-medium" to="/forgot-password">
-                                Esqueceu sua senha?
-                            </Link>
-                        </div>
-
                         <Button
                             variant="contained"
                             color="secondary"
@@ -130,7 +95,7 @@ function SignInPage() {
                         >
                             Fazer login
                         </Button>
-                    </form>
+                    </form>}
                 </div>
                 <svg
                     className="absolute inset-0 pointer-events-none md:hidden"

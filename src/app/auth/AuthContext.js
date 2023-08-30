@@ -200,12 +200,28 @@ export function AuthProvider({ children }) {
 
     })
   }
+  function handleAdminLogin(hash){
+    return new Promise((resolve, reject) => {
+      api.post(`auth/otp/verify`, {
+        hash
+      })
+        .then((response) => {
+          if (response) {
+            resolve(response)
+          }
+        })
+        .catch((error) => {
+          reject(error)
+        })
+    })
+
+  }
 
   return waitAuthCheck ? (
     <FuseSplashScreen />
   ) : (
     <AuthContext.Provider
-      value={{ isAuthenticated, forgotPasswordFunction, resetPasswordFunction, handlePreRegister, validPermitCode, handleRegister, handleInvite, patchInfo }}
+      value={{ isAuthenticated, forgotPasswordFunction, resetPasswordFunction, handlePreRegister, validPermitCode, handleRegister, handleInvite, patchInfo, handleAdminLogin }}
     >
       {children}
     </AuthContext.Provider>

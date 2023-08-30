@@ -52,10 +52,9 @@ export  function TableUsers() {
     }
 
     const handleEditSubmit = (data) => {
-        const updatedEmail = data.email;
-        console.log('Updated Email:', updatedEmail);
+        const updatedEmail = data.email
 
-        closeModal();
+        closeModal()
     }
    
   return (

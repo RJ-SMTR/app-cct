@@ -13,7 +13,7 @@ const AdminConfig = {
             },
         },
     },
-    auth: ['User'],
+    auth: ['Admin'],
     routes: [
         {
             path: 'admin',
