@@ -9,6 +9,8 @@ const initialState = {
     previousDays: {},
     dateRange: [],
     searchingDay: false,
+    fullReport: false,
+    todayStatements: []
 };
 
 const extractSlice = createSlice({
@@ -33,6 +35,12 @@ const extractSlice = createSlice({
         setSearchingDay: (state, action) => {
             state.searchingDay = action.payload;
         },
+        setFullReport: (state, action) => {
+            state.fullReport = action.payload;
+        },
+        setTodayStatements: (state, action) => {
+            state.todayStatements = action.payload;
+        },
     },
 });
 
@@ -43,12 +51,16 @@ export const {
     mapInfo,
     statements,
     dateRange,
+    fullReport,
+    todayStatements,
     setSearchingWeek,
     setStatements,
     setMapInfo,
     setPreviousDays,
     setDateRange,
     setSearchingDay,
+    setFullReport,
+    setTodayStatements
 } = extractSlice.actions;
 
 export default extractSlice.reducer;
@@ -132,3 +144,23 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             });
     });
 };
+export const getTodayStatements = () => (dispatch) => {
+
+    const token = window.localStorage.getItem('jwt_access_token')
+    return new Promise((resolve, reject) => {
+        api.post(jwtServiceConfig.revenues, {
+            previousDays: 1
+        }, {
+            headers: { "Authorization": `Bearer ${token}` },
+        })
+        .then((response) => {
+            dispatch(setTodayStatements(response.data))
+            dispatch(setMapInfo(response.data))
+            resolve(response.data)
+            console.log(response.data)
+        })
+            .catch((error) => {
+                reject(error)
+            });
+    })
+}

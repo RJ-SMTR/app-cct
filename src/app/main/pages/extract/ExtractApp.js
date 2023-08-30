@@ -1,22 +1,26 @@
 import { Typography,Box, Button } from '@mui/material';
 
 import React, { useContext } from 'react'
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectUser } from 'app/store/userSlice';
 import Chart from './widgets/Chart';
 import Entries from './widgets/Entries';
 import TableTransactions from './widgets/Table'
 import { TripsResume } from '../home/widgets/Widgets';
+import { setFullReport, setPreviousDays } from 'app/store/extractSlice';
 
 
 
 function ExtractApp() {
+  const dispatch = useDispatch()
   const user = useSelector(selectUser);
   const fullName = user.fullName
   const [first] = fullName.split(' ');
   const mapInfo = useSelector(state => state.extract.mapInfo)
   const searchingDay = useSelector(state => state.extract.searchingDay)
   const statements = useSelector(state => state.extract.statements)
+  dispatch(setFullReport(true))
+  
 
   return (
     <>

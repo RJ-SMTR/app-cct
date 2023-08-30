@@ -28,6 +28,7 @@ import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { getStatements, setPreviousDays,  setDateRange,  setSearchingWeek, setSearchingDay } from 'app/store/extractSlice';
+import { useNavigate } from 'react-router-dom';
 
 function TableTransactions() {
     const dispatch = useDispatch()
@@ -36,6 +37,7 @@ function TableTransactions() {
     const dateRange = useSelector(state => state.extract.dateRange)
     const searchingDay = useSelector(state => state.extract.searchingDay)
     const searchingWeek = useSelector(state => state.extract.searchingWeek)
+    const fullReport = useSelector(state => state.extract.fullReport)
  
 
     const [currentWeekStart, setCurrentWeekStart] = useState()
@@ -44,6 +46,8 @@ function TableTransactions() {
     const [page, setPage] = useState(0);
     const [lastDate, setLastDate] = useState([])
     const [rowsPerPage, setRowsPerPage] = useState(8);
+
+    const navigate =  useNavigate()
     const useStyles = makeStyles(() => ({
         root: {
 
@@ -134,28 +138,32 @@ function TableTransactions() {
         const [day, month, year] = start.split('/');
         const transformedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
         const tz = 'America/Sao_Paulo';
+       if(fullReport){
+           if (searchingWeek) {
+               dispatch(setSearchingDay(true));
+               const givenDate = new Date(transformedDate);
+               const givenDateZoned = utcToZonedTime(givenDate, tz);
+               const nextDayZoned = addDays(givenDateZoned, 1);
+               const nextDayUtc = zonedTimeToUtc(nextDayZoned, tz);
+               const transformedEndDate = nextDayUtc.toISOString().slice(0, 10);
+               dispatch(setDateRange([transformedDate, transformedEndDate]));
+           } else {
+               const clickedDate = parseISO(transformedDate);
+               const clickedDateToday = utcToZonedTime(clickedDate, tz);
+               const startDate = startOfWeek(clickedDateToday, { weekStartsOn: 5 });
+               const today = utcToZonedTime(new Date(), tz);
+               const endDate = today.getDay() >= 4 ? endOfWeek(today, { weekStartsOn: 5 }) : today;
 
-        if (searchingWeek) {
-            dispatch(setSearchingDay(true));
-            const givenDate = new Date(transformedDate);
-            const givenDateZoned = utcToZonedTime(givenDate, tz);
-            const nextDayZoned = addDays(givenDateZoned, 1);
-            const nextDayUtc = zonedTimeToUtc(nextDayZoned, tz);
-            const transformedEndDate = nextDayUtc.toISOString().slice(0, 10);
-            dispatch(setDateRange([transformedDate, transformedEndDate]));
-        } else {
-            const clickedDate = parseISO(transformedDate);
-            const clickedDateToday = utcToZonedTime(clickedDate, tz);
-            const startDate = startOfWeek(clickedDateToday, { weekStartsOn: 5 });
-            const today = utcToZonedTime(new Date(), tz);
-            const endDate = today.getDay() >= 4 ? endOfWeek(today, { weekStartsOn: 5 }) : today;
-
-            setCurrentWeekStart(clickedDateToday);
-            dispatch(setSearchingWeek(true));
-            dispatch(setDateRange([startDate, endDate]));
-            setPage(0);
-        }
+               setCurrentWeekStart(clickedDateToday);
+               dispatch(setSearchingWeek(true));
+               dispatch(setDateRange([startDate, endDate]));
+               setPage(0);
+           }
+       } else {
+        navigate('/extrato')
+       }
     }
+    
     const handleBack = () => {
         if(searchingDay){
             dispatch(setDateRange(lastDate))
@@ -176,7 +184,7 @@ function TableTransactions() {
                     {searchingDay ? <p>Catracadas durante o dia</p> : (searchingWeek ? <p>Catracadas da semana</p> : <p>Valores recebidos</p>)}
                 </Typography>
 
-                <Hidden smUp >
+                {fullReport ? <> <Hidden smUp >
                     <div className="flex align-center">
                         <Button onClick={filterMenuClick}>
                             <FuseSvgIcon className="text-48" size={24} color="action">feather:filter</FuseSvgIcon>
@@ -200,52 +208,52 @@ function TableTransactions() {
                         />
                     </div>
                 </Hidden>
-                <Popover
-                    open={Boolean(filterMenu)}
-                    anchorEl={filterMenu}
-                    onClose={filterMenuClose}
-                    anchorOrigin={{
-                        vertical: 'bottom',
-                        horizontal: 'center',
-                    }}
-                    transformOrigin={{
-                        vertical: 'top',
-                        horizontal: 'center',
-                    }}
-                    classes={{
-                        paper: 'py-8',
-                    }}
-                >
-                    <MenuItem role="button" onClick={handleDays} data-value={7}>
-                        <ListItemText primary="7 dias" />
-                    </MenuItem>
-                    <MenuItem role="button" onClick={handleDays} data-value={14}>
-                        <ListItemText primary="14 dias" />
-                    </MenuItem>
-                    <MenuItem role="button" onClick={handleDays} data-value=''>
-                        <ListItemText primary="Mês todo" />
-                    </MenuItem>
-                </Popover>
+                    <Popover
+                        open={Boolean(filterMenu)}
+                        anchorEl={filterMenu}
+                        onClose={filterMenuClose}
+                        anchorOrigin={{
+                            vertical: 'bottom',
+                            horizontal: 'center',
+                        }}
+                        transformOrigin={{
+                            vertical: 'top',
+                            horizontal: 'center',
+                        }}
+                        classes={{
+                            paper: 'py-8',
+                        }}
+                    >
+                        <MenuItem role="button" onClick={handleDays} data-value={7}>
+                            <ListItemText primary="7 dias" />
+                        </MenuItem>
+                        <MenuItem role="button" onClick={handleDays} data-value={14}>
+                            <ListItemText primary="14 dias" />
+                        </MenuItem>
+                        <MenuItem role="button" onClick={handleDays} data-value=''>
+                            <ListItemText primary="Mês todo" />
+                        </MenuItem>
+                    </Popover>
 
-                <Hidden smDown>
-                    <div>
-                        <DateRangePicker
-                            showOneCalendar
-                            placeholder="Selecionar datas"
-                            className='mr-5'
-                            disabledDate={afterToday()}
-                            format='dd/MM/yy'
-                            character=' - '
-                            locale={locale}
-                            onChange={(newValue) => dispatch(setDateRange(newValue))}
+                    <Hidden smDown>
+                        <div>
+                            <DateRangePicker
+                                showOneCalendar
+                                placeholder="Selecionar datas"
+                                className='mr-5'
+                                disabledDate={afterToday()}
+                                format='dd/MM/yy'
+                                character=' - '
+                                locale={locale}
+                                onChange={(newValue) => dispatch(setDateRange(newValue))}
 
-                        />
-                        <Button className={previousDays == 7 ? 'active' : ''} variant="contained" onClick={handleDays} data-value={7}>7 dias</Button>
-                        <Button className={`${previousDays == 14 ? 'active' : ''} mx-5 `} variant="contained" onClick={handleDays} data-value={14}>14 dias</Button>
-                        <Button className={previousDays !== 7 && previousDays !== 14 ? 'active' : ''} variant="contained" onClick={handleDays} data-value=''>Mês todo</Button>
+                            />
+                            <Button className={previousDays == 7 ? 'active' : ''} variant="contained" onClick={handleDays} data-value={7}>7 dias</Button>
+                            <Button className={`${previousDays == 14 ? 'active' : ''} mx-5 `} variant="contained" onClick={handleDays} data-value={14}>14 dias</Button>
+                            <Button className={previousDays !== 7 && previousDays !== 14 ? 'active' : ''} variant="contained" onClick={handleDays} data-value=''>Mês todo</Button>
 
-                    </div>
-                </Hidden>
+                        </div>
+                    </Hidden></> : <></>}
 
             </div>
 
