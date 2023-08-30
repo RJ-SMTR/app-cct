@@ -3,6 +3,7 @@ import fuse from './fuse';
 import i18n from './i18nSlice';
 import user from './userSlice';
 import steps from './formStepSlice'
+import admin from './adminSlice'
 
 
 const createReducer = (asyncReducers) => (state, action) => {
@@ -11,6 +12,7 @@ const createReducer = (asyncReducers) => (state, action) => {
     i18n,
     steps,
     user,
+    admin,
     ...asyncReducers,
   });
 

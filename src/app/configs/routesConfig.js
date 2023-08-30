@@ -12,6 +12,8 @@ import HomeConifg from '../main/pages/home/HomeConfig';
 import profileAppConfig from '../main/pages/profile/profileAppConfig';
 import ExtractConfig from '../main/pages/extract/ExtractConfig';
 import ResumeConfig from '../main/pages/resume/ResumeConfig';
+import AdminSignIn from '../main/pages/auth/admin/sign-in/SignInConfig';
+import AdminConfig from '../main/pages/admin/AdminConfig';
 
 const routeConfigs = [
   HomeConifg,
@@ -22,7 +24,9 @@ const routeConfigs = [
   ConcludeConfig,
   profileAppConfig,
   ExtractConfig,
-  ResumeConfig
+  ResumeConfig,
+  AdminSignIn,
+  AdminConfig
 ];
 
 const routes = [
