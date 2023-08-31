@@ -19,9 +19,10 @@ export const { setUsersList, userList } = stepSlice.actions;
 export default stepSlice.reducer;
 
 export const getUser = () => (dispatch) => {
+    const token = window.localStorage.getItem('jwt_access_token');
     return new Promise((resolve, reject) => {
         api.get('/users?page=1&limit=4', {
-            headers: { 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6eyJpZCI6MSwibmFtZSI6IkFkbWluIn0sImlhdCI6MTY5MzQxMjAxMiwiZXhwIjoxNjkzNDk4NDEyfQ.RFrkswDPevsPRwbulgwPg0N75GKhYsKKiMCqjhhzJLE'}
+            headers: { 'Authorization': `Bearer ${token}`}
         })
             .then((response) => {
                 const filteredUsers = response.data.data.filter(user =>

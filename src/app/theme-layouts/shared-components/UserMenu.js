@@ -23,8 +23,8 @@ function UserMenu(props) {
   const userMenuClose = () => {
     setUserMenu(null);
   };
-  const fullName = user.fullName
-  const [first] = fullName.split(' ');
+  const fullName = user.fullName ?? ''
+  const [first] = fullName?.split(' ');
 
   return (
     <>

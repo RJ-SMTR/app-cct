@@ -22,8 +22,8 @@ function ResumeApp() {
   const [filterMenu, setFilterMenu] = useState(null);
     const {getResume, resume} = useContext(ResumeContext)
     const user = useSelector(selectUser);
-    const fullName = user.fullName
-    const [first] = fullName.split(' ');
+    const fullName = user.fullName ?? 'Admin'
+    const [first] = fullName?.split(' ');
 
     useEffect(() => {
       getResume(previousDays, dateRange)

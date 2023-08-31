@@ -10,8 +10,8 @@ import TableTransactions from './widgets/Table'
 
 function ExtractApp() {
   const user = useSelector(selectUser);
-  const fullName = user.fullName
-  const [first] = fullName.split(' ');
+  const fullName = user.fullName ?? 'Admin'
+  const [first] = fullName?.split(' ');
 
   return (
     <>

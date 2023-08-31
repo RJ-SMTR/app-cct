@@ -240,12 +240,12 @@ function Error404Page() {
             color="text.secondary"
             className="mt-8 text-lg md:text-xl font-medium tracking-tight text-center"
           >
-            The page you requested could not be found.
+            A página solicitada não pode ser encontrada
           </Typography>
         </motion.div>
 
         <Link className="block font-normal mt-48" to="/">
-          Back to Dashboard
+          Voltar para página inicial
         </Link>
       </div>
     </div>

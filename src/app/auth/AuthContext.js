@@ -207,6 +207,8 @@ export function AuthProvider({ children }) {
       })
         .then((response) => {
           if (response) {
+            jwtService.setSession(response.data.token)
+            jwtService.emit('onLogin', response.data.user)
             resolve(response)
           }
         })

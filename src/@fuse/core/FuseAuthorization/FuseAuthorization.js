@@ -76,7 +76,7 @@ class FuseAuthorization extends Component {
         User must be on unAuthorized page or just logged in
         Redirect to dashboard or loginRedirectUrl
         */
-      setTimeout(() => history.push(redirectUrl), 0);
+      setTimeout(() => history.push("/not-auth"), 0);
 
       resetSessionRedirectUrl();
     }

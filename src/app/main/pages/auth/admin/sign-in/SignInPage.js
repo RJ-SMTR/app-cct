@@ -29,6 +29,7 @@ const defaultValues = {
 
 function SignInPage() {
     const [sent, setSent] = useState(false)
+    const [link, setLink] = useState('')
     const { control, formState, handleSubmit, setError, setValue } = useForm({
         mode: 'onChange',
         defaultValues,
@@ -42,7 +43,7 @@ function SignInPage() {
             .adminSignIn(email)
             .then((response) => {
                 const link = response.data.link
-                console.log(link)
+                setLink(link)
                 setSent(true)
             })
             .catch((_errors) => {
@@ -59,7 +60,7 @@ function SignInPage() {
                         {sent ? "Enviado com sucesso!" : "Login de Administrador"}
                     </Typography>
                     
-                    {sent ? <Box>Foi enviado um email para que você possa prosseguir com seu login!</Box> : 
+                    {sent ? <><Box>Foi enviado um email para que você possa prosseguir com seu login!</Box> <Link className='underline' to={link}>Link que seria enviado para email</Link></>: 
                     <form
                         name="loginForm"
                         noValidate

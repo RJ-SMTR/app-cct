@@ -10,8 +10,8 @@ import { Link } from 'react-router-dom';
 
 function Home(props) {
   const user = useSelector(selectUser);
-  const fullName = user.fullName
-  const [first] = fullName.split(' ');
+  const fullName = user.fullName ?? 'Admin'
+  const [first] = fullName?.split(' ');
 
   return (
     <>

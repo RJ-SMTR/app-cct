@@ -42,7 +42,7 @@ export function PersonalInfo({ user }) {
         defaultValues: {
             permitCode: user.permitCode,
             email: user.email,
-            fullName: user.fullName,
+            fullName: user.fullName ?? '',
             phone: user.phone ?? '',
             bankAccount: '',
             bankCode: '',
