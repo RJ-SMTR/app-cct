@@ -15,7 +15,8 @@ const jwtServiceConfig = {
   invite: `auth/licensee/invite`,
   bankStatement: 'bank-statements/me',
   resumeTrips: '/trips-income/me',
-  adminSignIn: 'auth/admin/email/login'
+  adminSignIn: 'auth/admin/email/login',
+  adminConclude: 'auth/admin/email/conclude-login',
 };
 
 export default jwtServiceConfig;

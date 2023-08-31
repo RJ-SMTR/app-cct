@@ -202,7 +202,7 @@ export function AuthProvider({ children }) {
   }
   function handleAdminLogin(hash){
     return new Promise((resolve, reject) => {
-      api.post(`auth/otp/verify`, {
+      api.post(jwtServiceConfig.adminConclude, {
         hash
       })
         .then((response) => {
