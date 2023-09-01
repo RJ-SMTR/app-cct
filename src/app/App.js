@@ -48,7 +48,8 @@ function App() {
 
   const langDirection = useSelector(selectCurrentLanguageDirection);
   const mainTheme = useSelector(selectMainTheme);
-
+  const loginRedirectUrl = user.role?.name === 'Admin' ? '/admin' : settingsConfig.loginRedirectUrl;
+  
   return (
     <CacheProvider value={createCache(emotionCacheOptions[langDirection])}>
       <FuseTheme theme={mainTheme} direction={langDirection}>
@@ -58,7 +59,7 @@ function App() {
           <BrowserRouter>
             <FuseAuthorization
               userRole={user.role?.name}
-              loginRedirectUrl={settingsConfig.loginRedirectUrl}
+              loginRedirectUrl={loginRedirectUrl}
             >
               <SnackbarProvider
                 maxSnack={5}

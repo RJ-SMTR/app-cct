@@ -102,13 +102,17 @@ class JwtService extends FuseUtils.EventEmitter {
     });
   };
   
-  adminSignIn = (email) => {
+  
+  adminSignIn = (email, password) => {
     return new Promise((resolve, reject) => {
       api.post(jwtServiceConfig.adminSignIn, {
-        email
+        email,
+        password
       })
         .then((response) => {
           resolve(response)
+          this.setSession(response.data.token)
+          this.emit('onLogin', response.data.user)
         })
         .catch((error) => {
           reject(error);

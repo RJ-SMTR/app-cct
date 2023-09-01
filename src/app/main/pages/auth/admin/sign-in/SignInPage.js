@@ -6,7 +6,7 @@ import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { Link } from 'react-router-dom';
+import { Link, redirect } from 'react-router-dom';
 import * as yup from 'yup';
 import _ from '@lodash';
 import Box from '@mui/material/Box';
@@ -19,17 +19,18 @@ import { useState } from 'react';
  */
 
 const schema = yup.object().shape({
-    email: yup.string().required('Insira seu e-mail'),
+    email: yup.string().required('Insira seu código de permissão'),
+    password: yup.string().required('Por favor insira sua senha.').min(4, 'Senha muito curta'),
 });
 
 const defaultValues = {
     email: '',
-    remember: true,
+    password: '',
 };
+
 
 function SignInPage() {
     const [sent, setSent] = useState(false)
-    const [link, setLink] = useState('')
     const { control, formState, handleSubmit, setError, setValue } = useForm({
         mode: 'onChange',
         defaultValues,
@@ -38,13 +39,10 @@ function SignInPage() {
 
     const { isValid, dirtyFields, errors } = formState;
 
-    function onSubmit({ email }) {
+    function onSubmit({ email, password }) {
         jwtService
-            .adminSignIn(email)
+            .adminSignIn(email, password)
             .then((response) => {
-                const link = response.data.link
-                setLink(link)
-                setSent(true)
             })
             .catch((_errors) => {
               
@@ -85,6 +83,23 @@ function SignInPage() {
                                 />
                             )}
                         />
+                            <Controller
+                                name="password"
+                                control={control}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        className="mb-24"
+                                        label="Senha"
+                                        type="password"
+                                        error={!!errors.password}
+                                        helperText={errors?.password?.message}
+                                        variant="outlined"
+                                        required
+                                        fullWidth
+                                    />
+                                )}
+                            />
                         <Button
                             variant="contained"
                             color="secondary"

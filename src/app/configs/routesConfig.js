@@ -14,7 +14,6 @@ import ExtractConfig from '../main/pages/extract/ExtractConfig';
 import ResumeConfig from '../main/pages/resume/ResumeConfig';
 import AdminSignIn from '../main/pages/auth/admin/sign-in/SignInConfig';
 import AdminConfig from '../main/pages/admin/AdminConfig';
-import AdminConclude from '../main/pages/auth/admin/conclude/ConcludeConfig';
 import ForbiddenConfig from '../main/pages/errors/401/ForbiddenConfig';
 
 const routeConfigs = [
@@ -29,7 +28,6 @@ const routeConfigs = [
   ResumeConfig,
   AdminSignIn,
   AdminConfig,
-  AdminConclude,
   ForbiddenConfig
 ];
 

@@ -43,16 +43,19 @@ class FuseAuthorization extends Component {
     const matchedRoutes = matchRoutes(state.routes, pathname);
     // Verifica se a url contém conclude-registration
     const matchedPath = matchPath({path: '/conclude-registration/:hash'},pathname)
-    const concludeAdmin = matchPath({path: '/conclude-admin/:hash'},pathname)
 
     const matched = matchedRoutes ? matchedRoutes[0] : false;
 
     const userHasPermission = FuseUtils.hasPermission(matched.route.auth, userRole);
 
-    const ignoredPaths = ['/', '/callback', '/sign-in', '/sign-out', '/logout', '/404', matchedPath?.pathname, concludeAdmin?.pathname, '/forgot-password'];
+    const ignoredPaths = ['/', '/callback', '/sign-in', '/sign-out', '/logout', '/404', matchedPath?.pathname, '/forgot-password'];
 
     if (matched && !userHasPermission && !ignoredPaths.includes(pathname) ) {
-      setSessionRedirectUrl(pathname);
+      if(userRole === "Admin"){
+        setSessionRedirectUrl("/admin");
+      } else{
+        setSessionRedirectUrl("/");
+      }     
     }
 
     return {
@@ -76,7 +79,7 @@ class FuseAuthorization extends Component {
         User must be on unAuthorized page or just logged in
         Redirect to dashboard or loginRedirectUrl
         */
-      setTimeout(() => history.push("/not-auth"), 0);
+      setTimeout(() => history.push(redirectUrl), 0);
 
       resetSessionRedirectUrl();
     }

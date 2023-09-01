@@ -200,30 +200,12 @@ export function AuthProvider({ children }) {
 
     })
   }
-  function handleAdminLogin(hash){
-    return new Promise((resolve, reject) => {
-      api.post(jwtServiceConfig.adminConclude, {
-        hash
-      })
-        .then((response) => {
-          if (response) {
-            jwtService.setSession(response.data.token)
-            jwtService.emit('onLogin', response.data.user)
-            resolve(response)
-          }
-        })
-        .catch((error) => {
-          reject(error)
-        })
-    })
-
-  }
 
   return waitAuthCheck ? (
     <FuseSplashScreen />
   ) : (
     <AuthContext.Provider
-      value={{ isAuthenticated, forgotPasswordFunction, resetPasswordFunction, handlePreRegister, validPermitCode, handleRegister, handleInvite, patchInfo, handleAdminLogin }}
+      value={{ isAuthenticated, forgotPasswordFunction, resetPasswordFunction, handlePreRegister, validPermitCode, handleRegister, handleInvite, patchInfo }}
     >
       {children}
     </AuthContext.Provider>
