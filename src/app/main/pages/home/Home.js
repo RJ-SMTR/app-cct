@@ -1,17 +1,34 @@
 import { styled } from '@mui/material/styles';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectUser } from 'app/store/userSlice';
-import {CurrentStatementWidget, TripsResume} from './widgets/Widgets'
 import { Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
+import Table from '../extract/widgets/Table';
+import { getTodayStatements,setDateRange,setFullReport, setSearchingDay, setSearchingWeek } from 'app/store/extractSlice';
+import { TripsResume } from './widgets/Widgets';
+import { useEffect } from 'react';
 
 
-function Home(props) {
+function Home() {
+  const dispatch = useDispatch()
+
   const user = useSelector(selectUser);
   const fullName = user.fullName
   const [first] = fullName.split(' ');
+  const todayStatements = useSelector(state => state.extract.todayStatements)
+  const mapInfo = useSelector(state => state.extract.mapInfo)
+
+useEffect(() => {
+  dispatch(setFullReport(false))
+  dispatch(setSearchingDay(false))
+  dispatch(setSearchingWeek(false))
+  dispatch(setDateRange([]))
+  dispatch(getTodayStatements())
+}, [])
+
+
 
   return (
     <>
@@ -20,10 +37,11 @@ function Home(props) {
           <h2 className='fw-black'>Bem vindo, {first}</h2>
           <p className='w-[100%] md:w-[35%]'>Esse é seu dashboard, aqui você pode conferir os valores que deve receber nos próximos dias e um resumo das vaigens realizadas.</p>
         </div>
-        <div className="p-24 pt-10 max-w-[342px]">
+        <div className="p-24 pt-10 ">
           <Typography className='font-medium text-3xl'>Extrato</Typography>
           <Box className='flex flex-col  justify-around'>
-          <CurrentStatementWidget/>
+         <Table/>
+           <Link className='text-white no-underline'  to="/extrato">
           <Button
             variant="contained"
             color="secondary"
@@ -32,17 +50,17 @@ function Home(props) {
             size="large"
             role="button"
           >
-            <Link className='text-white no-underline'  to="/extrato">
               Ver extrato completo 
-            </Link>
           </Button>
+            </Link>
           </Box>
           <br />
         </div>
-      <div className="p-24 pt-10 max-w-[342px]" >
+      <div className="p-24 pt-10 " >
           <Typography className='font-medium text-3xl'>Resumo das Viagens</Typography>
           <Box className='flex flex-col  justify-around md:justify-start'>
-            <TripsResume/>
+              <TripsResume mapInfo={mapInfo} statements={todayStatements}/>
+          <Link className='text-white no-underline' to="/extrato">
           <Button
             variant="contained"
             color="secondary"
@@ -51,10 +69,9 @@ function Home(props) {
             size="large"
             role="button"
           >
-            <Link className='text-white no-underline' to="/resumo">
               Ver resumo completo
-            </Link>
           </Button>
+            </Link>
           </Box>
 
           <br />
