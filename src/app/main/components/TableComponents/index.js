@@ -9,7 +9,11 @@ import { useSelector } from 'react-redux';
 export function CustomTable(data){
   const searchingDay = useSelector(state => state.extract.searchingDay);
   const searchingWeek = useSelector(state => state.extract.searchingWeek);
-    const dayAmount = parseInt(data.data.transactions) * 4.3
+  const dayAmount = parseInt(data.data.transactions) * 4.3
+  const formatter = new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
   return  (
     data ? <TableRow key={data.data.id} className="hover:bg-gray-100 cursor-pointer">
       <TableCell component="th" scope="row" onClick={data.handleClickRow}>
@@ -20,9 +24,9 @@ export function CustomTable(data){
       <TableCell component="th" scope="row">
         <Typography className="whitespace-nowrap">
           {searchingDay ? (
-            <>R$ {dayAmount.toFixed(2)}</>
+            <>{formatter.format(dayAmount)}</>
           ) : (
-            <>R$ {(data.data.amount ?? data.data.multipliedAmount).toFixed(2)}</>
+            <>{formatter.format(data.data.amount ?? data.data.multipliedAmount)}</>
           )}
         </Typography>
 
