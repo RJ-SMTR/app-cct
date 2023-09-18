@@ -15,6 +15,7 @@ import ResumeConfig from '../main/pages/resume/ResumeConfig';
 import AdminSignIn from '../main/pages/auth/admin/sign-in/SignInConfig';
 import AdminConfig from '../main/pages/admin/AdminConfig';
 import ForbiddenConfig from '../main/pages/errors/401/ForbiddenConfig';
+import AdminUserConfig from '../main/pages/admin/UserAnalysis/UserConfig';
 
 const routeConfigs = [
   HomeConifg,
@@ -28,7 +29,8 @@ const routeConfigs = [
   ResumeConfig,
   AdminSignIn,
   AdminConfig,
-  ForbiddenConfig
+  ForbiddenConfig,
+  AdminUserConfig,
 ];
 
 const routes = [

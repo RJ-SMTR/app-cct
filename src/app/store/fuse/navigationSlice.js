@@ -1,5 +1,6 @@
 import { createEntityAdapter, createSelector, createSlice } from '@reduxjs/toolkit';
 import navigationConfig from 'app/configs/navigationConfig';
+import navAdminConfig from 'app/configs/navAdminConfig';
 import FuseUtils from '@fuse/utils';
 import i18next from 'i18next';
 import _ from '@lodash';
@@ -70,11 +71,11 @@ export const selectNavigation = createSelector(
         return item;
       });
     }
-
+    const configToUse = userRole === 'Admin' ? navAdminConfig : navigationConfig;
     return setTranslationValues(
       _.merge(
         [],
-        filterRecursively(navigation, (item) => FuseUtils.hasPermission(item.auth, userRole))
+        filterRecursively(configToUse, (item) => FuseUtils.hasPermission(item.auth, userRole))
       )
     );
   }
