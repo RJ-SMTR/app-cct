@@ -4,9 +4,13 @@ import Typography from '@mui/material/Typography';
 import ReactApexChart from 'react-apexcharts';
 import { useContext } from 'react';
 import { ExtractContext } from 'src/app/hooks/ExtractContext';
+import { useSelector } from 'react-redux';
 
 function Chart() {
-    const {chartOptions, average, statements} = useContext(ExtractContext)
+    const {chartOptions, average} = useContext(ExtractContext)
+
+    const statements = useSelector(state => state.extract.statements)
+
     const firstDate = new Date(`${statements[0]?.date}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
     const lastDate = new Date(`${statements[statements.length - 1 ]?.date}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
   return (
