@@ -16,14 +16,14 @@ const navAdminConfig = [
         icon: 'heroicons-outline:home',
         url: 'admin',
     },
-    {
-        id: 'users',
-        title: 'Usuários',
-        translate: 'Usuários',
-        type: 'item',
-        icon: 'heroicons-outline:user-circle',
-        url: 'admin/users',
-    }
+    // {
+    //     id: 'users',
+    //     title: 'Usuários',
+    //     translate: 'Usuários',
+    //     type: 'item',
+    //     icon: 'heroicons-outline:user-circle',
+    //     url: 'admin/users',
+    // }
    
 ];
 
