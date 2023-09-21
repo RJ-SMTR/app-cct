@@ -94,7 +94,7 @@ export  function TableUsers() {
                                       <TableCell component="th" scope="row">
                                          <Typography className="whitespace-nowrap">
                                             <Link to={`/admin/user/${i.permitCode}`}>
-                                                ver
+                                                Detalhes
                                             </Link>
                                              </Typography>
                                       </TableCell>

@@ -27,8 +27,6 @@ const style = {
 
 
 export function PersonalInfo({ user }) {
-
-    const { patchInfo } = useContext(AuthContext)
     const [isEditable, setIsEditable] = useState(false)
     const [saved, setSaved] = useState(false)
     const [open, setOpen] = useState(false);
@@ -42,27 +40,29 @@ export function PersonalInfo({ user }) {
             email: user.email,
             fullName: user.fullName ?? '',
             phone: user.phone ?? '',
-        
+
         },
         resolver: yupResolver(personalInfoSchema),
     });
     const { isValid, errors } = formState;
 
 
-    function onSubmit({ email }) {
-        patchInfo({ email })
-            .then(() => {
-                if (isValid) {
-                    setIsEditable(false)
-                    setSaved(true)
-                    handleOpen()
-                }
-            })
-            .catch((_errors) => {
-                setError(_errors.email, {
-                    message: 'E-mail inválido'
-                });
-            });
+    function onSubmit({ info }) {
+        const token = window.localStorage.getItem('jwt_access_token');
+        return new Promise((resolve, reject) => {
+            api.patch(`users/${id}`,
+                info, {
+                headers: { "Authorization": `Bearer ${token}` },
+            }
+            )
+                .then((response) => {
+                    resolve(response.data)
+                })
+                .catch((error) => {
+                    reject(error.response.data.errors)
+                })
+
+        })
 
     }
     function clear() {

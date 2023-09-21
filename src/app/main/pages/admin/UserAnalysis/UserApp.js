@@ -4,13 +4,15 @@ import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
-import { selectUser } from 'app/store/userSlice';
+import { selectUser, setUser } from 'app/store/userSlice';
 import { BankInfo, PersonalInfo } from './forms/userForms';
 
 import { useThemeMediaQuery
  } from '@fuse/hooks';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { api } from 'app/configs/api/api';
 const Root = styled(FusePageSimple)(({ theme }) => ({
   '& .FusePageSimple-header': {
     backgroundColor: theme.palette.background.paper,
@@ -24,9 +26,15 @@ const Root = styled(FusePageSimple)(({ theme }) => ({
 }));
 
 function UserApp() {
+  const [user, setUser] = useState({})
   let {id} = useParams()
-  const user = useSelector(selectUser);
   const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
+  useEffect(() => {
+    api.get(`/users/${id}`)
+        .then(response => {
+          setUser(response.data)
+        })
+  }, [])
 
   return (
     <Root
