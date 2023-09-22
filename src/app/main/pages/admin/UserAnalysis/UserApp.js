@@ -26,11 +26,14 @@ const Root = styled(FusePageSimple)(({ theme }) => ({
 }));
 
 function UserApp() {
-  const [user, setUser] = useState({})
+  const [user, setUser] = useState()
   let {id} = useParams()
   const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
   useEffect(() => {
-    api.get(`/users/${id}`)
+    const token = window.localStorage.getItem('jwt_access_token');
+    api.get(`/users/${id}`, {
+      headers: { "Authorization": `Bearer ${token}` },
+    })
         .then(response => {
           setUser(response.data)
         })
@@ -66,27 +69,26 @@ function UserApp() {
              </div>
            </div>
             <div>
-              <button className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-12 '>
+              <button className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-12 mb-12 '>
               Reenviar e-mail de cadastro
              </button>
             </div>
           
           </div>
-
         </div>
       }
       content={
       <>
-          <div>
-            <Link>
-            Voltar
-            </Link>
-          </div>
+    
           <div className="flex flex-col md:flex-row max-w-[95%] w-full mx-auto my-32">
-            
-            <PersonalInfo user={user} />
-        
-            <BankInfo user={user} />
+            {user && (
+                  <>
+                <PersonalInfo user={user} />
+
+                <BankInfo user={user} />
+                </>
+            )}
+       
           </div>
       </>
       }

@@ -17,8 +17,7 @@ export  function TableUsers() {
 
 
     const handleLink = (user) => {
-        console.log(user.permitCode)
-      redirect(`admin/users/${user.permitCode}`)
+      redirect(`admin/users/${user.id}`)
     }
    
   return (
@@ -93,7 +92,7 @@ export  function TableUsers() {
                                       </TableCell>
                                       <TableCell component="th" scope="row">
                                          <Typography className="whitespace-nowrap">
-                                            <Link to={`/admin/user/${i.permitCode}`}>
+                                             <Link to={`/admin/user/${i.id}`} className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10'>
                                                 Detalhes
                                             </Link>
                                              </Typography>

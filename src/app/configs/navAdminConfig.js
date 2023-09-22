@@ -14,16 +14,9 @@ const navAdminConfig = [
         translate: 'Home',
         type: 'item',
         icon: 'heroicons-outline:home',
-        url: 'admin',
+        url: '/',
     },
-    // {
-    //     id: 'users',
-    //     title: 'Usuários',
-    //     translate: 'Usuários',
-    //     type: 'item',
-    //     icon: 'heroicons-outline:user-circle',
-    //     url: 'admin/users',
-    // }
+  
    
 ];
 

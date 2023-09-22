@@ -8,11 +8,10 @@ import { useContext } from "react";
 import { AuthContext } from "src/app/auth/AuthContext";
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { api } from "app/configs/api/api";
 
 
-const personalInfoSchema = yup.object().shape({
-    phone: yup.string().required("Insira um telefone válido"),
-});
+
 
 const style = {
     position: 'absolute',
@@ -34,29 +33,30 @@ export function PersonalInfo({ user }) {
     const handleClose = () => setOpen(false);
 
 
-    const { handleSubmit, control, setError, formState } = useForm({
+    const { handleSubmit, control, formState } = useForm({
         defaultValues: {
-            permitCode: user.permitCode,
+            // permitCode: user.permitCode,
             email: user.email,
-            fullName: user.fullName ?? '',
-            phone: user.phone ?? '',
+            // fullName: user.fullName ?? '',
+            // phone: user.phone ?? '',
 
         },
-        resolver: yupResolver(personalInfoSchema),
     });
     const { isValid, errors } = formState;
 
 
-    function onSubmit({ info }) {
+    function onSubmit(formData) {
+        console.log(formData)
         const token = window.localStorage.getItem('jwt_access_token');
         return new Promise((resolve, reject) => {
-            api.patch(`users/${id}`,
-                info, {
+            api.patch(`users/${user.id}`,
+                formData, {
                 headers: { "Authorization": `Bearer ${token}` },
             }
             )
                 .then((response) => {
                     resolve(response.data)
+                    setIsEditable(false)
                 })
                 .catch((error) => {
                     reject(error.response.data.errors)
@@ -66,13 +66,9 @@ export function PersonalInfo({ user }) {
 
     }
     function clear() {
-        if (isValid && saved) {
-            clearErrors()
             setIsEditable(false)
-        } else {
             handleOpen()
-
-        }
+      
     }
     const renderButton = () => {
         if (!isEditable) {
@@ -130,51 +126,38 @@ export function PersonalInfo({ user }) {
                     </Box>
                 </Box>
             </Modal>
-            <Card className=" w-full md:mx-9 p-24 relative">
+            <Card className="w-full md:mx-9 p-24 relative">
                 <header className="flex justify-between items-center">
                     <h1 className="font-semibold">
                         Dados Cadastrais
                     </h1>
-
                 </header>
-                <form name="Personal"
+                <form
+                    name="Personal"
                     noValidate
+                    onSubmit={handleSubmit(onSubmit)}
                     className="flex flex-col justify-center w-full mt-32"
-                    onSubmit={handleSubmit(onSubmit)}>
+                >
                     <div className='absolute right-24 top-24'>
                         {renderButton()}
                     </div>
-                    <Controller
-                        name="permitCode"
-                        control={control}
-                        render={({ field }) => (
-                            <TextField
-                                {...field}
-                                className="mb-24"
-                                label="Código de Permissão"
-                                type="string"
-                                variant="outlined"
-                                disabled
-                                value={user.permitCode}
-                                fullWidth
-                            />
-                        )}
+                    <TextField
+                        className="mb-24"
+                        label="Código de Permissão"
+                        type="string"
+                        variant="outlined"
+                        disabled
+                        value={user.permitCode}
+                        fullWidth
                     />
-                    <Controller
-                        name="fullName"
-                        control={control}
-                        render={({ field }) => (
-                            <TextField
-                                {...field}
-                                className="mb-24"
-                                label="Nome"
-                                type="string"
-                                variant="outlined"
-                                disabled
-                                value={user.fullName}
-                                fullWidth
-                            />
-                        )}
+                    <TextField
+                        className="mb-24"
+                        label="Nome"
+                        type="string"
+                        variant="outlined"
+                        disabled
+                        value={user.fullName}
+                        fullWidth
                     />
                     <Controller
                         name="email"
@@ -187,40 +170,32 @@ export function PersonalInfo({ user }) {
                                 type="string"
                                 variant="outlined"
                                 disabled={!isEditable}
-                                value={user.email}
                                 fullWidth
                                 error={!!errors.invalidEmail}
                                 helperText={errors?.invalidEmail?.message}
                             />
                         )}
                     />
-                    <Controller
-                        name="phone"
-                        control={control}
-                        render={({ field }) => (
-                            <TextField
-                                {...field}
-                                disabled
-                                className="mb-24"
-                                label="Celular"
-                                variant="outlined"
-                                fullWidth
-
-                            />
-                        )}
+                    <TextField
+                        disabled
+                        className="mb-24"
+                        label="Celular"
+                        variant="outlined"
+                        fullWidth
+                        value={user.phone}
                     />
-
                 </form>
             </Card>
         </>
-    )
+    );
+
 }
 
 
 
 
 
-export function BankInfo() {
+export function BankInfo({user}) {
 
     return (
         <>
@@ -238,9 +213,8 @@ export function BankInfo() {
                 >
 
 
-
                     <TextField
-                        value='1'
+                        value={user.bankCode}
                         disabled
                         label='Banco'
                         className="mb-24"
@@ -249,7 +223,7 @@ export function BankInfo() {
                     />
 
                     <TextField
-                        value='1'
+                        value={user.bankAgency}
                         disabled
                         className="mb-24"
                         label="Agência"
@@ -260,7 +234,7 @@ export function BankInfo() {
                     />
                     <Box className="flex justify-between">
                         <TextField
-                            value='1'
+                            value={user.bankAccount}
                             disabled
                             className="mb-24 w-[68%]"
                             label="Conta"
@@ -270,7 +244,7 @@ export function BankInfo() {
                         />
 
                         <TextField
-                            value='1'
+                            value={user.bankAccountDigit}
                             disabled
                             className="mb-24 w-[30%]"
                             label="Dígito"
