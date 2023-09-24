@@ -35,6 +35,7 @@ function UserApp() {
       headers: { "Authorization": `Bearer ${token}` },
     })
         .then(response => {
+          console.log(response.data)
           setUser(response.data)
         })
   }, [])
@@ -63,7 +64,8 @@ function UserApp() {
              </div>
             
              <div className="flex flex-col items-center lg:items-start my-16 lg:mt-0 lg:ml-32 md:justify-between">
-                 <Typography className="text-lg font-bold leading-none">João</Typography>
+              
+                 <Typography className="text-lg font-bold leading-none">{user?.fullName}</Typography>
                  <Typography color="text.secondary">#{id}</Typography>
             
              </div>

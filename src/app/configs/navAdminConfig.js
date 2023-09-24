@@ -16,6 +16,14 @@ const navAdminConfig = [
         icon: 'heroicons-outline:home',
         url: '/',
     },
+    {
+        id: 'upload-component',
+        title: 'Upload',
+        translate: 'Upload',
+        type: 'item',
+        icon: 'heroicons-outline:upload',
+        url: 'upload',
+    },
   
    
 ];
