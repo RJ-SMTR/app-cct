@@ -1,0 +1,83 @@
+import { styled } from '@mui/material/styles';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectUser } from 'app/store/userSlice';
+import { Typography } from '@mui/material';
+import { Box } from '@mui/system';
+import Button from '@mui/material/Button';
+import { Link } from 'react-router-dom';
+import Table from '../extract/widgets/Table';
+import { getTodayStatements,setDateRange,setFullReport, setSearchingDay, setSearchingWeek } from 'app/store/extractSlice';
+import { TripsResume } from './widgets/Widgets';
+import { useEffect } from 'react';
+
+
+function Home() {
+  const dispatch = useDispatch()
+
+  const user = useSelector(selectUser);
+  const fullName = user.fullName
+  const [first] = fullName.split(' ');
+  const todayStatements = useSelector(state => state.extract.todayStatements)
+  const mapInfo = useSelector(state => state.extract.mapInfo)
+
+useEffect(() => {
+  dispatch(setFullReport(false))
+  dispatch(setSearchingDay(false))
+  dispatch(setSearchingWeek(false))
+  dispatch(setDateRange([]))
+  dispatch(getTodayStatements())
+}, [])
+
+
+
+  return (
+    <>
+    
+      <div className="p-24 text-white bg-[#004A80] overflow">
+          <h2 className='fw-black'>Bem vindo, {first}</h2>
+          <p className='w-[100%] md:w-[35%]'>Esse é seu dashboard, aqui você pode conferir os valores que deve receber nos próximos dias e um resumo das vaigens realizadas.</p>
+        </div>
+        <div className="p-24 pt-10 ">
+          <Typography className='font-medium text-3xl'>Extrato</Typography>
+          <Box className='flex flex-col  justify-around'>
+         <Table/>
+           <Link className='text-white no-underline'  to="/extrato">
+          <Button
+            variant="contained"
+            color="secondary"
+            className="w-full z-10 mt-24"
+            aria-label="Register"
+            size="large"
+            role="button"
+          >
+              Ver extrato completo 
+          </Button>
+            </Link>
+          </Box>
+          <br />
+        </div>
+      <div className="p-24 pt-10 " >
+          <Typography className='font-medium text-3xl'>Resumo das Viagens</Typography>
+          <Box className='flex flex-col  justify-around md:justify-start'>
+              <TripsResume mapInfo={mapInfo} statements={todayStatements}/>
+          <Link className='text-white no-underline' to="/extrato">
+          <Button
+            variant="contained"
+            color="secondary"
+            className="w-full z-10 mt-24"
+            aria-label="Register"
+            size="large"
+            role="button"
+          >
+              Ver resumo completo
+          </Button>
+            </Link>
+          </Box>
+
+          <br />
+        </div>
+    </>
+  );
+}
+
+export default Home;
