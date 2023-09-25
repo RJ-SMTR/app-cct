@@ -9,7 +9,12 @@ export function ExtractProvider({ children }) {
 const statements = useSelector(state => state.extract.statements)
 
 
-    
+
+    const formatter = new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+    });
+
     const average = useMemo(() => {
         let totalSum = 0;
         let average = 0;
@@ -18,12 +23,13 @@ const statements = useSelector(state => state.extract.statements)
             totalSum += currentValue;
             average = totalSum / (i + 1);
         }
-        return average.toFixed(2);
+        return formatter.format(average);
 
-    }, [statements])
+    }, [statements]);
 
 
-
+   
+  
     const theme = useTheme()
     const chartOptions = {
         chart: {
@@ -69,7 +75,9 @@ const statements = useSelector(state => state.extract.statements)
                 format: ' dd MMM, yyyy',
             },
             y: {
-                formatter: (value) => `R$${value}`,
+                formatter: function(value){
+                    return formatter.format(value)
+                } 
             },
         },
         xaxis: {

@@ -33,15 +33,6 @@ const navigationConfig = [
     url: 'extrato',
   },
   {
-    id: 'resume',
-    title: 'Resumo',
-    translate: 'Resumo',
-    type: 'item',
-    icon: 'material-outline:directions_bus',
-    url: 'resumo',
-  },
-
-  {
     id: 'support',
     title: 'Suporte',
     translate: 'Suporte',
