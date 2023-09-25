@@ -31,7 +31,7 @@ function Chart() {
               <div className="flex items-start mt-12 mr-8">
                   <div className="flex flex-col">
                       <Typography className="font-semibold text-3xl md:text-5xl tracking-tighter">
-                        R$ {average}
+                        {average}
                       </Typography>
                    
                   </div>

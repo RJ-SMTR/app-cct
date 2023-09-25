@@ -33,12 +33,13 @@ const navigationConfig = [
     url: 'extrato',
   },
   {
-    id: 'resume',
-    title: 'Resumo',
-    translate: 'Resumo',
+    id: 'support',
+    title: 'Suporte',
+    translate: 'Suporte',
     type: 'item',
-    icon: 'material-outline:directions_bus',
-    url: 'resumo',
+    icon: 'material-outline:contact_support',
+    target: '_blank',
+    url: 'https://secretariamunicipaldetransportes.movidesk.com/form/6594/',
   },
 
   {
