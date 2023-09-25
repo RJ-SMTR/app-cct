@@ -2,7 +2,7 @@ import { Card, Modal, Box, Typography } from "@mui/material"
 import _ from '@lodash';
 import { useState, useEffect } from "react";
 import { Controller, useForm } from 'react-hook-form';
-import { FormControl,Autocomplete } from "@mui/material";
+import { FormControl, Autocomplete } from "@mui/material";
 import TextField from '@mui/material/TextField';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { useContext } from "react";
@@ -89,9 +89,9 @@ export function PersonalInfo({ user }) {
         } else {
             return (
                 <div className='flex'>
-                    <button type="button" className='flex items-center rounded p-3 uppercase text-white bg-[#707070] hover:bg-[#4a4a4a ]  mr-2 h-[27px] min-h-[27px]' onClick={() => clear()}>
+                    {/* <button type="button" className='flex items-center rounded p-3 uppercase text-white bg-[#707070] hover:bg-[#4a4a4a ]  mr-2 h-[27px] min-h-[27px]' onClick={() => clear()}>
                         <FuseSvgIcon className="text-48 text-white" size={24} color="action">heroicons-outline:x</FuseSvgIcon>
-                    </button>
+                    </button> */}
                     <button type='submit' className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10' onClick={() => setIsEditable(true)}>
                         Salvar
                     </button>
@@ -111,7 +111,7 @@ export function PersonalInfo({ user }) {
                     <Box className="text-center flex flex-col content-center items-center">
                         {saved ?
                             <>
-                               
+
                                 <Box className="bg-green rounded-[100%]">
                                     <FuseSvgIcon className="text-48 text-white " size={48} color="action">heroicons-solid:check</FuseSvgIcon>
 
@@ -119,8 +119,8 @@ export function PersonalInfo({ user }) {
                                 <Typography id="modal-modal-title" variant="h6" component="h2">
                                     Seus dados foram salvos!
                                 </Typography>
-                            </> : 
-                        <>
+                            </> :
+                            <>
                                 <Box className="bg-red rounded-[100%]">
                                     <FuseSvgIcon className="text-48 text-white " size={48} color="action">heroicons-outline:x</FuseSvgIcon>
 
@@ -128,9 +128,9 @@ export function PersonalInfo({ user }) {
                                 <Typography id="modal-modal-title" variant="h6" component="h2">
                                     Seus dados não foram salvos!
                                 </Typography>
-                                </>
+                            </>
                         }
-                        
+
 
                     </Box>
                 </Box>
@@ -317,9 +317,9 @@ export function BankInfo({ user }) {
         } else {
             return (
                 <div className='flex'>
-                    <button type="button" className='flex items-center rounded p-3 uppercase text-white bg-[#707070] hover:bg-[#4a4a4a ]  mr-2 h-[27px] min-h-[27px]' onClick={() => clear()}>
+                    {/* <button type="button" className='flex items-center rounded p-3 uppercase text-white bg-[#707070] hover:bg-[#4a4a4a ]  mr-2 h-[27px] min-h-[27px]' onClick={() => clear()}>
                         <FuseSvgIcon className="text-48 text-white" size={24} color="action">heroicons-outline:x</FuseSvgIcon>
-                    </button>
+                    </button> */}
                     <button type='submit' className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10' onClick={() => setIsEditable(true)}>
                         Salvar
                     </button>
@@ -438,7 +438,7 @@ export function BankInfo({ user }) {
                         />
 
                     </Box>
-                 
+
                 </form>
             </Card>
         </>
