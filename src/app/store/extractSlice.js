@@ -169,14 +169,17 @@ export const getTodayStatements = () => (dispatch) => {
             });
     })
 }
-export const getMultipliedEntries = (statements, searchingDay) => (dispatch) => {
-   
+export const getMultipliedEntries = (statements, searchingDay, searchingWeek) => (dispatch) => {
         if(searchingDay){
             const sum = statements.map((statement) => statement)
                 .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
                 dispatch(setMultipliedEntries(sum));
-        } else {
+        } else if(searchingWeek) {
             const sum = statements.map((statement) => statement.multipliedAmount)
+                .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+            dispatch(setMultipliedEntries(sum));
+        } else {
+            const sum = statements.map((statement) => statement.amount)
                 .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
             dispatch(setMultipliedEntries(sum));
         }
