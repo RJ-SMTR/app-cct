@@ -15,8 +15,8 @@ function Home() {
   const dispatch = useDispatch()
 
   const user = useSelector(selectUser);
-  const fullName = user.fullName
-  const [first] = fullName.split(' ');
+  const fullName = user.fullName ?? 'Admin'
+  const [first] = fullName?.split(' ');
   const todayStatements = useSelector(state => state.extract.todayStatements)
   const mapInfo = useSelector(state => state.extract.mapInfo)
 

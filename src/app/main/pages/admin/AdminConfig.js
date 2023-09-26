@@ -1,9 +1,9 @@
 import { lazy } from 'react';
-import { authRoles } from 'src/app/auth';
+import AdminApp from './AdminApp';
 
-const ResumeApp = lazy(() => import('./ResumeApp'));
+const AdminAppLazy = lazy(() => import('./AdminApp'));
 
-const ResumeConfig = {
+const AdminConfig = {
     settings: {
         layout: {
             config: {
@@ -13,13 +13,13 @@ const ResumeConfig = {
             },
         },
     },
-    auth: authRoles.admin,
+    auth: ['Admin'],
     routes: [
         {
-            path: 'resumo',
-            element: <ResumeApp />,
+            path: 'admin',
+            element: <AdminAppLazy />,
         },
     ],
 };
 
-export default ResumeConfig;
+export default AdminConfig;

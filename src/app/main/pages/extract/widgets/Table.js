@@ -50,10 +50,9 @@ function TableTransactions() {
     const navigate =  useNavigate()
     const useStyles = makeStyles(() => ({
         root: {
-
-            "& .muiltr-1psng7p-MuiTablePagination-spacer": { display: "none" },
-            "& .muiltr-1oaobgk-MuiBadge-badge": {display: "inline", position: 'relative', padding: '3px'},
-            "& .muiltr-1nnvbx6-MuiBadge-badge": {display: "inline", position: 'relative', padding: '3px'},
+            "& .MuiTablePagination-spacer": { display: "none" },
+            "& .MuiBadge-badge": {display: "inline", position: 'relative', padding: '3px'},
+            "& .MuiBadge-badge": {display: "inline", position: 'relative', padding: '3px'},
         },
     }));
     const c = useStyles()

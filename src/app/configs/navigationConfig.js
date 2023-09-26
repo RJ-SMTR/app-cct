@@ -41,16 +41,6 @@ const navigationConfig = [
     target: '_blank',
     url: 'https://secretariamunicipaldetransportes.movidesk.com/form/6594/',
   },
-
-  {
-    id: 'support',
-    title: 'Suporte',
-    translate: 'Suporte',
-    type: 'item',
-    icon: 'material-outline:contact_support',
-    target: '_blank',
-    url: 'https://secretariamunicipaldetransportes.movidesk.com/form/6594/',
-  },
 ];
 
 export default navigationConfig;

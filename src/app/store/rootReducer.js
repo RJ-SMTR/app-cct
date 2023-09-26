@@ -4,6 +4,7 @@ import i18n from './i18nSlice';
 import user from './userSlice';
 import steps from './formStepSlice'
 import extract from './extractSlice'
+import admin from './adminSlice'
 
 
 const createReducer = (asyncReducers) => (state, action) => {
@@ -13,6 +14,7 @@ const createReducer = (asyncReducers) => (state, action) => {
     steps,
     user,
     extract,
+    admin,
     ...asyncReducers,
   });
 

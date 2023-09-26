@@ -5,7 +5,6 @@ import _ from '@lodash';
 import GlobalStyles from '@mui/material/GlobalStyles';
 import FuseNavHorizontalLayout1 from './horizontal/FuseNavHorizontalLayout1';
 import FuseNavVerticalLayout1 from './vertical/FuseNavVerticalLayout1';
-import FuseNavVerticalLayout2 from './vertical/FuseNavVerticalLayout2';
 import FuseNavHorizontalCollapse from './horizontal/types/FuseNavHorizontalCollapse';
 import FuseNavHorizontalGroup from './horizontal/types/FuseNavHorizontalGroup';
 import FuseNavHorizontalItem from './horizontal/types/FuseNavHorizontalItem';
@@ -73,7 +72,6 @@ function FuseNavigation(props) {
         {inputGlobalStyles}
         {props.layout === 'horizontal' && <FuseNavHorizontalLayout1 {...options} />}
         {props.layout === 'vertical' && <FuseNavVerticalLayout1 {...options} />}
-        {props.layout === 'vertical-2' && <FuseNavVerticalLayout2 {...options} />}
       </>
     );
   }
