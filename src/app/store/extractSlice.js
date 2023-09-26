@@ -10,7 +10,8 @@ const initialState = {
     dateRange: [],
     searchingDay: false,
     fullReport: false,
-    todayStatements: []
+    todayStatements: [],
+    multipliedEntries: []
 };
 
 const extractSlice = createSlice({
@@ -41,6 +42,9 @@ const extractSlice = createSlice({
         setTodayStatements: (state, action) => {
             state.todayStatements = action.payload;
         },
+        setMultipliedEntries: (state, action) => {
+            state.multipliedEntries = action.payload;
+        },
     },
 });
 
@@ -52,6 +56,7 @@ export const {
     statements,
     dateRange,
     fullReport,
+    multipliedEntries,
     todayStatements,
     setSearchingWeek,
     setStatements,
@@ -60,7 +65,8 @@ export const {
     setDateRange,
     setSearchingDay,
     setFullReport,
-    setTodayStatements
+    setTodayStatements,
+    setMultipliedEntries
 } = extractSlice.actions;
 
 export default extractSlice.reducer;
@@ -157,10 +163,23 @@ export const getTodayStatements = () => (dispatch) => {
             dispatch(setTodayStatements(response.data))
             dispatch(setMapInfo(response.data))
             resolve(response.data)
-            console.log(response.data)
         })
             .catch((error) => {
                 reject(error)
             });
     })
+}
+export const getMultipliedEntries = (statements, searchingDay) => (dispatch) => {
+   
+        if(searchingDay){
+            const sum = statements.map((statement) => statement)
+                .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+                dispatch(setMultipliedEntries(sum));
+        } else {
+            const sum = statements.map((statement) => statement.multipliedAmount)
+                .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+            dispatch(setMultipliedEntries(sum));
+        }
+
+   
 }
