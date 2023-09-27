@@ -35,7 +35,6 @@ function UserApp() {
       headers: { "Authorization": `Bearer ${token}` },
     })
         .then(response => {
-          console.log(response.data)
           setUser(response.data)
         })
   }, [])

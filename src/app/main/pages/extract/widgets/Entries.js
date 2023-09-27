@@ -27,15 +27,14 @@ function Entries() {
     }
     useEffect(() => {
 
-        if(searchingWeek){
-            dispatch(getMultipliedEntries(statements, searchingDay))
-        }
+       
         if(searchingDay){
             getDayEntries(statements)
             
+        } else {
+            dispatch(getMultipliedEntries(statements, searchingDay, searchingWeek))
         }
     }, [statements])
-    console.log(dayDate)
 
   return (
       <>{statements.length  ? <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden">
@@ -51,7 +50,7 @@ function Entries() {
           </div>
           <div className="flex flex-row flex-wrap mt-8 ">
               <Typography className="mt-8 font-medium text-3xl leading-none">
-                  {!searchingWeek ? formatter.format(statements[0]?.amount) : formatter.format(multipliedEntries)}
+                  {formatter.format(multipliedEntries)}
               </Typography>
           </div>
 

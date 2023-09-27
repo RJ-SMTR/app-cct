@@ -46,7 +46,6 @@ export function PersonalInfo({ user }) {
 
 
     function onSubmit(formData) {
-        console.log(formData)
         const token = window.localStorage.getItem('jwt_access_token');
         return new Promise((resolve, reject) => {
             api.patch(`users/${user.id}`,
