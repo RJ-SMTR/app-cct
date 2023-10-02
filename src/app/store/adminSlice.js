@@ -21,12 +21,12 @@ export default stepSlice.reducer;
 export const getUser = () => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
     return new Promise((resolve, reject) => {
-        api.get('/users?page=1&limit=4', {
+        api.get('/users?page=1', {
             headers: { 'Authorization': `Bearer ${token}`}
         })
             .then((response) => {
                 const filteredUsers = response.data.data.filter(user =>
-                    user.permitCode != null && user.role.name != 'Admin'
+                    user.permitCode != null && user.role?.name != 'Admin' 
                 )
                 dispatch(setUsersList(filteredUsers))
                 resolve(response.data)
