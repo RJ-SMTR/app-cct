@@ -59,7 +59,7 @@ function SignInPage() {
           <div className="flex items-baseline mt-2 font-medium">
             <Typography>Não foi registrado?</Typography>
             <Link className="ml-4" to="/support">
-              Fale conosco
+              <span className='underline'> fale conosco</span>
             </Link>
           </div>
 
