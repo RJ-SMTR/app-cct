@@ -8,7 +8,7 @@ import TableRow from '@mui/material/TableRow';
 import TablePagination from '@mui/material/TablePagination';
 import Typography from '@mui/material/Typography';
 import { useSelector } from 'react-redux';
-import { Box, Button, Modal, TextField } from '@mui/material';
+import { Badge} from '@mui/material';
 import { Link, redirect } from 'react-router-dom';
 export  function TableUsers() {
 
@@ -64,6 +64,14 @@ export  function TableUsers() {
                                       color="text.secondary"
                                       className="font-semibold text-12 whitespace-nowrap"
                                   >
+                                    Status de e-mail
+                                  </Typography>
+                              </TableCell>
+                              <TableCell>
+                                  <Typography
+                                      color="text.secondary"
+                                      className="font-semibold text-12 whitespace-nowrap"
+                                  >
                                       
                                   </Typography>
                               </TableCell>
@@ -91,7 +99,15 @@ export  function TableUsers() {
                                           </Typography>
                                       </TableCell>
                                       <TableCell component="th" scope="row">
-                                         <Typography className="whitespace-nowrap">
+                                          <Typography className="whitespace-nowrap">
+                                             <Badge 
+                                                 color='success'
+                                                 badgeContent="enviado"
+                                             />
+                                          </Typography>
+                                      </TableCell>
+                                      <TableCell component="th" scope="row">
+                                         <Typography className="whitespace-nowrap flex items-center">
                                              <Link to={`/admin/user/${i.id}`} className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10'>
                                                 Detalhes
                                             </Link>

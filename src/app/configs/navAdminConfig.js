@@ -24,6 +24,14 @@ const navAdminConfig = [
         icon: 'heroicons-outline:upload',
         url: 'upload',
     },
+    {
+        id: 'trigger-component',
+        title: 'trigger',
+        translate: 'Disparo',
+        type: 'item',
+        icon: 'heroicons-solid:mail',
+        url: 'disparo',
+    },
   
    
 ];
