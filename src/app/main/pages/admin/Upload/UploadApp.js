@@ -50,14 +50,21 @@ function UploadApp() {
             clearErrors('file')
           })
           .catch((error) => {
-            const { error: apiError } = error.response.data
+            const { error: apiError } = error.response?.data
 
             if (apiError.file) {
               apiError.file.invalidRows.forEach((invalidRow) => {
-                const errorMessage = `Coluna ${invalidRow.row}: E-mail já existe`
+                let errorMessage;
 
+                if (invalidRow.errors.email === 'email must be an email') {
+                  errorMessage = `Coluna ${invalidRow.row}: E-mail inválido`;
+                } else if (invalidRow.errors.email === 'emailAlreadyExists') {
+                  errorMessage = `Coluna ${invalidRow.row}: E-mail já existe`;
+                } else {
+                  errorMessage = `Coluna ${invalidRow.row}: Erro de email desconhecido: ${invalidRow.errors.email}`;
+                }
                 if (invalidRow.errors.permitCode) {
-                  errorMessage += ` (código de permissão: ${invalidRow.user.permitCode})`
+                  errorMessage += ` (código de permissão: ${invalidRow.errors.permitCode})`
                 }
 
                 setError('file', {
@@ -81,12 +88,12 @@ function UploadApp() {
             <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
               <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
                               <Typography className='font-medium text-2xl'>Enviar arquivos</Typography>
-                              <label className='my-10'>Formatos permitidos: .csv, .XLSX, .XLS e etc.</label>
+                              <label className='my-10'>Formatos permitidos: .CSV, .XLSX, .XLS</label>
                 
                       <input
                       {...register('file')}
                         type="file"
-                        accept=".xlsx, .csv"
+                        accept=".xlsx, .csv, .xls"
                        
                       />
                       {errors.file && (
