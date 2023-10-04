@@ -11,7 +11,8 @@ const initialState = {
     searchingDay: false,
     fullReport: false,
     todayStatements: [],
-    multipliedEntries: []
+    multipliedEntries: [],
+    listByType: []
 };
 
 const extractSlice = createSlice({
@@ -45,6 +46,9 @@ const extractSlice = createSlice({
         setMultipliedEntries: (state, action) => {
             state.multipliedEntries = action.payload;
         },
+        setListByType: (state, action) => {
+            state.listByType = action.payload;
+        },
     },
 });
 
@@ -58,6 +62,7 @@ export const {
     fullReport,
     multipliedEntries,
     todayStatements,
+    listByType,
     setSearchingWeek,
     setStatements,
     setMapInfo,
@@ -66,7 +71,8 @@ export const {
     setSearchingDay,
     setFullReport,
     setTodayStatements,
-    setMultipliedEntries
+    setMultipliedEntries,
+    setListByType
 } = extractSlice.actions;
 
 export default extractSlice.reducer;
@@ -94,31 +100,83 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
         return previousDays > 0 ? { previousDays: previousDays } : {}
     }
 }
- function resumeDays(inputData) {
-        const groupedData = {}
+function resumeDays(inputData, searchingDay) {
+    const groupedData = {};
 
-        inputData.forEach(item => {
-            const date = item.dateTime.split('T')[0]
-            if (!groupedData[date]) {
-                groupedData[date] = []
-            }
-            groupedData[date].push(item)
-        })
+    inputData.forEach((item) => {
+        const key = searchingDay ? item.transactionType : item.transactionDateTime.split('T')[0];
 
-        const result = Object.keys(groupedData).map(date => {
-            const group = groupedData[date]
-            const totalTransactions = group.reduce((sum, item) => sum + item.transactions, 0)
-            const multipliedAmount = group[0].amount * totalTransactions
+        if (!groupedData[key]) {
+            groupedData[key] = [];
+        }
+
+        groupedData[key].push(item);
+    });
+
+    const result = Object.keys(groupedData).map((key) => {
+        const group = groupedData[key];
+        const totalTransactions = group.length
+
+        if (searchingDay) {
+            const multipliedAmount = group[0].transactionValue * totalTransactions;
+
+            const allProperties = group.reduce((acc, item) => {
+                return { ...acc, ...item };
+            }, {});
 
             return {
-                date,
+                transactionType: key,
                 multipliedAmount,
-                transactions: totalTransactions
-            }
-        })
+                transactions: totalTransactions,
+                ...allProperties,
+            };
+        } else {
+            const allProperties = group.reduce((acc, item) => {
+                return { ...acc, ...item };
+            }, {});
 
-        return result
-    }
+            return {
+                date: key,
+                multipliedAmount: group[0].transactionValue * totalTransactions,
+                transactions: totalTransactions,
+                ...allProperties,
+            };
+        }
+    });
+
+    return result;
+}
+
+function resumeTypes(inputData) {
+    const groupedTransactions = {};
+    inputData.forEach((obj) => {
+        const transactionType = obj.transactionType;
+        if (!groupedTransactions[transactionType]) {
+            groupedTransactions[transactionType] = {
+                transactionType,
+                multipliedAmount: 0,
+                transactions: 0,
+            };
+        }
+
+        groupedTransactions[transactionType].multipliedAmount += obj.multipliedAmount;
+        groupedTransactions[transactionType].transactions += obj.transactions;
+    });
+
+    return groupedTransactions
+}
+// function resumeTypes(inputData) {
+//     const groupedTransactions = {};
+//     inputData.forEach((obj) => {
+//         const transactionType = obj.transactionType;
+
+//         if (!groupedTransactions[transactionType]) {
+//             groupedTransactions[transactionType] = [];
+//         }
+//         groupedTransactions[transactionType].push(obj);
+//     });
+//     return groupedTransactions
+// }
 
 export const getStatements = (previousDays, dateRange, searchingDay, searchingWeek) => (dispatch) => {
     const requestData = handleRequestData(previousDays, dateRange, searchingDay, searchingWeek);
@@ -131,14 +189,14 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             headers: { "Authorization": `Bearer ${token}` },
         })
             .then((response) => {
-                if (searchingWeek) {
-                    if (searchingDay) {
-                        dispatch(setStatements(response.data))
+                if (searchingWeek || searchingDay) {
                         dispatch(setMapInfo(response.data))
-                    } else {
-                        const weekStatements = resumeDays(response.data)
+                        const weekStatements = resumeDays(response.data, searchingDay)
+                        const types = resumeTypes(weekStatements)
                         dispatch(setStatements(weekStatements))
-                    }
+                        dispatch(setListByType(types))
+                    
+
                 } else {
                     dispatch(setStatements(response.data))
                 }
@@ -150,6 +208,9 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             });
     });
 };
+export const separateByType = (statements, searchingDay, searchingWeek) => (dispatch) => {
+
+}
 export const getTodayStatements = () => (dispatch) => {
 
     const token = window.localStorage.getItem('jwt_access_token')
@@ -159,30 +220,32 @@ export const getTodayStatements = () => (dispatch) => {
         }, {
             headers: { "Authorization": `Bearer ${token}` },
         })
-        .then((response) => {
-            dispatch(setTodayStatements(response.data))
-            dispatch(setMapInfo(response.data))
-            resolve(response.data)
-        })
+            .then((response) => {
+                dispatch(setTodayStatements(response.data))
+                dispatch(setMapInfo(response.data))
+                resolve(response.data)
+
+
+            })
             .catch((error) => {
                 reject(error)
             });
     })
 }
 export const getMultipliedEntries = (statements, searchingDay, searchingWeek) => (dispatch) => {
-        if(searchingDay){
-            const sum = statements.map((statement) => statement)
-                .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-                dispatch(setMultipliedEntries(sum));
-        } else if(searchingWeek) {
-            const sum = statements.map((statement) => statement.multipliedAmount)
-                .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-            dispatch(setMultipliedEntries(sum));
-        } else {
-            const sum = statements.map((statement) => statement.amount)
-                .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-            dispatch(setMultipliedEntries(sum));
-        }
+    if (searchingDay) {
+        const sum = statements.map((statement) => statement)
+            .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+        dispatch(setMultipliedEntries(sum));
+    } else if (searchingWeek) {
+        const sum = statements.map((statement) => statement.multipliedAmount)
+            .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+        dispatch(setMultipliedEntries(sum));
+    } else {
+        const sum = statements.map((statement) => statement.amount)
+            .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+        dispatch(setMultipliedEntries(sum));
+    }
 
-   
+
 }

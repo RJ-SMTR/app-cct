@@ -3,18 +3,35 @@ import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
 import { useSelector } from 'react-redux';
+import { useState, useEffect } from 'react';
 
 
 
-export function CustomTable(data){
+export function CustomTable(data) {
+  const [dayAmount, setDayAmount] = useState(null)
   const searchingDay = useSelector(state => state.extract.searchingDay);
   const searchingWeek = useSelector(state => state.extract.searchingWeek);
-  const dayAmount = parseInt(data.data.transactions) * 4.3
+  useEffect(() => {
+    if (data.data.payment_type !== 3) {
+      setDayAmount(parseInt(data.data.transactions) * 4.3);
+    } else {
+      setDayAmount(null);
+    }
+  }, [data, searchingDay]);
   const formatter = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   });
-  return  (
+  const transactionType = (i) => {
+    if (i.transactionType === "free") {
+      return 'Gratuito'
+    } else if (i.transactionType === 'half') {
+      return 'Meia'
+    } else {
+      return 'Integral'
+    }
+  }
+  return (
     data ? <TableRow key={data.data.id} className="hover:bg-gray-100 cursor-pointer">
       <TableCell component="th" scope="row" onClick={data.handleClickRow}>
         <Typography className={searchingDay ? "whitespace-nowrap" : "whitespace-nowrap underline"}>
@@ -37,6 +54,10 @@ export function CustomTable(data){
           badgeContent={data.data.status}
         />}
       </TableCell>
+      {searchingDay ? <TableCell component="th" scope="row">
+        {transactionType(data.data)}
+      </TableCell> : <></> }
+     
     </TableRow> : <p>Loading</p>
   )
 }

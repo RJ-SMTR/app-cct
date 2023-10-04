@@ -1,13 +1,14 @@
-import { Typography,Box, Button } from '@mui/material';
+import { Typography, Box, Button } from '@mui/material';
 
-import React, { useContext } from 'react'
+import React, { useContext, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { selectUser } from 'app/store/userSlice';
 import Chart from './widgets/Chart';
 import Entries from './widgets/Entries';
 import TableTransactions from './widgets/Table'
 import { TripsResume } from '../home/widgets/Widgets';
-import { setFullReport, setPreviousDays } from 'app/store/extractSlice';
+import {  separateByType, setFullReport, setListByType, setPreviousDays } from 'app/store/extractSlice';
+import TableTypes from './widgets/TableTypes';
 
 
 
@@ -18,9 +19,13 @@ function ExtractApp() {
   const [first] = fullName?.split(' ');
   const mapInfo = useSelector(state => state.extract.mapInfo)
   const searchingDay = useSelector(state => state.extract.searchingDay)
+  const searchingWeek = useSelector(state => state.extract.searchingWeek)
   const statements = useSelector(state => state.extract.statements)
   dispatch(setFullReport(true))
-  
+  useEffect(() => {
+    dispatch(separateByType(statements))
+  }, [statements])
+
 
   return (
     <>
@@ -35,15 +40,19 @@ function ExtractApp() {
           <Entries />
         </Box>
         <Box className='flex flex-col md:flex-row  justify-around'>
-              <TableTransactions />   
+          <TableTransactions />
         </Box>
+        {searchingWeek ? <Box className='flex flex-col md:flex-row  justify-around'>
+          <TableTypes />
+        </Box> : <></>}
+
         <Box className='flex flex-col  justify-around mt-24'>
           {searchingDay ?
-          <TripsResume mapInfo={mapInfo} statements={statements} />
+            <TripsResume mapInfo={mapInfo} statements={statements} />
             : <Chart />
-}
+          }
         </Box>
-        
+
         <br />
       </div>
     </>
