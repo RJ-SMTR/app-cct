@@ -12,11 +12,9 @@ export function CustomTable(data) {
   const searchingDay = useSelector(state => state.extract.searchingDay);
   const searchingWeek = useSelector(state => state.extract.searchingWeek);
   useEffect(() => {
-    if (data.data.payment_type !== 3) {
+  
       setDayAmount(parseInt(data.data.transactions) * 4.3);
-    } else {
-      setDayAmount(null);
-    }
+  
   }, [data, searchingDay]);
   const formatter = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -41,7 +39,9 @@ export function CustomTable(data) {
       <TableCell component="th" scope="row">
         <Typography className="whitespace-nowrap">
           {searchingDay ? (
-            <>{formatter.format(dayAmount)}</>
+            <> 
+            {data.data.transactionType === "free" ? "R$ 0" :formatter.format(dayAmount) }
+            </>
           ) : (
             <>{formatter.format(data.data.amount ?? data.data.multipliedAmount)}</>
           )}
