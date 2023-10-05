@@ -13,7 +13,6 @@ import { Link, redirect } from 'react-router-dom';
 export  function TableUsers() {
 
     const userList = useSelector(state => state.admin.userList)
-    console.log(userList)
 
 
 

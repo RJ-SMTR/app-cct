@@ -47,7 +47,8 @@ export const getInfo = () => (dispatch) => {
             headers: { 'Authorization': `Bearer ${token}`}
         })
             .then((response) => {
-                dispatch(setSendEmailValue(response.data[0].value))
+                const targetObject = response.data.find(item => item.name === "activate_auto_send_invite")
+                dispatch(setSendEmailValue(targetObject))
                 resolve(response.data)
             })
             .catch((error) => {

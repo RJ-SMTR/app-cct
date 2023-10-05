@@ -1,18 +1,52 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Typography, Paper, Box } from '@mui/material';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
+import { getInfo } from 'app/store/adminSlice';
+import { api } from 'app/configs/api/api';
 
 
 
 function TriggerApp() {
+    const dispatch = useDispatch()
     const [messageSent, setShowMessageSent] = useState(false)
     const sendEmailValue = useSelector(state => state.admin.sendEmailValue)
-    function sendEmail() {
-        console.log(sendEmailValue)
+
+    useEffect(() => {
+        dispatch(getInfo())
+     
+    }, [])
+
+    useEffect(() => {
+        if (sendEmailValue.value === "false") {
             setShowMessageSent(true)
+        }
+     
+    }, [sendEmailValue])
+
+    function sendEmail(sendEmailValue) {
+        const token = window.localStorage.getItem('jwt_access_token');
+        return new Promise((resolve, reject) => {
+            api.patch('http://localhost:3001/api/settings',
+           { name: sendEmailValue.name,
+            version: sendEmailValue.version,
+            value: sendEmailValue.value == "false" ? "true" : "false" 
+        },
+             {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+                .then((response) => {
+                    dispatch(getInfo())
+                    setShowMessageSent(!setShowMessageSent)
+                    resolve(response.data)
+                })
+                .catch((error) => {
+                    reject(error)
+                })
+        })
     }
+
   return (
       <div className="p-24 pt-10">
           <Typography className="font-medium text-3xl">Disparo de e-mail</Typography>
@@ -22,9 +56,9 @@ function TriggerApp() {
                           <Typography className='font-medium text-2xl'>Enviar e-mails de cadastro</Typography>
                           <label className='my-10'>Os envios são feitos diariamente em lotes (500 p/ dia). Para acompanhar os envios veja <Link to="/" className='underline'>aqui</Link></label>
                             {messageSent ? <Typography>
-                                E-mails enviados com sucesso. Serviço disponível novamente em 24 horas
+                                E-mails sendo enviados com sucesso.
                             </Typography> : <></>}
-                          <button type="button" onClick={() => sendEmail()} disabled={messageSent ? 'disabled' : ''} className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10 mt-10 '>Enviar</button>
+                      <button type="button" onClick={() => sendEmail(sendEmailValue)}  className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10 mt-10 '>{!messageSent ? 'Enviar e-mails' : 'Parar de enviar'}</button>
                   </Paper>
               </div>
           </Box>
