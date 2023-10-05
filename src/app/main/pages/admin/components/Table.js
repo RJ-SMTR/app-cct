@@ -13,6 +13,7 @@ import { Link, redirect } from 'react-router-dom';
 export  function TableUsers() {
 
     const userList = useSelector(state => state.admin.userList)
+    console.log(userList)
 
 
 
@@ -64,7 +65,7 @@ export  function TableUsers() {
                                       color="text.secondary"
                                       className="font-semibold text-12 whitespace-nowrap"
                                   >
-                                    Status de e-mail
+                                    Status de convite
                                   </Typography>
                               </TableCell>
                               <TableCell>
@@ -82,6 +83,22 @@ export  function TableUsers() {
 
                       {userList ?
                               userList.map((i) => {
+                                const emailStatus = (i) => {
+                                    switch(i.aux_inviteStatus.name){
+                                        case 'created':
+                                            return 'Criado';
+                                            break;
+                                        case 'queued':
+                                            return 'Na Fila';
+                                            break;
+                                        case 'sent':
+                                            return 'Enviado';
+                                            break;
+                                        case 'used':
+                                            return 'Acessado';
+                                            break;
+                                    }
+                                }
                                  return <TableRow >
                                       <TableCell component="th" scope="row">
                                           <Typography className="" color="text.secondary">
@@ -90,7 +107,7 @@ export  function TableUsers() {
                                       </TableCell>
                                       <TableCell component="th" scope="row">
                                           <Typography className="whitespace-nowrap">
-                                              {i.fullName}
+                                              {i.fullName ?? 'Fulano'}
                                           </Typography>
                                       </TableCell>
                                       <TableCell component="th" scope="row">
@@ -101,8 +118,9 @@ export  function TableUsers() {
                                       <TableCell component="th" scope="row">
                                           <Typography className="whitespace-nowrap">
                                              <Badge 
+                                             className='top-[5px] mt-10'
                                                  color='success'
-                                                 badgeContent="enviado"
+                                                 badgeContent={emailStatus(i)}
                                              />
                                           </Typography>
                                       </TableCell>

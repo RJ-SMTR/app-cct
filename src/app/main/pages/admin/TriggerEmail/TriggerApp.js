@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { Typography, Paper, Box } from '@mui/material';
 import { showMessage } from 'app/store/fuse/messageSlice';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 
 
 function TriggerApp() {
     const [messageSent, setShowMessageSent] = useState(false)
+    const sendEmailValue = useSelector(state => state.admin.sendEmailValue)
     function sendEmail() {
+        console.log(sendEmailValue)
             setShowMessageSent(true)
-
     }
   return (
       <div className="p-24 pt-10">
