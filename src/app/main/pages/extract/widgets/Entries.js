@@ -1,26 +1,56 @@
 import { Paper, Skeleton, Typography } from "@mui/material"
 import FuseSvgIcon from "@fuse/core/FuseSvgIcon"
 import { useDispatch, useSelector } from 'react-redux';
+import { useEffect, useState } from "react";
+import { getMultipliedEntries } from "app/store/extractSlice";
 
 function Entries() {
-    const dateRange = useSelector(state => state.extract.dateRange);
+    const dispatch = useDispatch()
+  
+    const formatter = new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+    });
+
     const statements = useSelector(state => state.extract.statements);
-        const date = new Date(`${statements[0]?.date}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
+    const multipliedEntries = useSelector(state => state.extract.multipliedEntries);
+    const searchingWeek = useSelector(state => state.extract.searchingWeek)
+    const searchingDay = useSelector(state => state.extract.searchingDay)
+    const firstDate = new Date(`${statements[0]?.date}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
+    const lastDate = new Date(`${statements[statements.length - 1]?.date}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
+    const dayDate = new Date(`${statements[0]?.dateTime}`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
+    function getDayEntries(day){
+        const map =  day.map((i) => {
+           return i.transactions * 4.3
+        })
+        dispatch(getMultipliedEntries(map, searchingDay))
+    }
+    useEffect(() => {
+
+       
+        if(searchingDay){
+            getDayEntries(statements)
+            
+        } else {
+            dispatch(getMultipliedEntries(statements, searchingDay, searchingWeek))
+        }
+    }, [statements])
+
   return (
       <>{statements.length  ? <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden">
           <div className="flex items-center justify-between">
               <div className="flex flex-col">
                   <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
-                      Valor a receber
+                      Valor acumulado 
                   </Typography>
-                  <Typography className="font-medium text-sm">{date} - 3 semana</Typography>
+                  <Typography className="font-medium text-sm"> {searchingDay ? dayDate : `${firstDate} - ${lastDate}`}</Typography>
 
               </div>
 
           </div>
           <div className="flex flex-row flex-wrap mt-8 ">
               <Typography className="mt-8 font-medium text-3xl leading-none">
-                  R$ {statements[0]?.receivable}
+                  {formatter.format(multipliedEntries)}
               </Typography>
           </div>
 

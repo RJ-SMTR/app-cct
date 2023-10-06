@@ -50,20 +50,22 @@ function TableTransactions() {
     const navigate =  useNavigate()
     const useStyles = makeStyles(() => ({
         root: {
-
-            "& .muiltr-1psng7p-MuiTablePagination-spacer": { display: "none" },
-            "& .muiltr-1oaobgk-MuiBadge-badge": {display: "inline", position: 'relative', padding: '3px'},
-            "& .muiltr-1nnvbx6-MuiBadge-badge": {display: "inline", position: 'relative', padding: '3px'},
+            "& .MuiTablePagination-spacer": { display: "none" },
+            "& .MuiBadge-badge": {display: "inline", position: 'relative', padding: '3px'},
+            "& .MuiBadge-badge": {display: "inline", position: 'relative', padding: '3px'},
         },
     }));
     const c = useStyles()
 
     const previousStatementsRef = useRef([]);
     useEffect(() => {
-        if (dateRange !== previousStatementsRef.current) {
-            setLastDate([previousStatementsRef.current[0], previousStatementsRef.current[previousStatementsRef.current.length - 1]]);
-            previousStatementsRef.current = dateRange;
+        if(searchingWeek && searchingDay){
+            if (dateRange !== previousStatementsRef.current) {
+                setLastDate([previousStatementsRef.current[0], previousStatementsRef.current[previousStatementsRef.current.length - 1]]);
+                previousStatementsRef.current = dateRange;
+            }
         }
+    
     }, [dateRange])
 
     const handleNextWeek = () => {
@@ -89,7 +91,7 @@ function TableTransactions() {
     useEffect(() => {
         const startDate = new Date(currentWeekStart)
         const endDate = new Date(currentWeekStart)
-        endDate.setDate(endDate.getDate() + 6) 
+        endDate.setDate(endDate.getDate() + 7) 
         if(currentWeekStart){
            setIsGreaterThanToday(isEndDateGreaterThanToday(endDate))
             dispatch(setDateRange([startDate, endDate]))
@@ -126,6 +128,7 @@ function TableTransactions() {
         setPage(0)
         dispatch(setDateRange([]))
         dispatch(setSearchingWeek(false))
+        dispatch(setSearchingDay(false))
     }
 
    
@@ -203,7 +206,7 @@ function TableTransactions() {
                             format='dd/MM/yy'
                             locale={locale}
                             character=' - '
-                            onChange={(newValue) => dispatch(setDateRange(newValue))}
+                            onChange={(newValue) => (dispatch(setDateRange(newValue)), dispatch(setSearchingWeek(false)))}
 
                         />
                     </div>
@@ -245,7 +248,7 @@ function TableTransactions() {
                                 format='dd/MM/yy'
                                 character=' - '
                                 locale={locale}
-                                onChange={(newValue) => dispatch(setDateRange(newValue))}
+                                onChange={(newValue) => (dispatch(setDateRange(newValue)), dispatch(setSearchingWeek(false)))}
 
                             />
                             <Button className={previousDays == 7 ? 'active' : ''} variant="contained" onClick={handleDays} data-value={7}>7 dias</Button>

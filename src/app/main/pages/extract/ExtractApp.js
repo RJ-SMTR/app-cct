@@ -14,8 +14,8 @@ import { setFullReport, setPreviousDays } from 'app/store/extractSlice';
 function ExtractApp() {
   const dispatch = useDispatch()
   const user = useSelector(selectUser);
-  const fullName = user.fullName
-  const [first] = fullName.split(' ');
+  const fullName = user.fullName ?? 'Admin'
+  const [first] = fullName?.split(' ');
   const mapInfo = useSelector(state => state.extract.mapInfo)
   const searchingDay = useSelector(state => state.extract.searchingDay)
   const statements = useSelector(state => state.extract.statements)

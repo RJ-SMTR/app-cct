@@ -57,30 +57,31 @@ export function AuthProvider({ children }) {
 
     jwtService.init();
 
-    function success(user, message) {
-      if (message) {
-        dispatch(showMessage({ message }));
-      }
-
-      Promise.all([
-        dispatch(setUser(user)),
-        // You can receive data in here before app initialization
-      ]).then((values) => {
-        setWaitAuthCheck(false);
-        setIsAuthenticated(true);
-      });
-    }
-
-    function pass(message) {
-      if (message) {
-        dispatch(showMessage({ message }));
-      }
-
-      setWaitAuthCheck(false);
-      setIsAuthenticated(false);
-    }
+   
     
   }, [dispatch]);
+  function success(user, message) {
+    if (message) {
+      dispatch(showMessage({ message }));
+    }
+
+    Promise.all([
+      dispatch(setUser(user)),
+      // You can receive data in here before app initialization
+    ]).then((values) => {
+      setWaitAuthCheck(false);
+      setIsAuthenticated(true);
+    });
+  }
+
+  function pass(message) {
+    if (message) {
+      dispatch(showMessage({ message }));
+    }
+
+    setWaitAuthCheck(false);
+    setIsAuthenticated(false);
+  }
 
   // CUSTOM FUNCTIONS
   function forgotPasswordFunction(email) {
@@ -205,7 +206,7 @@ export function AuthProvider({ children }) {
     <FuseSplashScreen />
   ) : (
     <AuthContext.Provider
-      value={{ isAuthenticated, forgotPasswordFunction, resetPasswordFunction, handlePreRegister, validPermitCode, handleRegister, handleInvite, patchInfo }}
+      value={{ isAuthenticated, forgotPasswordFunction, resetPasswordFunction, handlePreRegister, validPermitCode, handleRegister, handleInvite, patchInfo, success }}
     >
       {children}
     </AuthContext.Provider>

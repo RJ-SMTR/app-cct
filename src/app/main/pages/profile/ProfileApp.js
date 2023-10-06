@@ -48,7 +48,7 @@ function ProfileApp() {
             </div>
 
             <div className="flex flex-col items-center lg:items-start my-16 lg:mt-0 lg:ml-32">
-              <Typography className="text-lg font-bold leading-none">{user.fullName}</Typography>
+              <Typography className="text-lg font-bold leading-none">{user.fullName ?? 'Admin'}</Typography>
               <Typography color="text.secondary">#{user.permitCode}</Typography>
             </div>
           </div>

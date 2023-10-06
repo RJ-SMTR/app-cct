@@ -2,7 +2,7 @@ import { Card, Modal, Box, Typography } from "@mui/material"
 import _ from '@lodash';
 import { useState, useEffect } from "react";
 import { Controller, useForm } from 'react-hook-form';
-import { FormControl,Autocomplete } from "@mui/material";
+import { FormControl, Autocomplete } from "@mui/material";
 import TextField from '@mui/material/TextField';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { useContext } from "react";
@@ -29,20 +29,15 @@ const style = {
 
 
 export function PersonalInfo({ user }) {
-
-    const { patchInfo } = useContext(AuthContext)
+    const { patchInfo, success } = useContext(AuthContext)
     const [isEditable, setIsEditable] = useState(false)
     const [saved, setSaved] = useState(false)
-    const [open, setOpen] = useState(false);
-    const handleOpen = () => setOpen(true);
-    const handleClose = () => setOpen(false);
-
 
     const { handleSubmit, control, setError, formState } = useForm({
         defaultValues: {
             permitCode: user.permitCode,
             email: user.email,
-            fullName: user.fullName,
+            fullName: user.fullName ?? '',
             phone: user.phone ?? '',
             bankAccount: '',
             bankCode: '',
@@ -56,11 +51,12 @@ export function PersonalInfo({ user }) {
 
     function onSubmit({ phone }) {
         patchInfo({ phone })
-            .then(() => {
+            .then((response) => {
                 if (isValid) {
                     setIsEditable(false)
                     setSaved(true)
-                    handleOpen()
+                   success(response, "Seus dados foram salvos!")
+
                 }
             })
             .catch((_errors) => {
@@ -70,15 +66,7 @@ export function PersonalInfo({ user }) {
             });
 
     }
-    function clear() {
-        if (isValid && saved) {
-            clearErrors()
-            setIsEditable(false)
-        } else {
-            handleOpen()
 
-        }
-    }
     const renderButton = () => {
         if (!isEditable) {
             return (
@@ -89,9 +77,6 @@ export function PersonalInfo({ user }) {
         } else {
             return (
                 <div className='flex'>
-                    <button type="button" className='flex items-center rounded p-3 uppercase text-white bg-[#707070] hover:bg-[#4a4a4a ]  mr-2 h-[27px] min-h-[27px]' onClick={() => clear()}>
-                        <FuseSvgIcon className="text-48 text-white" size={24} color="action">heroicons-outline:x</FuseSvgIcon>
-                    </button>
                     <button type='submit' className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10' onClick={() => setIsEditable(true)}>
                         Salvar
                     </button>
@@ -101,40 +86,7 @@ export function PersonalInfo({ user }) {
     }
     return (
         <>
-            <Modal
-                open={open}
-                onClose={handleClose}
-                aria-labelledby="modal-modal-title"
-                aria-describedby="modal-modal-description"
-            >
-                <Box sx={style}>
-                    <Box className="text-center flex flex-col content-center items-center">
-                        {saved ?
-                            <>
-                               
-                                <Box className="bg-green rounded-[100%]">
-                                    <FuseSvgIcon className="text-48 text-white " size={48} color="action">heroicons-solid:check</FuseSvgIcon>
-
-                                </Box>
-                                <Typography id="modal-modal-title" variant="h6" component="h2">
-                                    Seus dados foram salvos!
-                                </Typography>
-                            </> : 
-                        <>
-                                <Box className="bg-red rounded-[100%]">
-                                    <FuseSvgIcon className="text-48 text-white " size={48} color="action">heroicons-outline:x</FuseSvgIcon>
-
-                                </Box>
-                                <Typography id="modal-modal-title" variant="h6" component="h2">
-                                    Seus dados não foram salvos!
-                                </Typography>
-                                </>
-                        }
-                        
-
-                    </Box>
-                </Box>
-            </Modal>
+     
             <Card className=" w-full md:mx-9 p-24 relative">
                 <header className="flex justify-between items-center">
                     <h1 className="font-semibold">
@@ -225,15 +177,11 @@ export function PersonalInfo({ user }) {
 
 
 export function BankInfo({ user }) {
-
     const [isEditable, setIsEditable] = useState(false)
     const [selectedBankCode, setSelectedBankCode] = useState(user.bankCode ?? '');
-    const { patchInfo } = useContext(AuthContext)
+    const { patchInfo, success } = useContext(AuthContext)
     const [bankOptions, setBankOptions] = useState([]);
     const [saved, setSaved] = useState(false)
-    const [open, setOpen] = useState(false);
-    const handleOpen = () => setOpen(true);
-    const handleClose = () => setOpen(false);
 
 
     const { handleSubmit, register, setError, formState, clearErrors, setValue } = useForm({
@@ -256,7 +204,7 @@ export function BankInfo({ user }) {
     const fetchBankOptions = async () => {
         try {
             const response = await api.get('/banks');
-            response.dara = response.data.sort((a, b) => a.name.localeCompare(b.name));
+            response.data = response.data.sort((a, b) => a.name.localeCompare(b.name));
             setBankOptions(response.data);
         } catch (error) {
             console.error('Error fetching bank options:', error);
@@ -272,11 +220,11 @@ export function BankInfo({ user }) {
 
     function onSubmit(info) {
         patchInfo(info)
-            .then(() => {
+            .then((response) => {
                 if (isValid) {
                     setIsEditable(false)
                     setSaved(true)
-                    handleOpen()
+                    success(response, "Seus dados foram salvos!")
                 }
             })
             .catch((_errors) => {
@@ -298,15 +246,7 @@ export function BankInfo({ user }) {
             });
     }
 
-    function clear() {
-        if (isValid && saved) {
-            clearErrors()
-            setIsEditable(false)
-        } else {
-            handleOpen()
 
-        }
-    }
     const renderButton = () => {
         if (!isEditable) {
             return (
@@ -317,9 +257,7 @@ export function BankInfo({ user }) {
         } else {
             return (
                 <div className='flex'>
-                    <button type="button" className='flex items-center rounded p-3 uppercase text-white bg-[#707070] hover:bg-[#4a4a4a ]  mr-2 h-[27px] min-h-[27px]' onClick={() => clear()}>
-                        <FuseSvgIcon className="text-48 text-white" size={24} color="action">heroicons-outline:x</FuseSvgIcon>
-                    </button>
+                
                     <button type='submit' className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10' onClick={() => setIsEditable(true)}>
                         Salvar
                     </button>
@@ -329,39 +267,7 @@ export function BankInfo({ user }) {
     }
     return (
         <>
-            <Modal
-                open={open}
-                onClose={handleClose}
-                aria-labelledby="modal-modal-title"
-                aria-describedby="modal-modal-description"
-            >
-                <Box sx={style}>
-                    <Box className="text-center flex flex-col content-center items-center">
-                        {saved ?
-                            <>
-                                <Box className="bg-green rounded-[100%]">
-                                    <FuseSvgIcon className="text-48 text-white " size={48} color="action">heroicons-solid:check</FuseSvgIcon>
-
-                                </Box>
-                                <Typography id="modal-modal-title" variant="h6" component="h2">
-                                    Seus dados foram salvos!
-                                </Typography>
-                            </> :
-                            <>
-                                <Box className="bg-red rounded-[100%]">
-                                    <FuseSvgIcon className="text-48 text-white " size={48} color="action">heroicons-outline:x</FuseSvgIcon>
-
-                                </Box>
-                                <Typography id="modal-modal-title" variant="h6" component="h2">
-                                    Seus dados não foram salvos!
-                                </Typography>
-                            </>
-                        }
-
-
-                    </Box>
-                </Box>
-            </Modal>
+       
             <Card className=" w-full md:mx-9 p-24 relative mt-24 md:mt-0">
                 <header className="flex justify-between items-center">
                     <h1 className="font-semibold">
@@ -438,7 +344,7 @@ export function BankInfo({ user }) {
                         />
 
                     </Box>
-                 
+
                 </form>
             </Card>
         </>

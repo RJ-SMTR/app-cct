@@ -1,9 +1,8 @@
 import { lazy } from 'react';
-import { authRoles } from 'src/app/auth';
 
-const ResumeApp = lazy(() => import('./ResumeApp'));
+const UploadAppLazy = lazy(() => import('./UploadApp'));
 
-const ResumeConfig = {
+const UploadConfig = {
     settings: {
         layout: {
             config: {
@@ -13,13 +12,13 @@ const ResumeConfig = {
             },
         },
     },
-    auth: authRoles.admin,
+    auth: ['Admin'],
     routes: [
         {
-            path: 'resumo',
-            element: <ResumeApp />,
+            path: 'upload',
+            element: <UploadAppLazy />,
         },
     ],
 };
 
-export default ResumeConfig;
+export default UploadConfig;

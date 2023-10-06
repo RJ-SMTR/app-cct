@@ -51,8 +51,17 @@ function ResetPassword() {
           <Typography className="mt-32 text-4xl font-extrabold tracking-tight leading-tight">
             Recuperação de senha
           </Typography>
-          <div className="flex items-baseline mt-2 font-medium">
-            <Typography>Digite sua nova senha! </Typography>
+          <div className="flex flex-col items-baseline mt-2 font-medium">
+            <Typography>Digite sua nova senha!
+            </Typography>
+            <Typography> Ela deve conter: 
+              <ul>
+                <li>- 8 caracteres</li>
+                <li>- Uma letra minúscula</li>
+                <li>- Uma letra maiúscula</li>
+              </ul>
+            </Typography>
+            
           </div>
 
           <form
