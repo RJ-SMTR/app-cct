@@ -71,14 +71,14 @@ function TableTypes() {
                                 Object.values(listByType).map((i) => {
                                     const transactionType = (i) => {
                                         if(i.transactionType ==="free"){
-                                            return 'Gratuito'
+                                            return 'Gratuidade'
                                         } else if(i.transactionType === 'half'){
-                                            return 'Meia'
+                                            return 'Integração'
                                         } else {
                                             return 'Integral'
                                         }
                                     }
-                                    return <TableRow key={Math.random()} className="hover:bg-gray-100 cursor-pointer">
+                                    return <TableRow className="hover:bg-gray-100 cursor-pointer">
                                         <TableCell component="th" scope="row" >
                                             <Typography className="whitespace-nowrap">
                                                {transactionType(i)}

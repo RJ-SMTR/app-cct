@@ -1,6 +1,5 @@
 import { lazy } from 'react';
-
-const ExtractApp = lazy(() => import('./ExtractApp'));
+import ExtractApp from './ExtractApp'
 
 const ExtractConfig = {
     settings: {

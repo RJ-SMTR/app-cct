@@ -7,7 +7,7 @@ import Chart from './widgets/Chart';
 import Entries from './widgets/Entries';
 import TableTransactions from './widgets/Table'
 import { TripsResume } from '../home/widgets/Widgets';
-import {  separateByType, setFullReport, setListByType, setPreviousDays } from 'app/store/extractSlice';
+import {  getFirstByType, getFirstTypes, setFullReport} from 'app/store/extractSlice';
 import TableTypes from './widgets/TableTypes';
 
 
@@ -19,12 +19,9 @@ function ExtractApp() {
   const [first] = fullName?.split(' ');
   const mapInfo = useSelector(state => state.extract.mapInfo)
   const searchingDay = useSelector(state => state.extract.searchingDay)
-  const searchingWeek = useSelector(state => state.extract.searchingWeek)
   const statements = useSelector(state => state.extract.statements)
   dispatch(setFullReport(true))
-  useEffect(() => {
-    dispatch(separateByType(statements))
-  }, [statements])
+
 
 
   return (
@@ -36,15 +33,16 @@ function ExtractApp() {
       </div>
       <div className="p-24 pt-10">
         <Typography className='font-medium text-3xl'>Resumo dos Valores</Typography>
-        <Box className='flex flex-col md:flex-row mt-24 justify-around max-w-[342px]'>
-          <Entries />
+        <Box className='flex flex-col md:flex-row mt-24 justify-around max-w-[684px] spacing-x-1'>
+          <Entries type="Valor acumulado" isDay="false" />
+          <Entries  type="Valor diário" isDay="true" />
         </Box>
         <Box className='flex flex-col md:flex-row  justify-around'>
           <TableTransactions />
         </Box>
-        {searchingWeek ? <Box className='flex flex-col md:flex-row  justify-around'>
+     <Box className='flex flex-col md:flex-row   justify-around'>
           <TableTypes />
-        </Box> : <></>}
+        </Box> 
 
         <Box className='flex flex-col  justify-around mt-24'>
           {searchingDay ?

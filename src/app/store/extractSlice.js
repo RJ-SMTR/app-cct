@@ -12,7 +12,8 @@ const initialState = {
     fullReport: false,
     todayStatements: [],
     multipliedEntries: [],
-    listByType: []
+    listByType: [],
+    firstDate: []
 };
 
 const extractSlice = createSlice({
@@ -49,6 +50,9 @@ const extractSlice = createSlice({
         setListByType: (state, action) => {
             state.listByType = action.payload;
         },
+        setFirstDate: (state, action) => {
+            state.firstDate = action.payload;
+        },
     },
 });
 
@@ -63,6 +67,7 @@ export const {
     multipliedEntries,
     todayStatements,
     listByType,
+    firstDate,
     setSearchingWeek,
     setStatements,
     setMapInfo,
@@ -72,7 +77,8 @@ export const {
     setFullReport,
     setTodayStatements,
     setMultipliedEntries,
-    setListByType
+    setListByType,
+    setFirstDate
 } = extractSlice.actions;
 
 export default extractSlice.reducer;
@@ -165,19 +171,6 @@ function resumeTypes(inputData) {
 
     return groupedTransactions
 }
-// function resumeTypes(inputData) {
-//     const groupedTransactions = {};
-//     inputData.forEach((obj) => {
-//         const transactionType = obj.transactionType;
-
-//         if (!groupedTransactions[transactionType]) {
-//             groupedTransactions[transactionType] = [];
-//         }
-//         groupedTransactions[transactionType].push(obj);
-//     });
-//     return groupedTransactions
-// }
-
 export const getStatements = (previousDays, dateRange, searchingDay, searchingWeek) => (dispatch) => {
     const requestData = handleRequestData(previousDays, dateRange, searchingDay, searchingWeek);
 
@@ -190,27 +183,58 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
         })
             .then((response) => {
                 if (searchingWeek || searchingDay) {
-                        dispatch(setMapInfo(response.data))
-                        const weekStatements = resumeDays(response.data, searchingDay)
-                        const types = resumeTypes(weekStatements)
-                        dispatch(setStatements(weekStatements))
-                        dispatch(setListByType(types))
-                    
+                    dispatch(setMapInfo(response.data));
+                    const weekStatements = resumeDays(response.data, searchingDay);
+                    dispatch(setStatements(weekStatements));
+                    const types = resumeTypes(weekStatements);
+                    const order = ["full", "half", "free"]
 
+                    const sortedTypes = {}
+                    order.forEach((type) => {
+                        if (types[type]) {
+                            sortedTypes[type] = types[type]
+                        }
+                    });
+                    dispatch(setListByType(sortedTypes));
                 } else {
-                    dispatch(setStatements(response.data))
+                    const first = response.data[0]?.date;
+                    const last = response.data[response.data.length - 1]?.date;
+                    dispatch(getFirstTypes([last, first]))
+                    dispatch(setStatements(response.data));
                 }
 
-                resolve(response.data)
+                resolve(response.data);
             })
             .catch((error) => {
-                reject(error)
+                reject(error);
             });
     });
 };
-export const separateByType = (statements, searchingDay, searchingWeek) => (dispatch) => {
 
+export const getFirstTypes = (firstDate) => (dispatch) => {
+    const token = window.localStorage.getItem('jwt_access_token')
+    return new Promise((resolve, reject) => {
+        api.post(jwtServiceConfig.revenues, {
+            startDate: firstDate[0],
+            endDate: firstDate[1]
+        }, {
+            headers: { "Authorization": `Bearer ${token}` },
+        }).then((response) => {
+            const weekStatements = resumeDays(response.data, searchingDay)
+            const types = resumeTypes(weekStatements)
+            const order = ["full", "half", "free"]
+
+            const sortedTypes = {}
+            order.forEach((type) => {
+                if (types[type]) {
+                    sortedTypes[type] = types[type]
+                }
+            });
+            dispatch(setListByType(sortedTypes))
+        })
+    })
 }
+
 export const getTodayStatements = () => (dispatch) => {
 
     const token = window.localStorage.getItem('jwt_access_token')
