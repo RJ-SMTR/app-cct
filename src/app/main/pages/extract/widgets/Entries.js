@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { getMultipliedEntries } from "app/store/extractSlice";
 
 function Entries(type) {
+    const [todayInfo, setTodayInfo] = useState({})
     const dispatch = useDispatch()
   
     const formatter = new Intl.NumberFormat('pt-BR', {
@@ -33,6 +34,15 @@ function Entries(type) {
             dispatch(getMultipliedEntries(statements, searchingDay, searchingWeek))
         }
     }, [statements])
+    useEffect(() => {
+        if(statements){
+            setTodayInfo({
+                amount: statements[0]?.amount,
+                date: firstDate
+            })
+
+        }
+    }, [])
 
   return (
       <>{statements.length ? <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden mx-5 mt-10 md:mt-0">
@@ -41,14 +51,14 @@ function Entries(type) {
                   <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
                       {type.type}
                   </Typography>
-                  <Typography className="font-medium text-sm"> {type.isDay == "true" ? firstDate :  searchingDay ? dayDate : `${firstDate} - ${lastDate}`}</Typography>
+                  <Typography className="font-medium text-sm"> {type.isDay == "true" ? todayInfo.date :  searchingDay ? dayDate : `${firstDate} - ${lastDate}`}</Typography>
 
               </div>
 
           </div>
           <div className="flex flex-row flex-wrap mt-8 ">
               <Typography className="mt-8 font-medium text-3xl leading-none">
-                  {type.isDay == "true" ? formatter.format(statements[0].amount) :  formatter.format(multipliedEntries) }
+                  {type.isDay == "true" ? formatter.format(todayInfo.amount) :  formatter.format(multipliedEntries) }
               </Typography>
           </div>
 
