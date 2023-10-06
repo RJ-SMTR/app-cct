@@ -4,13 +4,14 @@ on:
   push:
     branches:
       - "release/*"
-      # - "devops"
+      - "devops"
 
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
   GKE_CLUSTER: ${{ secrets.GKE_CLUSTER_NAME }}
+  ENV_PROD: ${{ secrets.ENV_PROD }}
   GKE_ZONE: us-central1-c
-  IMAGE: api-cct
+  IMAGE: app-cct
   MY_ENV: stag
 
 jobs:
@@ -51,9 +52,10 @@ jobs:
           location: ${{ env.GKE_ZONE }}
           credentials: ${{ secrets.GKE_SA_KEY }}
 
-      - name: Mount env
-        run: |-
-          echo "${{ secrets.ENV_STAG }}" > env-deploy
+      # - name: Mount env
+      #   run: |-
+      #     echo "${{ secrets.ENV_PROD }}" > env-deploy
+      #     ls -a
 
       - name: Build Docker image
         run: |-
@@ -68,13 +70,13 @@ jobs:
 
       - name: Set up Kustomize
         run: |-
-          cd ./.kubernetes/stag
+          cd ./.kubernetes/prod
           curl -sfLo kustomize https://github.com/kubernetes-sigs/kustomize/releases/download/v3.1.0/kustomize_3.1.0_linux_amd64
           chmod u+x ./kustomize
 
       - name: Deploy
         run: |-
-          cd ./.kubernetes/stag
+          cd ./.kubernetes/prod
           ./kustomize edit set image gcr.io/PROJECT_ID/IMAGE:TAG=gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA
           ./kustomize build . | kubectl apply -n cct-stag -f -
           kubectl get services -n cct-stag -o wide

@@ -20,8 +20,7 @@ spec:
     spec:
       containers:
         - name: cct-app
-          image: gcr.io/rj-smtr/app-cct:1.0.0-rc.3
-          # image: gcr.io/PROJECT_ID/IMAGE_APP:TAG
+          image: gcr.io/PROJECT_ID/IMAGE:TAG
           ports:
             - containerPort: 80
           # resources:
@@ -30,7 +29,7 @@ spec:
           #     memory: 128Mi
           env:
             - name: BASE_URL_CCT
-              value: https://api.cct.cluster.mobilidade.dev/api/v1/
+              value: https://api.cct.hmg.mobilidade.rio/api/v1/
           #   - name: NODE_ENV
           #     valueFrom:
           #       secretKeyRef:
@@ -67,10 +66,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - cct.mobilidade.rio
+        - cct.hmg.mobilidade.rio
       secretName: cct-app-tls
   rules:
-    - host: cct.mobilidade.rio
+    - host: cct.hmg.mobilidade.rio
       http:
         paths:
           - path: /
