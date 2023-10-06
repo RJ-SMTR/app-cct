@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - "release/*"
-      - "devops"
+      # - "devops"
 
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
