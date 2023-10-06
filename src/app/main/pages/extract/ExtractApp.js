@@ -34,8 +34,8 @@ function ExtractApp() {
       <div className="p-24 pt-10">
         <Typography className='font-medium text-3xl'>Resumo dos Valores</Typography>
         <Box className='flex flex-col md:flex-row mt-24 justify-around max-w-[684px] spacing-x-1'>
-          <Entries type="Valor acumulado" isDay="false" />
           <Entries  type="Valor diário" isDay="true" />
+          <Entries type="Valor acumulado" isDay="false" />
         </Box>
         <Box className='flex flex-col md:flex-row  justify-around'>
           <TableTransactions />
