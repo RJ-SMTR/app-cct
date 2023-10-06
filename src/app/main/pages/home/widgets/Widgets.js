@@ -41,7 +41,7 @@ export function CurrentStatementWidget({ classes }) {
 }
 export function TripsResume({ mapInfo, statements }) {
     const points = mapInfo.map(i => [i.transactionLat, i.transactionLon, i.transactionValue])
-    const transactions = statements.reduce((a, b) => a + b.transactions, 0)
+    const transactions = statements.length  
     const mapRef = useRef(null)
     const [zoom, setZoom] = useState(9)
     useEffect(() => {
@@ -105,7 +105,7 @@ export function TripsResume({ mapInfo, statements }) {
 
 
                 <Typography className="px-20 mb-10  text-xl font-bold" component="div">
-                    Passageiros pagantes: {transactions}
+                    Passageiros: {transactions}
                 </Typography>
 
 
