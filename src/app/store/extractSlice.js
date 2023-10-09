@@ -185,6 +185,12 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
                 if (searchingWeek || searchingDay) {
                     dispatch(setMapInfo(response.data));
                     const weekStatements = resumeDays(response.data, searchingDay);
+                    if (searchingDay) {
+                        weekStatements.sort((a, b) => {
+                            const sortingOrder = ["full", "half", "free"];
+                            return sortingOrder.indexOf(a.transactionType) - sortingOrder.indexOf(b.transactionType);
+                        });
+                    }
                     dispatch(setStatements(weekStatements));
                     const types = resumeTypes(weekStatements);
                     const order = ["full", "half", "free"]

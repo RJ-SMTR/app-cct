@@ -91,7 +91,7 @@ function TableTypes() {
 
                                         </TableCell>
                                         <TableCell component="th" scope="row">
-                                            {i.transactions}
+                                            {i?.transactions.toLocaleString()}
                                         </TableCell>
 
                                     </TableRow>

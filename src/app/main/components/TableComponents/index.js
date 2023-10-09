@@ -16,15 +16,16 @@ export function CustomTable(data) {
       setDayAmount(parseInt(data.data.transactions) * 4.3);
   
   }, [data, searchingDay]);
+
   const formatter = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   });
   const transactionType = (i) => {
     if (i.transactionType === "free") {
-      return 'Gratuito'
+      return 'Gratuidade'
     } else if (i.transactionType === 'half') {
-      return 'Meia'
+      return 'Integração'
     } else {
       return 'Integral'
     }
@@ -40,7 +41,7 @@ export function CustomTable(data) {
         <Typography className="whitespace-nowrap">
           {searchingDay ? (
             <> 
-            {data.data.transactionType === "free" ? "R$ 0" :formatter.format(dayAmount) }
+            {data.data.transactionType == "free" ? "R$ 0" :formatter.format(dayAmount) }
             </>
           ) : (
             <>{formatter.format(data.data.amount ?? data.data.multipliedAmount)}</>
@@ -49,7 +50,7 @@ export function CustomTable(data) {
 
       </TableCell>
       <TableCell component="th" scope="row">
-        {searchingWeek ? data.data.transactions : <Badge className={data.c?.root}
+        {searchingWeek ? data.data.transactions?.toLocaleString() : <Badge className={data.c?.root}
           color={data.data.status === 'falha' ? 'error' : data.data.status === 'sucesso' ? 'success' : 'default'}
           badgeContent={data.data.status}
         />}
