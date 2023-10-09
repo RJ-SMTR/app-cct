@@ -83,12 +83,9 @@ export  function TableUsers() {
                       {userList ?
                               userList.map((i) => {
                                 const emailStatus = (i) => {
-                                    switch(i.aux_inviteStatus.name){
+                                    switch(i.aux_inviteStatus?.name){
                                         case 'created':
-                                            return 'Criado';
-                                            break;
-                                        case 'queued':
-                                            return 'Na Fila';
+                                            return 'Registrado';
                                             break;
                                         case 'sent':
                                             return 'Enviado';
@@ -119,7 +116,7 @@ export  function TableUsers() {
                                              <Badge 
                                              className='top-[5px] mt-10'
                                                  color='success'
-                                                 badgeContent={emailStatus(i)}
+                                                 badgeContent={emailStatus(i) ?? 'Esperando'}
                                              />
                                           </Typography>
                                       </TableCell>

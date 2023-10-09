@@ -11,6 +11,7 @@ import { api } from 'app/configs/api/api';
 function TriggerApp() {
     const dispatch = useDispatch()
     const [messageSent, setShowMessageSent] = useState(false)
+    const [error, setError] = useState()
     const sendEmailValue = useSelector(state => state.admin.sendEmailValue)
 
     useEffect(() => {
@@ -42,6 +43,8 @@ function TriggerApp() {
                     resolve(response.data)
                 })
                 .catch((error) => {
+                    setError(error)
+                    console.error(error)
                     reject(error)
                 })
         })
@@ -58,7 +61,10 @@ function TriggerApp() {
                             {messageSent ? <Typography>
                                 E-mails sendo enviados com sucesso.
                             </Typography> : <></>}
-                      <button type="button" onClick={() => sendEmail(sendEmailValue)}  className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10 mt-10 '>{!messageSent ? 'Enviar e-mails' : 'Parar de enviar'}</button>
+                            {error ? <Typography className='text-red-500'>
+                          Houve um erro. Por favor tente novamente, se nada ocorrer contate o <Link className='underline' to="https://secretariamunicipaldetransportes.movidesk.com/form/6594/" >suporte</Link>
+                            </Typography> : <></>}
+                      <button type="button" onClick={() => sendEmail(sendEmailValue)} className={`rounded p-3 uppercase text-white h-[27px] min-h-[27px] font-medium px-10 mt-10 ${!messageSent ? 'bg-[#0DB1E3]' : 'bg-red-500'}`} >{!messageSent ? 'Enviar e-mails' : 'Parar de enviar'}</button>
                   </Paper>
               </div>
           </Box>

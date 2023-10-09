@@ -196,5 +196,5 @@ display: none !important;
 }
 .MuiBadge-badge{
     position: relative !important;
-transform: scale(1) translate(25%, -55%) !important;
+transform: scale(1) translate(2%, -55%) !important;
 }
