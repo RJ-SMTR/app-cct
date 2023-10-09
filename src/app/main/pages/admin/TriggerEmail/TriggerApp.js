@@ -29,7 +29,7 @@ function TriggerApp() {
     function sendEmail(sendEmailValue) {
         const token = window.localStorage.getItem('jwt_access_token');
         return new Promise((resolve, reject) => {
-            api.patch('http://localhost:3001/api/settings',
+            api.patch('https://api.cct.hmg.mobilidade.rio/api/settings',
            { name: sendEmailValue.name,
             version: sendEmailValue.version,
             value: sendEmailValue.value == "false" ? "true" : "false" 
