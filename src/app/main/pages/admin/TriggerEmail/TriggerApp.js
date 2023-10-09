@@ -57,7 +57,7 @@ function TriggerApp() {
               <div>
                   <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
                           <Typography className='font-medium text-2xl'>Enviar e-mails de cadastro</Typography>
-                          <label className='my-10'>Os envios são feitos diariamente em lotes (500 p/ dia). Para acompanhar os envios veja <Link to="/" className='underline'>aqui</Link></label>
+                      <label className='my-10'>Os envios são realizados em lotes, diariamente (500 p/dia).Para acompanhá-los clique <Link to="/" className='underline'>aqui!</Link></label>
                             {messageSent ? <Typography>
                                 E-mails sendo enviados com sucesso.
                             </Typography> : <></>}
