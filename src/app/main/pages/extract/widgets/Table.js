@@ -59,7 +59,7 @@ function TableTransactions() {
 
     const previousStatementsRef = useRef([]);
     useEffect(() => {
-        if(searchingWeek && searchingDay){
+        if(searchingWeek || searchingDay){
             if (dateRange !== previousStatementsRef.current) {
                 setLastDate([previousStatementsRef.current[0], previousStatementsRef.current[previousStatementsRef.current.length - 1]]);
                 previousStatementsRef.current = dateRange;
@@ -289,6 +289,11 @@ function TableTransactions() {
                                             {searchingWeek ? 'Catracadas' : 'Status'}
                                         </Typography>
                                     </TableCell>
+                                    {searchingDay ? <TableCell>
+                                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                            Tipo
+                                        </Typography>
+                                    </TableCell> : <></>}
                                 </TableRow>
                             </TableHead>
                         ) : (
@@ -298,7 +303,7 @@ function TableTransactions() {
                         <TableBody>
                             {statements &&
                                 statements.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
-                                    const date = parseISO(i.date ?? i.dateTime);
+                                    const date = parseISO(i.date ?? i.dateTime ?? i.dateIndex);
                                     const formattedDate = format(date, 'dd/MM/yyyy', { timeZone: 'Etc/UTC' });
                                    return  <CustomTable data={i} c={c} date={formattedDate} handleClickRow={handleClickRow} />
                             })}

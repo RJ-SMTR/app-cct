@@ -4,7 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from "react";
 import { getMultipliedEntries } from "app/store/extractSlice";
 
-function Entries() {
+function Entries(type) {
+    const [todayInfo, setTodayInfo] = useState({})
     const dispatch = useDispatch()
   
     const formatter = new Intl.NumberFormat('pt-BR', {
@@ -25,32 +26,39 @@ function Entries() {
         })
         dispatch(getMultipliedEntries(map, searchingDay))
     }
-    useEffect(() => {
 
-       
+    useEffect(() => {
         if(searchingDay){
             getDayEntries(statements)
-            
         } else {
             dispatch(getMultipliedEntries(statements, searchingDay, searchingWeek))
         }
     }, [statements])
+    useEffect(() => {
+        if(statements){
+            setTodayInfo({
+                amount: statements[0]?.amount,
+                date: firstDate
+            })
+
+        }
+    }, [])
 
   return (
-      <>{statements.length  ? <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden">
+      <>{statements.length ? <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden mx-5 mt-10 md:mt-0">
           <div className="flex items-center justify-between">
               <div className="flex flex-col">
                   <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
-                      Valor acumulado 
+                      {type.type}
                   </Typography>
-                  <Typography className="font-medium text-sm"> {searchingDay ? dayDate : `${firstDate} - ${lastDate}`}</Typography>
+                  <Typography className="font-medium text-sm"> {type.isDay == "true" ? todayInfo.date :  searchingDay ? dayDate : `${firstDate} - ${lastDate}`}</Typography>
 
               </div>
 
           </div>
           <div className="flex flex-row flex-wrap mt-8 ">
               <Typography className="mt-8 font-medium text-3xl leading-none">
-                  {formatter.format(multipliedEntries)}
+                  {type.isDay == "true" ? formatter.format(todayInfo.amount) :  formatter.format(multipliedEntries) }
               </Typography>
           </div>
 
