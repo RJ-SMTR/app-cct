@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Typography, Paper, Box } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import * as yup from 'yup';
-import axios from 'axios';
 import { api } from 'app/configs/api/api';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import { useDispatch } from 'react-redux';
@@ -101,7 +100,7 @@ function UploadApp() {
                       )}
 
 
-                              <button type="submit" className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10 '>Enviar</button>
+                              <button type="submit" className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10 mt-10 '>Enviar</button>
               </form>
             </Paper>
           </div>

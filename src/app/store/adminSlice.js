@@ -3,6 +3,7 @@ import { api } from 'app/configs/api/api';
 
 const initialState = {
     userList: [],
+    sendEmailValue: Boolean
 };
 
 const stepSlice = createSlice({
@@ -12,10 +13,13 @@ const stepSlice = createSlice({
         setUsersList: (state, action) => {
             state.userList = action.payload;
         },
+        setSendEmailValue: (state, action) => {
+            state.sendEmailValue = action.payload;
+        },
     },
 });
 
-export const { setUsersList, userList } = stepSlice.actions;
+export const { setUsersList, userList, sendEmailValue, setSendEmailValue } = stepSlice.actions;
 export default stepSlice.reducer;
 
 export const getUser = () => (dispatch) => {
@@ -29,6 +33,22 @@ export const getUser = () => (dispatch) => {
                     user.permitCode != null && user.role?.name != 'Admin' 
                 )
                 dispatch(setUsersList(filteredUsers))
+                resolve(response.data)
+            })
+            .catch((error) => {
+                reject(error)
+            })
+    })
+}
+export const getInfo = () => (dispatch) => {
+    const token = window.localStorage.getItem('jwt_access_token');
+    return new Promise((resolve, reject) => {
+        api.get('http://localhost:3001/api/settings', {
+            headers: { 'Authorization': `Bearer ${token}`}
+        })
+            .then((response) => {
+                const targetObject = response.data.find(item => item.name === "activate_auto_send_invite")
+                dispatch(setSendEmailValue(targetObject))
                 resolve(response.data)
             })
             .catch((error) => {

@@ -8,7 +8,7 @@ import TableRow from '@mui/material/TableRow';
 import TablePagination from '@mui/material/TablePagination';
 import Typography from '@mui/material/Typography';
 import { useSelector } from 'react-redux';
-import { Box, Button, Modal, TextField } from '@mui/material';
+import { Badge} from '@mui/material';
 import { Link, redirect } from 'react-router-dom';
 export  function TableUsers() {
 
@@ -64,6 +64,14 @@ export  function TableUsers() {
                                       color="text.secondary"
                                       className="font-semibold text-12 whitespace-nowrap"
                                   >
+                                    Status de convite
+                                  </Typography>
+                              </TableCell>
+                              <TableCell>
+                                  <Typography
+                                      color="text.secondary"
+                                      className="font-semibold text-12 whitespace-nowrap"
+                                  >
                                       
                                   </Typography>
                               </TableCell>
@@ -74,6 +82,19 @@ export  function TableUsers() {
 
                       {userList ?
                               userList.map((i) => {
+                                const emailStatus = (i) => {
+                                    switch(i.aux_inviteStatus?.name){
+                                        case 'created':
+                                            return 'Registrado';
+                                            break;
+                                        case 'sent':
+                                            return 'Enviado';
+                                            break;
+                                        case 'used':
+                                            return 'Acessado';
+                                            break;
+                                    }
+                                }
                                  return <TableRow >
                                       <TableCell component="th" scope="row">
                                           <Typography className="" color="text.secondary">
@@ -82,7 +103,7 @@ export  function TableUsers() {
                                       </TableCell>
                                       <TableCell component="th" scope="row">
                                           <Typography className="whitespace-nowrap">
-                                              {i.fullName}
+                                              {i.fullName ?? 'Fulano'}
                                           </Typography>
                                       </TableCell>
                                       <TableCell component="th" scope="row">
@@ -91,7 +112,16 @@ export  function TableUsers() {
                                           </Typography>
                                       </TableCell>
                                       <TableCell component="th" scope="row">
-                                         <Typography className="whitespace-nowrap">
+                                          <Typography className="whitespace-nowrap">
+                                             <Badge 
+                                             className='top-[5px] mt-10'
+                                                 color='success'
+                                                 badgeContent={emailStatus(i) ?? 'Esperando'}
+                                             />
+                                          </Typography>
+                                      </TableCell>
+                                      <TableCell component="th" scope="row">
+                                         <Typography className="whitespace-nowrap flex items-center">
                                              <Link to={`/admin/user/${i.id}`} className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10'>
                                                 Detalhes
                                             </Link>
