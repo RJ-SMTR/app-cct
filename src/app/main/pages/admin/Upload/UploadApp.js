@@ -50,29 +50,34 @@ function UploadApp() {
           })
           .catch((error) => {
             const { error: apiError } = error.response?.data
-
+            const errors = [];
             if (apiError.file) {
               apiError.file.invalidRows.forEach((invalidRow) => {
                 let errorMessage;
 
                 if (invalidRow.errors.email === 'email must be an email') {
-                  errorMessage = `Coluna ${invalidRow.row}: E-mail inválido`;
+                  errorMessage = `Linha ${invalidRow.row}: E-mail inválido`;
+                  errors.push(errorMessage)
                 } else if (invalidRow.errors.email === 'emailAlreadyExists') {
-                  errorMessage = `Coluna ${invalidRow.row}: E-mail já existe`;
+                  errorMessage = `Linha ${invalidRow.row}: E-mail já existe `;
+                  errors.push(errorMessage)
                 } else {
-                  errorMessage = `Coluna ${invalidRow.row}: Erro de email desconhecido: ${invalidRow.errors.email}`;
+                  errorMessage = `Linha ${invalidRow.row}: Erro de e-mail desconhecido: ${invalidRow.errors.email} `;
+                  errors.push(errorMessage)
                 }
                 if (invalidRow.errors.permitCode) {
-                  errorMessage += ` (código de permissão: ${invalidRow.errors.permitCode})`
+                  errorMessage += ` (código de permissão: ${invalidRow.errors.permitCode}) `
+                  errors.push(errorMessage)
                 }
 
-                setError('file', {
-                  type: 'server',
-                  message: errorMessage,
-                });
+              });
+              console.log(errors);
+              setError('file', {
+                type: 'server',
+                message: errors,
               });
             }
-            reject(error)
+            reject(errors)
           });
       });
     }
@@ -96,11 +101,11 @@ function UploadApp() {
                        
                       />
                       {errors.file && (
-                        <p className="text-red-500 my-10">{errors.file.message}</p>
+                        <p className="text-red-500 my-10">{errors.file.message.map((error) => {
+                          return <p>{error}</p>
+                        })} <br/></p>
                       )}
-
-
-                              <button type="submit" className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10 mt-10 '>Enviar</button>
+                      <button type="submit" className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10 mt-10 '>Enviar</button>
               </form>
             </Paper>
           </div>
