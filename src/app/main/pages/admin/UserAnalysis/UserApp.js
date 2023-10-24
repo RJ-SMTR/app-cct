@@ -6,6 +6,8 @@ import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { selectUser, setUser } from 'app/store/userSlice';
 import { BankInfo, PersonalInfo } from './forms/userForms';
+import { showMessage } from 'app/store/fuse/messageSlice';
+import { useDispatch } from 'react-redux';
 
 import { useThemeMediaQuery
  } from '@fuse/hooks';
@@ -29,6 +31,32 @@ function UserApp() {
   const [user, setUser] = useState()
   let {id} = useParams()
   const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
+  const dispatch = useDispatch()
+
+  const onSubmit = async () => {
+
+      const token = window.localStorage.getItem('jwt_access_token')
+      const data = {
+        id: id,
+      };
+
+      return new Promise((resolve, reject) => {
+        api
+          .post('/auth/email/resend', data, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+          .then((response) => {
+            console.log(response)
+            dispatch(showMessage({ message: 'E-mail enviado.' }))
+            resolve(response.data)
+          })
+          .catch((error) => {  
+            reject(error)
+          });
+      });
+  };
   useEffect(() => {
     const token = window.localStorage.getItem('jwt_access_token');
     api.get(`/users/${id}`, {
@@ -38,6 +66,7 @@ function UserApp() {
           setUser(response.data)
         })
   }, [])
+
 
   return (
     <Root
@@ -70,7 +99,7 @@ function UserApp() {
              </div>
            </div>
             <div>
-              <button className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-12 mb-12 '>
+              <button onClick={() => onSubmit()} className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-12 mb-12 '>
               Reenviar e-mail de cadastro
              </button>
             </div>
