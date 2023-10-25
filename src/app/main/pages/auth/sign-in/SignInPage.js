@@ -59,7 +59,7 @@ function SignInPage() {
           <div className="flex items-baseline mt-2 font-medium">
             <Typography>Não foi registrado?</Typography>
             <Link className="ml-4" to="https://secretariamunicipaldetransportes.movidesk.com/form/6594/">
-              <span className='underline'> fale conosco</span>
+              <span className='underline'> fale conosco!</span>
             </Link>
           </div>
 
