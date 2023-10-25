@@ -27,11 +27,6 @@ function ForgotPassword() {
 
   function onSubmit({ email }) {
     forgotPasswordFunction(email)
-      .then((response) => {
-        setTimeout(() => {
-          navigate(`/reset-password/${response.data.hash}`)
-        }, 3000)
-      })
   }
 
   return (

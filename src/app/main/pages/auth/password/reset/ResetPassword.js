@@ -39,9 +39,7 @@ function ResetPassword() {
 
   function onSubmit( password ) {
     resetPasswordFunction(password.passwordConfirm, hash)
-      .then(  setTimeout(() => {
-             return navigate('/sign-in')
-            }, 3000))
+    
   }
 
   return (
