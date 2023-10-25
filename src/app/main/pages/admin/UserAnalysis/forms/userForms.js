@@ -33,7 +33,7 @@ export function PersonalInfo({ user }) {
     const handleClose = () => setOpen(false);
 
 
-    const { handleSubmit, control, formState } = useForm({
+    const { handleSubmit, control, formState, setError, clearErrors } = useForm({
         defaultValues: {
             // permitCode: user.permitCode,
             email: user.email,
@@ -59,6 +59,14 @@ export function PersonalInfo({ user }) {
                 })
                 .catch((error) => {
                     reject(error.response.data.errors)
+                    console.log(error.response.data.errors.email)
+                    const errorMessage =
+                        error.response.data.errors.email === "email must be an email"
+                            ? "E-mail incorreto, verifique e tente novamente."
+                            : "E-mail já está sendo usado.";
+                    setError('email', {
+                        message: errorMessage,
+                    });
                 })
 
         })
@@ -82,7 +90,7 @@ export function PersonalInfo({ user }) {
                     <button type="button" className='flex items-center rounded p-3 uppercase text-white bg-[#707070] hover:bg-[#4a4a4a ]  mr-2 h-[27px] min-h-[27px]' onClick={() => clear()}>
                         <FuseSvgIcon className="text-48 text-white" size={24} color="action">heroicons-outline:x</FuseSvgIcon>
                     </button>
-                    <button type='submit' className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10' onClick={() => setIsEditable(true)}>
+                    <button type='submit' className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10' onClick={() => {setIsEditable(true), clearErrors()}}>
                         Salvar
                     </button>
                 </div>
@@ -170,11 +178,14 @@ export function PersonalInfo({ user }) {
                                 variant="outlined"
                                 disabled={!isEditable}
                                 fullWidth
-                                error={!!errors.invalidEmail}
-                                helperText={errors?.invalidEmail?.message}
+                                error={!!errors.email}
+                                helperText={errors?.email?.message}
                             />
+                            
                         )}
+                    
                     />
+                    {console.log(errors?.email?.message)}
                     <TextField
                         disabled
                         className="mb-24"
