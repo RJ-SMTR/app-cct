@@ -174,8 +174,8 @@ export function TableUsers() {
                                             <Typography className="whitespace-nowrap">
                                                 <Badge
                                                     className='top-[5px] mt-10'
-                                                    color='success'
-                                                    badgeContent={emailStatus(i) ?? 'Esperando'}
+                                                    color={emailStatus(i) ? 'success' : 'warning'}
+                                                    badgeContent={emailStatus(i) ?? 'Convite não enviado'}
                                                 />
                                             </Typography>
                                         </TableCell>
@@ -250,7 +250,7 @@ export function TableUsers() {
                                             Status de convite
                                         </MenuItem>
                                         <MenuItem value="queued">Na fila</MenuItem>
-                                        <MenuItem value="created">Criado</MenuItem>
+                                        {/* <MenuItem value="created">Criado</MenuItem> */}
                                         <MenuItem value="sent">Enviado</MenuItem>
                                         <MenuItem value="used">Acessado</MenuItem>
                                     </Select>
