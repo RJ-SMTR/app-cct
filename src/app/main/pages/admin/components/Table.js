@@ -45,7 +45,7 @@ export function TableUsers() {
     const handleClose = () => setOpen(false);
 
 
-    const { control, handleSubmit, formState: { errors, dirtyFields, isValid } } = useForm();
+    const { control, handleSubmit, formState: { errors, dirtyFields, isValid }, reset } = useForm();
 
 
     const onSubmit = (data) => {
@@ -55,6 +55,7 @@ export function TableUsers() {
                 .then((response) => {
                     handleClose()
                     setFiltered(true)
+                    reset();
                 })
     }
 
