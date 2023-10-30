@@ -17,7 +17,7 @@ function UploadApp() {
       return value.size <= 30000000
     })
 
- const onSubmit = async (formData) => {
+  const onSubmit = async (formData) => {
     const selectedFile = formData.file[0]
     if (selectedFile) {
       try {
@@ -50,31 +50,35 @@ function UploadApp() {
           })
           .catch((error) => {
             const { error: apiError } = error.response?.data
-            const errors = [];
+            const errorMessages = []
+
             if (apiError.file) {
               apiError.file.invalidRows.forEach((invalidRow) => {
                 let errorMessage;
 
                 if (invalidRow.errors.email === 'email must be an email') {
-                  errorMessage = `Linha ${invalidRow.row}: E-mail inválido`;
-                  errors.push(errorMessage)
+                  errorMessage = `Linha ${invalidRow.row}: E-mail inválido!`;
                 } else if (invalidRow.errors.email === 'emailAlreadyExists') {
-                  errorMessage = `Linha ${invalidRow.row}: E-mail já existe `;
-                  errors.push(errorMessage)
+                  errorMessage = `Linha ${invalidRow.row}: E-mail já existe!`;
                 } else {
-                  errorMessage = `Linha ${invalidRow.row}: Erro de e-mail desconhecido: ${invalidRow.errors.email} `;
-                  errors.push(errorMessage)
-                }
-                if (invalidRow.errors.permitCode) {
-                  errorMessage += ` (código de permissão: ${invalidRow.errors.permitCode}) `
-                  errors.push(errorMessage)
+                  errorMessage = `Linha ${invalidRow.row}: Erro de email desconhecido: ${invalidRow.errors.email}!`;
                 }
 
-              });
-              console.log(errors);
-              setError('file', {
-                type: 'server',
-                message: errors,
+                if (invalidRow.errors.permitCode) {
+                  errorMessage += ` (código de permissão: ${invalidRow.errors.permitCode})`;
+                }
+
+                if (!errorMessages[invalidRow.row]) {
+                  errorMessages[invalidRow.row] = errorMessage;
+                } else {
+                  errorMessages[invalidRow.row] += `\n${errorMessage}`;
+                }
+              })
+              Object.keys(errorMessages).forEach((email) => {
+                setError(`file[${email}]`, {
+                  type: 'server',
+                  message: errorMessages[email],
+                });
               });
             }
             reject(errors)
@@ -91,21 +95,25 @@ function UploadApp() {
           <div>
             <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
               <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
-                              <Typography className='font-medium text-2xl'>Enviar arquivos</Typography>
-                              <label className='my-10'>Formatos permitidos: .CSV, .XLSX, .XLS</label>
-                
-                      <input
-                      {...register('file')}
-                        type="file"
-                        accept=".xlsx, .csv, .xls"
-                       
-                      />
-                      {errors.file && (
-                        <p className="text-red-500 my-10">{errors.file.message.map((error) => {
-                          return <p>{error}</p>
-                        })} <br/></p>
-                      )}
-                      <button type="submit" className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10 mt-10 '>Enviar</button>
+                <Typography className='font-medium text-2xl'>Enviar arquivos</Typography>
+                <label className='my-10'>Formatos permitidos: .CSV, .XLSX, .XLS</label>
+
+                <input
+                  {...register('file')}
+                  type="file"
+                  accept=".xlsx, .csv, .xls"
+
+                />
+                {errors.file && (
+                  errors.file.map((error, index) => (
+                    <p key={index} className="text-red-500 my-10">{error.message}</p>
+                  ))
+                )}
+
+
+
+                <button type="submit" className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10 mt-10 '>Enviar</button>
+
               </form>
             </Paper>
           </div>
