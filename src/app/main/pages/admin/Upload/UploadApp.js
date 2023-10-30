@@ -51,6 +51,7 @@ function UploadApp() {
           .catch((error) => {
             const { error: apiError } = error.response?.data
             const errorMessages = []
+
             if (apiError.file) {
               apiError.file.invalidRows.forEach((invalidRow) => {
                 let errorMessage;
@@ -80,7 +81,7 @@ function UploadApp() {
                 });
               });
             }
-            reject(error)
+            reject(errors)
           });
       });
     }
@@ -112,6 +113,7 @@ function UploadApp() {
 
 
                 <button type="submit" className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10 mt-10 '>Enviar</button>
+
               </form>
             </Paper>
           </div>

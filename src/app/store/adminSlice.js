@@ -25,7 +25,7 @@ export default stepSlice.reducer;
 export const getUser = () => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
     return new Promise((resolve, reject) => {
-        api.get('/users?page=1', {
+        api.get('/users', {
             headers: { 'Authorization': `Bearer ${token}`}
         })
             .then((response) => {
@@ -43,7 +43,7 @@ export const getUser = () => (dispatch) => {
 export const getInfo = () => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
     return new Promise((resolve, reject) => {
-        api.get('http://localhost:3001/api/settings', {
+        api.get('https://api.cct.hmg.mobilidade.rio/api/settings', {
             headers: { 'Authorization': `Bearer ${token}`}
         })
             .then((response) => {
@@ -55,4 +55,30 @@ export const getInfo = () => (dispatch) => {
                 reject(error)
             })
     })
+}
+export const getUserByInfo = (selectedQuery, query, inviteStatus) => (dispatch) => {
+    const token = window.localStorage.getItem('jwt_access_token');
+    const queryKey = selectedQuery === "fullName" ? 'name' : selectedQuery
+    return new Promise((resolve, reject) => {
+        const requestData = {
+            [queryKey]: query,
+            inviteStatus: inviteStatus
+        };
+        
+        api.get('/users', {
+            params: requestData,
+            headers: { 'Authorization': `Bearer ${token}` },
+        })
+            .then((response) => {
+                const filteredUsers = response.data.data.filter(user =>
+                    user.permitCode != null && user.role?.name != 'Admin'
+                )
+                dispatch(setUsersList(filteredUsers))
+                resolve(response)
+            })
+            .catch((error) => {
+                reject(error)
+            })
+    })
+
 }
