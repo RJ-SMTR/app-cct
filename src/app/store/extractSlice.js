@@ -178,7 +178,7 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
 
     return new Promise((resolve, reject) => {
         const apiRoute = searchingWeek ? jwtServiceConfig.revenues : jwtServiceConfig.bankStatement
-        api.post(apiRoute, requestData, {
+        api.get(apiRoute, requestData, {
             headers: { "Authorization": `Bearer ${token}` },
         })
             .then((response) => {

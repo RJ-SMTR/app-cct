@@ -29,8 +29,11 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { getStatements, setPreviousDays,  setDateRange,  setSearchingWeek, setSearchingDay } from 'app/store/extractSlice';
 import { useNavigate } from 'react-router-dom';
+import { selectUser } from 'app/store/userSlice';
+import { getUserStatements } from 'app/store/adminSlice';
 
-function TableTransactions() {
+function TableTransactions({id}) {
+    const user = useSelector(selectUser)
     const dispatch = useDispatch()
     const statements = useSelector(state => state.extract.statements)
     const previousDays = useSelector(state => state.extract.previousDays)
@@ -109,7 +112,12 @@ function TableTransactions() {
     }
 
     useEffect(() => {
-        dispatch(getStatements(previousDays, dateRange, searchingDay, searchingWeek))
+        if(user.role.name === "Admin"){
+            dispatch(getUserStatements( id))
+        } else {
+
+            dispatch(getStatements(previousDays, dateRange, searchingDay, searchingWeek, id))
+        }
     }, [previousDays, dateRange])
 
     

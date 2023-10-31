@@ -24,7 +24,6 @@ function TableTypes() {
         currency: 'BRL',
     });
     const listByType = useSelector(state => state.extract.listByType)
-    console.log(listByType)
 
     return (
         <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">

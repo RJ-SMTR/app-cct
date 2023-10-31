@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { api } from 'app/configs/api/api';
+import { setStatements } from './extractSlice';
 
 const initialState = {
     userList: [],
@@ -81,4 +82,46 @@ export const getUserByInfo = (selectedQuery, query, inviteStatus) => (dispatch) 
             })
     })
 
+}
+function handleUserData(previousDays, dateRange, searchingDay, searchingWeek) {
+    if (dateRange?.length > 0 && !searchingDay) {
+        const separateDate = dateRange.map((i) => {
+            const inputDateString = i;
+            const dateObj = new Date(inputDateString);
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+            const day = String(dateObj.getDate()).padStart(2, "0");
+            const formattedDate = `${year}-${month}-${day}`;
+            return formattedDate;
+        });
+        return {
+            startDate: separateDate[0],
+            endDate: separateDate[1]
+        };
+    } else if (searchingDay && searchingWeek) {
+        return {
+            startDate: dateRange[0],
+            endDate: dateRange[1]
+        };
+    } else {
+        return previousDays > 0 ? { previousDays: previousDays } : {}
+    }
+}
+export const getUserStatements = (userId) => (dispatch) => {
+    const token = window.localStorage.getItem('jwt_access_token');
+    return new Promise((resolve, reject) => {
+        const apiRoute = `bank-statements/me?userId=${userId}&timeInterval=lastMonth`
+        api.get(apiRoute, {
+            headers: { "Authorization": `Bearer ${token}` },
+        })
+            .then((response) => {
+                console.log(response.data)
+               
+                    dispatch(setStatements(response.data.data));
+                resolve(response.data);
+            })
+            .catch((error) => {
+                reject(error);
+            });
+    });
 }
