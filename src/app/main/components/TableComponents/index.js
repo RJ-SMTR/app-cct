@@ -34,7 +34,7 @@ export function CustomTable(data) {
     const i = data.data.data
     const getStatus = (i) => {
       if (i.status == "accumulated") {
-        return 'Acumulado'
+        return 'A ser pago'
       } else if (i.status == "paid") {
         return 'Pago'
       } else {

@@ -10,12 +10,8 @@ import Typography from '@mui/material/Typography';
 import { Box, Skeleton } from '@mui/material';
 
 
-import { CustomTable } from 'src/app/main/components/TableComponents';
-import { format, parseISO } from 'date-fns';
 
 import { useSelector } from 'react-redux';
-import { useEffect } from 'react';
-
 
 
 function TableTypes() {
@@ -36,7 +32,7 @@ function TableTypes() {
             </div>
 
             <Box className="flex flex-col flex-auto mt-24  overflow-hidden">
-          
+
 
                 <TableContainer>
                     <Table className="min-w-full">
@@ -50,12 +46,12 @@ function TableTypes() {
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                          Valor arrecadado
+                                            Valor arrecadado
                                         </Typography>
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                          Catracadas
+                                            Catracadas
                                         </Typography>
                                     </TableCell>
                                 </TableRow>
@@ -66,12 +62,12 @@ function TableTypes() {
 
                         <TableBody>
                             {listByType &&
-                            
+
                                 Object.values(listByType).map((i) => {
                                     const transactionType = (i) => {
-                                        if(i.transactionType ==="free"){
+                                        if (i.transactionType === "free") {
                                             return 'Gratuidade'
-                                        } else if(i.transactionType === 'half'){
+                                        } else if (i.transactionType === 'half') {
                                             return 'Integração'
                                         } else {
                                             return 'Integral'
@@ -80,17 +76,17 @@ function TableTypes() {
                                     return <TableRow className="hover:bg-gray-100 cursor-pointer">
                                         <TableCell component="th" scope="row" >
                                             <Typography className="whitespace-nowrap">
-                                               {transactionType(i)}
+                                                {transactionType(i)}
                                             </Typography>
                                         </TableCell>
                                         <TableCell component="th" scope="row">
                                             <Typography className="whitespace-nowrap">
-                                               {i.transactionType === "free" ? "R$ 0" : formatter.format(i.multipliedAmount)}
+                                                {i.transactionValueSum === "free" ? "R$ 0" : formatter.format(i.transactionValueSum)}
                                             </Typography>
 
                                         </TableCell>
                                         <TableCell component="th" scope="row">
-                                            {i?.transactions.toLocaleString()}
+                                            {i?.count.toLocaleString()}
                                         </TableCell>
 
                                     </TableRow>

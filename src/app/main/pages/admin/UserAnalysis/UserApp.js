@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { api } from 'app/configs/api/api';
 import Table from '../../extract/widgets/Table';
 import { setFullReport } from 'app/store/extractSlice';
+import TableTypes from '../../extract/widgets/TableTypes';
 const Root = styled(FusePageSimple)(({ theme }) => ({
   '& .FusePageSimple-header': {
     backgroundColor: theme.palette.background.paper,
@@ -125,6 +126,10 @@ function UserApp() {
            
               <div>
                 <Table id={id} />
+              </div>
+           
+              <div>
+                <TableTypes id={id} />
               </div>
             </>
           )}

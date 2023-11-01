@@ -6,7 +6,7 @@ const initialState = {
     searchingWeek: false,
     statements: [],
     mapInfo: [],
-    previousDays: {},
+    previousDays: "lastMonth",
     dateRange: [],
     searchingDay: false,
     fullReport: false,
@@ -94,16 +94,16 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
             return formattedDate;
         });
         return {
-            startDate: separateDate[0],
+            // startDate: separateDate[0],ac
             endDate: separateDate[1]
         };
     } else if (searchingDay && searchingWeek) {
         return {
-            startDate: dateRange[0],
+            // startDate: dateRange[0],
             endDate: dateRange[1]
         };
     } else {
-        return previousDays > 0 ? { previousDays: previousDays } : {}
+        return previousDays > 0 ? { timeInterval: previousDays } : { timeInterval: previousDays }
     }
 }
 function resumeDays(inputData, searchingDay) {
@@ -156,7 +156,7 @@ function resumeDays(inputData, searchingDay) {
 function resumeTypes(inputData) {
     const groupedTransactions = {};
     inputData.forEach((obj) => {
-        const transactionType = obj.transactionType;
+        const transactionType = obj.transactionTypeCounts;
         if (!groupedTransactions[transactionType]) {
             groupedTransactions[transactionType] = {
                 transactionType,
@@ -171,110 +171,131 @@ function resumeTypes(inputData) {
 
     return groupedTransactions
 }
-export const getStatements = (previousDays, dateRange, searchingDay, searchingWeek) => (dispatch) => {
-    const requestData = handleRequestData(previousDays, dateRange, searchingDay, searchingWeek);
 
-    const token = window.localStorage.getItem('jwt_access_token')
+export const getFirstTypes = (userId) => async (dispatch) => {
+    const token = window.localStorage.getItem('jwt_access_token');
+    let config = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: userId ? jwtServiceConfig.revenues + `?userId=${userId}` : jwtServiceConfig.revenues ,
+        headers: {
+            "Authorization": `Bearer ${token}`
+        },
+        params: {
+            timeInterval: 'lastMonth'
+        }
+    };
 
-    return new Promise((resolve, reject) => {
-        const apiRoute = searchingWeek ? jwtServiceConfig.revenues : jwtServiceConfig.bankStatement
-        api.get(apiRoute, requestData, {
-            headers: { "Authorization": `Bearer ${token}` },
-        })
-            .then((response) => {
-                if (searchingWeek || searchingDay) {
-                    dispatch(setMapInfo(response.data));
-                    const weekStatements = resumeDays(response.data, searchingDay);
-                    if (searchingDay) {
-                        weekStatements.sort((a, b) => {
-                            const sortingOrder = ["full", "half", "free"];
-                            return sortingOrder.indexOf(a.transactionType) - sortingOrder.indexOf(b.transactionType);
-                        });
-                    }
-                    dispatch(setStatements(weekStatements));
-                    const types = resumeTypes(weekStatements);
-                    const order = ["full", "half", "free"]
+    try {
+        const response = await api.request(config)
+        // const weekStatements = resumeDays(response.data.data, searchingDay)
+        // console.log(weekStatements)
+        // const types = resumeTypes(response.data.data)
+        // const order = ["full", "half", "free"]
 
-                    const sortedTypes = {}
-                    order.forEach((type) => {
-                        if (types[type]) {
-                            sortedTypes[type] = types[type]
-                        }
-                    });
-                    dispatch(setListByType(sortedTypes));
-                } else {
-                    const first = response.data[0]?.date;
-                    const last = response.data[response.data.length - 1]?.date;
-                    dispatch(getFirstTypes([last, first]))
-                    dispatch(setStatements(response.data));
-                }
-
-                resolve(response.data);
-            })
-            .catch((error) => {
-                reject(error);
-            });
-    });
+        // const sortedTypes = {}
+        // order.forEach((type) => {
+        //     if (types[type]) {
+        //         sortedTypes[type] = types[type]
+        //     }
+        // });
+        dispatch(setListByType(response.data.data))
+    } catch (error) {
+        console.error(error);
+    }
 };
 
-export const getFirstTypes = (firstDate) => (dispatch) => {
-    const token = window.localStorage.getItem('jwt_access_token')
-    return new Promise((resolve, reject) => {
-        api.post(jwtServiceConfig.revenues, {
-            startDate: firstDate[0],
-            endDate: firstDate[1]
-        }, {
-            headers: { "Authorization": `Bearer ${token}` },
-        }).then((response) => {
-            const weekStatements = resumeDays(response.data, searchingDay)
-            const types = resumeTypes(weekStatements)
-            const order = ["full", "half", "free"]
-
-            const sortedTypes = {}
-            order.forEach((type) => {
-                if (types[type]) {
-                    sortedTypes[type] = types[type]
-                }
-            });
-            dispatch(setListByType(sortedTypes))
-        })
-    })
-}
-
-export const getTodayStatements = () => (dispatch) => {
-
-    const token = window.localStorage.getItem('jwt_access_token')
-    return new Promise((resolve, reject) => {
-        api.post(jwtServiceConfig.revenues, {
-            previousDays: 1
-        }, {
-            headers: { "Authorization": `Bearer ${token}` },
-        })
-            .then((response) => {
-                dispatch(setTodayStatements(response.data))
-                dispatch(setMapInfo(response.data))
-                resolve(response.data)
-
-
-            })
-            .catch((error) => {
-                reject(error)
-            });
-    })
-}
-export const getMultipliedEntries = (statements, searchingDay, searchingWeek) => (dispatch) => {
-    if (searchingDay) {
-        const sum = statements.map((statement) => statement)
-            .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-        dispatch(setMultipliedEntries(sum));
-    } else if (searchingWeek) {
-        const sum = statements.map((statement) => statement.multipliedAmount)
-            .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-        dispatch(setMultipliedEntries(sum));
+export const getStatements = (previousDays, dateRange, searchingDay, searchingWeek, userId) => async (dispatch) => {
+    const requestData = handleRequestData(previousDays, dateRange, searchingDay, searchingWeek);
+    let apiRoute = ''
+    if(!userId){
+        apiRoute = searchingWeek ? jwtServiceConfig.revenues : jwtServiceConfig.bankStatement;
     } else {
-        const sum = statements.map((statement) => statement.amount)
-            .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-        dispatch(setMultipliedEntries(sum));
+
+        apiRoute = searchingWeek ? jwtServiceConfig.revenues + `?userId=${userId}` : jwtServiceConfig.bankStatement + `?userId=${userId}`;
+    }
+    console.log("previeus days", previousDays);
+    const method = 'get';
+    const token = window.localStorage.getItem('jwt_access_token');
+
+    console.log("API ROUTE");
+    console.log(apiRoute)
+
+    const config = {
+        method: method,
+        maxBodyLength: Infinity,
+        url: apiRoute,
+        headers: {
+            "Authorization": `Bearer ${token}`
+        },
+        params: {
+            ...requestData,
+        }
+    };
+
+    try {
+        const response = await api(config);
+
+        if (searchingWeek || searchingDay) {
+            dispatch(setMapInfo(response.data.data));
+            dispatch(setStatements(response.data.data));
+            console.log(response.data.data)
+        } else {
+            dispatch(getFirstTypes(userId));
+            dispatch(setStatements(response.data.data));
+        }
+
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+
+
+
+export const getTodayStatements = () => async (dispatch) => {
+    const token = window.localStorage.getItem('jwt_access_token');
+
+    const config = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: jwtServiceConfig.revenues,
+        headers: {
+            "Authorization": `Bearer ${token}`
+        },
+        params: {
+            previousDays: 1
+        }
+    };
+
+    try {
+        const response = await api(config);
+
+        dispatch(setTodayStatements(response.data.data));
+        dispatch(setMapInfo(response.data.data));
+
+        return response.data.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const getMultipliedEntries = (statements, searchingDay, searchingWeek) => (dispatch) => {
+    if (statements.length > 0) {
+        if (searchingDay) {
+            const sum = statements.map((statement) => statement)
+                .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+            dispatch(setMultipliedEntries(sum));
+        } else if (searchingWeek) {
+            const sum = statements.map((statement) => statement.transactionValueSum)
+                .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+            dispatch(setMultipliedEntries(sum));
+        } else {
+            const sum = statements.map((statement) => statement.amount)
+                .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+            dispatch(setMultipliedEntries(sum));
+        }
     }
 
 
