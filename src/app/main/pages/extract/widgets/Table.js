@@ -271,9 +271,9 @@ function TableTransactions({id}) {
                                 onChange={(newValue) => (dispatch(setDateRange(newValue)), dispatch(setSearchingWeek(false)))}
 
                             />
-                            <Button className={previousDays == 7 ? 'active' : ''} variant="contained" onClick={handleDays} data-value={'lastWeek'}>7 dias</Button>
-                            <Button className={`${previousDays == 14 ? 'active' : ''} mx-5 `} variant="contained" onClick={handleDays} data-value={'last2Weeks'}>14 dias</Button>
-                            <Button className={previousDays !== 7 && previousDays !== 14 ? 'active' : ''} variant="contained" onClick={handleDays} data-value={'lastMonth'}>Mês todo</Button>
+                            <Button className={previousDays == 'lastWeek' ? 'active' : ''} variant="contained" onClick={handleDays} data-value={'lastWeek'}>7 dias</Button>
+                            <Button className={`${previousDays == 'last2Weeks' ? 'active' : ''} mx-5 `} variant="contained" onClick={handleDays} data-value={'last2Weeks'}>14 dias</Button>
+                            <Button className={previousDays !== 'lastWeek' && previousDays !== 'last2Weeks' ? 'active' : ''} variant="contained" onClick={handleDays} data-value={'lastMonth'}>Mês todo</Button>
 
                         </div>
                     </Hidden></> : <></>}
