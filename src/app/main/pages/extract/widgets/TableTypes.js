@@ -12,6 +12,7 @@ import { Box, Skeleton } from '@mui/material';
 
 
 import { useSelector } from 'react-redux';
+import { useEffect } from 'react';
 
 
 function TableTypes() {
@@ -20,7 +21,7 @@ function TableTypes() {
         currency: 'BRL',
     });
     const listByType = useSelector(state => state.extract.listByType)
-
+ 
     return (
         <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
             <div className="flex flex-row justify-between">
@@ -61,36 +62,34 @@ function TableTypes() {
                         )}
 
                         <TableBody>
-                            {listByType &&
-
-                                Object.values(listByType).map((i) => {
-                                    const transactionType = (i) => {
-                                        if (i.transactionType === "free") {
-                                            return 'Gratuidade'
-                                        } else if (i.transactionType === 'half') {
-                                            return 'Integração'
+                            {listByType && listByType.transactionTypeCounts &&
+                                Object.entries(listByType.transactionTypeCounts).map(([type, count]) => {
+                                    const i = (type, count) => {
+                                        if(type === "Integração"){
+                                            return count * 2.15
                                         } else {
-                                            return 'Integral'
+                                            return count * 4.3
                                         }
                                     }
-                                    return <TableRow className="hover:bg-gray-100 cursor-pointer">
-                                        <TableCell component="th" scope="row" >
-                                            <Typography className="whitespace-nowrap">
-                                                {transactionType(i)}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell component="th" scope="row">
-                                            <Typography className="whitespace-nowrap">
-                                                {i.transactionValueSum === "free" ? "R$ 0" : formatter.format(i.transactionValueSum)}
-                                            </Typography>
-
-                                        </TableCell>
-                                        <TableCell component="th" scope="row">
-                                            {i?.count.toLocaleString()}
-                                        </TableCell>
-
-                                    </TableRow>
-                                })}
+                                    return (
+                                        <TableRow key={type} className="hover:bg-gray-100 cursor-pointer">
+                                            <TableCell component="th" scope="row">
+                                                <Typography className="whitespace-nowrap">
+                                                    {type}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell component="th" scope="row">
+                                                <Typography className="whitespace-nowrap">
+                                                    {type === "Botoeria" ? "R$ 0" : formatter.format(i(type,count))}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell component="th" scope="row">
+                                                {count.toLocaleString()}
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })
+                            }
                         </TableBody>
                     </Table>
                 </TableContainer>

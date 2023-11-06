@@ -94,12 +94,12 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
             return formattedDate;
         });
         return {
-            // startDate: separateDate[0],ac
+            startDate: separateDate[0], 
             endDate: separateDate[1]
         };
     } else if (searchingDay && searchingWeek) {
         return {
-            // startDate: dateRange[0],
+            startDate: dateRange[0],
             endDate: dateRange[1]
         };
     } else {
@@ -199,7 +199,8 @@ export const getFirstTypes = (userId) => async (dispatch) => {
         //         sortedTypes[type] = types[type]
         //     }
         // });
-        dispatch(setListByType(response.data.data))
+        console.log(response.data)
+        dispatch(setListByType(response.data))
     } catch (error) {
         console.error(error);
     }
@@ -209,10 +210,10 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
     const requestData = handleRequestData(previousDays, dateRange, searchingDay, searchingWeek);
     let apiRoute = ''
     if(!userId){
-        apiRoute = searchingWeek ? jwtServiceConfig.revenues : jwtServiceConfig.bankStatement;
+        apiRoute = searchingWeek ? jwtServiceConfig.revenuesUn : jwtServiceConfig.bankStatement;
     } else {
 
-        apiRoute = searchingWeek ? jwtServiceConfig.revenues + `?userId=${userId}` : jwtServiceConfig.bankStatement + `?userId=${userId}`;
+        apiRoute = searchingWeek ? jwtServiceConfig.revenuesUn + `?userId=${userId}` : jwtServiceConfig.bankStatement + `?userId=${userId}`;
     }
     console.log("previeus days", previousDays);
     const method = 'get';
@@ -239,9 +240,12 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
         if (searchingWeek || searchingDay) {
             dispatch(setMapInfo(response.data.data));
             dispatch(setStatements(response.data.data));
-            console.log(response.data.data)
         } else {
-            dispatch(getFirstTypes(userId));
+            if(userId){
+                dispatch(getFirstTypes(userId));
+            } else {
+                dispatch(getFirstTypes());
+            }
             dispatch(setStatements(response.data.data));
         }
 
@@ -260,7 +264,7 @@ export const getTodayStatements = () => async (dispatch) => {
     const config = {
         method: 'get',
         maxBodyLength: Infinity,
-        url: jwtServiceConfig.revenues,
+        url: jwtServiceConfig.revenuesUn,
         headers: {
             "Authorization": `Bearer ${token}`
         },
