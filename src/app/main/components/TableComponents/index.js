@@ -12,9 +12,9 @@ export function CustomTable(data) {
   const searchingDay = useSelector(state => state.extract.searchingDay);
   const searchingWeek = useSelector(state => state.extract.searchingWeek);
   useEffect(() => {
-  
-      setDayAmount(parseInt(data.data.transactions) * 4.3);
-  
+
+    setDayAmount(parseInt(data.data.transactions) * 4.3);
+
   }, [data, searchingDay]);
 
   const formatter = new Intl.NumberFormat('pt-BR', {
@@ -30,6 +30,23 @@ export function CustomTable(data) {
       return 'Integral'
     }
   }
+  const CustomBadge = (data) => {
+    const i = data.data.data
+    const getStatus = (i) => {
+      if (i.status == "accumulated") {
+        return 'A ser pago'
+      } else if (i.status == "paid") {
+        return 'Pago'
+      } else {
+        return 'Falha'
+      }
+    }
+  
+    return <Badge className={data.c?.root}
+      color={i.status === 'falha' ? 'error' : i.status === 'paid' ? 'success' : 'warning'}
+      badgeContent={getStatus(i)}
+    />
+  }
   return (
     data ? <TableRow key={data.data.id} className="hover:bg-gray-100 cursor-pointer">
       <TableCell component="th" scope="row" onClick={data.handleClickRow}>
@@ -40,25 +57,22 @@ export function CustomTable(data) {
       <TableCell component="th" scope="row">
         <Typography className="whitespace-nowrap">
           {searchingDay ? (
-            <> 
-            {data.data.transactionType == "free" ? "R$ 0" :formatter.format(dayAmount) }
+            <>
+              {data.data.transactionType == "Botoeria" ? "R$ 0" : formatter.format(data.data.transactionValueSum)}
             </>
           ) : (
-            <>{formatter.format(data.data.amount ?? data.data.multipliedAmount)}</>
+            <>{formatter.format(data.data.amount ?? data.data.transactionValueSum)}</>
           )}
         </Typography>
 
       </TableCell>
       <TableCell component="th" scope="row">
-        {searchingWeek ? data.data.transactions?.toLocaleString() : <Badge className={data.c?.root}
-          color={data.data.status === 'falha' ? 'error' : data.data.status === 'sucesso' ? 'success' : 'default'}
-          badgeContent={data.data.status}
-        />}
+        {searchingWeek ? data.data.count?.toLocaleString() : <CustomBadge data={data} />}
       </TableCell>
       {searchingDay ? <TableCell component="th" scope="row">
         {transactionType(data.data)}
-      </TableCell> : <></> }
-     
+      </TableCell> : <></>}
+
     </TableRow> : <p>Loading</p>
   )
 }

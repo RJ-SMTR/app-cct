@@ -7,15 +7,12 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 
-import { Box, Skeleton } from '@mui/material';
+import { Box, CircularProgress, Skeleton } from '@mui/material';
 
 
-import { CustomTable } from 'src/app/main/components/TableComponents';
-import { format, parseISO } from 'date-fns';
 
 import { useSelector } from 'react-redux';
 import { useEffect } from 'react';
-
 
 
 function TableTypes() {
@@ -24,8 +21,7 @@ function TableTypes() {
         currency: 'BRL',
     });
     const listByType = useSelector(state => state.extract.listByType)
-    console.log(listByType)
-
+ 
     return (
         <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
             <div className="flex flex-row justify-between">
@@ -37,7 +33,7 @@ function TableTypes() {
             </div>
 
             <Box className="flex flex-col flex-auto mt-24  overflow-hidden">
-          
+
 
                 <TableContainer>
                     <Table className="min-w-full">
@@ -51,12 +47,12 @@ function TableTypes() {
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                          Valor arrecadado
+                                            Valor arrecadado
                                         </Typography>
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                          Catracadas
+                                            Catracadas
                                         </Typography>
                                     </TableCell>
                                 </TableRow>
@@ -66,36 +62,38 @@ function TableTypes() {
                         )}
 
                         <TableBody>
-                            {listByType &&
-                            
-                                Object.values(listByType).map((i) => {
-                                    const transactionType = (i) => {
-                                        if(i.transactionType ==="free"){
-                                            return 'Gratuidade'
-                                        } else if(i.transactionType === 'half'){
-                                            return 'Integração'
+                            {listByType && listByType.transactionTypeCounts ?
+                                Object.entries(listByType.transactionTypeCounts).map(([type, count]) => {
+                                    const i = (type, count) => {
+                                        if(type === "Integração"){
+                                            return count * 2.15
                                         } else {
-                                            return 'Integral'
+                                            return count * 4.3
                                         }
                                     }
-                                    return <TableRow className="hover:bg-gray-100 cursor-pointer">
-                                        <TableCell component="th" scope="row" >
-                                            <Typography className="whitespace-nowrap">
-                                               {transactionType(i)}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell component="th" scope="row">
-                                            <Typography className="whitespace-nowrap">
-                                               {i.transactionType === "free" ? "R$ 0" : formatter.format(i.multipliedAmount)}
-                                            </Typography>
-
-                                        </TableCell>
-                                        <TableCell component="th" scope="row">
-                                            {i?.transactions.toLocaleString()}
-                                        </TableCell>
-
-                                    </TableRow>
-                                })}
+                                    return (
+                                        <TableRow key={type} className="hover:bg-gray-100 cursor-pointer">
+                                            <TableCell component="th" scope="row">
+                                                <Typography className="whitespace-nowrap">
+                                                    {type}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell component="th" scope="row">
+                                                <Typography className="whitespace-nowrap">
+                                                    {type === "Botoeria" ? "R$ 0" : formatter.format(i(type,count))}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell component="th" scope="row">
+                                                {count.toLocaleString()}
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })
+                            :  (
+                                    <Box className="w-[100%] flex m-2">
+                                        <CircularProgress />
+                                    </Box>
+                        ) }
                         </TableBody>
                     </Table>
                 </TableContainer>

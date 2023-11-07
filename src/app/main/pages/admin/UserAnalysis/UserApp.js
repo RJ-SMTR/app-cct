@@ -15,6 +15,9 @@ import { Link, useParams } from 'react-router-dom';
 import { Button } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { api } from 'app/configs/api/api';
+import Table from '../../extract/widgets/Table';
+import { setFullReport } from 'app/store/extractSlice';
+import TableTypes from '../../extract/widgets/TableTypes';
 const Root = styled(FusePageSimple)(({ theme }) => ({
   '& .FusePageSimple-header': {
     backgroundColor: theme.palette.background.paper,
@@ -32,7 +35,9 @@ function UserApp() {
   let {id} = useParams()
   const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
   const dispatch = useDispatch()
-
+  useEffect(() => {
+    dispatch(setFullReport(true))
+  }, [])
   const onSubmit = async () => {
 
       const token = window.localStorage.getItem('jwt_access_token')
@@ -48,7 +53,6 @@ function UserApp() {
             },
           })
           .then((response) => {
-            console.log(response)
             dispatch(showMessage({ message: 'E-mail enviado.' }))
             resolve(response.data)
           })
@@ -108,20 +112,30 @@ function UserApp() {
         </div>
       }
       content={
-      <>
-    
-          <div className="flex flex-col md:flex-row max-w-[95%] w-full mx-auto my-32">
+        <div className='flex flex-col max-w-[95%] w-full mx-auto my-32'>
+          <div className="flex flex-col md:flex-row">
             {user && (
-                  <>
+              <>
                 <PersonalInfo user={user} />
-
                 <BankInfo user={user} />
-                </>
+              </>
             )}
-       
           </div>
-      </>
+          {user && (
+            <>
+           
+              <div>
+                <Table id={id} />
+              </div>
+           
+              <div>
+                <TableTypes id={id} />
+              </div>
+            </>
+          )}
+        </div>
       }
+
 
       scroll={isMobile ? 'normal' : 'page'}
     />

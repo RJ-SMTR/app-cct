@@ -17,23 +17,14 @@ function Entries(type) {
     const multipliedEntries = useSelector(state => state.extract.multipliedEntries);
     const searchingWeek = useSelector(state => state.extract.searchingWeek)
     const searchingDay = useSelector(state => state.extract.searchingDay)
-    const firstDate = new Date(`${statements[0]?.date}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
-    const lastDate = new Date(`${statements[statements.length - 1]?.date}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
+    const firstDate = new Date(`${statements[0]?.date ?? statements[0]?.partitionDate}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
+    const lastDate = new Date(`${statements[statements.length - 1]?.date ?? statements[statements.length - 1]?.partitionDate }T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
     const dayDate = new Date(`${statements[0]?.dateTime}`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
-    function getDayEntries(day){
-        const map =  day.map((i) => {
-           return i.transactions * 4.3
-        })
-        dispatch(getMultipliedEntries(map, searchingDay))
-    }
+ 
 
     useEffect(() => {
-        if(searchingDay){
-            getDayEntries(statements)
-        } else {
             dispatch(getMultipliedEntries(statements, searchingDay, searchingWeek))
-        }
-    }, [statements])
+    }, [])
     useEffect(() => {
         if(statements){
             setTodayInfo({

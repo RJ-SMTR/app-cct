@@ -46,7 +46,7 @@ function ExtractApp() {
 
         <Box className='flex flex-col  justify-around mt-24'>
           {searchingDay ?
-            <TripsResume mapInfo={mapInfo} statements={statements} />
+            <></>
             : <Chart />
           }
         </Box>

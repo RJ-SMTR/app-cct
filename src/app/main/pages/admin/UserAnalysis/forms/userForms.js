@@ -59,7 +59,6 @@ export function PersonalInfo({ user }) {
                 })
                 .catch((error) => {
                     reject(error.response.data.errors)
-                    console.log(error.response.data.errors.email)
                     const errorMessage =
                         error.response.data.errors.email === "email must be an email"
                             ? "E-mail incorreto, verifique e tente novamente."

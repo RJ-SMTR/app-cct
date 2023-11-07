@@ -56,7 +56,7 @@ useEffect(() => {
           </Box>
           <br />
         </div>
-      <div className="p-24 pt-10 " >
+      {/* <div className="p-24 pt-10 " >
           <Typography className='font-medium text-3xl'>Resumo das Viagens</Typography>
           <Box className='flex flex-col  justify-around md:justify-start'>
               <TripsResume mapInfo={mapInfo} statements={todayStatements}/>
@@ -75,7 +75,7 @@ useEffect(() => {
           </Box>
 
           <br />
-        </div>
+        </div> */}
     </>
   );
 }
