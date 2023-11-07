@@ -7,7 +7,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 
-import { Box, Skeleton } from '@mui/material';
+import { Box, CircularProgress, Skeleton } from '@mui/material';
 
 
 
@@ -62,7 +62,7 @@ function TableTypes() {
                         )}
 
                         <TableBody>
-                            {listByType && listByType.transactionTypeCounts &&
+                            {listByType && listByType.transactionTypeCounts ?
                                 Object.entries(listByType.transactionTypeCounts).map(([type, count]) => {
                                     const i = (type, count) => {
                                         if(type === "Integração"){
@@ -89,7 +89,11 @@ function TableTypes() {
                                         </TableRow>
                                     );
                                 })
-                            }
+                            :  (
+                                    <Box className="w-[100%] flex m-2">
+                                        <CircularProgress />
+                                    </Box>
+                        ) }
                         </TableBody>
                     </Table>
                 </TableContainer>

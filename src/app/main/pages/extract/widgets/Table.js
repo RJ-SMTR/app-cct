@@ -168,13 +168,13 @@ function TableTransactions({id}) {
        if(fullReport){
            if (searchingWeek) {
                dispatch(setSearchingDay(true));
-               const givenDate = new Date(transformedDate);
-               const givenDateZoned = utcToZonedTime(givenDate, tz);
-               const nextDayZoned = addDays(givenDateZoned, 1);
-               const nextDayUtc = zonedTimeToUtc(nextDayZoned, tz);
-               const transformedEndDate = nextDayUtc.toISOString().slice(0, 10);
-               console.log(transformedEndDate)
-               dispatch(setDateRange([transformedDate, transformedEndDate]));
+            //    const givenDate = new Date(transformedDate);
+            //    const givenDateZoned = utcToZonedTime(givenDate, tz);
+            //    const nextDayZoned = addDays(givenDateZoned, 1);
+            //    const nextDayUtc = zonedTimeToUtc(nextDayZoned, tz);
+            //    const transformedEndDate = nextDayUtc.toISOString().slice(0, 10);
+            //    console.log(transformedEndDate)
+               dispatch(setDateRange([transformedDate, transformedDate]));
            } else {
                const clickedDate = parseISO(transformedDate);
                const clickedDateToday = utcToZonedTime(clickedDate, tz);

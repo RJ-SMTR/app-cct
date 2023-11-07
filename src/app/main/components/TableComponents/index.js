@@ -41,6 +41,7 @@ export function CustomTable(data) {
         return 'Falha'
       }
     }
+  
     return <Badge className={data.c?.root}
       color={i.status === 'falha' ? 'error' : i.status === 'paid' ? 'success' : 'warning'}
       badgeContent={getStatus(i)}
@@ -57,7 +58,7 @@ export function CustomTable(data) {
         <Typography className="whitespace-nowrap">
           {searchingDay ? (
             <>
-              {data.data.transactionType == "free" ? "R$ 0" : formatter.format(dayAmount)}
+              {data.data.transactionType == "Botoeria" ? "R$ 0" : formatter.format(data.data.transactionValueSum)}
             </>
           ) : (
             <>{formatter.format(data.data.amount ?? data.data.transactionValueSum)}</>

@@ -41,7 +41,7 @@ function ExtractApp() {
           <TableTransactions />
         </Box>
      <Box className='flex flex-col md:flex-row   justify-around'>
-          {/* <TableTypes /> */}
+          <TableTypes />
         </Box> 
 
         <Box className='flex flex-col  justify-around mt-24'>

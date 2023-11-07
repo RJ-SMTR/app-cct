@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { api } from 'app/configs/api/api';
+import { format } from 'date-fns';
 import jwtServiceConfig from '../auth/services/jwtService/jwtServiceConfig';
 
 const initialState = {
@@ -94,7 +95,7 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
             return formattedDate;
         });
         return {
-            startDate: separateDate[0], 
+            // startDate: separateDate[0], 
             endDate: separateDate[1]
         };
     } else if (searchingDay && searchingWeek) {
@@ -260,6 +261,9 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
 
 export const getTodayStatements = () => async (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
+    const today = new Date()
+    const formattedDate = format(today, 'yyyy-MM-dd');
+
 
     const config = {
         method: 'get',
@@ -269,7 +273,8 @@ export const getTodayStatements = () => async (dispatch) => {
             "Authorization": `Bearer ${token}`
         },
         params: {
-            previousDays: 1
+            startDate: formattedDate ,
+            endDate: formattedDate, 
         }
     };
 
