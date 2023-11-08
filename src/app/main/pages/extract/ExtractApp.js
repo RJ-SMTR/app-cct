@@ -15,7 +15,8 @@ import TableTypes from './widgets/TableTypes';
 function ExtractApp() {
   const dispatch = useDispatch()
   const user = useSelector(selectUser);
-  const fullName = user.fullName ?? 'Admin'
+  const fullName = user.fullName ?? 'Admin';
+  const valorAcumulado = useSelector(state => state.extract.valorAcumuladoLabel);
   const [first] = fullName?.split(' ');
   const mapInfo = useSelector(state => state.extract.mapInfo)
   const searchingDay = useSelector(state => state.extract.searchingDay)
@@ -35,7 +36,7 @@ function ExtractApp() {
         <Typography className='font-medium text-3xl'>Resumo dos Valores</Typography>
         <Box className='flex flex-col md:flex-row mt-24 justify-around max-w-[684px] spacing-x-1'>
           <Entries  type="Valor diário" isDay="true" />
-          <Entries type="Valor acumulado" isDay="false" />
+          <Entries type={valorAcumulado} isDay="false" />
         </Box>
         <Box className='flex flex-col md:flex-row  justify-around'>
           <TableTransactions />

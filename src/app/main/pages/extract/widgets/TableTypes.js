@@ -66,9 +66,11 @@ function TableTypes() {
                                 Object.entries(listByType.transactionTypeCounts).map(([type, count]) => {
                                     const i = (type, count) => {
                                         if(type === "Integração"){
-                                            return count * 2.15
-                                        } else {
-                                            return count * 4.3
+                                            return count * 2.15;
+                                        }else if (type === "Gratuidade"){
+                                            return 0;
+                                        }else {
+                                            return count * 4.3;
                                         }
                                     }
                                     return (
