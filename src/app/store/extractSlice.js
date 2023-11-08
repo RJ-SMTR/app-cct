@@ -95,7 +95,7 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
             return formattedDate;
         });
         return {
-            // startDate: separateDate[0], 
+            startDate: separateDate[0], 
             endDate: separateDate[1]
         };
     } else if (searchingDay && searchingWeek) {
