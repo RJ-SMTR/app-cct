@@ -168,12 +168,7 @@ function TableTransactions({id}) {
        if(fullReport){
            if (searchingWeek) {
                dispatch(setSearchingDay(true));
-            //    const givenDate = new Date(transformedDate);
-            //    const givenDateZoned = utcToZonedTime(givenDate, tz);
-            //    const nextDayZoned = addDays(givenDateZoned, 1);
-            //    const nextDayUtc = zonedTimeToUtc(nextDayZoned, tz);
-            //    const transformedEndDate = nextDayUtc.toISOString().slice(0, 10);
-            //    console.log(transformedEndDate)
+          
                dispatch(setDateRange([transformedDate, transformedDate]));
            } else {
                const clickedDate = parseISO(transformedDate);
@@ -192,9 +187,11 @@ function TableTransactions({id}) {
             dispatch(setDateRange(lastDate))
             setPage(0)
             dispatch(setSearchingDay(false))
+            setIsLoading(true)
         } else {
             dispatch(setDateRange([]))
             setPage(0)
+            setIsLoading(true)
             dispatch(setSearchingWeek(false))
         }
     }
@@ -315,15 +312,21 @@ function TableTransactions({id}) {
                                     </TableCell> : <></>}
                                 </TableRow>
                             </TableHead>
+                            
                         <TableBody>
-                            {isLoading ? <Box className="w-[100%] flex m-2">
-                                <CircularProgress/>
-                            </Box> :  statements &&
+                       
+                            {isLoading ? <TableCell colSpan={4}>
+                                <Box className="flex justify-center items-center m-10">
+                                    <CircularProgress />
+                                </Box>
+                            </TableCell> :  statements &&
+                              
                                 statements?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
                                     const date = parseISO(i.date ?? i.dateTime ?? i.partitionDate);
                                     const formattedDate = format(date, 'dd/MM/yyyy', { timeZone: 'Etc/UTC' });
                                     return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={handleClickRow} />
-                                })}
+                                })
+                                }
                         </TableBody>
                     </Table>
                 </TableContainer>

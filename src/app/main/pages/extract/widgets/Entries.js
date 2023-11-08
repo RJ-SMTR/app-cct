@@ -3,6 +3,7 @@ import FuseSvgIcon from "@fuse/core/FuseSvgIcon"
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from "react";
 import { getMultipliedEntries } from "app/store/extractSlice";
+import { format } from "date-fns";
 
 function Entries(type) {
     const [todayInfo, setTodayInfo] = useState({})
@@ -14,6 +15,7 @@ function Entries(type) {
     });
 
     const statements = useSelector(state => state.extract.statements);
+    const todaySum = useSelector(state => state.extract.todaySum)
     const multipliedEntries = useSelector(state => state.extract.multipliedEntries);
     const searchingWeek = useSelector(state => state.extract.searchingWeek)
     const searchingDay = useSelector(state => state.extract.searchingDay)
@@ -27,10 +29,9 @@ function Entries(type) {
     }, [])
     useEffect(() => {
         if(statements){
-            setTodayInfo({
-                amount: statements[0]?.amount,
-                date: firstDate
-            })
+            const date = new Date()
+            const today = format(date, 'dd/MM/yyyy')
+            setTodayInfo(today)
 
         }
     }, [])
@@ -42,14 +43,14 @@ function Entries(type) {
                   <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
                       {type.type}
                   </Typography>
-                  <Typography className="font-medium text-sm"> {type.isDay == "true" ? todayInfo.date :  searchingDay ? dayDate : `${firstDate} - ${lastDate}`}</Typography>
+                  <Typography className="font-medium text-sm"> {type.isDay == "true" ? todayInfo :  searchingDay ? dayDate : `${firstDate} - ${lastDate}`}</Typography>
 
               </div>
 
           </div>
           <div className="flex flex-row flex-wrap mt-8 ">
               <Typography className="mt-8 font-medium text-3xl leading-none">
-                  {type.isDay == "true" ? formatter.format(todayInfo.amount) :  formatter.format(multipliedEntries) }
+                  {type.isDay == "true" ? formatter.format(todaySum) :  formatter.format(multipliedEntries) }
               </Typography>
           </div>
 
