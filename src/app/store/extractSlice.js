@@ -15,7 +15,7 @@ const initialState = {
     multipliedEntries: [],
     listByType: [],
     firstDate: [],
-    todaySum: []
+    sumInfo: []
 };
 
 const extractSlice = createSlice({
@@ -55,8 +55,8 @@ const extractSlice = createSlice({
         setFirstDate: (state, action) => {
             state.firstDate = action.payload;
         },
-        setTodaySum: (state, action) => {
-            state.todaySum = action.payload;
+        setSumInfo: (state, action) => {
+            state.sumInfo = action.payload;
         },
     },
 });
@@ -84,8 +84,8 @@ export const {
     setMultipliedEntries,
     setListByType,
     setFirstDate,
-    todaySum,
-    setTodaySum
+    sumInfo,
+    setSumInfo
 } = extractSlice.actions;
 
 export default extractSlice.reducer;
@@ -253,7 +253,8 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             } else {
                 dispatch(getFirstTypes());
             }
-            dispatch(setTodaySum(response.data.todaySum))
+            dispatch(setSumInfo(response.data))
+            console.log(response.data.amountSum)
             dispatch(setStatements(response.data.data));
         }
 

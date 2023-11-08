@@ -15,8 +15,7 @@ function Entries(type) {
     });
 
     const statements = useSelector(state => state.extract.statements);
-    const todaySum = useSelector(state => state.extract.todaySum)
-    const multipliedEntries = useSelector(state => state.extract.multipliedEntries);
+    const sumInfo = useSelector(state => state.extract.sumInfo)
     const searchingWeek = useSelector(state => state.extract.searchingWeek)
     const searchingDay = useSelector(state => state.extract.searchingDay)
     const firstDate = new Date(`${statements[0]?.date ?? statements[0]?.partitionDate}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
@@ -28,12 +27,10 @@ function Entries(type) {
             dispatch(getMultipliedEntries(statements, searchingDay, searchingWeek))
     }, [])
     useEffect(() => {
-        if(statements){
             const date = new Date()
             const today = format(date, 'dd/MM/yyyy')
             setTodayInfo(today)
-
-        }
+            console.log(sumInfo)
     }, [])
 
   return (
@@ -43,14 +40,16 @@ function Entries(type) {
                   <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
                       {type.type}
                   </Typography>
-                  <Typography className="font-medium text-sm"> {type.isDay == "true" ? todayInfo :  searchingDay ? dayDate : `${firstDate} - ${lastDate}`}</Typography>
+                  <Typography className="font-medium text-sm"> {type.isDay == "true" ? todayInfo ?? '' :  searchingDay ? dayDate : `${firstDate} - ${lastDate}`}</Typography>
 
               </div>
 
           </div>
           <div className="flex flex-row flex-wrap mt-8 ">
               <Typography className="mt-8 font-medium text-3xl leading-none">
-                  {type.isDay == "true" ? formatter.format(todaySum) :  formatter.format(multipliedEntries) }
+                  {type.isDay == "true" ? formatter.format(sumInfo?.todaySum) : formatter.format(sumInfo?.amountSum) 
+                      
+                   }
               </Typography>
           </div>
 
