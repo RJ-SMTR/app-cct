@@ -16,6 +16,8 @@ const initialState = {
     listByType: [],
     firstDate: [],
     valorAcumuladoLabel: 'Valor acumulado Mensal',
+    sumInfo: [],
+    sumInfoWeek: [],
 };
 
 const extractSlice = createSlice({
@@ -55,9 +57,15 @@ const extractSlice = createSlice({
         setFirstDate: (state, action) => {
             state.firstDate = action.payload;
         },
+        setSumInfo: (state, action) => {
+            state.sumInfo = action.payload;
+        },
+        setSumInfoWeek: (state, action) => {
+            state.sumInfoWeek = action.payload;
+        },
         setValorAcumuladoLabel: (state, action) => {
             state.valorAcumuladoLabel = action.payload;
-        }
+        },
     },
 });
 
@@ -84,7 +92,11 @@ export const {
     setMultipliedEntries,
     setListByType,
     setFirstDate,
-    setValorAcumuladoLabel
+    setValorAcumuladoLabel,
+    sumInfo,
+    setSumInfo,
+    sumInfoWeek,
+    setSumInfoWeek
 } = extractSlice.actions;
 
 export default extractSlice.reducer;
@@ -120,71 +132,6 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
         return previousDays > 0 ? { timeInterval: previousDays } : { timeInterval: previousDays }
     }
 }
-// function resumeDays(inputData, searchingDay) {
-//     const groupedData = {};
-
-//     inputData.forEach((item) => {
-//         const key = searchingDay ? item.transactionType : item.transactionDateTime.split('T')[0];
-
-//         if (!groupedData[key]) {
-//             groupedData[key] = [];
-//         }
-
-//         groupedData[key].push(item);
-//     });
-
-//     const result = Object.keys(groupedData).map((key) => {
-//         const group = groupedData[key];
-//         const totalTransactions = group.length
-
-//         if (searchingDay) {
-//             const multipliedAmount = group[0].transactionValue * totalTransactions;
-
-//             const allProperties = group.reduce((acc, item) => {
-//                 return { ...acc, ...item };
-//             }, {});
-
-//             return {
-//                 transactionType: key,
-//                 multipliedAmount,
-//                 transactions: totalTransactions,
-//                 ...allProperties,
-//             };
-//         } else {
-//             const allProperties = group.reduce((acc, item) => {
-//                 return { ...acc, ...item };
-//             }, {});
-
-//             return {
-//                 date: key,
-//                 multipliedAmount: group[0].transactionValue * totalTransactions,
-//                 transactions: totalTransactions,
-//                 ...allProperties,
-//             };
-//         }
-//     });
-
-//     return result;
-// }
-
-// function resumeTypes(inputData) {
-//     const groupedTransactions = {};
-//     inputData.forEach((obj) => {
-//         const transactionType = obj.transactionTypeCounts;
-//         if (!groupedTransactions[transactionType]) {
-//             groupedTransactions[transactionType] = {
-//                 transactionType,
-//                 multipliedAmount: 0,
-//                 transactions: 0,
-//             };
-//         }
-
-//         groupedTransactions[transactionType].multipliedAmount += obj.multipliedAmount;
-//         groupedTransactions[transactionType].transactions += obj.transactions;
-//     });
-
-//     return groupedTransactions
-// }
 
 export const getFirstTypes = (userId) => async (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
@@ -202,18 +149,6 @@ export const getFirstTypes = (userId) => async (dispatch) => {
 
     try {
         const response = await api.request(config)
-        // const weekStatements = resumeDays(response.data.data, searchingDay)
-        // console.log(weekStatements)
-        // const types = resumeTypes(response.data.data)
-        // const order = ["full", "half", "free"]
-
-        // const sortedTypes = {}
-        // order.forEach((type) => {
-        //     if (types[type]) {
-        //         sortedTypes[type] = types[type]
-        //     }
-        // });
-        console.log(response.data)
         dispatch(setListByType(response.data))
     } catch (error) {
         console.error(error);
@@ -226,15 +161,11 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
     if(!userId){
         apiRoute = searchingWeek ? jwtServiceConfig.revenuesUn : jwtServiceConfig.bankStatement;
     } else {
-
         apiRoute = searchingWeek ? jwtServiceConfig.revenuesUn + `?userId=${userId}` : jwtServiceConfig.bankStatement + `?userId=${userId}`;
     }
-    console.log("previeus days", previousDays);
     const method = 'get';
     const token = window.localStorage.getItem('jwt_access_token');
 
-    console.log("API ROUTE");
-    console.log(apiRoute)
 
     const config = {
         method: method,
@@ -254,12 +185,16 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
         if (searchingWeek || searchingDay) {
             dispatch(setMapInfo(response.data.data));
             dispatch(setStatements(response.data.data));
+            dispatch(setSumInfoWeek(response.data))
+
         } else {
             if(userId){
                 dispatch(getFirstTypes(userId));
             } else {
                 dispatch(getFirstTypes());
             }
+            dispatch(setSumInfo(response.data))
+
             dispatch(setStatements(response.data.data));
         }
 

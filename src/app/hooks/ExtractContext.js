@@ -19,7 +19,7 @@ const statements = useSelector(state => state.extract.statements)
         let totalSum = 0;
         let average = 0;
         for (let i = 0; i < statements.length; i++) {
-            const currentValue = statements[i].amount ?? statements[i].multipliedAmount;
+            const currentValue = statements[i].amount ?? statements[i].count;
             totalSum += currentValue;
             average = totalSum / (i + 1);
         }
@@ -57,8 +57,8 @@ const statements = useSelector(state => state.extract.statements)
             {
                 "name": "Recebido",
                 data: statements.map((statement) => ({
-                    x: statement.date,
-                    y: statement.amount ?? statement.multipliedAmount,
+                    x: statement.partitionDate,
+                    y: statement.amount ?? statement.count,
                 })),
 
             },

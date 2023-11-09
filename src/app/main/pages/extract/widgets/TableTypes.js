@@ -92,9 +92,11 @@ function TableTypes() {
                                     );
                                 })
                             :  (
-                                    <Box className="w-[100%] flex m-2">
-                                        <CircularProgress />
-                                    </Box>
+                                    <TableCell colSpan={4}> 
+                                        <Box className="flex justify-center items-center m-10">
+                                            <CircularProgress />
+                                        </Box>
+                                    </TableCell> 
                         ) }
                         </TableBody>
                     </Table>
