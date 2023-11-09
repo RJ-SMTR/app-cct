@@ -89,6 +89,7 @@ export const {
 
 export default extractSlice.reducer;
 function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek) {
+    console.log("AAAAA", {previousDays, dateRange, searchingDay, searchingWeek})
     if (dateRange?.length > 0 && !searchingDay) {
         const separateDate = dateRange.map((i) => {
             const inputDateString = i;
@@ -99,11 +100,18 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
             const formattedDate = `${year}-${month}-${day}`;
             return formattedDate;
         });
+        if (!searchingDay && !searchingWeek) {
+            return {
+                startDate: separateDate[0], 
+                endDate: separateDate[1]
+            }
+        }
         return {
-            startDate: separateDate[0], 
+            // startDate: separateDate[0], 
             endDate: separateDate[1]
         };
-    } else if (searchingDay && searchingWeek) {
+    } 
+    else if (searchingDay && searchingWeek) {
         return {
             startDate: dateRange[0],
             endDate: dateRange[1]
@@ -112,71 +120,71 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
         return previousDays > 0 ? { timeInterval: previousDays } : { timeInterval: previousDays }
     }
 }
-function resumeDays(inputData, searchingDay) {
-    const groupedData = {};
+// function resumeDays(inputData, searchingDay) {
+//     const groupedData = {};
 
-    inputData.forEach((item) => {
-        const key = searchingDay ? item.transactionType : item.transactionDateTime.split('T')[0];
+//     inputData.forEach((item) => {
+//         const key = searchingDay ? item.transactionType : item.transactionDateTime.split('T')[0];
 
-        if (!groupedData[key]) {
-            groupedData[key] = [];
-        }
+//         if (!groupedData[key]) {
+//             groupedData[key] = [];
+//         }
 
-        groupedData[key].push(item);
-    });
+//         groupedData[key].push(item);
+//     });
 
-    const result = Object.keys(groupedData).map((key) => {
-        const group = groupedData[key];
-        const totalTransactions = group.length
+//     const result = Object.keys(groupedData).map((key) => {
+//         const group = groupedData[key];
+//         const totalTransactions = group.length
 
-        if (searchingDay) {
-            const multipliedAmount = group[0].transactionValue * totalTransactions;
+//         if (searchingDay) {
+//             const multipliedAmount = group[0].transactionValue * totalTransactions;
 
-            const allProperties = group.reduce((acc, item) => {
-                return { ...acc, ...item };
-            }, {});
+//             const allProperties = group.reduce((acc, item) => {
+//                 return { ...acc, ...item };
+//             }, {});
 
-            return {
-                transactionType: key,
-                multipliedAmount,
-                transactions: totalTransactions,
-                ...allProperties,
-            };
-        } else {
-            const allProperties = group.reduce((acc, item) => {
-                return { ...acc, ...item };
-            }, {});
+//             return {
+//                 transactionType: key,
+//                 multipliedAmount,
+//                 transactions: totalTransactions,
+//                 ...allProperties,
+//             };
+//         } else {
+//             const allProperties = group.reduce((acc, item) => {
+//                 return { ...acc, ...item };
+//             }, {});
 
-            return {
-                date: key,
-                multipliedAmount: group[0].transactionValue * totalTransactions,
-                transactions: totalTransactions,
-                ...allProperties,
-            };
-        }
-    });
+//             return {
+//                 date: key,
+//                 multipliedAmount: group[0].transactionValue * totalTransactions,
+//                 transactions: totalTransactions,
+//                 ...allProperties,
+//             };
+//         }
+//     });
 
-    return result;
-}
+//     return result;
+// }
 
-function resumeTypes(inputData) {
-    const groupedTransactions = {};
-    inputData.forEach((obj) => {
-        const transactionType = obj.transactionTypeCounts;
-        if (!groupedTransactions[transactionType]) {
-            groupedTransactions[transactionType] = {
-                transactionType,
-                multipliedAmount: 0,
-                transactions: 0,
-            };
-        }
+// function resumeTypes(inputData) {
+//     const groupedTransactions = {};
+//     inputData.forEach((obj) => {
+//         const transactionType = obj.transactionTypeCounts;
+//         if (!groupedTransactions[transactionType]) {
+//             groupedTransactions[transactionType] = {
+//                 transactionType,
+//                 multipliedAmount: 0,
+//                 transactions: 0,
+//             };
+//         }
 
-        groupedTransactions[transactionType].multipliedAmount += obj.multipliedAmount;
-        groupedTransactions[transactionType].transactions += obj.transactions;
-    });
+//         groupedTransactions[transactionType].multipliedAmount += obj.multipliedAmount;
+//         groupedTransactions[transactionType].transactions += obj.transactions;
+//     });
 
-    return groupedTransactions
-}
+//     return groupedTransactions
+// }
 
 export const getFirstTypes = (userId) => async (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');

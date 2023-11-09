@@ -165,7 +165,6 @@ function TableTransactions({id}) {
         const [day, month, year] = start.split('/');
         const transformedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
         const tz = 'America/Sao_Paulo';
-        console.log("click row", searchingWeek)
         if(!searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Semanal'));
         if(searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'));
         if(fullReport){
