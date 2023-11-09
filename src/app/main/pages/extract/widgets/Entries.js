@@ -6,7 +6,7 @@ import { getMultipliedEntries } from "app/store/extractSlice";
 import { format } from "date-fns";
 
 function Entries(type) {
-    const [todayInfo, setTodayInfo] = useState({})
+    const [todayInfo, setTodayInfo] = useState()
     const dispatch = useDispatch()
   
     const formatter = new Intl.NumberFormat('pt-BR', {
