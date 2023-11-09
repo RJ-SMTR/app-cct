@@ -27,7 +27,7 @@ import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz';
 
 import { useDispatch, useSelector } from 'react-redux';
 
-import { getStatements, setPreviousDays,  setDateRange,  setSearchingWeek, setSearchingDay } from 'app/store/extractSlice';
+import { getStatements, setPreviousDays,  setDateRange,  setSearchingWeek, setSearchingDay, setValorAcumuladoLabel } from 'app/store/extractSlice';
 import { useNavigate } from 'react-router-dom';
 import { selectUser } from 'app/store/userSlice';
 
@@ -165,10 +165,17 @@ function TableTransactions({id}) {
         const [day, month, year] = start.split('/');
         const transformedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
         const tz = 'America/Sao_Paulo';
-       if(fullReport){
-           if (searchingWeek) {
-               dispatch(setSearchingDay(true));
-          
+        if(!searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Semanal'));
+        if(searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'));
+        if(fullReport){
+            if (searchingWeek) {
+                dispatch(setSearchingDay(true));
+            //    const givenDate = new Date(transformedDate);
+            //    const givenDateZoned = utcToZonedTime(givenDate, tz);
+            //    const nextDayZoned = addDays(givenDateZoned, 1);
+            //    const nextDayUtc = zonedTimeToUtc(nextDayZoned, tz);
+            //    const transformedEndDate = nextDayUtc.toISOString().slice(0, 10);
+            //    console.log(transformedEndDate)
                dispatch(setDateRange([transformedDate, transformedDate]));
            } else {
                const clickedDate = parseISO(transformedDate);
@@ -183,6 +190,8 @@ function TableTransactions({id}) {
     }
     
     const handleBack = () => {
+        if(!searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Semanal'));
+        if(searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'));
         if(searchingDay){
             dispatch(setDateRange(lastDate))
             setPage(0)
