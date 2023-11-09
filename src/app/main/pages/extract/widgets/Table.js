@@ -152,6 +152,8 @@ function TableTransactions({id}) {
         dispatch(setDateRange([]))
         dispatch(setSearchingWeek(false))
         dispatch(setSearchingDay(false))
+        setIsLoading(true)
+
     }
 
    
