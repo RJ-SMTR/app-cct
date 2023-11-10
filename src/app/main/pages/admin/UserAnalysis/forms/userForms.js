@@ -35,10 +35,7 @@ export function PersonalInfo({ user }) {
 
     const { handleSubmit, control, formState, setError, clearErrors } = useForm({
         defaultValues: {
-            // permitCode: user.permitCode,
             email: user.email,
-            // fullName: user.fullName ?? '',
-            // phone: user.phone ?? '',
 
         },
     });
@@ -184,7 +181,6 @@ export function PersonalInfo({ user }) {
                         )}
                     
                     />
-                    {console.log(errors?.email?.message)}
                     <TextField
                         disabled
                         className="mb-24"
