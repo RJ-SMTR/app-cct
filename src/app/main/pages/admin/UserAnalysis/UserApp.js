@@ -58,6 +58,16 @@ function UserApp() {
           })
           .catch((error) => {  
             reject(error)
+            if(error.response.data.error.includes('mailStatus')){
+              dispatch(showMessage({ message: 'Usuário não esta na fila de envio, não foi possível fazer o reenvio.' }))
+
+            } else if (error.response.data.error.includes('quota')){
+              dispatch(showMessage({ message: 'Número máximo de envios diário atingido, não foi possível fazer o reenvio.' }))
+            } else {
+              dispatch(showMessage({ message: 'Erro desconhecido, não foi possível fazer o reenvio.' }))
+            }
+            console.log(error.response.data.error)
+
           });
       });
   };
