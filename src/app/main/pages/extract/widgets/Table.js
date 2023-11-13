@@ -316,11 +316,7 @@ function TableTransactions({id}) {
                                             {searchingWeek ? 'Catracadas' : 'Status'}
                                         </Typography>
                                     </TableCell>
-                                    {searchingDay ? <TableCell>
-                                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                            Tipo
-                                        </Typography>
-                                    </TableCell> : <></>}
+                                  
                                 </TableRow>
                             </TableHead>
                             

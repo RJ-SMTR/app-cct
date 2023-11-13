@@ -133,8 +133,30 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
     }
 }
 
-export const getFirstTypes = (userId) => async (dispatch) => {
+export const getFirstTypes = (userId, dateRange) => async (dispatch) => {
+    
     const token = window.localStorage.getItem('jwt_access_token');
+
+    let dataSent = {};
+
+    if (dateRange) {
+        const separateDate = dateRange.map((i) => {
+            const inputDateString = i;
+            const dateObj = new Date(inputDateString);
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+            const day = String(dateObj.getDate()).padStart(2, "0");
+            const formattedDate = `${year}-${month}-${day}`;
+            return formattedDate;
+        });
+        dataSent = {
+            startDate: separateDate[0],
+            endDate: separateDate[1]
+        };
+    } else {
+        dataSent = { timeInterval: 'lastMonth' };
+    }
+
     let config = {
         method: 'get',
         maxBodyLength: Infinity,
@@ -143,13 +165,20 @@ export const getFirstTypes = (userId) => async (dispatch) => {
             "Authorization": `Bearer ${token}`
         },
         params: {
-            timeInterval: 'lastMonth'
+            ...dataSent
         }
     };
 
     try {
         const response = await api.request(config)
-        dispatch(setListByType(response.data))
+        const order = ["Integral", "Integração", "Gratuidade"];
+
+        const sortedObject = Object.fromEntries(
+            Object.entries(response.data.transactionTypeCounts)
+                .sort(([keyA], [keyB]) => order.indexOf(keyA) - order.indexOf(keyB))
+        );
+
+        dispatch(setListByType(sortedObject))
     } catch (error) {
         console.error(error);
     }
@@ -186,6 +215,7 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             dispatch(setMapInfo(response.data.data));
             dispatch(setStatements(response.data.data));
             dispatch(setSumInfoWeek(response.data))
+            dispatch(getFirstTypes(null, dateRange));
 
         } else {
             if(userId){

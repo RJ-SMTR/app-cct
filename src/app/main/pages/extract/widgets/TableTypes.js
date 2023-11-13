@@ -62,17 +62,8 @@ function TableTypes() {
                         )}
 
                         <TableBody>
-                            {listByType && listByType.transactionTypeCounts ?
-                                Object.entries(listByType.transactionTypeCounts).map(([type, count]) => {
-                                    const i = (type, count) => {
-                                        if(type === "Integração"){
-                                            return count * 2.15;
-                                        }else if (type === "Gratuidade"){
-                                            return 0;
-                                        }else {
-                                            return count * 4.3;
-                                        }
-                                    }
+                            {listByType ?
+                                Object.entries(listByType).map(([type, count]) => {
                                     return (
                                         <TableRow key={type} className="hover:bg-gray-100 cursor-pointer">
                                             <TableCell component="th" scope="row">
@@ -82,11 +73,11 @@ function TableTypes() {
                                             </TableCell>
                                             <TableCell component="th" scope="row">
                                                 <Typography className="whitespace-nowrap">
-                                                    {type === "Botoeria" ? "R$ 0" : formatter.format(i(type,count))}
+                                                {formatter.format(count.transactionValue)}
                                                 </Typography>
                                             </TableCell>
                                             <TableCell component="th" scope="row">
-                                                {count.toLocaleString()}
+                                                {count.count.toLocaleString()}
                                             </TableCell>
                                         </TableRow>
                                     );
