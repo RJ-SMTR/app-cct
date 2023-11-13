@@ -6,7 +6,7 @@ import { Box } from '@mui/system';
 import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
 import Table from '../extract/widgets/Table';
-import { getTodayStatements,setDateRange,setFullReport, setSearchingDay, setSearchingWeek } from 'app/store/extractSlice';
+import { getTodayStatements,setDateRange,setFullReport, setSearchingDay, setSearchingWeek, setValorAcumuladoLabel } from 'app/store/extractSlice';
 import { TripsResume } from './widgets/Widgets';
 import { useEffect } from 'react';
 
@@ -26,6 +26,7 @@ useEffect(() => {
   dispatch(setSearchingWeek(false))
   dispatch(setDateRange([]))
   dispatch(getTodayStatements())
+  dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'))
 }, [])
 
 

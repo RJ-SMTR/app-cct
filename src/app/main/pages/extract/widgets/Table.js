@@ -153,6 +153,7 @@ function TableTransactions({id}) {
         dispatch(setSearchingWeek(false))
         dispatch(setSearchingDay(false))
         setIsLoading(true)
+        dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'))
 
     }
 
