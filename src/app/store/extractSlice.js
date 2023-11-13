@@ -101,7 +101,6 @@ export const {
 
 export default extractSlice.reducer;
 function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek) {
-    console.log("AAAAA", {previousDays, dateRange, searchingDay, searchingWeek})
     if (dateRange?.length > 0 && !searchingDay) {
         const separateDate = dateRange.map((i) => {
             const inputDateString = i;
@@ -119,7 +118,6 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
             }
         }
         return {
-            // startDate: separateDate[0], 
             endDate: separateDate[1]
         };
     } 
@@ -129,34 +127,15 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
             endDate: dateRange[1]
         };
     } else {
-        return previousDays > 0 ? { timeInterval: previousDays } : { timeInterval: previousDays }
+        return previousDays > 0 ? { timeInterval: previousDays } : { timeInterval: 'lastMonth' }
     }
 }
 
-export const getFirstTypes = (userId, dateRange) => async (dispatch) => {
-    
+export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) => async (dispatch) => {
+    const requestData = handleRequestData(null, dateRange, searchingDay, searchingWeek)
     const token = window.localStorage.getItem('jwt_access_token');
 
-    let dataSent = {};
-
-    if (dateRange) {
-        const separateDate = dateRange.map((i) => {
-            const inputDateString = i;
-            const dateObj = new Date(inputDateString);
-            const year = dateObj.getFullYear();
-            const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-            const day = String(dateObj.getDate()).padStart(2, "0");
-            const formattedDate = `${year}-${month}-${day}`;
-            return formattedDate;
-        });
-        dataSent = {
-            startDate: separateDate[0],
-            endDate: separateDate[1]
-        };
-    } else {
-        dataSent = { timeInterval: 'lastMonth' };
-    }
-
+  
     let config = {
         method: 'get',
         maxBodyLength: Infinity,
@@ -165,7 +144,7 @@ export const getFirstTypes = (userId, dateRange) => async (dispatch) => {
             "Authorization": `Bearer ${token}`
         },
         params: {
-            ...dataSent
+            ...requestData
         }
     };
 
@@ -215,13 +194,13 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             dispatch(setMapInfo(response.data.data));
             dispatch(setStatements(response.data.data));
             dispatch(setSumInfoWeek(response.data))
-            dispatch(getFirstTypes(null, dateRange));
+            dispatch(getFirstTypes(null, dateRange, searchingWeek, searchingDay));
 
         } else {
             if(userId){
                 dispatch(getFirstTypes(userId));
             } else {
-                dispatch(getFirstTypes());
+                dispatch(getFirstTypes(null, null, searchingWeek, searchingDay));
             }
             dispatch(setSumInfo(response.data))
 
