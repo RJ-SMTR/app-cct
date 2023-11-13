@@ -69,9 +69,7 @@ export function CustomTable(data) {
       <TableCell component="th" scope="row">
         {searchingWeek ? data.data.count?.toLocaleString() : <CustomBadge data={data} />}
       </TableCell>
-      {searchingDay ? <TableCell component="th" scope="row">
-        {transactionType(data.data)}
-      </TableCell> : <></>}
+     
 
     </TableRow> : <p>Loading</p>
   )

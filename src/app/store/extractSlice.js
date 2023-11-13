@@ -101,7 +101,6 @@ export const {
 
 export default extractSlice.reducer;
 function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek) {
-    console.log("AAAAA", {previousDays, dateRange, searchingDay, searchingWeek})
     if (dateRange?.length > 0 && !searchingDay) {
         const separateDate = dateRange.map((i) => {
             const inputDateString = i;
@@ -119,7 +118,6 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
             }
         }
         return {
-            // startDate: separateDate[0], 
             endDate: separateDate[1]
         };
     } 
@@ -129,12 +127,15 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
             endDate: dateRange[1]
         };
     } else {
-        return previousDays > 0 ? { timeInterval: previousDays } : { timeInterval: previousDays }
+        return previousDays > 0 ? { timeInterval: previousDays } : { timeInterval: 'lastMonth' }
     }
 }
 
-export const getFirstTypes = (userId) => async (dispatch) => {
+export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) => async (dispatch) => {
+    const requestData = handleRequestData(null, dateRange, searchingDay, searchingWeek)
     const token = window.localStorage.getItem('jwt_access_token');
+
+  
     let config = {
         method: 'get',
         maxBodyLength: Infinity,
@@ -143,13 +144,20 @@ export const getFirstTypes = (userId) => async (dispatch) => {
             "Authorization": `Bearer ${token}`
         },
         params: {
-            timeInterval: 'lastMonth'
+            ...requestData
         }
     };
 
     try {
         const response = await api.request(config)
-        dispatch(setListByType(response.data))
+        const order = ["Integral", "Integração", "Gratuidade"];
+
+        const sortedObject = Object.fromEntries(
+            Object.entries(response.data.transactionTypeCounts)
+                .sort(([keyA], [keyB]) => order.indexOf(keyA) - order.indexOf(keyB))
+        );
+
+        dispatch(setListByType(sortedObject))
     } catch (error) {
         console.error(error);
     }
@@ -186,12 +194,13 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             dispatch(setMapInfo(response.data.data));
             dispatch(setStatements(response.data.data));
             dispatch(setSumInfoWeek(response.data))
+            dispatch(getFirstTypes(null, dateRange, searchingWeek, searchingDay));
 
         } else {
             if(userId){
                 dispatch(getFirstTypes(userId));
             } else {
-                dispatch(getFirstTypes());
+                dispatch(getFirstTypes(null, null, searchingWeek, searchingDay));
             }
             dispatch(setSumInfo(response.data))
 

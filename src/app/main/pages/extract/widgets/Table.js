@@ -153,6 +153,7 @@ function TableTransactions({id}) {
         dispatch(setSearchingWeek(false))
         dispatch(setSearchingDay(false))
         setIsLoading(true)
+        dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'))
 
     }
 
@@ -316,11 +317,7 @@ function TableTransactions({id}) {
                                             {searchingWeek ? 'Catracadas' : 'Status'}
                                         </Typography>
                                     </TableCell>
-                                    {searchingDay ? <TableCell>
-                                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                            Tipo
-                                        </Typography>
-                                    </TableCell> : <></>}
+                                  
                                 </TableRow>
                             </TableHead>
                             
