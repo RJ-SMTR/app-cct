@@ -79,34 +79,3 @@ spec:
                 name: cct-app
                 port:
                   number: 80
----
-#Secret
-# apiVersion: v1
-# kind: Secret
-# metadata:
-#   name: custom-envs
-# type: Opaque
-# stringData:
-#   NODE_ENV: "development"
-#   PORT: "3000"
-#   MONGODB_URL: "mongodb://gm6vx_gtfs:zCGp9*ghPmt#ezFjdrqo6nyI@mongo-gtfs-mongodb:27017/gtfseditor"
-#   JWT_SECRET: "thisisasamplesecret"
-#   JWT_ACCESS_EXPIRATION_MINUTES: "30"
-#   JWT_REFRESH_EXPIRATION_DAYS: "30"
-#   JWT_RESET_PASSWORD_EXPIRATION_MINUTES: "10"
-#   JWT_VERIFY_EMAIL_EXPIRATION_MINUTES: "10"
-#   SMTP_HOST: "email-server"
-#   SMTP_PORT: "587"
-#   SMTP_USERNAME: "email-server-username"
-#   SMTP_PASSWORD: "email-server-password"
-#   EMAIL_FROM: "support@yourapp.com"
-#   DB_DEV_HOST: "postgis-postgresql"
-#   DB_DEV_PORT: "5432"
-#   DB_DEV_USER: "postgres"
-#   DB_DEV_PASSWORD: "jys3nslnsx"
-#   DB_DEV_DATABASE: "gtfs_stag"
-#   DB_HOST: ""
-#   DB_PORT: ""
-#   DB_USER: ""
-#   DB_PASSWORD: ""
-#   DB_DATABASE: ""
