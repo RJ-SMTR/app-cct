@@ -21,6 +21,7 @@ function Entries(type) {
     const searchingDay = useSelector(state => state.extract.searchingDay)
     const firstDate = new Date(`${statements[0]?.date ?? statements[0]?.partitionDate}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
     const lastDate = new Date(`${statements[statements.length - 1]?.date ?? statements[statements.length - 1]?.partitionDate }T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
+    const dayDate = new Date(`${statements[0]?.partitionDate}`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
  
 
     useEffect(() => {
@@ -41,7 +42,7 @@ function Entries(type) {
                   <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
                       {type.type}
                   </Typography>
-                  <Typography className="font-medium text-sm"> {type.isDay == "true" ? todayInfo ?? '' :  searchingDay ? todayInfo : `${firstDate} - ${lastDate}`}</Typography>
+                  <Typography className="font-medium text-sm"> {type.isDay == "true" ? todayInfo ?? '' :  searchingDay ? dayDate : `${firstDate} - ${lastDate}`}</Typography>
 
               </div>
 
