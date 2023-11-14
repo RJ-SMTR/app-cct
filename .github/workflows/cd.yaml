@@ -52,10 +52,10 @@ jobs:
           location: ${{ env.GKE_ZONE }}
           credentials: ${{ secrets.GKE_SA_KEY }}
 
-      # - name: Mount env
-      #   run: |-
-      #     echo "${{ secrets.ENV_PROD }}" > env-deploy
-      #     ls -a
+      - name: Mount env
+        run: |-
+          echo "${{ secrets.ENV_PROD }}" > .env
+          ls -a
 
       - name: Build Docker image
         run: |-
