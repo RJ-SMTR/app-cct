@@ -4,6 +4,7 @@ WORKDIR /app
 COPY . . 
 RUN npm ci
 COPY . ./
+RUN ls -la
 RUN npm run build
 
 FROM nginx:stable-alpine as production-stage
