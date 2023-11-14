@@ -18,9 +18,7 @@ function NotificationPanelToggleButton(props) {
       onClick={(ev) => dispatch(toggleNotificationPanel())}
       size="large"
     >
-      <Badge color="secondary" variant="dot" invisible={notifications.length === 0}>
-        {props.children}
-      </Badge>
+  
     </IconButton>
   );
 }

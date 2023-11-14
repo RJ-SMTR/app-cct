@@ -51,7 +51,11 @@ class FuseAuthorization extends Component {
     const ignoredPaths = ['/', '/callback', '/sign-in', '/sign-out', '/logout', '/404', matchedPath?.pathname, '/forgot-password'];
 
     if (matched && !userHasPermission && !ignoredPaths.includes(pathname) ) {
-      setSessionRedirectUrl(pathname);
+      if(userRole === "Admin"){
+        setSessionRedirectUrl("/admin");
+      } else{
+        setSessionRedirectUrl("/");
+      }     
     }
 
     return {

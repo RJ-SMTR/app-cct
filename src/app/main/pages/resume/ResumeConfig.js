@@ -1,4 +1,5 @@
 import { lazy } from 'react';
+import { authRoles } from 'src/app/auth';
 
 const ResumeApp = lazy(() => import('./ResumeApp'));
 
@@ -12,6 +13,7 @@ const ResumeConfig = {
             },
         },
     },
+    auth: authRoles.admin,
     routes: [
         {
             path: 'resumo',

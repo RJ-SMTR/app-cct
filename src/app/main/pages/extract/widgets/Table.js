@@ -14,7 +14,7 @@ import { useState } from 'react';
 import DateRangePicker from 'rsuite/DateRangePicker';
 
 import Button from '@mui/material/Button';
-import { Box, Hidden, Skeleton } from '@mui/material';
+import { Box, CircularProgress, Hidden, Skeleton } from '@mui/material';
 import Popover from '@mui/material/Popover';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { ExtractContext } from 'src/app/hooks/ExtractContext';
@@ -27,17 +27,23 @@ import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz';
 
 import { useDispatch, useSelector } from 'react-redux';
 
-import { getStatements, setPreviousDays,  setDateRange,  setSearchingWeek, setSearchingDay } from 'app/store/extractSlice';
+import { getStatements, setPreviousDays,  setDateRange,  setSearchingWeek, setSearchingDay, setValorAcumuladoLabel } from 'app/store/extractSlice';
 import { useNavigate } from 'react-router-dom';
+import { selectUser } from 'app/store/userSlice';
 
-function TableTransactions() {
+function TableTransactions({id}) {
     const dispatch = useDispatch()
-    const statements = useSelector(state => state.extract.statements)
-    const previousDays = useSelector(state => state.extract.previousDays)
-    const dateRange = useSelector(state => state.extract.dateRange)
-    const searchingDay = useSelector(state => state.extract.searchingDay)
-    const searchingWeek = useSelector(state => state.extract.searchingWeek)
-    const fullReport = useSelector(state => state.extract.fullReport)
+    const user = useSelector(selectUser)
+    const {
+        statements,
+        previousDays,
+        dateRange,
+        searchingDay,
+        searchingWeek,
+        fullReport,
+    } = useSelector((state) => state.extract);
+    const MemoizedCustomTable = memo(CustomTable);
+
  
 
     const [currentWeekStart, setCurrentWeekStart] = useState()
@@ -46,30 +52,34 @@ function TableTransactions() {
     const [page, setPage] = useState(0);
     const [lastDate, setLastDate] = useState([])
     const [rowsPerPage, setRowsPerPage] = useState(8);
+    const [isLoading, setIsLoading] = useState(true)
 
     const navigate =  useNavigate()
     const useStyles = makeStyles(() => ({
         root: {
-
-            "& .muiltr-1psng7p-MuiTablePagination-spacer": { display: "none" },
-            "& .muiltr-1oaobgk-MuiBadge-badge": {display: "inline", position: 'relative', padding: '3px'},
-            "& .muiltr-1nnvbx6-MuiBadge-badge": {display: "inline", position: 'relative', padding: '3px'},
+            "& .MuiTablePagination-spacer": { display: "none" },
+            "& .MuiBadge-badge": {display: "inline", position: 'relative', padding: '3px'},
+            "& .MuiBadge-badge": {display: "inline", position: 'relative', padding: '3px'},
         },
     }));
     const c = useStyles()
 
     const previousStatementsRef = useRef([]);
     useEffect(() => {
-        if (dateRange !== previousStatementsRef.current) {
-            setLastDate([previousStatementsRef.current[0], previousStatementsRef.current[previousStatementsRef.current.length - 1]]);
-            previousStatementsRef.current = dateRange;
+        if(searchingWeek || searchingDay){
+            if (dateRange !== previousStatementsRef.current) {
+                setLastDate([previousStatementsRef.current[0], previousStatementsRef.current[previousStatementsRef.current.length - 1]]);
+                previousStatementsRef.current = dateRange;
+            }
         }
+    
     }, [dateRange])
 
     const handleNextWeek = () => {
         const nextWeekStart = new Date(currentWeekStart)
         nextWeekStart.setDate(nextWeekStart.getDate() + 7) 
         setCurrentWeekStart(nextWeekStart)
+        setIsLoading(true)
  
     }
  
@@ -78,6 +88,7 @@ function TableTransactions() {
         const previousWeekStart = new Date(currentWeekStart)
         previousWeekStart.setDate(previousWeekStart.getDate() - 7)
         setCurrentWeekStart(previousWeekStart)
+        setIsLoading(true)
     }
 
     function isEndDateGreaterThanToday(endDate) {
@@ -89,10 +100,11 @@ function TableTransactions() {
     useEffect(() => {
         const startDate = new Date(currentWeekStart)
         const endDate = new Date(currentWeekStart)
-        endDate.setDate(endDate.getDate() + 6) 
+        endDate.setDate(endDate.getDate() - 6) 
+        startDate.setDate(startDate.getDate()) 
         if(currentWeekStart){
-           setIsGreaterThanToday(isEndDateGreaterThanToday(endDate))
-            dispatch(setDateRange([startDate, endDate]))
+           setIsGreaterThanToday(isEndDateGreaterThanToday(startDate))
+            dispatch(setDateRange([endDate, startDate]))
         }
     }, [currentWeekStart])
 
@@ -107,7 +119,20 @@ function TableTransactions() {
     }
 
     useEffect(() => {
-        dispatch(getStatements(previousDays, dateRange, searchingDay, searchingWeek))
+        setPreviousDays("lastMonth");
+        if (user.role.name === "Admin") {
+            dispatch(getStatements(previousDays, dateRange, searchingDay, searchingWeek, id))
+                .then((response) => {
+                    setIsLoading(false)
+                })
+        } else {
+            dispatch(getStatements(previousDays, dateRange, searchingDay, searchingWeek))
+                .then((response) => {
+                    setIsLoading(false)
+                })
+        }
+                
+     
     }, [previousDays, dateRange])
 
     
@@ -120,12 +145,16 @@ function TableTransactions() {
         setFilterMenu(null);
     }
     const handleDays = (event) => {
-        const previousDays = parseInt(event.currentTarget.dataset.value)
+        const previousDays = event.currentTarget.dataset.value;
         dispatch(setPreviousDays(previousDays))
         setFilterMenu(null)
         setPage(0)
         dispatch(setDateRange([]))
         dispatch(setSearchingWeek(false))
+        dispatch(setSearchingDay(false))
+        setIsLoading(true)
+        dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'))
+
     }
 
    
@@ -134,29 +163,28 @@ function TableTransactions() {
    
 
     const handleClickRow = (event) => {
+        setIsLoading(true)
         const start = event.target.innerText;
         const [day, month, year] = start.split('/');
         const transformedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
         const tz = 'America/Sao_Paulo';
-       if(fullReport){
-           if (searchingWeek) {
-               dispatch(setSearchingDay(true));
-               const givenDate = new Date(transformedDate);
-               const givenDateZoned = utcToZonedTime(givenDate, tz);
-               const nextDayZoned = addDays(givenDateZoned, 1);
-               const nextDayUtc = zonedTimeToUtc(nextDayZoned, tz);
-               const transformedEndDate = nextDayUtc.toISOString().slice(0, 10);
-               dispatch(setDateRange([transformedDate, transformedEndDate]));
+        if(!searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Semanal'));
+        if(searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'));
+        if(fullReport){
+            if (searchingWeek) {
+                dispatch(setSearchingDay(true));
+            //    const givenDate = new Date(transformedDate);
+            //    const givenDateZoned = utcToZonedTime(givenDate, tz);
+            //    const nextDayZoned = addDays(givenDateZoned, 1);
+            //    const nextDayUtc = zonedTimeToUtc(nextDayZoned, tz);
+            //    const transformedEndDate = nextDayUtc.toISOString().slice(0, 10);
+            //    console.log(transformedEndDate)
+               dispatch(setDateRange([transformedDate, transformedDate]));
            } else {
                const clickedDate = parseISO(transformedDate);
                const clickedDateToday = utcToZonedTime(clickedDate, tz);
-               const startDate = startOfWeek(clickedDateToday, { weekStartsOn: 5 });
-               const today = utcToZonedTime(new Date(), tz);
-               const endDate = today.getDay() >= 4 ? endOfWeek(today, { weekStartsOn: 5 }) : today;
-
                setCurrentWeekStart(clickedDateToday);
                dispatch(setSearchingWeek(true));
-               dispatch(setDateRange([startDate, endDate]));
                setPage(0);
            }
        } else {
@@ -165,13 +193,17 @@ function TableTransactions() {
     }
     
     const handleBack = () => {
+        if(!searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Semanal'));
+        if(searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'));
         if(searchingDay){
             dispatch(setDateRange(lastDate))
             setPage(0)
             dispatch(setSearchingDay(false))
+            setIsLoading(true)
         } else {
             dispatch(setDateRange([]))
             setPage(0)
+            setIsLoading(true)
             dispatch(setSearchingWeek(false))
         }
     }
@@ -203,7 +235,7 @@ function TableTransactions() {
                             format='dd/MM/yy'
                             locale={locale}
                             character=' - '
-                            onChange={(newValue) => dispatch(setDateRange(newValue))}
+                            onChange={(newValue) => (dispatch(setDateRange(newValue)), dispatch(setSearchingWeek(false)))}
 
                         />
                     </div>
@@ -245,12 +277,12 @@ function TableTransactions() {
                                 format='dd/MM/yy'
                                 character=' - '
                                 locale={locale}
-                                onChange={(newValue) => dispatch(setDateRange(newValue))}
+                                onChange={(newValue) => (dispatch(setDateRange(newValue)), dispatch(setSearchingWeek(false)))}
 
                             />
-                            <Button className={previousDays == 7 ? 'active' : ''} variant="contained" onClick={handleDays} data-value={7}>7 dias</Button>
-                            <Button className={`${previousDays == 14 ? 'active' : ''} mx-5 `} variant="contained" onClick={handleDays} data-value={14}>14 dias</Button>
-                            <Button className={previousDays !== 7 && previousDays !== 14 ? 'active' : ''} variant="contained" onClick={handleDays} data-value=''>Mês todo</Button>
+                            <Button className={previousDays == 'lastWeek' ? 'active' : ''} variant="contained" onClick={handleDays} data-value={'lastWeek'}>7 dias</Button>
+                            <Button className={`${previousDays == 'last2Weeks' ? 'active' : ''} mx-5 `} variant="contained" onClick={handleDays} data-value={'last2Weeks'}>14 dias</Button>
+                            <Button className={previousDays !== 'lastWeek' && previousDays !== 'last2Weeks' ? 'active' : ''} variant="contained" onClick={handleDays} data-value={'lastMonth'}>Mês todo</Button>
 
                         </div>
                     </Hidden></> : <></>}
@@ -268,7 +300,6 @@ function TableTransactions() {
 
                 <TableContainer>
                     <Table className="min-w-full">
-                        {statements ? (
                             <TableHead>
                                 <TableRow>
                                     <TableCell>
@@ -286,36 +317,27 @@ function TableTransactions() {
                                             {searchingWeek ? 'Catracadas' : 'Status'}
                                         </Typography>
                                     </TableCell>
+                                  
                                 </TableRow>
                             </TableHead>
-                        ) : (
-                            <Skeleton variant="rounded" width={1044} height={42} />
-                        )}
-
+                            
                         <TableBody>
-                            {statements &&
-                                statements.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
-                                    const date = parseISO(i.date ?? i.dateTime);
+                       
+                            {isLoading ? <TableCell colSpan={4}>
+                                <Box className="flex justify-center items-center m-10">
+                                    <CircularProgress />
+                                </Box>
+                            </TableCell> :  statements &&
+                              
+                                statements?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
+                                    const date = parseISO(i.date ?? i.dateTime ?? i.partitionDate);
                                     const formattedDate = format(date, 'dd/MM/yyyy', { timeZone: 'Etc/UTC' });
-                                   return  <CustomTable data={i} c={c} date={formattedDate} handleClickRow={handleClickRow} />
-                            })}
+                                    return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={handleClickRow} />
+                                })
+                                }
                         </TableBody>
                     </Table>
                 </TableContainer>
-
-                {statements.length > 8 && (
-                    <TablePagination
-                        className={`overflow-visible ${c.root}`}
-                        rowsPerPageOptions={[5]}
-                        component="div"
-                        count={statements.length}
-                        rowsPerPage={rowsPerPage}
-                        page={page}
-                        onPageChange={handleChangePage}
-                        onRowsPerPageChange={handleChangeRowsPerPage}
-                    />
-                )}
-
                 {searchingWeek && !searchingDay && (
                     <TablePagination
                         className={`overflow-visible ${c.root}`}
@@ -328,8 +350,7 @@ function TableTransactions() {
                         ActionsComponent={() => (
                             <div className="my-4 flex space-x-2">
                                 <Button variant="text" onClick={handlePreviousWeek}>
-                                    &lt; Semana Anterior
-                                </Button>
+                                    &lt; Semana Anterior                                </Button>
                                 <Button disabled={isGreaterThanToday} variant="text" onClick={handleNextWeek}>
                                     Próxima Semana &gt;
                                 </Button>
@@ -343,3 +364,4 @@ function TableTransactions() {
 }
 
 export default memo(TableTransactions);
+ 

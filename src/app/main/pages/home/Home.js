@@ -6,7 +6,7 @@ import { Box } from '@mui/system';
 import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
 import Table from '../extract/widgets/Table';
-import { getTodayStatements,setDateRange,setFullReport, setSearchingDay, setSearchingWeek } from 'app/store/extractSlice';
+import { getTodayStatements,setDateRange,setFullReport, setSearchingDay, setSearchingWeek, setValorAcumuladoLabel } from 'app/store/extractSlice';
 import { TripsResume } from './widgets/Widgets';
 import { useEffect } from 'react';
 
@@ -15,8 +15,8 @@ function Home() {
   const dispatch = useDispatch()
 
   const user = useSelector(selectUser);
-  const fullName = user.fullName
-  const [first] = fullName.split(' ');
+  const fullName = user.fullName ?? 'Admin'
+  const [first] = fullName?.split(' ');
   const todayStatements = useSelector(state => state.extract.todayStatements)
   const mapInfo = useSelector(state => state.extract.mapInfo)
 
@@ -26,6 +26,7 @@ useEffect(() => {
   dispatch(setSearchingWeek(false))
   dispatch(setDateRange([]))
   dispatch(getTodayStatements())
+  dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'))
 }, [])
 
 
@@ -35,7 +36,7 @@ useEffect(() => {
     
       <div className="p-24 text-white bg-[#004A80] overflow">
           <h2 className='fw-black'>Bem vindo, {first}</h2>
-          <p className='w-[100%] md:w-[35%]'>Esse é seu dashboard, aqui você pode conferir os valores que deve receber nos próximos dias e um resumo das vaigens realizadas.</p>
+          <p className='w-[100%] md:w-[35%]'>Esse é seu dashboard, aqui você pode conferir os valores que deve receber nos próximos dias e um resumo das viagens realizadas.</p>
         </div>
         <div className="p-24 pt-10 ">
           <Typography className='font-medium text-3xl'>Extrato</Typography>
@@ -56,7 +57,7 @@ useEffect(() => {
           </Box>
           <br />
         </div>
-      <div className="p-24 pt-10 " >
+      {/* <div className="p-24 pt-10 " >
           <Typography className='font-medium text-3xl'>Resumo das Viagens</Typography>
           <Box className='flex flex-col  justify-around md:justify-start'>
               <TripsResume mapInfo={mapInfo} statements={todayStatements}/>
@@ -75,7 +76,7 @@ useEffect(() => {
           </Box>
 
           <br />
-        </div>
+        </div> */}
     </>
   );
 }

@@ -23,10 +23,17 @@ import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 
 
 const steps = ['', ''];
+const getCharacterValidationError = (str) => {
+    return `Sua senha deve conter 1 ${str}`;
+};
 const schema = yup.object().shape({
     password: yup
         .string()
-        .required('Digite sua senha'),
+        .required('Digite sua senha')
+           .min(8, 'Senha muito curta - mínimo 8 caracteres.')
+        .matches(/[0-9]/, getCharacterValidationError('número'))
+        .matches(/[a-z]/, getCharacterValidationError('letra minúscula'))
+        .matches(/[A-Z]/, getCharacterValidationError('letra maiúscula')),
     passwordConfirm: yup.string().oneOf([yup.ref('password'), null], 'As senhas devem ser iguais'),
 });
 
@@ -195,7 +202,7 @@ function ConcludePage() {
                            <div className="items-baseline mt-10 font-medium">
                                <Typography>Olá, {info.fullName}.<br></br> Confirme seus dados abaixo! Se por acaso estiverem incorretos
                                        <Link className="ml-4" to="https://secretariamunicipaldetransportes.movidesk.com/form/6594/">
-                                       fale conosco
+                                           <span className='underline'> fale conosco!</span>
                                    </Link></Typography>
 
                            </div>

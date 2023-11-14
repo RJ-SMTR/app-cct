@@ -12,6 +12,12 @@ import HomeConifg from '../main/pages/home/HomeConfig';
 import profileAppConfig from '../main/pages/profile/profileAppConfig';
 import ExtractConfig from '../main/pages/extract/ExtractConfig';
 import ResumeConfig from '../main/pages/resume/ResumeConfig';
+import AdminSignIn from '../main/pages/auth/admin/sign-in/SignInConfig';
+import AdminConfig from '../main/pages/admin/AdminConfig';
+import ForbiddenConfig from '../main/pages/errors/401/ForbiddenConfig';
+import AdminUserConfig from '../main/pages/admin/UserAnalysis/UserConfig';
+import UploadConfig from '../main/pages/admin/Upload/UploadConfig';
+import TriggerConfig from '../main/pages/admin/TriggerEmail/TriggerConfig';
 
 const routeConfigs = [
   HomeConifg,
@@ -22,7 +28,13 @@ const routeConfigs = [
   ConcludeConfig,
   profileAppConfig,
   ExtractConfig,
-  ResumeConfig
+  ResumeConfig,
+  AdminSignIn,
+  AdminConfig,
+  ForbiddenConfig,
+  AdminUserConfig,
+  UploadConfig,
+  TriggerConfig
 ];
 
 const routes = [

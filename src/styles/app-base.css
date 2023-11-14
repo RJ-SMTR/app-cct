@@ -194,3 +194,7 @@ display: none !important;
 .muiltr-1u155r9-MuiTableCell-root{
     padding: 6px !important;
 }
+.MuiBadge-badge{
+    position: relative !important;
+transform: scale(1) translate(2%, -55%) !important;
+}

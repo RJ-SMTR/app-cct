@@ -20,8 +20,8 @@ spec:
     spec:
       containers:
         - name: cct-app
-          image: gcr.io/rj-smtr/app-cct:1.0.0-rc.3
-          # image: gcr.io/PROJECT_ID/IMAGE_APP:TAG          
+          image: gcr.io/rj-smtr/app-cct:1.0.2-rc.4
+          # image: gcr.io/PROJECT_ID/IMAGE_APP:TAG      
           ports:
             - containerPort: 80
           # resources:

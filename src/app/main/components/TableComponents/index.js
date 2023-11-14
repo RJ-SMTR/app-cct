@@ -3,14 +3,51 @@ import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
 import { useSelector } from 'react-redux';
+import { useState, useEffect } from 'react';
 
 
 
-export function CustomTable(data){
+export function CustomTable(data) {
+  const [dayAmount, setDayAmount] = useState(null)
   const searchingDay = useSelector(state => state.extract.searchingDay);
   const searchingWeek = useSelector(state => state.extract.searchingWeek);
-    const dayAmount = parseInt(data.data.transactions) * 4.3
-  return  (
+  useEffect(() => {
+
+    setDayAmount(parseInt(data.data.transactions) * 4.3);
+
+  }, [data, searchingDay]);
+
+  const formatter = new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
+  const transactionType = (i) => {
+    if (i.transactionType === "free") {
+      return 'Gratuidade'
+    } else if (i.transactionType === 'half') {
+      return 'Integração'
+    } else {
+      return 'Integral'
+    }
+  }
+  const CustomBadge = (data) => {
+    const i = data.data.data
+    const getStatus = (i) => {
+      if (i.status == "accumulated") {
+        return 'A ser pago'
+      } else if (i.status == "paid") {
+        return 'Pago'
+      } else {
+        return 'Falha'
+      }
+    }
+  
+    return <Badge className={data.c?.root}
+      color={i.status === 'falha' ? 'error' : i.status === 'paid' ? 'success' : 'warning'}
+      badgeContent={getStatus(i)}
+    />
+  }
+  return (
     data ? <TableRow key={data.data.id} className="hover:bg-gray-100 cursor-pointer">
       <TableCell component="th" scope="row" onClick={data.handleClickRow}>
         <Typography className={searchingDay ? "whitespace-nowrap" : "whitespace-nowrap underline"}>
@@ -20,19 +57,20 @@ export function CustomTable(data){
       <TableCell component="th" scope="row">
         <Typography className="whitespace-nowrap">
           {searchingDay ? (
-            <>R$ {dayAmount.toFixed(2)}</>
+            <>
+              {data.data.transactionType == "Botoeria" ? "R$ 0" : formatter.format(data.data.transactionValueSum)}
+            </>
           ) : (
-            <>R$ {(data.data.amount ?? data.data.multipliedAmount).toFixed(2)}</>
+            <>{formatter.format(data.data.amount ?? data.data.transactionValueSum)}</>
           )}
         </Typography>
 
       </TableCell>
       <TableCell component="th" scope="row">
-        {searchingWeek ? data.data.transactions : <Badge className={data.c?.root}
-          color={data.data.status === 'falha' ? 'error' : data.data.status === 'sucesso' ? 'success' : 'default'}
-          badgeContent={data.data.status}
-        />}
+        {searchingWeek ? data.data.count?.toLocaleString() : <CustomBadge data={data} />}
       </TableCell>
+     
+
     </TableRow> : <p>Loading</p>
   )
 }

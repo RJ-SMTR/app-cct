@@ -1,0 +1,81 @@
+#Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cct-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cct-app
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 5
+  template:
+    metadata:
+      labels:
+        app: cct-app
+    spec:
+      containers:
+        - name: cct-app
+          image: gcr.io/PROJECT_ID/IMAGE:TAG
+          ports:
+            - containerPort: 80
+          # resources:
+          #   limits:
+          #     cpu: 500m
+          #     memory: 128Mi
+          env:
+            - name: BASE_URL_CCT
+              value: https://api.cct.hmg.mobilidade.rio/api/v1/
+          #   - name: NODE_ENV
+          #     valueFrom:
+          #       secretKeyRef:
+          #         name: custom-envs
+          #         key: NODE_ENV
+      restartPolicy: Always
+---
+#Service
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: cct-app
+  name: cct-app
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: cct-app
+---
+#Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cct-app-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/issuer: "letsencrypt"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    # nginx.org/client-max-body-size: "100m"
+spec:
+  tls:
+    - hosts:
+        - cct.hmg.mobilidade.rio
+      secretName: cct-app-tls
+  rules:
+    - host: cct.hmg.mobilidade.rio
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cct-app
+                port:
+                  number: 80

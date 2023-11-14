@@ -9,22 +9,29 @@ export function ExtractProvider({ children }) {
 const statements = useSelector(state => state.extract.statements)
 
 
-    
+
+    const formatter = new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+    });
+
     const average = useMemo(() => {
         let totalSum = 0;
         let average = 0;
         for (let i = 0; i < statements.length; i++) {
-            const currentValue = statements[i].amount ?? statements[i].multipliedAmount;
+            const currentValue = statements[i].amount ?? statements[i].transactionValueSum;
             totalSum += currentValue;
             average = totalSum / (i + 1);
         }
-        return average.toFixed(2);
+        return formatter.format(average);
 
-    }, [statements])
+    }, [statements]);
 
 
-
+   
+  
     const theme = useTheme()
+    const reversedStatements = [...statements].reverse()
     const chartOptions = {
         chart: {
             animations: {
@@ -37,45 +44,60 @@ const statements = useSelector(state => state.extract.statements)
             foreColor: 'inherit',
             width: '100%',
             height: '100%',
-            type: 'area',
+            type: 'bar',
             sparkline: {
-                enabled: true,
+                enabled: false,
+            },
+            toolbar: {
+                show: false,
             },
         },
-        colors: [theme.palette.secondary.dark, theme.palette.secondary.dark],
+        colors: [theme.palette.secondary.dark],
         fill: {
-            colors: [theme.palette.secondary.dark, theme.palette.secondary.dark],
-            opacity: 0.5,
+            colors: [theme.palette.secondary.dark],
+            opacity: 0.7, 
         },
+      
+
         series: [
             {
-                "name": "Recebido",
-                data: statements.map((statement) => ({
-                    x: statement.date,
-                    y: statement.amount ?? statement.multipliedAmount,
+                name: 'Recebido',
+                data: reversedStatements.map((statement) => ({
+                    x: statement.date ?? statement.partitionDate,
+                    y: statement.amount ?? statement.transactionValueSum,
                 })),
-
             },
-
         ],
-        stroke: {
-            curve: 'smooth',
-            width: 2,
+        xaxis: {
+            show: false
+        },
+        yaxis: {
+            labels: {
+                formatter: function (value) {
+                    return formatter.format(value);
+                },
+            },
+        },
+        plotOptions: {
+            bar: {
+                horizontal: false,
+            },
+        },
+        dataLabels: {
+            enabled: false, 
         },
         tooltip: {
             followCursor: true,
             theme: 'dark',
-            x: {
-                format: ' dd MMM, yyyy',
-            },
+         
             y: {
-                formatter: (value) => `R$${value}`,
+                formatter: function (value) {
+                    return formatter.format(value);
+                },
             },
-        },
-        xaxis: {
-            type: 'datetime',
         },
     };
+
 
 
       return(  <ExtractContext.Provider

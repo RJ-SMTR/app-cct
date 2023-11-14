@@ -11,8 +11,8 @@ function Chart() {
 
     const statements = useSelector(state => state.extract.statements)
 
-    const firstDate = new Date(`${statements[0]?.date}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
-    const lastDate = new Date(`${statements[statements.length - 1 ]?.date}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
+    const firstDate = new Date(`${statements[0]?.date ?? statements[0]?.partitionDate}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
+    const lastDate = new Date(`${statements[statements.length - 1]?.date ?? statements[statements.length - 1]?.partitionDate}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
   return (
       <Paper className="flex flex-col flex-auto shadow rounded-2xl overflow-hidden md:w-[60%]">
           <div className="flex flex-col p-12 pb-16">
@@ -31,7 +31,7 @@ function Chart() {
               <div className="flex items-start mt-12 mr-8">
                   <div className="flex flex-col">
                       <Typography className="font-semibold text-3xl md:text-5xl tracking-tighter">
-                        R$ {average}
+                        {average}
                       </Typography>
                    
                   </div>
