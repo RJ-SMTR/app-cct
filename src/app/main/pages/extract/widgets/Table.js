@@ -172,13 +172,9 @@ function TableTransactions({id}) {
         if(searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'));
         if(fullReport){
             if (searchingWeek) {
-                dispatch(setSearchingDay(true));
-            //    const givenDate = new Date(transformedDate);
-            //    const givenDateZoned = utcToZonedTime(givenDate, tz);
-            //    const nextDayZoned = addDays(givenDateZoned, 1);
-            //    const nextDayUtc = zonedTimeToUtc(nextDayZoned, tz);
-            //    const transformedEndDate = nextDayUtc.toISOString().slice(0, 10);
-            //    console.log(transformedEndDate)
+                dispatch(setSearchingDay(true))
+                dispatch(setValorAcumuladoLabel('Valor acumulado Diário'));
+        
                dispatch(setDateRange([transformedDate, transformedDate]));
            } else {
                const clickedDate = parseISO(transformedDate);
@@ -193,14 +189,16 @@ function TableTransactions({id}) {
     }
     
     const handleBack = () => {
-        if(!searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Semanal'));
-        if(searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'));
+      
         if(searchingDay){
+            dispatch(setValorAcumuladoLabel('Valor acumulado Semanal'));
             dispatch(setDateRange(lastDate))
             setPage(0)
             dispatch(setSearchingDay(false))
             setIsLoading(true)
         } else {
+            if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Semanal'));
+            if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'));
             dispatch(setDateRange([]))
             setPage(0)
             setIsLoading(true)
