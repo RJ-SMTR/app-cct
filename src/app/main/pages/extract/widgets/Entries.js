@@ -21,7 +21,7 @@ function Entries(type) {
     const searchingDay = useSelector(state => state.extract.searchingDay)
     const firstDate = new Date(`${statements[0]?.date ?? statements[0]?.partitionDate}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
     const lastDate = new Date(`${statements[statements.length - 1]?.date ?? statements[statements.length - 1]?.partitionDate }T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
-    const dayDate = new Date(`${statements[0]?.dateTime}`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
+    const dayDate = new Date(`${statements[0]?.partitionDate}`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
  
 
     useEffect(() => {
@@ -30,6 +30,7 @@ function Entries(type) {
     useEffect(() => {
             const date = new Date()
             const today = format(date, 'dd/MM/yyyy')
+            console.log(today)
             setTodayInfo(today)
 
     }, [])
@@ -62,7 +63,7 @@ function Entries(type) {
           </div>
       </Paper> : 
           <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden">
-            <Skeleton variant="rectangular" width={318} height={50} />
+            <p>Não há dados para sem exibidos</p>
           </Paper>}
                 </>
   )

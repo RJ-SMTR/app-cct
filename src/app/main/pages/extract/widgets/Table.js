@@ -14,7 +14,7 @@ import { useState } from 'react';
 import DateRangePicker from 'rsuite/DateRangePicker';
 
 import Button from '@mui/material/Button';
-import { Box, CircularProgress, Hidden, Skeleton } from '@mui/material';
+import { Box, CircularProgress, Hidden } from '@mui/material';
 import Popover from '@mui/material/Popover';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { ExtractContext } from 'src/app/hooks/ExtractContext';
@@ -172,13 +172,9 @@ function TableTransactions({id}) {
         if(searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'));
         if(fullReport){
             if (searchingWeek) {
-                dispatch(setSearchingDay(true));
-            //    const givenDate = new Date(transformedDate);
-            //    const givenDateZoned = utcToZonedTime(givenDate, tz);
-            //    const nextDayZoned = addDays(givenDateZoned, 1);
-            //    const nextDayUtc = zonedTimeToUtc(nextDayZoned, tz);
-            //    const transformedEndDate = nextDayUtc.toISOString().slice(0, 10);
-            //    console.log(transformedEndDate)
+                dispatch(setSearchingDay(true))
+                dispatch(setValorAcumuladoLabel('Valor acumulado Diário'));
+        
                dispatch(setDateRange([transformedDate, transformedDate]));
            } else {
                const clickedDate = parseISO(transformedDate);
@@ -193,14 +189,16 @@ function TableTransactions({id}) {
     }
     
     const handleBack = () => {
-        if(!searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Semanal'));
-        if(searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'));
+      
         if(searchingDay){
+            dispatch(setValorAcumuladoLabel('Valor acumulado Semanal'));
             dispatch(setDateRange(lastDate))
             setPage(0)
             dispatch(setSearchingDay(false))
             setIsLoading(true)
         } else {
+            if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Semanal'));
+            if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'));
             dispatch(setDateRange([]))
             setPage(0)
             setIsLoading(true)
@@ -324,9 +322,10 @@ function TableTransactions({id}) {
                         <TableBody>
                        
                             {isLoading ? <TableCell colSpan={4}>
-                                <Box className="flex justify-center items-center m-10">
+                                {/* <Box className="flex justify-center items-center m-10">
                                     <CircularProgress />
-                                </Box>
+                                </Box> */}
+                                <p>Não há dados para sem exibidos</p>
                             </TableCell> :  statements &&
                               
                                 statements?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
