@@ -14,7 +14,7 @@ import { useState } from 'react';
 import DateRangePicker from 'rsuite/DateRangePicker';
 
 import Button from '@mui/material/Button';
-import { Box, CircularProgress, Hidden, Skeleton } from '@mui/material';
+import { Box, CircularProgress, Hidden } from '@mui/material';
 import Popover from '@mui/material/Popover';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { ExtractContext } from 'src/app/hooks/ExtractContext';
@@ -322,9 +322,10 @@ function TableTransactions({id}) {
                         <TableBody>
                        
                             {isLoading ? <TableCell colSpan={4}>
-                                <Box className="flex justify-center items-center m-10">
+                                {/* <Box className="flex justify-center items-center m-10">
                                     <CircularProgress />
-                                </Box>
+                                </Box> */}
+                                <p>Não há dados para sem exibidos</p>
                             </TableCell> :  statements &&
                               
                                 statements?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
