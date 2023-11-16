@@ -84,9 +84,10 @@ function TableTypes() {
                                 })
                             :  (
                                     <TableCell colSpan={4}> 
-                                        <Box className="flex justify-center items-center m-10">
+                                        <p>Não há dados para sem exibidos</p>
+                                        {/* <Box className="flex justify-center items-center m-10">
                                             <CircularProgress />
-                                        </Box>
+                                        </Box> */}
                                     </TableCell> 
                         ) }
                         </TableBody>

@@ -63,7 +63,7 @@ function Entries(type) {
           </div>
       </Paper> : 
           <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden">
-            <Skeleton variant="rectangular" width={318} height={50} />
+            <p>Não há dados para sem exibidos</p>
           </Paper>}
                 </>
   )
