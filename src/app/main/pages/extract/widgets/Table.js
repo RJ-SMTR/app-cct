@@ -14,7 +14,7 @@ import { useState } from 'react';
 import DateRangePicker from 'rsuite/DateRangePicker';
 
 import Button from '@mui/material/Button';
-import { Box, CircularProgress, Hidden } from '@mui/material';
+import { Box, CircularProgress, Hidden, Skeleton } from '@mui/material';
 import Popover from '@mui/material/Popover';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { ExtractContext } from 'src/app/hooks/ExtractContext';
@@ -168,8 +168,7 @@ function TableTransactions({id}) {
         const [day, month, year] = start.split('/');
         const transformedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
         const tz = 'America/Sao_Paulo';
-        if(!searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Semanal'));
-        if(searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'));
+    
         if(fullReport){
             if (searchingWeek) {
                 dispatch(setSearchingDay(true))
@@ -177,6 +176,8 @@ function TableTransactions({id}) {
         
                dispatch(setDateRange([transformedDate, transformedDate]));
            } else {
+                if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Semanal'));
+                if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'));
                const clickedDate = parseISO(transformedDate);
                const clickedDateToday = utcToZonedTime(clickedDate, tz);
                setCurrentWeekStart(clickedDateToday);
