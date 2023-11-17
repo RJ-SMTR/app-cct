@@ -100,6 +100,9 @@ function SignInPage() {
                                     />
                                 )}
                             />
+                        <Link className="text-md font-medium" to="/forgot-password">
+                            Esqueceu sua senha?
+                        </Link>
                         <Button
                             variant="contained"
                             color="secondary"
