@@ -45,7 +45,9 @@ function SignInPage() {
             .then((response) => {
             })
             .catch((_errors) => {
-              
+                setError('password', {
+                    message: 'Senha ou e-mail incorretos',
+                });
             });
     }
 
