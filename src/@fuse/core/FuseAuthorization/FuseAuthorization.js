@@ -17,6 +17,7 @@ class FuseAuthorization extends Component {
     this.state = {
       accessGranted: true,
       routes,
+      lastUserRole: null,
     };
   }
 
@@ -66,27 +67,22 @@ class FuseAuthorization extends Component {
   redirectRoute() {
     const { userRole } = this.props;
     const redirectUrl = getSessionRedirectUrl() || this.props.loginRedirectUrl;
-
-    /*
-        User is guest
-        Redirect to Login Page
-        */
+    const lastUserRole = this.state.lastUserRole;
     if (!userRole || userRole.length === 0) {
-      setTimeout(() => history.push('/sign-in'), 0);
+      if(lastUserRole === "Admin"){
+        setTimeout(() => history.push('/admin/sign-in'), 0);
+      } else {
+        setTimeout(() => history.push('/sign-in'), 0);
+      }
     } else {
-      /*
-        User is member
-        User must be on unAuthorized page or just logged in
-        Redirect to dashboard or loginRedirectUrl
-        */
       setTimeout(() => history.push(redirectUrl), 0);
+      this.setState({ lastUserRole: userRole });
 
       resetSessionRedirectUrl();
     }
   }
 
   render() {
-    // console.info('Fuse Authorization rendered', this.state.accessGranted);
     return this.state.accessGranted ? this.props.children : null;
   }
 }

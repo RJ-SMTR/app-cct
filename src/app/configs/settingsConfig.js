@@ -1,6 +1,7 @@
 import themesConfig from 'app/configs/themesConfig';
 import i18n from '../../i18n';
 
+
 const settingsConfig = {
   layout: {
     style: 'layout1', // layout1 layout2 layout3
@@ -19,11 +20,8 @@ const settingsConfig = {
    To make whole app accessible without authorization by default set defaultAuth: null
    *** The individual route configs which has auth option won't be overridden.
    */
-  // DEFAULT AUTH COMO USER PQ NA API O USUÁRIO QUE CRIEI TEM ESSA ROLE
   defaultAuth: ['User'],
-  /*
-    Default redirect url for the logged-in user,
-   */
+
   loginRedirectUrl: '/',
 };
 
