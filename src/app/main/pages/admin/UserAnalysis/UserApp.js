@@ -18,6 +18,7 @@ import { api } from 'app/configs/api/api';
 import Table from '../../extract/widgets/Table';
 import { setFullReport } from 'app/store/extractSlice';
 import TableTypes from '../../extract/widgets/TableTypes';
+import Entries from '../../extract/widgets/Entries';
 const Root = styled(FusePageSimple)(({ theme }) => ({
   '& .FusePageSimple-header': {
     backgroundColor: theme.palette.background.paper,
@@ -33,6 +34,7 @@ const Root = styled(FusePageSimple)(({ theme }) => ({
 function UserApp() {
   const [user, setUser] = useState()
   let {id} = useParams()
+  const valorAcumulado = useSelector(state => state.extract.valorAcumuladoLabel);
   const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
   const dispatch = useDispatch()
   useEffect(() => {
@@ -133,7 +135,10 @@ function UserApp() {
           </div>
           {user && (
             <>
-           
+           <div className='md:flex mt-10 md:max-w-[50%]'>
+                <Entries type="Valor diário" isDay="true" />
+                <Entries type={valorAcumulado} isDay="false" />
+           </div>
               <div>
                 <Table id={id} />
               </div>
