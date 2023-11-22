@@ -45,7 +45,9 @@ function SignInPage() {
             .then((response) => {
             })
             .catch((_errors) => {
-              
+                setError('password', {
+                    message: 'Senha ou e-mail incorretos',
+                });
             });
     }
 
@@ -100,9 +102,11 @@ function SignInPage() {
                                     />
                                 )}
                             />
-                        <Link className="text-md font-medium" to="/forgot-password">
-                            Esqueceu sua senha?
-                        </Link>
+                        <Box className="flex justify-end">
+                                <Link className="text-md font-medium" to="/forgot-password">
+                                    Esqueceu sua senha?
+                                </Link>
+                        </Box>
                         <Button
                             variant="contained"
                             color="secondary"
