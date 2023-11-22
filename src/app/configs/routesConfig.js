@@ -20,15 +20,15 @@ import UploadConfig from '../main/pages/admin/Upload/UploadConfig';
 import TriggerConfig from '../main/pages/admin/TriggerEmail/TriggerConfig';
 
 const routeConfigs = [
-  HomeConifg,
+  // HomeConifg,
   SignOutConfig,
   SignInConfig,
   ForgotPasswordConfig,
   ResetPasswordConfig,
   ConcludeConfig,
   profileAppConfig,
-  ExtractConfig,
-  ResumeConfig,
+  // ExtractConfig,
+  // ResumeConfig,
   AdminSignIn,
   AdminConfig,
   ForbiddenConfig,

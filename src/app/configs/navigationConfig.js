@@ -8,14 +8,14 @@ i18next.addResourceBundle('tr', 'navigation', tr);
 i18next.addResourceBundle('ar', 'navigation', ar);
 
 const navigationConfig = [
-  {
-    id: 'Home-component',
-    title: 'Home',
-    translate: 'Home',
-    type: 'item',
-    icon: 'heroicons-outline:home',
-    url: '/',
-  },
+  // {
+  //   id: 'Home-component',
+  //   title: 'Home',
+  //   translate: 'Home',
+  //   type: 'item',
+  //   icon: 'heroicons-outline:home',
+  //   url: '/',
+  // },
   {
     id: 'profile',
     title: 'Perfil',
@@ -24,14 +24,14 @@ const navigationConfig = [
     icon: 'heroicons-outline:user-circle',
     url: 'profile',
   },
-  {
-    id: 'extract',
-    title: 'Financeiro',
-    translate: 'Financeiro',
-    type: 'item',
-    icon: 'heroicons-outline:currency-dollar',
-    url: 'extrato',
-  },
+  // {
+  //   id: 'extract',
+  //   title: 'Financeiro',
+  //   translate: 'Financeiro',
+  //   type: 'item',
+  //   icon: 'heroicons-outline:currency-dollar',
+  //   url: 'extrato',
+  // },
   {
     id: 'support',
     title: 'Suporte',
