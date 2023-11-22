@@ -22,7 +22,7 @@ const settingsConfig = {
    */
   defaultAuth: ['User'],
 
-  loginRedirectUrl: '/',
+  loginRedirectUrl: '/profile',
 };
 
 export default settingsConfig;
