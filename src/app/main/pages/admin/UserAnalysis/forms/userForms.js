@@ -201,6 +201,7 @@ export function PersonalInfo({ user }) {
 
 
 export function BankInfo({user}) {
+    const bankCode = `${user.bankCode} - ${user.aux_bank.name}`
 
     return (
         <>
@@ -219,7 +220,7 @@ export function BankInfo({user}) {
 
 
                     <TextField
-                        value={user.bankCode}
+                        value={bankCode}
                         disabled
                         label='Banco'
                         className="mb-24"
