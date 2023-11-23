@@ -220,7 +220,7 @@ export function BankInfo({user}) {
 
 
                     <TextField
-                        value={bankCode}
+                        value={bankCode ?? user.bankCode}
                         disabled
                         label='Banco'
                         className="mb-24"
