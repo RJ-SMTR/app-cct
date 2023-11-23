@@ -43,8 +43,14 @@ export const getUser = () => (dispatch) => {
 }
 export const getInfo = () => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
+    const currentHostname = window.location.hostname;
+    const isProduction = currentHostname === 'cct.mobilidade.rio';
+
+    const baseUrl = isProduction
+        ? 'https://api.cct.mobilidade.rio/'
+        : 'https://api.cct.hmg.mobilidade.rio/';
     return new Promise((resolve, reject) => {
-        api.get('https://api.cct.hmg.mobilidade.rio/api/settings', {
+        api.get(`${baseUrl}api/settings`, {
             headers: { 'Authorization': `Bearer ${token}`}
         })
             .then((response) => {

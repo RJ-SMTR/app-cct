@@ -52,7 +52,7 @@ function UploadApp() {
             const { error: apiError } = error.response?.data
             const errorMessages = []
 
-            if (apiError.file) {
+            if (apiError.file.invalidRows) {
               apiError.file.invalidRows.forEach((invalidRow) => {
                 let errorMessage;
 
@@ -64,8 +64,14 @@ function UploadApp() {
                   errorMessage = `Linha ${invalidRow.row}: Erro de email desconhecido: ${invalidRow.errors.email}!`;
                 }
 
-                if (invalidRow.errors.permitCode) {
-                  errorMessage += ` (código de permissão: ${invalidRow.errors.permitCode})`;
+                if (invalidRow.errors.codigo_permissionario ) {
+                  errorMessage += ` Código de Permissionário: ${invalidRow.errors.codigo_permissionario})`;
+                }
+                if (invalidRow.errors.cpf ) {
+                  errorMessage += ` CPF: ${invalidRow.errors.cpf})`;
+                }
+                if (invalidRow.errors.telefone ) {
+                  errorMessage += ` telefone: ${invalidRow.errors.telefone})`;
                 }
 
                 if (!errorMessages[invalidRow.row]) {
@@ -80,6 +86,11 @@ function UploadApp() {
                   message: errorMessages[email],
                 });
               });
+            } else {
+              setError('file', {
+                type: 'server',
+                message: 'Cabeçalhos inválidos. Verifique se está nessa ordem: código de permissionário, email, telefone, nome e CPF '
+              })
             }
             reject(errors)
           });
@@ -104,11 +115,11 @@ function UploadApp() {
                   accept=".xlsx, .csv, .xls"
 
                 />
-                {errors.file && (
+                {errors.file ?
                   errors.file.map((error, index) => (
                     <p key={index} className="text-red-500 my-10">{error.message}</p>
                   ))
-                )}
+                  : <p  className="text-red-500 my-10">{errors.file?.message}</p> }
 
 
 
