@@ -27,9 +27,17 @@ function TriggerApp() {
     }, [sendEmailValue])
 
     function sendEmail(sendEmailValue) {
+        const currentHostname = window.location.hostname;
+        const isProduction = currentHostname === 'cct.mobilidade.rio';
+
+        const baseUrl = isProduction
+            ? 'https://api.cct.mobilidade.rio/'
+            : 'https://api.cct.hmg.mobilidade.rio/';
+
         const token = window.localStorage.getItem('jwt_access_token');
         return new Promise((resolve, reject) => {
-            api.patch('https://api.cct.hmg.mobilidade.rio/api/settings',
+            api.patch(
+                `${baseUrl}api/settings`,
            { name: sendEmailValue.name,
             version: sendEmailValue.version,
             value: sendEmailValue.value == "false" ? "true" : "false" 
