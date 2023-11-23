@@ -184,11 +184,11 @@ export function AuthProvider({ children }) {
     })
 
   }
-  function patchInfo(info){
+  function patchInfo(info, id){
     const token = window.localStorage.getItem('jwt_access_token');
     return new Promise((resolve, reject) => {
-      api.patch(jwtServiceConfig.userInfo, 
-       info, {
+      api.patch(`users/${id}`,
+        info,{
           headers: { "Authorization": `Bearer ${token}` },
         }
       )
