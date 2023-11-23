@@ -98,12 +98,13 @@ function UserApp() {
            <div className='flex flex-col md:flex-row'>
              <div className="-mt-96 lg:-mt-88 rounded-full">
                <motion.div initial={{ scale: 0 }} animate={{ scale: 1, transition: { delay: 0.1 } }}>
-                 <Avatar
+                 {/* <Avatar
                    sx={{ borderColor: 'background.paper' }}
                    className="w-128 h-128 border-4"
                    src="assets/images/pages/profile/pfp.png"
                    alt="User avatar"
-                 />
+                 /> */}
+                  <Avatar sx={{ borderColor: 'background.white' }} className="w-128 h-128 border-4" alt={user.firstName?.charAt(0)} />
                </motion.div>
              </div>
             
