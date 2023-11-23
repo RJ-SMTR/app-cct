@@ -64,8 +64,14 @@ function UploadApp() {
                   errorMessage = `Linha ${invalidRow.row}: Erro de email desconhecido: ${invalidRow.errors.email}!`;
                 }
 
-                if (invalidRow.errors.permitCode) {
-                  errorMessage += ` (código de permissão: ${invalidRow.errors.permitCode})`;
+                if (invalidRow.errors.codigo_permissionario ) {
+                  errorMessage += ` Código de Permissionário: ${invalidRow.errors.codigo_permissionario})`;
+                }
+                if (invalidRow.errors.cpf ) {
+                  errorMessage += ` CPF: ${invalidRow.errors.cpf})`;
+                }
+                if (invalidRow.errors.telefone ) {
+                  errorMessage += ` telefone: ${invalidRow.errors.telefone})`;
                 }
 
                 if (!errorMessages[invalidRow.row]) {
@@ -109,7 +115,7 @@ function UploadApp() {
                   accept=".xlsx, .csv, .xls"
 
                 />
-                {errors.file?.lentgh > 1 ?
+                {errors.file ?
                   errors.file.map((error, index) => (
                     <p key={index} className="text-red-500 my-10">{error.message}</p>
                   ))
