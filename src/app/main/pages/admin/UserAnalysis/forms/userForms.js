@@ -201,10 +201,12 @@ export function PersonalInfo({ user }) {
 
 
 export function BankInfo({user}) {
-    const [bankCode, setBankCode] = useState(null);
+    const [bankCode, setBankCode] = useState();
 
-    if (user.aux_bank) {
+    if (user.aux_bank != null) {
         setBankCode(`${user.bankCode} - ${user.aux_bank.name}`);
+    } else {
+        setBankCode(user.bankCode)
     }
     return (
         <>
@@ -223,7 +225,7 @@ export function BankInfo({user}) {
 
 
                     <TextField
-                        value={bankCode ?? user.bankCode}
+                        value={bankCode}
                         disabled
                         label='Banco'
                         className="mb-24"
