@@ -219,7 +219,7 @@ export function BankInfo({ user }) {
 
 
     function onSubmit(info) {
-        patchInfo(info)
+        patchInfo(info, user.id)
             .then((response) => {
                 if (isValid) {
                     setIsEditable(false)

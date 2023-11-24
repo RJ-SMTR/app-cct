@@ -201,11 +201,11 @@ export function PersonalInfo({ user }) {
 
 
 export function BankInfo({user}) {
-    const bankCode = null
-   if(user.aux_bank){
-       bankCode = `${user.bankCode} - ${user.aux_bank.name}`
-   }
+    const [bankCode, setBankCode] = useState(null);
 
+    if (user.aux_bank) {
+        setBankCode(`${user.bankCode} - ${user.aux_bank.name}`);
+    }
     return (
         <>
 
