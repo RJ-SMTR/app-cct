@@ -66,13 +66,13 @@ function TriggerApp() {
                   <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
                           <Typography className='font-medium text-2xl'>Enviar e-mails de cadastro</Typography>
                       <label className='my-10'>Os envios são realizados em lotes, diariamente (500 p/dia).Para acompanhá-los clique <Link to="/" className='underline'>aqui!</Link></label>
-                            {messageSent ? <Typography>
+                            {!messageSent ? <Typography>
                                 E-mails sendo enviados com sucesso.
                             </Typography> : <></>}
                             {error ? <Typography className='text-red-500'>
                           Houve um erro. Por favor tente novamente, se nada ocorrer contate o <Link className='underline' to="https://secretariamunicipaldetransportes.movidesk.com/form/6594/" >suporte</Link>
                             </Typography> : <></>}
-                      <button type="button" onClick={() => sendEmail(sendEmailValue)} className={`rounded p-3 uppercase text-white h-[27px] min-h-[27px] font-medium px-10 mt-10 ${!messageSent ? 'bg-[#0DB1E3]' : 'bg-red-500'}`} >{!messageSent ? 'Enviar e-mails' : 'Parar de enviar'}</button>
+                      <button type="button" onClick={() => sendEmail(sendEmailValue)} className={`rounded p-3 uppercase text-white h-[27px] min-h-[27px] font-medium px-10 mt-10 ${messageSent ? 'bg-[#0DB1E3]' : 'bg-red-500'}`} >{ messageSent ? 'Enviar e-mails' : 'Parar de enviar'}</button>
                   </Paper>
               </div>
           </Box>
