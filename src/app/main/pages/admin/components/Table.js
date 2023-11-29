@@ -249,7 +249,7 @@ export function TableUsers() {
                                         <MenuItem value="" selected disabled>
                                             Status de convite
                                         </MenuItem>
-                                        <MenuItem value="queued">Na fila</MenuItem>
+                                        <MenuItem value="queued">Não enviado</MenuItem>
                                         {/* <MenuItem value="created">Criado</MenuItem> */}
                                         <MenuItem value="sent">Enviado</MenuItem>
                                         <MenuItem value="used">Acessado</MenuItem>

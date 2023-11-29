@@ -1,6 +1,6 @@
 import { Card, Modal, Box, Typography } from "@mui/material"
 import _ from '@lodash';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from 'react-hook-form';
 import TextField from '@mui/material/TextField';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
@@ -201,11 +201,14 @@ export function PersonalInfo({ user }) {
 
 
 export function BankInfo({user}) {
-    const [bankCode, setBankCode] = useState(null);
-
-    if (user.aux_bank) {
-        setBankCode(`${user.bankCode} - ${user.aux_bank.name}`);
-    }
+    const [bankCode, setBankCode] = useState()
+    useEffect(() => {
+        if (user.aux_bank != null) {
+            setBankCode(`${user.bankCode} - ${user.aux_bank.name}`);
+        } else {
+            setBankCode(user.bankCode)
+        }
+    }, [])
     return (
         <>
 
@@ -223,7 +226,7 @@ export function BankInfo({user}) {
 
 
                     <TextField
-                        value={bankCode ?? user.bankCode}
+                        value={bankCode}
                         disabled
                         label='Banco'
                         className="mb-24"
