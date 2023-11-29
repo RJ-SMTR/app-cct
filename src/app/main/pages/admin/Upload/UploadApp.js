@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Typography, Paper, Box } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import * as yup from 'yup';
@@ -98,6 +98,7 @@ function UploadApp() {
     }
   };
 
+
   return (
     <>
       <div className="p-24 pt-10">
@@ -115,7 +116,8 @@ function UploadApp() {
                   accept=".xlsx, .csv, .xls"
 
                 />
-                {errors.file ?
+                {errors.file?.lentgh > 1 ?
+                
                   errors.file.map((error, index) => (
                     <p key={index} className="text-red-500 my-10">{error.message}</p>
                   ))
