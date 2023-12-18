@@ -55,6 +55,7 @@ export function TableUsers() {
                 .then((response) => {
                     handleClose()
                     setFiltered(true)
+                    setPage(0)
                     reset();
                 })
     }
