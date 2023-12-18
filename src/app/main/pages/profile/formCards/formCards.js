@@ -50,14 +50,12 @@ export function PersonalInfo({ user }) {
 
 
     function onSubmit({ phone }) {
-        patchInfo({ phone })
+        patchInfo({phone}, user.id)
             .then((response) => {
-                if (isValid) {
                     setIsEditable(false)
                     setSaved(true)
                    success(response, "Seus dados foram salvos!")
 
-                }
             })
             .catch((_errors) => {
                 setError(_errors.phone, {
