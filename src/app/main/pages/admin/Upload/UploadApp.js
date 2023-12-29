@@ -49,29 +49,26 @@ function UploadApp() {
             clearErrors('file')
           })
           .catch((error) => {
-            const { error: apiError } = error.response?.data
+            const { error: apiError } = error.response.data
             const errorMessages = []
 
             if (apiError.file.invalidRows) {
               apiError.file.invalidRows.forEach((invalidRow) => {
                 let errorMessage;
-
-                if (invalidRow.errors.email === 'email must be an email') {
-                  errorMessage = `Linha ${invalidRow.row}: E-mail inválido!`;
-                } else if (invalidRow.errors.email === 'emailAlreadyExists') {
-                  errorMessage = `Linha ${invalidRow.row}: E-mail já existe!`;
+               if (invalidRow.errors.email) {
+                 errorMessage = `Linha ${invalidRow.row}: E-mail:  ${invalidRow.errors.email}!`;
                 } else {
-                  errorMessage = `Linha ${invalidRow.row}: Erro de email desconhecido: ${invalidRow.errors.email}!`;
+                  errorMessage = `Linha ${invalidRow.row}: `;
                 }
 
                 if (invalidRow.errors.codigo_permissionario ) {
                   errorMessage += ` Código de Permissionário: ${invalidRow.errors.codigo_permissionario})`;
                 }
                 if (invalidRow.errors.cpf ) {
-                  errorMessage += ` CPF: ${invalidRow.errors.cpf})`;
+                  errorMessage += ` CPF: ${invalidRow.errors.cpf}!`;
                 }
                 if (invalidRow.errors.telefone ) {
-                  errorMessage += ` telefone: ${invalidRow.errors.telefone})`;
+                  errorMessage += ` telefone: ${invalidRow.errors.telefone}`;
                 }
 
                 if (!errorMessages[invalidRow.row]) {
@@ -116,12 +113,11 @@ function UploadApp() {
                   accept=".xlsx, .csv, .xls"
 
                 />
-                {errors.file?.lentgh > 1 ?
-                
+                {errors.file ?
                   errors.file.map((error, index) => (
                     <p key={index} className="text-red-500 my-10">{error.message}</p>
                   ))
-                  : <p  className="text-red-500 my-10">{errors.file?.message}</p> }
+                  : <></> }
 
 
 
