@@ -2,9 +2,6 @@ import FuseUtils from '@fuse/utils/FuseUtils';
 import { api } from 'app/configs/api/api';
 import axios from 'axios';
 import jwtDecode from 'jwt-decode';
-import { useContext } from 'react';
-import { redirect } from 'react-router-dom';
-import { AuthContext } from '../../AuthContext';
 import jwtServiceConfig from './jwtServiceConfig';
 
 /* eslint-disable camelcase */
@@ -46,7 +43,7 @@ class JwtService extends FuseUtils.EventEmitter {
       this.emit('onAutoLogin', true);
     } else {
       this.setSession(null);
-      this.emit('onAutoLogout', 'access_token expired');
+      this.emit('onAutoLogout', 'Seu token já expirou, faça login novamente');
     }
   };
 
@@ -146,19 +143,13 @@ class JwtService extends FuseUtils.EventEmitter {
   };
 
   isAuthTokenValid = (access_token) => {
-    const {success} = useContext(AuthContext)
     if (!access_token) {
       return false;
     }
     const decoded = jwtDecode(access_token);
     const currentTime = Date.now() / 1000;
     if (decoded.exp < currentTime) {
-      this.emit
-      console.warn('Seu token já expirou. Faça login novamente');
-      success(access_token, 'Seu token já expirou. Faça login novamente')
-      setTimeout(() => {
-        redirect('/sign-in/admin')
-      }, 10000)
+      console.warn('access token expired');
       return false;
     }
 
