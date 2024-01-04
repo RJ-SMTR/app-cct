@@ -9,6 +9,7 @@ import TableTransactions from './widgets/Table'
 import { TripsResume } from '../home/widgets/Widgets';
 import {  getFirstByType, getFirstTypes, setFullReport} from 'app/store/extractSlice';
 import TableTypes from './widgets/TableTypes';
+import TablePending from './widgets/TablePending';
 
 
 
@@ -47,8 +48,8 @@ function ExtractApp() {
 
         <Box className='flex flex-col  justify-around mt-24'>
           {searchingDay ?
-            <></>
-            : <Chart />
+            <TablePending></TablePending>
+            : <TablePending />
           }
         </Box>
 
