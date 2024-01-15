@@ -22,6 +22,7 @@ function UploadApp() {
     if (selectedFile) {
       try {
         await fileSchema.validate(selectedFile)
+        
       } catch (validationError) {
         setError('file', {
           type: 'validation',
@@ -113,11 +114,14 @@ function UploadApp() {
                   accept=".xlsx, .csv, .xls"
 
                 />
-                {errors.file ?
-                  errors.file.map((error, index) => (
-                    <p key={index} className="text-red-500 my-10">{error.message}</p>
-                  ))
-                  : <></> }
+                {errors.file &&
+                  (Array.isArray(errors.file)
+                    ? errors.file.map((error, index) => (
+                      <p key={index} className="text-red-500 my-10">{error.message}</p>
+                    ))
+                    : <p className="text-red-500 my-10">{errors.file.message}</p>
+                  )
+                }
 
 
 
