@@ -13,6 +13,7 @@ import { Box, CircularProgress, Skeleton } from '@mui/material';
 
 import { useSelector } from 'react-redux';
 import { useEffect } from 'react';
+import _ from 'lodash';
 
 
 function TableTypes() {
@@ -21,6 +22,9 @@ function TableTypes() {
         currency: 'BRL',
     });
     const listByType = useSelector(state => state.extract.listByType)
+    useEffect(() => {
+        console.log("list", listByType)
+    }, [listByType])
  
     return (
         <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
@@ -62,8 +66,9 @@ function TableTypes() {
                         )}
 
                         <TableBody>
-                            {listByType ?
+                            {!_.isEmpty(listByType)  ? 
                                 Object.entries(listByType).map(([type, count]) => {
+                                    console.log("list", listByType.count)
                                     return (
                                         <TableRow key={type} className="hover:bg-gray-100 cursor-pointer">
                                             <TableCell component="th" scope="row">
@@ -82,14 +87,14 @@ function TableTypes() {
                                         </TableRow>
                                     );
                                 })
-                            :  (
+                            :  
                                     <TableCell colSpan={4}> 
                                         <p>Não há dados para sem exibidos</p>
                                         {/* <Box className="flex justify-center items-center m-10">
                                             <CircularProgress />
                                         </Box> */}
                                     </TableCell> 
-                        ) }
+                         }
                         </TableBody>
                     </Table>
                 </TableContainer>

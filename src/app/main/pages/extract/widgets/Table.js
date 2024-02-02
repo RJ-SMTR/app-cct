@@ -322,7 +322,7 @@ function TableTransactions({id}) {
                             
                         <TableBody>
                        
-                            {isLoading ? <TableCell colSpan={4}>
+                            {isLoading || statements.length < 1? <TableCell colSpan={4}>
                                 {/* <Box className="flex justify-center items-center m-10">
                                     <CircularProgress />
                                 </Box> */}

@@ -18,6 +18,8 @@ const initialState = {
     valorAcumuladoLabel: 'Valor acumulado Mensal',
     sumInfo: [],
     sumInfoWeek: [],
+    pendingValue: [],
+    pendingList: [],
 };
 
 const extractSlice = createSlice({
@@ -66,6 +68,12 @@ const extractSlice = createSlice({
         setValorAcumuladoLabel: (state, action) => {
             state.valorAcumuladoLabel = action.payload;
         },
+        setPendingValue: (state, action) => {
+            state.pendingValue = action.payload;
+        },
+        setPendingList: (state, action) => {
+            state.pendingList = action.payload;
+        },
     },
 });
 
@@ -96,7 +104,11 @@ export const {
     sumInfo,
     setSumInfo,
     sumInfoWeek,
-    setSumInfoWeek
+    setSumInfoWeek,
+    setPendingList,
+    pendingList,
+    setPendingValue,
+    pendingValue
 } = extractSlice.actions;
 
 export default extractSlice.reducer;
@@ -130,6 +142,17 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
         return previousDays > 0 ? { timeInterval: previousDays } : { timeInterval: 'lastMonth' }
     }
 }
+export const  getPreviousDays = (dateRange) => (dispatch) => {
+    const token = window.localStorage.getItem('jwt_access_token');
+    api.get(jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=lastMonth`, {
+        headers: { "Authorization": `Bearer ${token}` },
+    })
+        .then((response) => {
+            dispatch(setPendingValue(response.data.statusCounts))
+            dispatch(setPendingList(response.data.data))
+        })
+
+}
 
 export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) => async (dispatch) => {
     const requestData = handleRequestData(null, dateRange, searchingDay, searchingWeek)
@@ -156,7 +179,6 @@ export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) =>
             Object.entries(response.data.transactionTypeCounts)
                 .sort(([keyA], [keyB]) => order.indexOf(keyA) - order.indexOf(keyB))
         );
-
         dispatch(setListByType(sortedObject))
     } catch (error) {
         console.error(error);
@@ -191,6 +213,7 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
         const response = await api(config);
 
         if (searchingWeek || searchingDay) {
+            dispatch(getPreviousDays(requestData.endDate))
             dispatch(setMapInfo(response.data.data));
             dispatch(setStatements(response.data.data));
             dispatch(setSumInfoWeek(response.data))
@@ -202,6 +225,7 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             } else {
                 dispatch(getFirstTypes(null, null, searchingWeek, searchingDay));
             }
+            
             dispatch(setSumInfo(response.data))
 
             dispatch(setStatements(response.data.data));

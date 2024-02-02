@@ -328,7 +328,6 @@ export function BankInfo({ user }) {
                             helperText={errors?.bankAccount?.message}
                             disabled={!isEditable}
                         />
-
                         <TextField
                             {...register("bankAccountDigit")}
                             className="mb-24 w-[30%]"
