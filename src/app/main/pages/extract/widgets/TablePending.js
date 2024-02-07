@@ -27,7 +27,7 @@ function TablePending() {
     const CustomBadge = (i) => {
         console.log(i)
         return <Badge className='mt-[20px]'
-            color={i.data.status === 'Pendente' ? 'error' : i.status === 'Pendente' ? 'waring' : 'warning'}
+            color={i.data.status === 'Pendente' ? 'error' : i.status === 'Pendente' ? 'waring' : 'success'}
             badgeContent={i.data.status}
         />
     }
@@ -153,12 +153,19 @@ function TablePending() {
 
             </Box>
             <Box className="flex justify-end">
+                <Box className="mr-16">
+                    <Typography className="font-bold">
+
+                        Total Pago:  {formatter.format(values.paid?.amountSum ?? 0)}
+                    </Typography>
+                </Box>
                            <Box className="mr-16">
                     <Typography className="font-bold">
                         
                         Total a Pagar:  {formatter.format(values.toPay?.amountSum ?? 0) }
                     </Typography>
                            </Box>
+                   
                            <Box>
                     <Typography className="text-red font-bold">
                         Total Pendente:  {formatter.format(values.pending?.amountSum ?? 0) }
