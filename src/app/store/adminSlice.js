@@ -121,8 +121,6 @@ export const getUserStatements = (userId) => (dispatch) => {
             headers: { "Authorization": `Bearer ${token}` },
         })
             .then((response) => {
-                console.log(response.data)
-               
                     dispatch(setStatements(response.data.data));
                 resolve(response.data);
             })

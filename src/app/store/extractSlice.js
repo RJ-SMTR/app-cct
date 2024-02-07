@@ -189,7 +189,13 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
     const requestData = handleRequestData(previousDays, dateRange, searchingDay, searchingWeek);
     let apiRoute = ''
     if(!userId){
-        apiRoute = searchingWeek ? jwtServiceConfig.revenuesUn : jwtServiceConfig.bankStatement;
+        console.log("searchingWeek", searchingWeek)
+        console.log("searchingDay", searchingDay)
+        apiRoute = searchingWeek && searchingDay
+            ? jwtServiceConfig.revenuesDay
+            : searchingWeek 
+                ? jwtServiceConfig.revenuesUn
+                : jwtServiceConfig.bankStatement
     } else {
         apiRoute = searchingWeek ? jwtServiceConfig.revenuesUn + `?userId=${userId}` : jwtServiceConfig.bankStatement + `?userId=${userId}`;
     }
@@ -213,6 +219,7 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
         const response = await api(config);
 
         if (searchingWeek || searchingDay) {
+            console.log("response.data", response.data)
             dispatch(getPreviousDays(requestData.endDate))
             dispatch(setMapInfo(response.data.data));
             dispatch(setStatements(response.data.data));

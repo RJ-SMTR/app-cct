@@ -4,6 +4,7 @@ import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
 import { useSelector } from 'react-redux';
 import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 
 
 
@@ -11,10 +12,11 @@ export function CustomTable(data) {
   const [dayAmount, setDayAmount] = useState(null)
   const searchingDay = useSelector(state => state.extract.searchingDay);
   const searchingWeek = useSelector(state => state.extract.searchingWeek);
+  const statements = useSelector(state => state.extract.statements);
   useEffect(() => {
 
     setDayAmount(parseInt(data.data.transactions) * 4.3);
-
+    console.log(data)
   }, [data, searchingDay]);
 
   const formatter = new Intl.NumberFormat('pt-BR', {
@@ -49,16 +51,18 @@ export function CustomTable(data) {
   }
   return (
     data ? <TableRow key={data.data.id} className="hover:bg-gray-100 cursor-pointer">
-      <TableCell component="th" scope="row" onClick={data.handleClickRow}>
-        <Typography className={searchingDay ? "whitespace-nowrap" : "whitespace-nowrap underline"}>
-          {data.date}
+      <TableCell component="th" scope="row" onClick={searchingDay ? undefined : data.handleClickRow}>
+        <Typography className={searchingDay ? "whitespace-nowrap max-w-[8rem]" : "whitespace-nowrap underline"}>
+       
+          {searchingDay ? format(new Date(data.data.processingDateTime), 'dd/MM/yyyy hh:mm:ss')  : data.date }
+          
         </Typography>
       </TableCell>
       <TableCell component="th" scope="row">
         <Typography className="whitespace-nowrap">
           {searchingDay ? (
             <>
-              {data.data.transactionType == "Botoeria" ? "R$ 0" : formatter.format(data.data.transactionValueSum)}
+              {data.data.transactionType == "Botoeria" ? "R$ 0" : formatter.format(data.data.transactionValue)}
             </>
           ) : (
             <>{formatter.format(data.data.amount ?? data.data.transactionValueSum)}</>
@@ -67,7 +71,7 @@ export function CustomTable(data) {
 
       </TableCell>
       <TableCell component="th" scope="row">
-        {searchingWeek ? data.data.count?.toLocaleString() : <CustomBadge data={data} />}
+        {searchingDay ? <>1</> : searchingWeek? data.data.count?.toLocaleString() : <CustomBadge data={data} />}
       </TableCell>
      
 

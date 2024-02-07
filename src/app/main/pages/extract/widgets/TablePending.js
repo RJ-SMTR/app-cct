@@ -25,7 +25,6 @@ function TablePending() {
         currency: 'BRL',
     });
     const CustomBadge = (i) => {
-        console.log(i)
         return <Badge className='mt-[20px]'
             color={i.data.status === 'Pendente' ? 'error' : i.status === 'Pendente' ? 'waring' : 'success'}
             badgeContent={i.data.status}
