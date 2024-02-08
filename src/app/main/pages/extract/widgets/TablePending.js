@@ -26,7 +26,7 @@ function TablePending() {
     });
     const CustomBadge = (i) => {
         return <Badge className='mt-[20px]'
-            color={i.data.status === 'Pendente' ? 'error' : i.status === 'Pendente' ? 'waring' : 'success'}
+            color={i.data.status === 'Erro' ? 'error' : i.data.status == 'A pagar' ? 'warning' : 'success'}
             badgeContent={i.data.status}
         />
     }

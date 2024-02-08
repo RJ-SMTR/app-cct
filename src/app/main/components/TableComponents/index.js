@@ -52,7 +52,7 @@ export function CustomTable(data) {
   return (
     data ? <TableRow key={data.data.id} className="hover:bg-gray-100 cursor-pointer">
       <TableCell component="th" scope="row" onClick={searchingDay ? undefined : data.handleClickRow}>
-        <Typography className={searchingDay ? "whitespace-nowrap max-w-[8rem]" : "whitespace-nowrap underline"}>
+        <Typography className={searchingDay ? "whitespace-nowrap " : "whitespace-nowrap underline"}>
        
           {searchingDay ? format(new Date(data.data.processingDateTime), 'dd/MM/yyyy hh:mm:ss')  : data.date }
           
