@@ -7,7 +7,7 @@ import Chart from './widgets/Chart';
 import Entries from './widgets/Entries';
 import TableTransactions from './widgets/Table'
 import { TripsResume } from '../home/widgets/Widgets';
-import {  getFirstByType, getFirstTypes, searchingWeek, setFullReport} from 'app/store/extractSlice';
+import {  getFirstByType, getFirstTypes, searchingDay, searchingWeek, setFullReport} from 'app/store/extractSlice';
 import TableTypes from './widgets/TableTypes';
 import TablePending from './widgets/TablePending';
 
@@ -20,6 +20,7 @@ function ExtractApp() {
   const valorAcumulado = useSelector(state => state.extract.valorAcumuladoLabel);
   const [first] = fullName?.split(' ');
   const searchingWeek = useSelector(state => state.extract.searchingWeek)
+  const searchingDay = useSelector(state => state.extract.searchingDay)
   dispatch(setFullReport(true))
 
 
@@ -45,7 +46,7 @@ function ExtractApp() {
         </Box> 
 
         <Box className='flex flex-col  justify-around mt-24'>
-          {searchingWeek ?
+          {searchingWeek && searchingDay ?
             <TablePending></TablePending>
             : <></>
           }

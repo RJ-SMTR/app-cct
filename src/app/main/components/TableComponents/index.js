@@ -35,9 +35,9 @@ export function CustomTable(data) {
   const CustomBadge = (data) => {
     const i = data.data.data
     const getStatus = (i) => {
-      if (i.status == "accumulated") {
+      if (i.statusCode == "accumulated") {
         return 'A ser pago'
-      } else if (i.status == "paid") {
+      } else if (i.statusCode == "paid") {
         return 'Pago'
       } else {
         return 'Falha'
@@ -45,7 +45,7 @@ export function CustomTable(data) {
     }
   
     return <Badge className={data.c?.root}
-      color={i.status === 'falha' ? 'error' : i.status === 'paid' ? 'success' : 'warning'}
+      color={i.status === 'falha' ? 'error' : i.statusCode === 'paid' ? 'success' : 'warning'}
       badgeContent={getStatus(i)}
     />
   }
