@@ -18,6 +18,7 @@ import ForbiddenConfig from '../main/pages/errors/401/ForbiddenConfig';
 import AdminUserConfig from '../main/pages/admin/UserAnalysis/UserConfig';
 import UploadConfig from '../main/pages/admin/Upload/UploadConfig';
 import TriggerConfig from '../main/pages/admin/TriggerEmail/TriggerConfig';
+import FinanReleaseConfig from '../main/pages/admin/FinanRelease/FinanReleaseConfig';
 
 const routeConfigs = [
   // HomeConifg,
@@ -34,7 +35,8 @@ const routeConfigs = [
   ForbiddenConfig,
   AdminUserConfig,
   UploadConfig,
-  TriggerConfig
+  TriggerConfig,
+  FinanReleaseConfig
 ];
 
 const routes = [

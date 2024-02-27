@@ -12,10 +12,10 @@ const FinanReleaseConfig = {
             },
         },
     },
-    auth: ['Staff'],
+    auth: ['Admin'],
     routes: [
         {
-            path: 'lancamentos-finaceiros',
+            path: 'lancamentos',
             element: <FinanReleaseLazy />,
         },
     ],

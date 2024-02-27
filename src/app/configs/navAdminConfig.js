@@ -32,6 +32,14 @@ const navAdminConfig = [
         icon: 'heroicons-solid:mail',
         url: 'disparo',
     },
+    {
+        id: 'trigger-component',
+        title: 'trigger',
+        translate: 'Lançamentos',
+        type: 'item',
+        icon: 'heroicons-solid:mail',
+        url: 'lancamentos',
+    },
   
    
 ];
