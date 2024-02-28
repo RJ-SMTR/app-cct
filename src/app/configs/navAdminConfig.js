@@ -40,6 +40,14 @@ const navAdminConfig = [
         icon: 'heroicons-solid:mail',
         url: 'lancamentos',
     },
+    {
+        id: 'trigger-component',
+        title: 'trigger',
+        translate: 'Aprovação',
+        type: 'item',
+        icon: 'heroicons-solid:mail',
+        url: 'aprovação',
+    },
   
    
 ];

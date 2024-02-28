@@ -19,6 +19,7 @@ import AdminUserConfig from '../main/pages/admin/UserAnalysis/UserConfig';
 import UploadConfig from '../main/pages/admin/Upload/UploadConfig';
 import TriggerConfig from '../main/pages/admin/TriggerEmail/TriggerConfig';
 import FinanReleaseConfig from '../main/pages/admin/FinanRelease/FinanReleaseConfig';
+import ApprovalConfig from '../main/pages/admin/Approval/ApprovalConfig';
 
 const routeConfigs = [
   // HomeConifg,
@@ -36,7 +37,8 @@ const routeConfigs = [
   AdminUserConfig,
   UploadConfig,
   TriggerConfig,
-  FinanReleaseConfig
+  FinanReleaseConfig,
+  ApprovalConfig
 ];
 
 const routes = [

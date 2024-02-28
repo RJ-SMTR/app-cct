@@ -1982,7 +1982,7 @@
     prop-types "^15.8.1"
     react-is "^18.2.0"
 
-"@mui/x-data-grid@6.9.1":
+"@mui/x-data-grid@^6.9.1":
   version "6.9.1"
   resolved "https://registry.npmjs.org/@mui/x-data-grid/-/x-data-grid-6.9.1.tgz"
   integrity sha512-nJjvyGHRh8fWSF+VZYtN/gwDRRv/0V3AvbwlIMKRtEiXNUxPxGZ8G0J8dpq9zu6VSDU2AbQ/Prl1yfrnHiPQog==
