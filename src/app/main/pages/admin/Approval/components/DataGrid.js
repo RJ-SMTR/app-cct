@@ -1,12 +1,13 @@
 import {useState} from 'react';
 import { DataGrid, GridActionsCellItem, ptBR } from '@mui/x-data-grid';
-import { Box, Button, Card } from '@mui/material';
+import { Box, Button, Card, TextField } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
 import PropTypes from 'prop-types';
+import { NumericFormat } from 'react-number-format';
 
 function EditToolbar(props) {
     const { setRows, setRowModesModel } = props;
@@ -36,9 +37,9 @@ EditToolbar.propTypes = {
 
 export default function BasicEditingGrid() {
     const initialRows = [
-        { id: 1, name: "John Doe", age: 30, setBy: "João Spala", lastLogin: new Date() },
-        { id: 2, name: "Jane Smith", age: 25, setBy: "João Spala", lastLogin: new Date() },
-        { id: 3, name: "Alice Johnson", age: 35, setBy: "Louise Nideck", lastLogin: new Date() },
+        { id: 1, name: "John Doe", toPay: 30, setBy: "João Spala", paymentOrder: new Date(), authBy: "Lauro Silvestre", effectivePayment: new Date() },
+        { id: 2, name: "Jane Smith", toPay: 25, setBy: "João Spala", paymentOrder: new Date(), authBy: "Lauro Silvestre", effectivePayment: new Date() },
+        { id: 3, name: "Alice Johnson", toPay: 35, setBy: "Louise Nideck", paymentOrder: new Date(), authBy: "Lauro Silvestre", effectivePayment: new Date() },
     ];
     const [rows, setRows] = useState(initialRows);
     const [rowModesModel, setRowModesModel] = useState({});
@@ -77,9 +78,33 @@ export default function BasicEditingGrid() {
 
     const columns = [
         { field: 'name', headerName: 'Consórcio/BRT', width: 180, editable: true },
-        { field: 'age', headerName: 'Age', type: 'number', editable: true },
+        {
+            field: 'toPay', headerName: 'Valor a Pagar', width: 180, editable: true, renderEditCell: (params) => (
+                <NumericFormat
+                    value={params.value}
+                    thousandSeparator={'.'}
+                    decimalSeparator={','}
+                    prefix={'R$'}
+                    onValueChange={(values) => {
+                        const { value } = values;
+                        params.api.setEditCellValue({ id: params.id, field: params.field, value });
+                    }}
+                    customInput={TextField}
+                />
+            ),
+            renderCell: (params) => (
+                <NumericFormat
+                    value={params.value}
+                    displayType={'text'}
+                    thousandSeparator={'.'}
+                    decimalSeparator={','}
+                    prefix={'R$'}
+                />
+            ), },
         { field: 'setBy', headerName: 'Lançado Por',  width: 180, editable: true },
-        { field: 'lastLogin', headerName: 'Data Ordem Pagamento', type: 'date', width: 200, editable: true },
+        { field: 'paymentOrder', headerName: 'Data Ordem Pagamento', type: 'date', width: 200, editable: true },
+        { field: 'authBy', headerName: 'Autorizado Por', width: 180, editable: true },
+        { field: 'effectivePayment', headerName: 'Data Pagamento Efetivo', type: 'date', width: 200, editable: true },
         {
             field: 'actions',
             type: 'actions',

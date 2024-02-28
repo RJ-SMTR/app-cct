@@ -36,7 +36,8 @@ function FinanRelease() {
                             },
                         });
                     }}
-                    thousandSeparator
+                    thousandSeparator={'.'}
+                    decimalSeparator={','}
                     valueIsNumericString
                     prefix="R$"
                 />
