@@ -1,4 +1,5 @@
 import { lazy } from 'react';
+import { authRoles } from 'src/app/auth';
 
 const ForbiddenAppLazy = lazy(() => import('./ForbiddenApp'));
 
@@ -12,7 +13,7 @@ const ForbiddenConfig = {
             },
         },
     },
-    auth: ['User', 'Admin'],
+    auth: authRoles.onlyGuest,
     routes: [
         { 
             path: '/not-auth',

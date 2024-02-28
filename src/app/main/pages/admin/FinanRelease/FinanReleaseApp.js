@@ -68,7 +68,7 @@ function FinanRelease() {
                             noValidate
                             className="flex flex-col justify-center w-full mt-32"
                         >
-                            <Box className="grid gap-x-10 grid-cols-3">
+                            <Box className="grid gap-10  md:grid-cols-3">
                                 <FormControl fullWidth>
                                     <Autocomplete
                                         {...register('favorecido')}
@@ -81,7 +81,6 @@ function FinanRelease() {
                                             <TextField
                                                 {...params}
                                                 label='Selecionar Favorecido'
-                                                className="mb-24"
                                                 id="bank-autocomplete"
                                                 variant='outlined'
 
@@ -127,8 +126,8 @@ function FinanRelease() {
 
 
                                     >
-                                        <MenuItem value={1}>01/02 - 15/02</MenuItem>
-                                        <MenuItem value={2}>16/02 - 29/02</MenuItem>
+                                        <MenuItem value={1}>1a Quinzena</MenuItem>
+                                        <MenuItem value={2}>2a Quinzena</MenuItem>
                                     </Select>
                                 </FormControl>
                                 <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR} >
@@ -136,7 +135,6 @@ function FinanRelease() {
 
                                 </LocalizationProvider>
                                 <TextField
-                                    className="mb-24"
                                     label="Número do Processo"
                                     type="string"
                                     variant="outlined"
@@ -144,7 +142,7 @@ function FinanRelease() {
                                 />
                               
                             </Box>
-                            <Box className="grid grid-cols-3 gap-10 mb-24">
+                            <Box className="grid md:grid-cols-3 gap-10 mt-10">
                                 <TextField
                                     label="Valor Algoritmo"
                                     value={values.numberformat}
@@ -166,7 +164,7 @@ function FinanRelease() {
                               
 
                             </Box>
-                            <Box className="grid grid-cols-3 gap-10">
+                            <Box className="grid md:grid-cols-3 gap-10  mt-10">
                                 <TextField
                                     label="Valor Recurso"
                                     value={values.numberformat}

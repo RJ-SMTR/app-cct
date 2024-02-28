@@ -1,4 +1,5 @@
 import { lazy } from 'react';
+import { authRoles } from 'src/app/auth';
 
 const ApprovalAppLazy = lazy(() => import('./ApprovalApp'));
 
@@ -12,7 +13,7 @@ const ApprovalConfig = {
             },
         },
     },
-    auth: ['Admin'],
+    auth: authRoles.commonFinan,
     routes: [
         {
             path: 'aprovação',

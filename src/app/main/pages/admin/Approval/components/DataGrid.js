@@ -13,7 +13,7 @@ function EditToolbar(props) {
     const { setRows, setRowModesModel } = props;
 
     const handleClick = () => {
-        const id = Math.random(); // Generating random ID
+        const id = Math.random()
         setRows((oldRows) => [...oldRows, { id, name: '', age: '', isNew: true }]);
         setRowModesModel((oldModel) => ({
             ...oldModel,
@@ -117,31 +117,56 @@ export default function BasicEditingGrid() {
                 if (isInEditMode) {
                     return [
                         <GridActionsCellItem
-                            icon={<SaveIcon />}
+                            icon={<SaveIcon sx={{ color: 'white' }} />}
                             label="Save"
                             onClick={handleSaveClick(id)}
+                            sx={{
+                                backgroundColor: 'green',
+                                '&:hover': {
+                                    backgroundColor: 'green',
+                                },
+                            }}
                         />,
                         <GridActionsCellItem
-                            icon={<CancelIcon />}
+                            icon={<CancelIcon sx={{ color: 'white' }} />}
                             label="Cancel"
                             onClick={handleCancelClick(id)}
                             color="inherit"
+                            sx={{
+                                backgroundColor: 'red',
+                                '&:hover': {
+                                    backgroundColor: 'red',
+                                },
+                            }}
                         />,
                     ];
                 }
 
                 return [
                     <GridActionsCellItem
-                        icon={<EditIcon />}
+                        icon={<EditIcon sx={{ color: 'white' }} />}
                         label="Edit"
                         onClick={handleEditClick(id)}
                         color="inherit"
+                        sx={{
+                            backgroundColor: '#004A80', 
+                            '&:hover': {
+                                backgroundColor: '#004A80', 
+                            },
+                        }}
+                        
                     />,
                     <GridActionsCellItem
-                        icon={<DeleteIcon />}
+                        icon={<DeleteIcon sx={{ color: 'white' }} />}
                         label="Delete"
                         onClick={handleDeleteClick(id)}
                         color="inherit"
+                        sx={{
+                            backgroundColor: 'red',
+                            '&:hover': {
+                                backgroundColor: 'red',
+                            },
+                        }}
                     />,
                     <button className='rounded p-3 uppercase text-white bg-[#004A80]  font-medium px-10 text-xs'>
                         Autorizar
@@ -169,9 +194,7 @@ export default function BasicEditingGrid() {
                     event.defaultMuiPrevented = true;
                 }}
                 processRowUpdate={processRowUpdate}
-                // components={{
-                //     Toolbar: EditToolbar,
-                // }}
+           
                 componentsProps={{
                     toolbar: { setRows, setRowModesModel },
                 }}

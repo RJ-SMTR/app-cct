@@ -5,6 +5,7 @@ import user from './userSlice';
 import steps from './formStepSlice'
 import extract from './extractSlice'
 import admin from './adminSlice'
+import release from './releaseSlice'
 
 
 const createReducer = (asyncReducers) => (state, action) => {
@@ -15,6 +16,7 @@ const createReducer = (asyncReducers) => (state, action) => {
     user,
     extract,
     admin,
+    release,
     ...asyncReducers,
   });
 

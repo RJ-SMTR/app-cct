@@ -1,4 +1,5 @@
 import { lazy } from 'react';
+import { authRoles } from 'src/app/auth';
 
 const FinanReleaseLazy = lazy(() => import('./FinanReleaseApp'));
 
@@ -12,7 +13,7 @@ const FinanReleaseConfig = {
             },
         },
     },
-    auth: ['Admin'],
+    auth:  authRoles.commonFinan,
     routes: [
         {
             path: 'lancamentos',

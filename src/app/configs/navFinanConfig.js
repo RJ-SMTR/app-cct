@@ -8,32 +8,25 @@ i18next.addResourceBundle('tr', 'navigation', tr);
 i18next.addResourceBundle('ar', 'navigation', ar);
 
 const navAdminConfig = [
+   
     {
-        id: 'Home-component',
-        title: 'Home',
-        translate: 'Home',
+        id: 'trigger-component',
+        title: 'trigger',
+        translate: 'Lançamentos',
         type: 'item',
-        icon: 'heroicons-outline:home',
-        url: '/',
-    },
-    {
-        id: 'upload-component',
-        title: 'Upload',
-        translate: 'Upload',
-        type: 'item',
-        icon: 'heroicons-outline:upload',
-        url: 'upload',
+        icon: 'heroicons-outline:plus-circle',
+        url: 'lancamentos',
     },
     {
         id: 'trigger-component',
         title: 'trigger',
-        translate: 'Disparo',
+        translate: 'Aprovação',
         type: 'item',
-        icon: 'heroicons-solid:mail',
-        url: 'disparo',
+        icon: 'heroicons-outline:currency-dollar',
+        url: 'aprovação',
     },
-  
-   
+
+
 ];
 
 export default navAdminConfig;
