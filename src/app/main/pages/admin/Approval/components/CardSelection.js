@@ -15,11 +15,23 @@ function CardSelection() {
  
 
     const { register } = useForm()
+    const [selectedDate, setSelectedDate] = useState({
+        mes: '',
+        periodo: ''
+    });
 
-  function handleChange(){
-    dispatch(setSelectedPeriod(false))
-  }
-
+    function handleChange(event) {
+        const { name, value } = event.target;
+        setSelectedDate(prevState => ({
+            ...prevState,
+            [name]: value
+        }));
+    }
+    useEffect(() => {
+        if (selectedDate.mes && selectedDate.periodo) {
+            fetchData(selectedDate.mes, selectedDate.periodo);
+        }
+    }, [selectedDate]);
 
     return (
         <>
@@ -61,7 +73,7 @@ function CardSelection() {
                                         labelId="select-periodo"
                                         id="select-periodo"
                                         label="Selecionar Periodo"
-                                    onChange={() =>dispatch(setSelectedPeriod(true))}
+                                    onChange={handleChange}
 
 
                                     >
