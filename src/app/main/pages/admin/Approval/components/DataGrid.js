@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import { DataGrid, GridActionsCellItem, ptBR } from '@mui/x-data-grid';
 import { Box, Button, Card, TextField } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -35,7 +35,10 @@ EditToolbar.propTypes = {
     setRows: PropTypes.func.isRequired,
 };
 
-export default function BasicEditingGrid() {
+export default function BasicEditingGrid(data) {
+    useEffect(() => {
+        console.log(data)
+    }, [data])
     const initialRows = [
         { id: 1, name: "John Doe", toPay: 30, setBy: "João Spala", paymentOrder: new Date(), authBy: "Lauro Silvestre", effectivePayment: new Date() },
         { id: 2, name: "Jane Smith", toPay: 25, setBy: "João Spala", paymentOrder: new Date(), authBy: "Lauro Silvestre", effectivePayment: new Date() },

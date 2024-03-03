@@ -10,6 +10,7 @@ import { useSelector } from "react-redux";
 
 function ApprovalApp() {
  const selectedPeriod = useSelector(state => state.release.selectedPeriod)
+ const listTransactions = useSelector(state => state.release.listTransactions)
 
     return (
         <>
@@ -21,7 +22,7 @@ function ApprovalApp() {
                 <CardSelection/>
                 {selectedPeriod ? <Box>
                     <Paper>
-                        <DataGridInfos />
+                        <DataGridInfos data={listTransactions}  />
                     </Paper>
                 </Box> : null}
             </div>

@@ -4,8 +4,8 @@ import { Box } from '@mui/system';
 import { useForm } from 'react-hook-form';
 import { FormControl, Autocomplete } from "@mui/material";
 import { NumericFormat } from 'react-number-format';
-import { useDispatch } from 'react-redux';
-import { setSelectedPeriod } from 'app/store/releaseSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { getData, setSelectedPeriod } from 'app/store/releaseSlice';
 
 
 
@@ -13,7 +13,7 @@ import { setSelectedPeriod } from 'app/store/releaseSlice';
 function CardSelection() {
     const dispatch = useDispatch()
  
-
+const listTransactions = useSelector(state => state.release.listTransactions)
     const { register } = useForm()
     const [selectedDate, setSelectedDate] = useState({
         mes: '',
@@ -29,7 +29,8 @@ function CardSelection() {
     }
     useEffect(() => {
         if (selectedDate.mes && selectedDate.periodo) {
-            fetchData(selectedDate.mes, selectedDate.periodo);
+            dispatch(getData({selectedDate}))
+            
         }
     }, [selectedDate]);
 

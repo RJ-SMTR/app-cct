@@ -19,6 +19,7 @@ const jwtServiceConfig = {
   revenuesUn: 'ticket-revenues/me',
   adminSignIn: 'auth/admin/email/login',
   adminConclude: 'auth/admin/email/conclude-login',
+  finanGetInfo: 'lancamento'
 };
 
 export default jwtServiceConfig;
