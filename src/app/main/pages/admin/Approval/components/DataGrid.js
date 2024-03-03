@@ -35,15 +35,22 @@ EditToolbar.propTypes = {
     setRows: PropTypes.func.isRequired,
 };
 
-export default function BasicEditingGrid(data) {
+export default function BasicEditingGrid(props) {
     useEffect(() => {
-        console.log(data)
-    }, [data])
-    const initialRows = [
-        { id: 1, name: "John Doe", toPay: 30, setBy: "João Spala", paymentOrder: new Date(), authBy: "Lauro Silvestre", effectivePayment: new Date() },
-        { id: 2, name: "Jane Smith", toPay: 25, setBy: "João Spala", paymentOrder: new Date(), authBy: "Lauro Silvestre", effectivePayment: new Date() },
-        { id: 3, name: "Alice Johnson", toPay: 35, setBy: "Louise Nideck", paymentOrder: new Date(), authBy: "Lauro Silvestre", effectivePayment: new Date() },
-    ];
+        console.log(props.data)
+    }, [props])
+    
+    const initialRows = props.data.map((item, index) => {
+        return {
+            id: item.id,
+            name: item.descricao,
+            toPay: parseFloat(item.valor),
+            setBy: item.user.fullName, 
+            paymentOrder: new Date(item.data_ordem),
+            authBy: item.autorizadopor, 
+            effectivePayment: new Date(item.data_pgto)
+        };
+    });
     const [rows, setRows] = useState(initialRows);
     const [rowModesModel, setRowModesModel] = useState({});
 
