@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import jwtServiceConfig from '../auth/services/jwtService/jwtServiceConfig';
 import { api } from 'app/configs/api/api';
+import { useHistory } from 'react-router-dom';
 
 
 const initialState = {
@@ -39,3 +40,34 @@ export const getData = (data) => (dispatch) => {
         })
 
 }
+
+
+export const setRelease = (data)  => (dispatch) => {
+    return new Promise((resolve, reject) => {
+        const cleanedData = {
+            ...data,
+            recurso: parseInt(data.recurso.replace(/\D/g, '')),
+            valor_a_pagar: parseInt(data.valor_a_pagar.replace(/\D/g, '')),
+            algoritmo: parseInt(data.algoritmo.replace(/\D/g, '')),
+            glosa: parseInt(data.glosa.replace(/\D/g, '')),
+            valor: parseInt(data.valor_a_pagar.replace(/\D/g, ''))
+
+        };
+
+        const token = window.localStorage.getItem('jwt_access_token');
+        api.post(jwtServiceConfig.setRelease,
+            cleanedData,
+            { headers: { "Authorization": `Bearer ${token}` } })
+            .then((response) => {
+                console.log(response);
+                if (response.status === 201) {
+                    resolve(); 
+                } else {
+                    reject(new Error('Erro')); 
+                }
+            })
+            .catch((error) => {
+                reject(error); 
+            });
+    });
+};

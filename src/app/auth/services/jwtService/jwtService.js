@@ -122,6 +122,24 @@ class JwtService extends FuseUtils.EventEmitter {
     })
 
   }
+  
+  adminFinace = (email, password) => {
+    return new Promise((resolve, reject) => {
+      api.post(jwtServiceConfig.adminFinanceSignIn, {
+        email,
+        password
+      })
+        .then((response) => {
+          resolve(response)
+          this.setSession(response.data.token)
+          this.emit('onLogin', response.data.user)
+        })
+        .catch((error) => {
+          reject(error);
+        });
+    })
+
+  }
 
   updateUserData = (user) => {
     return axios.post(jwtServiceConfig.updateUser, {

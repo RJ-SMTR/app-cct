@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { Card, Select, TextField, Typography, MenuItem, InputLabel} from '@mui/material';
+import React, { useContext, useEffect, useState } from 'react'
+import { Card, Select, TextField, Typography, MenuItem, InputLabel, InputAdornment} from '@mui/material';
 import { Box } from '@mui/system';
 import { Controller, useForm } from 'react-hook-form';
 import { FormControl, Autocomplete } from "@mui/material";
@@ -9,16 +9,26 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import ptBR from 'date-fns/locale/pt-BR';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { NumericFormat } from 'react-number-format';
+import { setRelease } from 'app/store/releaseSlice';
+import { useDispatch } from 'react-redux';
+import { AuthContext } from 'src/app/auth/AuthContext';
 
 
 
 
 function FinanRelease() {
+    const {  success } = useContext(AuthContext)
+    const dispatch = useDispatch()
     const [values, setValues] = useState({
-        numberformat: null,
+        algoritmo: null,
+        glosa: null,
+        recurso: null,
+        valor_a_pagar: null
     });
 
-    const { handleSubmit, register, setError, formState, clearErrors, setValue } = useForm()
+    const { handleSubmit, register, setError, reset, clearErrors, setValue } = useForm({
+        
+    })
 
     const NumericFormatCustom = React.forwardRef(
         function NumericFormatCustom(props, ref) {
@@ -28,28 +38,28 @@ function FinanRelease() {
                 <NumericFormat
                     {...other}
                     getInputRef={ref}
-                    onValueChange={(values) => {
-                        onChange({
-                            target: {
-                                name: props.name,
-                                value: values.value,
-                            },
-                        });
-                    }}
                     thousandSeparator={'.'}
                     decimalSeparator={','}
-                    valueIsNumericString
-                    prefix="R$"
+                    
                 />
             );
         },
     );
     const handleChange = (event) => {
+        const { name, value } = event.target;
+        const numericValue = parseInt(value.replace(/\D/g, ''));
         setValues({
             ...values,
-            [event.target.name]: event.target.value,
+            [name]: numericValue,
         });
     };
+    const onSubmit = (info) => {
+        dispatch(setRelease(info))
+            .then((response) => {
+                success(response, "Seus dados foram salvos!")
+                reset(info)
+            })
+    }
 
 
     return (
@@ -67,11 +77,11 @@ function FinanRelease() {
                             name="Personal"
                             noValidate
                             className="flex flex-col justify-center w-full mt-32"
+                            onSubmit={handleSubmit(onSubmit)}
                         >
                             <Box className="grid gap-10  md:grid-cols-3">
                                 <FormControl fullWidth>
                                     <Autocomplete
-                                        {...register('favorecido')}
                                         id='favorecidos'
                                         options={[
                                             'Auto-viação Norte',
@@ -80,26 +90,26 @@ function FinanRelease() {
                                         renderInput={(params) => (
                                             <TextField
                                                 {...params}
+                                                {...register('descricao')}
                                                 label='Selecionar Favorecido'
                                                 id="bank-autocomplete"
                                                 variant='outlined'
+                                                name='descricao'
 
                                             />
                                         )}
                                     />
                                 </FormControl>
                                 <FormControl fullWidth>
-                                    <InputLabel id="select-mes">Selecionar Mês</InputLabel>
+                                    <InputLabel id="select-mes">Selecionar Mês</InputLabel >
                                     <Select
                                         {...register('mes')}
                                         labelId="select-mes"
                                         id="select-mes"
-                                        // value={age}
                                         label="Selecionar Mes"
-                                    // onChange={handleChange}
-
-
+                                        name='mes'
                                     >
+                                        
                                         <MenuItem value={1}>Janeiro</MenuItem>
                                         <MenuItem value={2}>Fevereiro</MenuItem>
                                         <MenuItem value={3}>Março</MenuItem>
@@ -120,11 +130,8 @@ function FinanRelease() {
                                         {...register('periodo')}
                                         labelId="select-periodo"
                                         id="select-periodo"
-                                        // value={age}
                                         label="Selecionar Periodo"
-                                    // onChange={handleChange}
-
-
+                                        name='periodo'
                                     >
                                         <MenuItem value={1}>1a Quinzena</MenuItem>
                                         <MenuItem value={2}>2a Quinzena</MenuItem>
@@ -132,60 +139,71 @@ function FinanRelease() {
                                 </FormControl>
                                 <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR} >
                                     <DatePicker label="Data Ordem de Pagamento" />
-
                                 </LocalizationProvider>
                                 <TextField
+                                    {...register('processo')}
                                     label="Número do Processo"
                                     type="string"
+                                    name='processo'
                                     variant="outlined"
                                     fullWidth
                                 />
                               
                             </Box>
-                            <Box className="grid md:grid-cols-3 gap-10 mt-10">
-                                <TextField
-                                    label="Valor Algoritmo"
-                                    value={values.numberformat}
-                                    onChange={handleChange}
-                                    name="numberformat"
-                                    InputProps={{
-                                        inputComponent: NumericFormatCustom,
-                                    }}
-                                />
-                                <TextField
-                                    label="Valor Glosa"
-                                    value={values.numberformat}
-                                    onChange={handleChange}
-                                    name="numberformat"
-                                    InputProps={{
-                                        inputComponent: NumericFormatCustom,
-                                    }}
-                                />
-                              
+                                            <FormControl>
+                                <Box className="grid md:grid-cols-3 gap-10 mt-10">
+                                    <TextField
+                                        {...register('algoritmo')}
+                                        label="Valor Algoritmo"
+                                        value={values.algoritmo}
+                                        onChange={handleChange}
+                                        name="algoritmo"
+                                        InputProps={{
+                                            inputComponent: NumericFormatCustom,
+                                            startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
+                                        }}
+                                    />
+                                    <TextField
+                                        {...register('glosa')}
+                                        label="Valor Glosa"
+                                        value={values.glosa}
+                                        onChange={handleChange}
+                                        name="glosa"
+                                        InputProps={{
+                                            inputComponent: NumericFormatCustom,
+                                            startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
+                                        }}
+                                    />
 
-                            </Box>
-                            <Box className="grid md:grid-cols-3 gap-10  mt-10">
-                                <TextField
-                                    label="Valor Recurso"
-                                    value={values.numberformat}
-                                    onChange={handleChange}
-                                    name="numberformat"
-                                    InputProps={{
-                                        inputComponent: NumericFormatCustom,
-                                    }}
-                                />
-                                <TextField
-                                    label="Valor a Pagar"
-                                    value={values.numberformat}
-                                    onChange={handleChange}
-                                    name="numberformat"
-                                    InputProps={{
-                                        inputComponent: NumericFormatCustom,
-                                    }}
-                                />
-                            
 
-                            </Box>
+                                </Box>
+                                <Box className="grid md:grid-cols-3 gap-10  mt-10">
+                                    <TextField
+                                        {...register('recurso')}
+                                        label="Valor Recurso"
+                                        value={values.recurso}
+                                        onChange={handleChange}
+                                        name="recurso"
+                                        InputProps={{
+                                            inputComponent: NumericFormatCustom,
+                                            startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
+                                        }}
+                                    />
+                                    <TextField
+                                        {...register('valor_a_pagar')}
+                                        label="Valor a Pagar"
+                                        value={values.valor_a_pagar}
+                                        onChange={handleChange}
+                                        name="valor_a_pagar"
+                                        InputProps={{
+                                            inputComponent: NumericFormatCustom,
+                                            startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
+                                        }}
+                                    />
+
+
+                                </Box>
+                                            </FormControl>
                             <div className='flex justify-end mt-24'>
                                 <a href="" className='rounded p-3 uppercase text-white bg-grey h-[27px] min-h-[27px] font-medium px-10 mx-10'>
                                     Voltar
