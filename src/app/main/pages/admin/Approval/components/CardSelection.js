@@ -4,8 +4,10 @@ import { Box } from '@mui/system';
 import { useForm } from 'react-hook-form';
 import { FormControl, Autocomplete } from "@mui/material";
 import { NumericFormat } from 'react-number-format';
+import AddIcon from '@mui/icons-material/Add';
 import { useDispatch, useSelector } from 'react-redux';
 import { getData, selectedPeriod, setSelectedPeriod } from 'app/store/releaseSlice';
+import { Link } from 'react-router-dom';
 
 
 
@@ -86,7 +88,9 @@ function CardSelection() {
                            
 
                             </Box>
-
+                    <Link to={'/lancamentos'} className='absolute right-0 top-0 m-16 bg-[#004A80] pr-10 rounded text-white'>
+                <AddIcon/> Novo
+            </Link>
                          
                     </Card>
                 </Box>
