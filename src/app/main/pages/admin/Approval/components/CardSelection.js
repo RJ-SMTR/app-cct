@@ -5,15 +5,14 @@ import { useForm } from 'react-hook-form';
 import { FormControl, Autocomplete } from "@mui/material";
 import { NumericFormat } from 'react-number-format';
 import { useDispatch, useSelector } from 'react-redux';
-import { getData, setSelectedPeriod } from 'app/store/releaseSlice';
+import { getData, selectedPeriod, setSelectedPeriod } from 'app/store/releaseSlice';
 
 
 
 
 function CardSelection() {
     const dispatch = useDispatch()
- 
-const listTransactions = useSelector(state => state.release.listTransactions)
+ const selectedPeriod = useSelector(state => state.release.selectedPeriod)
     const { register } = useForm()
     const [selectedDate, setSelectedDate] = useState({
         mes: '',
@@ -22,6 +21,8 @@ const listTransactions = useSelector(state => state.release.listTransactions)
 
     function handleChange(event) {
         const { name, value } = event.target;
+        dispatch(setSelectedPeriod(!selectedPeriod))
+
         setSelectedDate(prevState => ({
             ...prevState,
             [name]: value
