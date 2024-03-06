@@ -71,3 +71,33 @@ export const setRelease = (data)  => (dispatch) => {
             });
     });
 };
+export const editRelease = (data,id) => (dispatch) => {
+    return new Promise((resolve, reject) => {
+        const cleanedData = {
+            ...data,
+            recurso: parseInt(data.recurso.replace(/\D/g, '')),
+            valor_a_pagar: parseInt(data.valor_a_pagar.replace(/\D/g, '')),
+            algoritmo: parseInt(data.algoritmo.replace(/\D/g, '')),
+            glosa: parseInt(data.glosa.replace(/\D/g, '')),
+            valor: parseInt(data.valor_a_pagar.replace(/\D/g, '')),
+            numero_processo: parseInt(data.numero_processo)
+
+        };
+
+        const token = window.localStorage.getItem('jwt_access_token');
+        api.put(jwtServiceConfig.finanGetInfo + `?lancamentoId=${id}`,
+            cleanedData,
+            { headers: { "Authorization": `Bearer ${token}` } })
+            .then((response) => {
+                console.log(response);
+                if (response.status === 200) {
+                    resolve();
+                } else {
+                    reject(new Error('Erro'));
+                }
+            })
+            .catch((error) => {
+                reject(error);
+            });
+    });
+};

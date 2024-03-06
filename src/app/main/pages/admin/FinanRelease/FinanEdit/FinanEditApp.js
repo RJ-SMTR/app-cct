@@ -1,33 +1,69 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { Card, Select, TextField, Typography, MenuItem, InputLabel, InputAdornment} from '@mui/material';
+import { Card, Select, TextField, Typography, MenuItem, InputLabel, InputAdornment } from '@mui/material';
 import { Box } from '@mui/system';
 import { Controller, useForm } from 'react-hook-form';
-import { FormControl, Autocomplete } from "@mui/material";
-import DateRangePicker from 'rsuite/DateRangePicker';
+import { FormControl } from "@mui/material";
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import ptBR from 'date-fns/locale/pt-BR';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { NumericFormat } from 'react-number-format';
-import { setRelease } from 'app/store/releaseSlice';
+import { editRelease } from 'app/store/releaseSlice';
 import { useDispatch } from 'react-redux';
 import { AuthContext } from 'src/app/auth/AuthContext';
+import { useParams } from 'react-router-dom';
+import { api } from 'app/configs/api/api';
+import jwtServiceConfig from 'src/app/auth/services/jwtService/jwtServiceConfig';
+import dayjs from 'dayjs';
 
 
 
 
-function FinanRelease() {
-    const {  success } = useContext(AuthContext)
+function FinanEdit() {
+    let {id} = useParams()
+    const [showForm, setShowForm] = useState(false);
+    const { success } = useContext(AuthContext)
+    const [dateOrder, setDateOrder] = useState({
+        month: null,
+        period: null
+
+    })
+    const [releaseData, setReleaseData] = useState([])
     const dispatch = useDispatch()
     const [values, setValues] = useState({
+        periodo: null,
         algoritmo: null,
         glosa: null,
-        recurso: null,
-        valor_a_pagar: null
+        valor_a_pagar: null,
     });
 
+    useEffect(() => {
+        const fetchData = async () => {
+            const token = window.localStorage.getItem('jwt_access_token');
+            const response = await api.get(jwtServiceConfig.finanGetInfo + `/${id}`, {
+                headers: { "Authorization": `Bearer ${token}` },
+            });
+            setReleaseData(response.data)
+            setShowForm(true)
+            const dateString = response.data.data_ordem;
+            const date = new Date(dateString);
+            const month = date.getMonth() + 1; 
+            const day = date.getDate();
+            const period = day > 15 ? 2 : 1;
+            setDateOrder({
+                month: month,
+                period: period
+            });
+            console.log(response.data)
+        };
+        fetchData()
+    }, [id]);
+ 
     const { handleSubmit, register, setError, reset, clearErrors, setValue } = useForm({
-        
+        defaultValues: {
+            descricao: releaseData.descricao
+        }
+
     })
 
     const NumericFormatCustom = React.forwardRef(
@@ -40,7 +76,7 @@ function FinanRelease() {
                     getInputRef={ref}
                     thousandSeparator={'.'}
                     decimalSeparator={','}
-                    
+
                 />
             );
         },
@@ -54,17 +90,18 @@ function FinanRelease() {
         });
     };
     const onSubmit = (info) => {
-        dispatch(setRelease(info))
+        dispatch(editRelease(info, id))
             .then((response) => {
-                success(response, "Seus dados foram salvos!")
+                success(response, "Os dados foram atualizados!")
                 reset(info)
             })
     }
+    
 
 
     return (
         <>
-            <div className="p-24 pt-10">
+            {showForm && <div className="p-24 pt-10">
                 <Typography className='font-medium text-3xl'>Lançamentos Financeiros</Typography>
                 <Box className='flex flex-col  justify-around'>
                     <Card className="w-full md:mx-9 p-24 relative mt-32">
@@ -80,26 +117,16 @@ function FinanRelease() {
                             onSubmit={handleSubmit(onSubmit)}
                         >
                             <Box className="grid gap-10  md:grid-cols-3">
-                                <FormControl fullWidth>
-                                    <Autocomplete
-                                        id='favorecidos'
-                                        options={[
-                                            'Auto-viação Norte',
-                                            'Transoeste International'
-                                        ]}
-                                        renderInput={(params) => (
-                                            <TextField
-                                                {...params}
-                                                {...register('descricao')}
-                                                label='Selecionar Favorecido'
-                                                id="bank-autocomplete"
-                                                variant='outlined'
-                                                name='descricao'
+                                <TextField
+                                    {...register('descricao')}
+                                    label='Selecionar Favorecido'
+                                    id="bank-autocomplete"
+                                    variant='outlined'
+                                    name='descricao'
+                                    disabled
+                                    value={releaseData.descricao}
 
-                                            />
-                                        )}
-                                    />
-                                </FormControl>
+                                />
                                 <FormControl fullWidth>
                                     <InputLabel id="select-mes">Selecionar Mês</InputLabel >
                                     <Select
@@ -108,8 +135,8 @@ function FinanRelease() {
                                         id="select-mes"
                                         label="Selecionar Mes"
                                         name='mes'
+                                        defaultValue={dateOrder.month}
                                     >
-                                        
                                         <MenuItem value={1}>Janeiro</MenuItem>
                                         <MenuItem value={2}>Fevereiro</MenuItem>
                                         <MenuItem value={3}>Março</MenuItem>
@@ -132,36 +159,32 @@ function FinanRelease() {
                                         id="select-periodo"
                                         label="Selecionar Periodo"
                                         name='periodo'
+                                        value={dateOrder.period}
                                     >
                                         <MenuItem value={1}>1a Quinzena</MenuItem>
                                         <MenuItem value={2}>2a Quinzena</MenuItem>
                                     </Select>
-                           
                                 </FormControl>
-                                <FormControl>
-                                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR} >
-                                        <DatePicker label="Data Ordem de Pagamento" />
-                                    </LocalizationProvider>
-                                </FormControl>
-                               <FormControl>
-                                    <TextField
-                                        {...register('numero_processo')}
-                                        label="Número do Processo"
-                                        type="string"
-                                        name='numero_processo'
-                                        variant="outlined"
-                                        fullWidth
-                                    />
-                               </FormControl>
+                                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR} >
+                                    <DatePicker label="Data Ordem de Pagamento" defaultValue={dayjs(releaseData.data_ordem).toDate()} />
+                                </LocalizationProvider>
+                                <TextField
+                                    {...register('numero_processo')}
+                                    label="Número do Processo"
+                                    type="string"
+                                    name='numero_processo'
+                                    variant="outlined"
+                                    fullWidth
+                                    value={releaseData.numero_processo}
+                                />
 
-                              
                             </Box>
-                                            <FormControl>
+                            <FormControl>
                                 <Box className="grid md:grid-cols-3 gap-10 mt-10">
                                     <TextField
                                         {...register('algoritmo')}
                                         label="Valor Algoritmo"
-                                        value={values.algoritmo}
+                                        value={releaseData.algoritmo}
                                         onChange={handleChange}
                                         name="algoritmo"
                                         InputProps={{
@@ -172,7 +195,7 @@ function FinanRelease() {
                                     <TextField
                                         {...register('glosa')}
                                         label="Valor Glosa"
-                                        value={values.glosa}
+                                        value={releaseData.glosa}
                                         onChange={handleChange}
                                         name="glosa"
                                         InputProps={{
@@ -187,7 +210,7 @@ function FinanRelease() {
                                     <TextField
                                         {...register('recurso')}
                                         label="Valor Recurso"
-                                        value={values.recurso}
+                                        value={releaseData.recurso}
                                         onChange={handleChange}
                                         name="recurso"
                                         InputProps={{
@@ -198,7 +221,7 @@ function FinanRelease() {
                                     <TextField
                                         {...register('valor_a_pagar')}
                                         label="Valor a Pagar"
-                                        value={values.valor_a_pagar}
+                                        value={releaseData.valor_a_pagar}
                                         onChange={handleChange}
                                         name="valor_a_pagar"
                                         InputProps={{
@@ -209,7 +232,7 @@ function FinanRelease() {
 
 
                                 </Box>
-                                            </FormControl>
+                            </FormControl>
                             <div className='flex justify-end mt-24'>
                                 <a href="" className='rounded p-3 uppercase text-white bg-grey h-[27px] min-h-[27px] font-medium px-10 mx-10'>
                                     Voltar
@@ -218,16 +241,16 @@ function FinanRelease() {
                                     Salvar
                                 </button>
                             </div>
-                            
-                        
+
+
                         </form>
-                     
+
                     </Card>
                 </Box>
                 <br />
-            </div>
+            </div>}
         </>
     );
 }
 
-export default FinanRelease
+export default FinanEdit

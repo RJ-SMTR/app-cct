@@ -8,8 +8,10 @@ import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
 import PropTypes from 'prop-types';
 import { NumericFormat } from 'react-number-format';
+import { redirect, useNavigate } from 'react-router-dom';
 
 function EditToolbar(props) {
+    
     const { setRows, setRowModesModel } = props;
 
     const handleClick = () => {
@@ -53,9 +55,10 @@ export default function BasicEditingGrid(props) {
     });
     const [rows, setRows] = useState(initialRows);
     const [rowModesModel, setRowModesModel] = useState({});
-
+    const navigate = useNavigate()
     const handleEditClick = (id) => () => {
-        setRowModesModel({ ...rowModesModel, [id]: { mode: 'edit' } });
+        navigate(`/lancamentos/editar/${id}`)
+        console.log(id)
     };
 
     const handleSaveClick = (id) => () => {

@@ -21,6 +21,7 @@ import UploadConfig from '../main/pages/admin/Upload/UploadConfig';
 import TriggerConfig from '../main/pages/admin/TriggerEmail/TriggerConfig';
 import FinanReleaseConfig from '../main/pages/admin/FinanRelease/FinanReleaseConfig';
 import ApprovalConfig from '../main/pages/admin/Approval/ApprovalConfig';
+import FinanEditConfig from '../main/pages/admin/FinanRelease/FinanEdit/FinanEditConfig';
 
 const routeConfigs = [
   // HomeConifg,
@@ -40,7 +41,8 @@ const routeConfigs = [
   TriggerConfig,
   FinanReleaseConfig,
   ApprovalConfig,
-  FinanSignInConfig
+  FinanSignInConfig,
+  FinanEditConfig
 ];
 
 const routes = [
