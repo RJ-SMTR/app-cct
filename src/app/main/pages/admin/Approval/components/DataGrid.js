@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {useContext, useEffect, useState} from 'react';
 import { DataGrid, GridActionsCellItem, ptBR } from '@mui/x-data-grid';
 import { Box, Button, Card, TextField } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -6,59 +6,43 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
-import PropTypes from 'prop-types';
 import { NumericFormat } from 'react-number-format';
-import { redirect, useNavigate } from 'react-router-dom';
+import {  useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { handleAuthRelease } from 'app/store/releaseSlice';
+import { AuthContext } from 'src/app/auth/AuthContext';
 
-function EditToolbar(props) {
-    
-    const { setRows, setRowModesModel } = props;
 
-    const handleClick = () => {
-        const id = Math.random()
-        setRows((oldRows) => [...oldRows, { id, name: '', age: '', isNew: true }]);
-        setRowModesModel((oldModel) => ({
-            ...oldModel,
-            [id]: { mode: 'edit', fieldToFocus: 'name' },
-        }));
-    };
 
-    return (
-        <div>
-            <Button color="primary" startIcon={<AddIcon />} onClick={handleClick}>
-                Add record
-            </Button>
-        </div>
-    );
-}
 
-EditToolbar.propTypes = {
-    setRowModesModel: PropTypes.func.isRequired,
-    setRows: PropTypes.func.isRequired,
-};
 
 export default function BasicEditingGrid(props) {
-    useEffect(() => {
-        console.log(props.data)
-    }, [props])
+    const [rowModesModel, setRowModesModel] = useState({});
+    const { success } = useContext(AuthContext)
+    const navigate = useNavigate()
+    const dispatch = useDispatch()
     
     const initialRows = props.data.map((item, index) => {
+        console.log(item)
         return {
             id: item.id,
             name: item.descricao,
             toPay: parseFloat(item.valor),
             setBy: item.user.fullName, 
             paymentOrder: new Date(item.data_ordem),
-            authBy: item.autorizadopor, 
+            authBy: item.autorizadopor.map((i => i.fullName)), 
             effectivePayment: new Date(item.data_pgto)
         };
     });
     const [rows, setRows] = useState(initialRows);
-    const [rowModesModel, setRowModesModel] = useState({});
-    const navigate = useNavigate()
     const handleEditClick = (id) => () => {
         navigate(`/lancamentos/editar/${id}`)
-        console.log(id)
+    };
+    const handleAuth = (id) => () => {
+        dispatch(handleAuthRelease(id))
+                .then((response) => {
+                    success(response, "Autorizado")
+                })
     };
 
     const handleSaveClick = (id) => () => {
@@ -181,7 +165,7 @@ export default function BasicEditingGrid(props) {
                             },
                         }}
                     />,
-                    <button className='rounded p-3 uppercase text-white bg-[#004A80]  font-medium px-10 text-xs'>
+                    <button onClick={handleAuth(id)} className='rounded p-3 uppercase text-white bg-[#004A80]  font-medium px-10 text-xs'>
                         Autorizar
                     </button>,
                 ];

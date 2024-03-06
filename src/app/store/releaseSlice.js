@@ -101,3 +101,21 @@ export const editRelease = (data,id) => (dispatch) => {
             });
     });
 };
+export const handleAuthRelease = (id) => (dispatch) => {
+    return new Promise((resolve, reject) => {
+        const token = window.localStorage.getItem('jwt_access_token');
+        api.put(jwtServiceConfig.finanGetInfo + `/authorize?lancamentoId=${id}`,
+         id,
+         {
+            headers: { "Authorization": `Bearer ${token}` } 
+        })
+        .then((response) => {
+            if (response.status === 200) {
+                resolve()
+            } else {
+                reject(new Error('Erro ao autorizar'));
+            }
+        })
+
+    })
+}
