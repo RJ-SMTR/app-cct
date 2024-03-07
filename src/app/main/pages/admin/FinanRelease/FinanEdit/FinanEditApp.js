@@ -59,7 +59,7 @@ function FinanEdit() {
         fetchData()
     }, [id]);
  
-    const { handleSubmit, register, setError, reset, clearErrors, setValue } = useForm({
+    const { handleSubmit, register, setError, reset, control, setValue } = useForm({
         defaultValues: {
             descricao: releaseData.descricao
         }
@@ -159,15 +159,33 @@ function FinanEdit() {
                                         id="select-periodo"
                                         label="Selecionar Periodo"
                                         name='periodo'
-                                        value={dateOrder.period}
+                                        defaultValue={dateOrder.period}
                                     >
                                         <MenuItem value={1}>1a Quinzena</MenuItem>
                                         <MenuItem value={2}>2a Quinzena</MenuItem>
                                     </Select>
                                 </FormControl>
-                                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR} >
-                                    <DatePicker label="Data Ordem de Pagamento" defaultValue={dayjs(releaseData.data_ordem).toDate()} />
-                                </LocalizationProvider>
+                                <FormControl>
+                                    <Controller
+                                        {...register('data_ordem')}
+                                        name="data_ordem"
+                                        defaultValue={dayjs(releaseData.data_ordem).toDate()}
+                                        control={control}
+                                        render={({ field }) =>
+                                            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                                                <DatePicker
+                                                    label="Data Ordem de Pagamento"
+                                                    renderInput={(params) =>
+                                                        <TextField
+                                                            {...params}
+                                                        />}
+                                                    {...field}
+                                                />
+                                            </LocalizationProvider>
+                                        }
+                                    />
+                                    
+                                </FormControl>
                                 <TextField
                                     {...register('numero_processo')}
                                     label="Número do Processo"
@@ -175,7 +193,7 @@ function FinanEdit() {
                                     name='numero_processo'
                                     variant="outlined"
                                     fullWidth
-                                    value={releaseData.numero_processo}
+                                    defaultValue={releaseData.numero_processo}
                                 />
 
                             </Box>

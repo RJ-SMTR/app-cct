@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import jwtServiceConfig from '../auth/services/jwtService/jwtServiceConfig';
 import { api } from 'app/configs/api/api';
 import { useHistory } from 'react-router-dom';
+import dayjs from 'dayjs';
 
 
 const initialState = {
@@ -44,13 +45,16 @@ export const getData = (data) => (dispatch) => {
 
 export const setRelease = (data)  => (dispatch) => {
     return new Promise((resolve, reject) => {
+        const parseDate = dayjs(data.data_ordem, 'DD/MM/YYYY')
+        const isoDateString = parseDate.toISOString()
         const cleanedData = {
             ...data,
             recurso: parseInt(data.recurso.replace(/\D/g, '')),
             valor_a_pagar: parseInt(data.valor_a_pagar.replace(/\D/g, '')),
             algoritmo: parseInt(data.algoritmo.replace(/\D/g, '')),
             glosa: parseInt(data.glosa.replace(/\D/g, '')),
-            valor: parseInt(data.valor_a_pagar.replace(/\D/g, ''))
+            valor: parseInt(data.valor_a_pagar.replace(/\D/g, '')),
+            data_ordem: isoDateString
 
         };
 
@@ -73,6 +77,9 @@ export const setRelease = (data)  => (dispatch) => {
 };
 export const editRelease = (data,id) => (dispatch) => {
     return new Promise((resolve, reject) => {
+        
+        const parseDate = dayjs(data.data_ordem, 'DD/MM/YYYY')
+        const isoDateString = parseDate.toISOString()
         const cleanedData = {
             ...data,
             recurso: parseInt(data.recurso.replace(/\D/g, '')),
@@ -80,7 +87,8 @@ export const editRelease = (data,id) => (dispatch) => {
             algoritmo: parseInt(data.algoritmo.replace(/\D/g, '')),
             glosa: parseInt(data.glosa.replace(/\D/g, '')),
             valor: parseInt(data.valor_a_pagar.replace(/\D/g, '')),
-            numero_processo: parseInt(data.numero_processo)
+            numero_processo: parseInt(data.numero_processo),
+            data_ordem: isoDateString
 
         };
 

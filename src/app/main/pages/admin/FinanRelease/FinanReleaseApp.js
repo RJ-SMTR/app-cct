@@ -26,8 +26,18 @@ function FinanRelease() {
         valor_a_pagar: null
     });
 
-    const { handleSubmit, register, setError, reset, clearErrors, setValue } = useForm({
-        
+    const { handleSubmit, register, control, reset, clearErrors, setValue } = useForm({
+        defaultValues: {
+            descricao: null,
+            mes: null,
+            periodo: null,
+            numero_processo: null,
+            algoritmo: null,
+            glosa: null,
+            recurso: null,
+            valor_a_pagar: null,
+            data_ordem: null
+        }
     })
 
     const NumericFormatCustom = React.forwardRef(
@@ -56,9 +66,10 @@ function FinanRelease() {
     const onSubmit = (info) => {
         dispatch(setRelease(info))
             .then((response) => {
-                success(response, "Seus dados foram salvos!")
-                reset(info)
+                success(response, "Informações Lançadas!")
+                reset()
             })
+
     }
 
 
@@ -102,46 +113,71 @@ function FinanRelease() {
                                 </FormControl>
                                 <FormControl fullWidth>
                                     <InputLabel id="select-mes">Selecionar Mês</InputLabel >
-                                    <Select
-                                        {...register('mes')}
-                                        labelId="select-mes"
-                                        id="select-mes"
-                                        label="Selecionar Mes"
+                                    <Controller
                                         name='mes'
-                                    >
-                                        
-                                        <MenuItem value={1}>Janeiro</MenuItem>
-                                        <MenuItem value={2}>Fevereiro</MenuItem>
-                                        <MenuItem value={3}>Março</MenuItem>
-                                        <MenuItem value={4}>Abril</MenuItem>
-                                        <MenuItem value={5}>Maio</MenuItem>
-                                        <MenuItem value={6}>Junho</MenuItem>
-                                        <MenuItem value={7}>Julho</MenuItem>
-                                        <MenuItem value={8}>Agosto</MenuItem>
-                                        <MenuItem value={9}>Setembro</MenuItem>
-                                        <MenuItem value={10}>Outubro</MenuItem>
-                                        <MenuItem value={11}>Novembro</MenuItem>
-                                        <MenuItem value={12}>Dezembro</MenuItem>
-                                    </Select>
+                                        control={control}
+                                        {...register('mes')}
+                                        render={({ field }) => (
+                                            <Select
+                                                labelId="select-mes"
+                                                label="Selecionar Mes"
+                                                {...field}
+                                            >
+
+                                                <MenuItem value={1}>Janeiro</MenuItem>
+                                                <MenuItem value={2}>Fevereiro</MenuItem>
+                                                <MenuItem value={3}>Março</MenuItem>
+                                                <MenuItem value={4}>Abril</MenuItem>
+                                                <MenuItem value={5}>Maio</MenuItem>
+                                                <MenuItem value={6}>Junho</MenuItem>
+                                                <MenuItem value={7}>Julho</MenuItem>
+                                                <MenuItem value={8}>Agosto</MenuItem>
+                                                <MenuItem value={9}>Setembro</MenuItem>
+                                                <MenuItem value={10}>Outubro</MenuItem>
+                                                <MenuItem value={11}>Novembro</MenuItem>
+                                                <MenuItem value={12}>Dezembro</MenuItem>
+                                            </Select>
+                                        )}
+                                    />
                                 </FormControl>
                                 <FormControl fullWidth>
                                     <InputLabel id="select-periodo">Selecionar Período</InputLabel>
-                                    <Select
-                                        {...register('periodo')}
-                                        labelId="select-periodo"
-                                        id="select-periodo"
-                                        label="Selecionar Periodo"
+                                    <Controller
                                         name='periodo'
+
+                                        control={control}
+                                        {...register('periodo')}
+                                        render={({ field }) => (
+                                    <Select
+                                        labelId="select-periodo"
+                                                label="Selecionar Período"
+                                                {...field}
                                     >
                                         <MenuItem value={1}>1a Quinzena</MenuItem>
                                         <MenuItem value={2}>2a Quinzena</MenuItem>
                                     </Select>
+                                        )}
+                                    />
                            
                                 </FormControl>
                                 <FormControl>
-                                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR} >
-                                        <DatePicker label="Data Ordem de Pagamento" />
-                                    </LocalizationProvider>
+                                    <Controller
+                                        {...register('data_ordem')}
+                                        name="data_ordem"
+                                        control={control}
+                                        render={({ field }) =>
+                                            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                                                <DatePicker
+                                                    label="Data Ordem de Pagamento" 
+                                                    renderInput={(params) =>
+                                                        <TextField
+                                                            {...params}
+                                                        />}
+                                                    {...field}
+                                                />
+                                            </LocalizationProvider>
+                                        }
+                                    /> 
                                 </FormControl>
                                <FormControl>
                                     <TextField
@@ -211,10 +247,10 @@ function FinanRelease() {
                                 </Box>
                                             </FormControl>
                             <div className='flex justify-end mt-24'>
-                                <a href="" className='rounded p-3 uppercase text-white bg-grey h-[27px] min-h-[27px] font-medium px-10 mx-10'>
+                                <a href='/aprovação' className='rounded p-3 uppercase text-white bg-grey h-[27px] min-h-[27px] font-medium px-10 mx-10'>
                                     Voltar
                                 </a>
-                                <button type='submit' className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10'>
+                                <button type='submit'  className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10'>
                                     Salvar
                                 </button>
                             </div>
