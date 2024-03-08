@@ -44,6 +44,7 @@ export const getData = (data) => (dispatch) => {
 
 
 export const setRelease = (data)  => (dispatch) => {
+    console.log(data)
     return new Promise((resolve, reject) => {
         const parseDate = dayjs(data.data_ordem, 'DD/MM/YYYY')
         const isoDateString = parseDate.toISOString()
