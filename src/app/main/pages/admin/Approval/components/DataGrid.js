@@ -1,7 +1,6 @@
 import {useContext, useEffect, useState} from 'react';
 import { DataGrid, GridActionsCellItem, ptBR } from '@mui/x-data-grid';
-import { Box, Button, Card, TextField } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
+import { Box, Button, Card, Modal, TextField, Typography, InputAdornment } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import SaveIcon from '@mui/icons-material/Save';
@@ -11,9 +10,33 @@ import {  useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { handleAuthRelease } from 'app/store/releaseSlice';
 import { AuthContext } from 'src/app/auth/AuthContext';
+import { api } from 'app/configs/api/api';
+import jwtServiceConfig from 'src/app/auth/services/jwtService/jwtServiceConfig';
+import dayjs from 'dayjs';
+var updateLocale = require('dayjs/plugin/updateLocale')
+dayjs.extend(updateLocale)
+require('dayjs/locale/pt-br')
+dayjs.updateLocale('pt-br', {
+    months: [
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho",
+        "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ]
+})
+
+dayjs.locale('pt-br')
 
 
-
+const style = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '50rem',
+    borderRadius: '.5rem',
+    bgcolor: 'background.paper',
+    boxShadow: 24,
+    p: 4,
+};
 
 
 export default function BasicEditingGrid(props) {
@@ -21,16 +44,57 @@ export default function BasicEditingGrid(props) {
     const { success } = useContext(AuthContext)
     const navigate = useNavigate()
     const dispatch = useDispatch()
+    const [open, setOpen] = useState(false)
+    const [showModal, setShowModal] = useState(false)
+    const [selectedId, setSelectedId] = useState()
+    const [dataAuth, setDataAuth] = useState()
+    const [dateOrder, setDateOrder] = useState({
+        month: null,
+        period: null
+
+    })
+
+   async function getInfoAuth(id){
+       const token = window.localStorage.getItem('jwt_access_token');
+       const response = await api.get(jwtServiceConfig.finanGetInfo + `/${id}`, {
+           headers: { "Authorization": `Bearer ${token}` },
+       });
+       if (response.data.auth_usersIds){
+           const auth_usersIdsArray = response.data.auth_usersIds.split(",");
+           response.data.auth_usersIds = auth_usersIdsArray;
+       }
+
+       setDataAuth(response.data)
+       setOpen(true)
+       const dateString = response.data.data_ordem;
+       const date = new Date(dateString);
+       const month = date.getMonth() + 1;
+       const day = date.getDate();
+       const period = day > 15 ? 2 : 1;
+       setDateOrder({
+           month: month,
+           period: period
+       });
+    }
+
+    const handleOpen = (id) => {
+      
+        setSelectedId(id)
+        getInfoAuth(id)
+
+    };
+    const handleClose = () => setOpen(false);
     
     const initialRows = props.data.map((item, index) => {
-        console.log(item)
         return {
             id: item.id,
             name: item.descricao,
             toPay: parseFloat(item.valor),
             setBy: item.user.fullName, 
             paymentOrder: new Date(item.data_ordem),
-            authBy: item.autorizadopor.map((i => i.fullName)), 
+            authBy: item.autorizadopor.map(i => i.fullName
+                 
+            ),
             effectivePayment: new Date(item.data_pgto)
         };
     });
@@ -40,9 +104,21 @@ export default function BasicEditingGrid(props) {
     };
     const handleAuth = (id) => () => {
         dispatch(handleAuthRelease(id))
-                .then((response) => {
-                    success(response, "Autorizado")
-                })
+            .then((response) => {
+                success(response, "Autorizado!");
+                setOpen(false);
+                const updatedRows = rows.map(row => {
+                    if (row.id === id) {
+                        const updatedAutorizadopor = props.data.find(item => item.id === id);
+                        if (updatedAutorizadopor) {
+                            return { ...row, authBy: updatedAutorizadopor.autorizadopor.map(i => i.fullName), };
+                        }
+                    }
+                    return row;
+                });
+
+                setRows(updatedRows);
+            })
     };
 
     const handleSaveClick = (id) => () => {
@@ -70,8 +146,10 @@ export default function BasicEditingGrid(props) {
         setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
         return updatedRow;
     };
+;
 
-  
+
+   
 
     const columns = [
         { field: 'name', headerName: 'Consórcio/BRT', width: 180, editable: true },
@@ -165,7 +243,8 @@ export default function BasicEditingGrid(props) {
                             },
                         }}
                     />,
-                    <button onClick={handleAuth(id)} className='rounded p-3 uppercase text-white bg-[#004A80]  font-medium px-10 text-xs'>
+                  
+                    <button onClick={() => handleOpen(id)} className='rounded p-3 uppercase text-white bg-[#004A80]  font-medium px-10 text-xs'>
                         Autorizar
                     </button>,
                 ];
@@ -174,6 +253,7 @@ export default function BasicEditingGrid(props) {
     ];
 
     return (
+        <>
           <Box className="w-full md:mx-9 p-24 relative mt-32">
                 <header className="flex justify-between items-center">
                     <h3 className="font-semibold mb-24">
@@ -199,6 +279,68 @@ export default function BasicEditingGrid(props) {
             />
         </div>
         </Box>
-
+            <Modal
+                open={open}
+                onClose={handleClose}
+                aria-labelledby="modal-modal-title"
+                aria-describedby="modal-modal-description"
+            >
+                <Box sx={style}>
+                    <Box>
+                        <Typography id="modal-modal-title" variant="h6" component="h2">
+                            Favorecido: {dataAuth?.descricao}
+                        </Typography>
+                        <p>Mês: {dayjs().month(dateOrder?.month - 1).format('MMMM')}</p>
+                        <Box className="flex justify-between w-full">
+                        <p>Período: {dateOrder.period} Quinzena</p>
+                            {dataAuth?.auth_usersIds?.length > 1 ? <button  className='rounded p-3 uppercase text-white bg-green-500  font-medium px-10 text-xs' disabled>
+                                Autorizado
+                            </button> : <button onClick={handleAuth(dataAuth?.id)} className='rounded p-3 uppercase text-white bg-[#004A80]  font-medium px-10 text-xs'>
+                                Autorizar
+                            </button>}
+                        </Box>
+                    </Box>
+                    <hr className='mt-10'/>
+                    <Box className="grid gap-10  md:grid-cols-2 mt-12">
+                    <Box>
+                            <h4  className="font-semibold mb-5">
+                                Valor Algoritmo
+                            </h4>
+                            <TextField prefix='R$' value={dataAuth?.algoritmo} disabled InputProps={{
+                                
+                                startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
+                            }} />
+                    </Box>
+                    <Box>
+                            <h4  className="font-semibold mb-5">
+                                Valor Glosa
+                            </h4>
+                            <TextField prefix='R$' value={dataAuth?.glosa} disabled InputProps={{
+                                
+                                startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
+                            }} />
+                    </Box>
+                    <Box>
+                            <h4  className="font-semibold mb-5">
+                                Valor Recurso
+                            </h4>
+                            <TextField prefix='R$' value={dataAuth?.recurso} disabled InputProps={{
+                                
+                                startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
+                            }} />
+                    </Box>
+                    <Box>
+                            <h4  className="font-semibold mb-5">
+                                Valor a Pagar
+                            </h4>
+                            <TextField prefix='R$' value={dataAuth?.valor_a_pagar} disabled InputProps={{
+                                
+                                startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
+                            }} />
+                    </Box>
+                  </Box>
+                </Box>
+            </Modal>
+    </>
     );
 }

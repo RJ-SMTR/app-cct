@@ -36,6 +36,12 @@ function CardSelection() {
             
         }
     }, [selectedDate]);
+    useEffect(() => {
+        setSelectedDate({
+            mes: '',
+            periodo: ''
+        })
+    }, []);
 
     return (
         <>

@@ -2,7 +2,9 @@ import { Box, Paper } from "@mui/material";
 import CardBalance from "./components/CardBalance";
 import DataGridInfos from "./components/DataGrid";
 import CardSelection from "./components/CardSelection";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect } from "react";
+import { setSelectedPeriod } from "app/store/releaseSlice";
 
 
 
@@ -11,6 +13,12 @@ import { useSelector } from "react-redux";
 function ApprovalApp() {
  const selectedPeriod = useSelector(state => state.release.selectedPeriod)
  const listTransactions = useSelector(state => state.release.listTransactions)
+ const dispacth = useDispatch()
+ useEffect(() => {
+     dispacth(
+         setSelectedPeriod(false)
+     )
+ }, [])
 
     return (
         <>
