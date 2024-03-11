@@ -201,3 +201,6 @@ transform: scale(1) translate(2%, -55%) !important;
 .muiltr-9r3zz9-MuiTableCell-root{
     padding-left: .725rem !important;
 }
+.glosa .muiltr-j901z8-MuiInputBase-root-MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline{
+    border-color: red ;
+}

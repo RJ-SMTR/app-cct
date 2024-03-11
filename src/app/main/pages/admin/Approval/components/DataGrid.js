@@ -7,7 +7,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
 import { NumericFormat } from 'react-number-format';
 import {  useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { handleAuthRelease } from 'app/store/releaseSlice';
 import { AuthContext } from 'src/app/auth/AuthContext';
 import { api } from 'app/configs/api/api';
@@ -44,8 +44,9 @@ export default function BasicEditingGrid(props) {
     const { success } = useContext(AuthContext)
     const navigate = useNavigate()
     const dispatch = useDispatch()
+    const selectedDate = useSelector(state => state.release.selectedDate)
     const [open, setOpen] = useState(false)
-    const [showModal, setShowModal] = useState(false)
+    const [initialRows, setInitialRows] = useState(false)
     const [selectedId, setSelectedId] = useState()
     const [dataAuth, setDataAuth] = useState()
     const [dateOrder, setDateOrder] = useState({
@@ -63,7 +64,6 @@ export default function BasicEditingGrid(props) {
            const auth_usersIdsArray = response.data.auth_usersIds.split(",");
            response.data.auth_usersIds = auth_usersIdsArray;
        }
-
        setDataAuth(response.data)
        setOpen(true)
        const dateString = response.data.data_ordem;
@@ -84,26 +84,28 @@ export default function BasicEditingGrid(props) {
 
     };
     const handleClose = () => setOpen(false);
-    
-    const initialRows = props.data.map((item, index) => {
-        return {
-            id: item.id,
-            name: item.descricao,
-            toPay: parseFloat(item.valor),
-            setBy: item.user.fullName, 
-            paymentOrder: new Date(item.data_ordem),
-            authBy: item.autorizadopor.map(i => i.fullName
-                 
-            ),
-            effectivePayment: new Date(item.data_pgto)
-        };
-    });
+  
+  useEffect(() => {
+        setRows(props.data.map((item, index) => {
+          return {
+              id: item.id,
+              name: item.descricao,
+              toPay: parseFloat(item.valor),
+              setBy: item.user.fullName,
+              paymentOrder: new Date(item.data_ordem),
+              authBy: item.autorizadopor.map(i => i.fullName
+
+              ),
+              effectivePayment: new Date(item.data_pgto)
+          };
+      }))
+  }, [props])
     const [rows, setRows] = useState(initialRows);
     const handleEditClick = (id) => () => {
         navigate(`/lancamentos/editar/${id}`)
     };
     const handleAuth = (id) => () => {
-        dispatch(handleAuthRelease(id))
+        dispatch(handleAuthRelease(selectedDate, id))
             .then((response) => {
                 success(response, "Autorizado!");
                 setOpen(false);
@@ -290,9 +292,18 @@ export default function BasicEditingGrid(props) {
                         <Typography id="modal-modal-title" variant="h6" component="h2">
                             Favorecido: {dataAuth?.descricao}
                         </Typography>
+                        <h4 id="modal-modal-title">
+                            N.º Processo: {dataAuth?.numero_processo}
+                        </h4>
                         <p>Mês: {dayjs().month(dateOrder?.month - 1).format('MMMM')}</p>
                         <Box className="flex justify-between w-full">
-                        <p>Período: {dateOrder.period} Quinzena</p>
+                            <p>
+                                Período: {dateOrder.period} Quinzena -{' '}
+                                {dateOrder.period === 1
+                                    ? `05/${dayjs().month(dateOrder.month - 1).format('MM')}`
+                                    : `20/${dayjs().month(dateOrder.month - 1).format('MM')}`}
+                            </p>
+
                             {dataAuth?.auth_usersIds?.length > 1 ? <button  className='rounded p-3 uppercase text-white bg-green-500  font-medium px-10 text-xs' disabled>
                                 Autorizado
                             </button> : <button onClick={handleAuth(dataAuth?.id)} className='rounded p-3 uppercase text-white bg-[#004A80]  font-medium px-10 text-xs'>
@@ -315,9 +326,9 @@ export default function BasicEditingGrid(props) {
                             <h4  className="font-semibold mb-5">
                                 Valor Glosa
                             </h4>
-                            <TextField prefix='R$' value={dataAuth?.glosa} disabled InputProps={{
+                            <TextField className='glosa' sx={{borderColor: 'red'}} prefix='R$' value={dataAuth?.glosa} disabled InputProps={{
                                 
-                                startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
+                                startAdornment: <InputAdornment position='start'>R$ -</InputAdornment>,
                             }} />
                     </Box>
                     <Box>

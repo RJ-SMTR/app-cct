@@ -7,7 +7,11 @@ import dayjs from 'dayjs';
 
 const initialState = {
     selectedPeriod: false,
-    listTransactions: []
+    listTransactions: [],
+    selectedDate: {
+        mes: '',
+        periodo: ''
+    }
 };
 
 const stepSlice = createSlice({
@@ -20,16 +24,18 @@ const stepSlice = createSlice({
         setListTransactions: (state, action) => {
             state.listTransactions = action.payload;
         },
+        setSelectedDate: (state, action) => {
+            state.selectedDate = action.payload;
+        },
     },
 });
 
-export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTransactions} = stepSlice.actions;
+export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTransactions, selectDate, setSelectedDate} = stepSlice.actions;
 export default stepSlice.reducer;
 
 export const getData = (data) => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
-    const selectDate = data.selectedDate
-    console.log(selectDate)
+    const selectDate = data.selectedDate ?? data
     
     api.get(jwtServiceConfig.finanGetInfo + `?mes=${selectDate.mes}&periodo=${selectDate.periodo}&ano=2024`, {
         headers: { "Authorization": `Bearer ${token}` },
@@ -110,7 +116,7 @@ export const editRelease = (data,id) => (dispatch) => {
             });
     });
 };
-export const handleAuthRelease = (id) => (dispatch) => {
+export const handleAuthRelease = (data, id) => (dispatch) => {
     return new Promise((resolve, reject) => {
         const token = window.localStorage.getItem('jwt_access_token');
         api.put(jwtServiceConfig.finanGetInfo + `/authorize?lancamentoId=${id}`,
@@ -121,6 +127,7 @@ export const handleAuthRelease = (id) => (dispatch) => {
         .then((response) => {
             if (response.status === 200) {
                 resolve()
+                dispatch(getData(data))
             } else {
                 reject(new Error('Erro ao autorizar'));
             }

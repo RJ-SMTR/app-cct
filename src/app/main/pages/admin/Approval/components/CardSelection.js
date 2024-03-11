@@ -6,7 +6,7 @@ import { FormControl, Autocomplete } from "@mui/material";
 import { NumericFormat } from 'react-number-format';
 import AddIcon from '@mui/icons-material/Add';
 import { useDispatch, useSelector } from 'react-redux';
-import { getData, selectedPeriod, setSelectedPeriod } from 'app/store/releaseSlice';
+import { getData, selectedPeriod, setSelectedDate, setSelectedPeriod } from 'app/store/releaseSlice';
 import { Link } from 'react-router-dom';
 
 
@@ -15,21 +15,20 @@ import { Link } from 'react-router-dom';
 function CardSelection() {
     const dispatch = useDispatch()
  const selectedPeriod = useSelector(state => state.release.selectedPeriod)
+ const selectedDate = useSelector(state => state.release.selectedDate)
     const { register } = useForm()
-    const [selectedDate, setSelectedDate] = useState({
-        mes: '',
-        periodo: ''
-    });
 
     function handleChange(event) {
         const { name, value } = event.target;
-        dispatch(setSelectedPeriod(!selectedPeriod))
 
-        setSelectedDate(prevState => ({
-            ...prevState,
+        // dispatch(setSelectedPeriod(!selectedPeriod));
+
+        dispatch(setSelectedDate({
+            ...selectedDate,
             [name]: value
         }));
     }
+
     useEffect(() => {
         if (selectedDate.mes && selectedDate.periodo) {
             dispatch(getData({selectedDate}))
@@ -37,10 +36,10 @@ function CardSelection() {
         }
     }, [selectedDate]);
     useEffect(() => {
-        setSelectedDate({
+        dispatch(setSelectedDate({
             mes: '',
             periodo: ''
-        })
+        }))
     }, []);
 
     return (

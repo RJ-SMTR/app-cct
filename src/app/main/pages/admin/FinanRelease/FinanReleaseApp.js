@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from 'react'
-import { Card, Select, TextField, Typography, MenuItem, InputLabel, InputAdornment} from '@mui/material';
+import { Card, Select, TextField, Typography, MenuItem, InputLabel, InputAdornment } from '@mui/material';
 import { Box } from '@mui/system';
 import { Controller, useForm } from 'react-hook-form';
 import { FormControl, Autocomplete } from "@mui/material";
@@ -17,9 +17,10 @@ import { AuthContext } from 'src/app/auth/AuthContext';
 
 
 function FinanRelease() {
-    const {  success } = useContext(AuthContext)
+    const { success } = useContext(AuthContext)
     const dispatch = useDispatch()
     const [valuesState, setValuesState] = useState({});
+    const [testeDate, setTesteDate] = useState();
     const [valueToPay, setValueToPay] = useState();
 
     const { handleSubmit, register, control, reset, clearErrors, setValue } = useForm({
@@ -51,21 +52,27 @@ function FinanRelease() {
                 success(response, "Informações Lançadas!")
                 setValuesState({})
                 reset()
-                
+
             })
 
     }
- 
+
 
     useEffect(() => {
-        if (valuesState.algoritmo && valuesState.recurso && valuesState.glosa){
+        if (valuesState.algoritmo && valuesState.recurso && valuesState.glosa) {
             const valueToPayAuto = parseFloat(valuesState.algoritmo) + parseFloat(valuesState.glosa) + parseFloat(valuesState.recurso)
-           setValueToPay(valueToPayAuto)
+            setValueToPay(valueToPayAuto)
         }
     }, [valuesState])
-const valueProps = {
-    startAdornment: <InputAdornment position='start'>R$</InputAdornment>
-}
+    useEffect(() => {
+
+    }, [])
+    const testeFunction = (event) => {
+console.log(event)
+    }
+    const valueProps = {
+        startAdornment: <InputAdornment position='start'>R$</InputAdornment>
+    }
     return (
         <>
             <div className="p-24 pt-10">
@@ -136,32 +143,34 @@ const valueProps = {
                                 <FormControl fullWidth>
                                     <InputLabel id="select-periodo">Selecionar Período</InputLabel>
                                     <Controller
+                                    {...register('periodo')}
                                         name='periodo'
-
                                         control={control}
-                                        {...register('periodo')}
                                         render={({ field }) => (
-                                    <Select
-                                        labelId="select-periodo"
+                                            <Select
+                                                labelId="select-periodo"
                                                 label="Selecionar Período"
-                                                {...field}
-                                    >
-                                        <MenuItem value={1}>1a Quinzena</MenuItem>
-                                        <MenuItem value={2}>2a Quinzena</MenuItem>
-                                    </Select>
+                                                onChange={(e) => field.onChange(e.target.value)} // Use field.onChange
+                                                value={field.value} // Use field.value
+                                            >
+                                                <MenuItem value={1}>1a Quinzena</MenuItem>
+                                                <MenuItem value={2}>2a Quinzena</MenuItem>
+                                            </Select>
                                         )}
                                     />
-                           
+
                                 </FormControl>
+
                                 <FormControl>
                                     <Controller
                                         {...register('data_ordem')}
                                         name="data_ordem"
+                                        value={testeDate}
                                         control={control}
                                         render={({ field }) =>
                                             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
                                                 <DatePicker
-                                                    label="Data Ordem de Pagamento" 
+                                                    label="Data Ordem de Pagamento"
                                                     renderInput={(params) =>
                                                         <TextField
                                                             {...params}
@@ -170,9 +179,9 @@ const valueProps = {
                                                 />
                                             </LocalizationProvider>
                                         }
-                                    /> 
+                                    />
                                 </FormControl>
-                               <FormControl>
+                                <FormControl>
                                     <TextField
                                         {...register('numero_processo')}
                                         label="Número do Processo"
@@ -181,21 +190,21 @@ const valueProps = {
                                         variant="outlined"
                                         fullWidth
                                     />
-                               </FormControl>
+                                </FormControl>
 
-                              
+
                             </Box>
-                                            <FormControl>
+                            <FormControl>
                                 <Box className="grid md:grid-cols-3 gap-10 mt-10">
+
                                     <Controller
                                         {...register('algoritmo')}
                                         name="algoritmo"
                                         control={control}
-                                        
                                         render={({ field }) =>
-                                        <NumericFormat
-                                        {...field}
-                                        labelId="algoritmo-label"
+                                            <NumericFormat
+                                                {...field}
+                                                labelId="algoritmo-label"
                                                 thousandSeparator={'.'}
                                                 decimalSeparator={','}
                                                 label="Algortimo"
@@ -207,8 +216,8 @@ const valueProps = {
                                                 }}
                                             />
                                         }
-                                    /> 
-                                  
+                                    />
+
                                     <Controller
                                         {...register('glosa')}
                                         name="glosa"
@@ -218,7 +227,7 @@ const valueProps = {
                                                 {...field}
                                                 thousandSeparator={'.'}
                                                 label="Glosa"
-                                                prefix='-'
+                                                allowNegative
                                                 decimalSeparator={','}
                                                 customInput={TextField}
                                                 InputProps={valueProps}
@@ -228,20 +237,20 @@ const valueProps = {
                                                 }}
                                             />
                                         }
-                                    /> 
+                                    />
 
                                     <Controller
                                         {...register('recurso')}
                                         name="recurso"
                                         control={control}
-                                        
+
                                         render={({ field }) =>
                                             <NumericFormat
                                                 {...field}
                                                 thousandSeparator={'.'}
                                                 decimalSeparator={','}
-                                                 label="Recurso"
-                                                 customInput={TextField}
+                                                label="Recurso"
+                                                customInput={TextField}
                                                 InputProps={valueProps}
                                                 onValueChange={(values, sourceInfo) => {
                                                     const { name } = sourceInfo.event.target;
@@ -249,8 +258,8 @@ const valueProps = {
                                                 }}
                                             />
                                         }
-                                    /> 
-                               
+                                    />
+
                                     <Controller
                                         {...register('valor_a_pagar')}
                                         name="valor_a_pagar"
@@ -265,33 +274,33 @@ const valueProps = {
                                                 decimalSeparator={','}
                                                 customInput={TextField}
                                                 InputProps={valueProps}
-                                                 label="Valor a Pagar"
-                                            
+                                                label="Valor a Pagar"
+
                                             />
                                         }
-                                    /> 
-                                                                
-
-                              
-                             
-                                   
+                                    />
 
 
-                                    
+
+
+
+
+
+
                                 </Box>
-                                            </FormControl>
+                            </FormControl>
                             <div className='flex justify-end mt-24'>
                                 <a href='/aprovação' className='rounded p-3 uppercase text-white bg-grey h-[27px] min-h-[27px] font-medium px-10 mx-10'>
                                     Voltar
                                 </a>
-                                <button type='submit'  className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10'>
+                                <button type='submit' className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10'>
                                     Salvar
                                 </button>
                             </div>
-                            
-                        
+
+
                         </form>
-                     
+
                     </Card>
                 </Box>
                 <br />
