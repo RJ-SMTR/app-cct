@@ -51,10 +51,10 @@ export const setRelease = (data)  => (dispatch) => {
         const cleanedData = {
             ...data,
             recurso: parseInt(data.recurso.replace(/\D/g, '')),
-            valor_a_pagar: parseInt(data.valor_a_pagar.replace(/\D/g, '')),
+            // valor_a_pagar: parseInt(data.valor_a_pagar.replace(/\D/g, '')),
             algoritmo: parseInt(data.algoritmo.replace(/\D/g, '')),
             glosa: parseInt(data.glosa.replace(/\D/g, '')),
-            valor: parseInt(data.valor_a_pagar.replace(/\D/g, '')),
+            // valor: parseInt(data.valor_a_pagar.replace(/\D/g, '')),
             data_ordem: isoDateString
 
         };

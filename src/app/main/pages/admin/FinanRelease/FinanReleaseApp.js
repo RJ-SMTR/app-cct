@@ -20,6 +20,7 @@ function FinanRelease() {
     const {  success } = useContext(AuthContext)
     const dispatch = useDispatch()
     const [valuesState, setValuesState] = useState({});
+    const [valueToPay, setValueToPay] = useState();
 
     const { handleSubmit, register, control, reset, clearErrors, setValue } = useForm({
         defaultValues: {
@@ -30,7 +31,6 @@ function FinanRelease() {
             algoritmo: null,
             glosa: null,
             recurso: null,
-            valor_a_pagar: null,
             data_ordem: null
         }
     })
@@ -41,46 +41,31 @@ function FinanRelease() {
         }));
     };
 
-    // const NumericFormatCustom = React.forwardRef(
-    //     function NumericFormatCustom(props, ref) {
-    //         const { onChange, ...other } = props;
 
-    //         const updateValuesState = (name, value) => {
-    //             setValuesState(prevState => ({
-    //                 ...prevState,
-    //                 [name]: value
-    //             }));
-    //         };
-
-    //         return (
-    //             <NumericFormat
-    //                 {...other}
-    //                 getInputRef={ref}
-    //                 thousandSeparator={'.'}
-    //                 decimalSeparator={','}
-    //                 onValueChange={(values, sourceInfo) => {
-    //                     const { name } = sourceInfo.event.target;
-    //                     updateValuesState(name, values.value);
-    //                 }}
-    //             />
-    //         );
-    //     },
-    // );
 
     const onSubmit = (info) => {
+        info.valor_a_pagar = valueToPay
+        info.valor = valueToPay
         dispatch(setRelease(info))
             .then((response) => {
                 success(response, "Informações Lançadas!")
                 setValuesState({})
                 reset()
+                
             })
 
     }
+ 
 
     useEffect(() => {
-        console.log(valuesState)
+        if (valuesState.algoritmo && valuesState.recurso && valuesState.glosa){
+            const valueToPayAuto = parseFloat(valuesState.algoritmo) + parseFloat(valuesState.glosa) + parseFloat(valuesState.recurso)
+           setValueToPay(valueToPayAuto)
+        }
     }, [valuesState])
-
+const valueProps = {
+    startAdornment: <InputAdornment position='start'>R$</InputAdornment>
+}
     return (
         <>
             <div className="p-24 pt-10">
@@ -206,12 +191,16 @@ function FinanRelease() {
                                         {...register('algoritmo')}
                                         name="algoritmo"
                                         control={control}
+                                        
                                         render={({ field }) =>
-                                            <NumericFormat
-                                              {...field}
+                                        <NumericFormat
+                                        {...field}
+                                        labelId="algoritmo-label"
                                                 thousandSeparator={'.'}
                                                 decimalSeparator={','}
-                                                placeholder="Algortimo"
+                                                label="Algortimo"
+                                                customInput={TextField}
+                                                InputProps={valueProps}
                                                 onValueChange={(values, sourceInfo) => {
                                                     const { name } = sourceInfo.event.target;
                                                     handleValueChange(name, values.value);
@@ -228,8 +217,11 @@ function FinanRelease() {
                                             <NumericFormat
                                                 {...field}
                                                 thousandSeparator={'.'}
-                                                placeholder="Glosa"
+                                                label="Glosa"
+                                                prefix='-'
                                                 decimalSeparator={','}
+                                                customInput={TextField}
+                                                InputProps={valueProps}
                                                 onValueChange={(values, sourceInfo) => {
                                                     const { name } = sourceInfo.event.target;
                                                     handleValueChange(name, values.value);
@@ -242,12 +234,15 @@ function FinanRelease() {
                                         {...register('recurso')}
                                         name="recurso"
                                         control={control}
+                                        
                                         render={({ field }) =>
                                             <NumericFormat
                                                 {...field}
                                                 thousandSeparator={'.'}
                                                 decimalSeparator={','}
-                                                 placeholder="Recurso"
+                                                 label="Recurso"
+                                                 customInput={TextField}
+                                                InputProps={valueProps}
                                                 onValueChange={(values, sourceInfo) => {
                                                     const { name } = sourceInfo.event.target;
                                                     handleValueChange(name, values.value);
@@ -263,67 +258,26 @@ function FinanRelease() {
                                         render={({ field }) =>
                                             <NumericFormat
                                                 {...field}
+                                                defaultValue={valueToPay}
+                                                value={valueToPay}
+                                                disabled
                                                 thousandSeparator={'.'}
                                                 decimalSeparator={','}
-                                                 placeholder="valor_a_pagar"
-                                                renderInput={(params) =>
-                                                    <TextField
-                                                        {...params}
-                                                    />}
-                                                onValueChange={(values, sourceInfo) => {
-                                                    const { name } = sourceInfo.event.target;
-                                                    handleValueChange(name, values.value);
-                                                }}
+                                                customInput={TextField}
+                                                InputProps={valueProps}
+                                                 label="Valor a Pagar"
+                                            
                                             />
                                         }
                                     /> 
-                               
-                                    {/* <TextField
-                                        {...register('algoritmo')}
-                                        label="Valor Algoritmo"
-                                        value={values.algoritmo}
-                                        name="algoritmo"
-                                        InputProps={{
-                                            inputComponent: NumericFormatCustom,
-                                            startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
-                                        }}
-                                    /> */}
-                                    {/* <TextField
-                                        {...register('glosa')}
-                                        label="Valor Glosa"
-                                        value={values.glosa}
-                                        name="glosa"
-                                        InputProps={{
-                                            inputComponent: NumericFormatCustom,
-                                            startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
-                                        }}
-                                    />
+                                                                
+
+                              
+                             
+                                   
 
 
-                                </Box>
-                                <Box className="grid md:grid-cols-3 gap-10  mt-10">
-                                    <TextField
-                                        {...register('recurso')}
-                                        label="Valor Recurso"
-                                        value={values.recurso}
-                                        name="recurso"
-                                        InputProps={{
-                                            inputComponent: NumericFormatCustom,
-                                            startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
-                                        }}
-                                    />
-                                    <TextField
-                                        {...register('valor_a_pagar')}
-                                        label="Valor a Pagar"
-                                        value={values.valor_a_pagar}
-                                        name="valor_a_pagar"
-                                        InputProps={{
-                                            inputComponent: NumericFormatCustom,
-                                            startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
-                                        }}
-                                    /> */}
-
-
+                                    
                                 </Box>
                                             </FormControl>
                             <div className='flex justify-end mt-24'>
