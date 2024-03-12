@@ -12,6 +12,7 @@ import { NumericFormat } from 'react-number-format';
 import { setRelease } from 'app/store/releaseSlice';
 import { useDispatch } from 'react-redux';
 import { AuthContext } from 'src/app/auth/AuthContext';
+import dayjs from 'dayjs';
 
 
 
@@ -20,7 +21,7 @@ function FinanRelease() {
     const { success } = useContext(AuthContext)
     const dispatch = useDispatch()
     const [valuesState, setValuesState] = useState({});
-    const [testeDate, setTesteDate] = useState();
+    const [dateFortnight, setDateFortnight] = useState();
     const [valueToPay, setValueToPay] = useState();
 
     const { handleSubmit, register, control, reset, clearErrors, setValue } = useForm({
@@ -67,8 +68,17 @@ function FinanRelease() {
     useEffect(() => {
 
     }, [])
-    const testeFunction = (event) => {
-console.log(event)
+    const setDateFunction = (event) => {
+
+        if(event == 1){
+            const currentMonth = dayjs().month() + 1
+            const furtherDate = dayjs().month(currentMonth).set('D', 5)
+            setValue('data_ordem', furtherDate.$d)
+        } else {
+                const currentMonth = dayjs().month() + 1
+                const furtherDate = dayjs().month(currentMonth).set('D', 20)
+                setValue('data_ordem', furtherDate.$d)
+        }
     }
     const valueProps = {
         startAdornment: <InputAdornment position='start'>R$</InputAdornment>
@@ -150,36 +160,34 @@ console.log(event)
                                             <Select
                                                 labelId="select-periodo"
                                                 label="Selecionar Período"
-                                                onChange={(e) => field.onChange(e.target.value)} // Use field.onChange
-                                                value={field.value} // Use field.value
+                                                onChange={(e) =>setDateFunction(e.target.value)} 
                                             >
                                                 <MenuItem value={1}>1a Quinzena</MenuItem>
                                                 <MenuItem value={2}>2a Quinzena</MenuItem>
                                             </Select>
-                                        )}
-                                    />
+                                         )} 
+                                    /> 
 
                                 </FormControl>
 
                                 <FormControl>
+
                                     <Controller
                                         {...register('data_ordem')}
                                         name="data_ordem"
-                                        value={testeDate}
                                         control={control}
-                                        render={({ field }) =>
+                                        render={({ field }) => (
                                             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
                                                 <DatePicker
                                                     label="Data Ordem de Pagamento"
-                                                    renderInput={(params) =>
-                                                        <TextField
-                                                            {...params}
-                                                        />}
+                                                    // value={dateFortnight}
+                                                    renderInput={(params) => <TextField {...params} />}
                                                     {...field}
                                                 />
                                             </LocalizationProvider>
-                                        }
+                                        )}
                                     />
+
                                 </FormControl>
                                 <FormControl>
                                     <TextField
@@ -228,6 +236,7 @@ console.log(event)
                                                 thousandSeparator={'.'}
                                                 label="Glosa"
                                                 allowNegative
+                                                className='glosa'
                                                 decimalSeparator={','}
                                                 customInput={TextField}
                                                 InputProps={valueProps}
