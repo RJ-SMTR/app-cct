@@ -49,12 +49,19 @@ export default function BasicEditingGrid(props) {
     const [initialRows, setInitialRows] = useState(false)
     const [selectedId, setSelectedId] = useState()
     const [dataAuth, setDataAuth] = useState()
+    const [sumOfItems, setSumOfItems] = useState(0);
     const [dateOrder, setDateOrder] = useState({
         month: null,
         period: null
 
     })
-
+    const [sumTotal, setSumTotal] = useState()
+    useEffect(() => {
+        if (dataAuth) {
+            const sum = dataAuth.algoritmo - dataAuth.glosa + dataAuth.recurso
+            setSumOfItems(sum);
+        }
+    }, [dataAuth]);
    async function getInfoAuth(id){
        const token = window.localStorage.getItem('jwt_access_token');
        const response = await api.get(jwtServiceConfig.finanGetInfo + `/${id}`, {
@@ -86,9 +93,12 @@ export default function BasicEditingGrid(props) {
     const handleClose = () => setOpen(false);
   
   useEffect(() => {
+      const sum = props.data.reduce((accumulator, item) => accumulator + parseFloat(item.valor), 0);
+      setSumTotal(sum)
         setRows(props.data.map((item, index) => {
           return {
               id: item.id,
+              processNumber: item.numero_processo,
               name: item.descricao,
               toPay: parseFloat(item.valor),
               setBy: item.user.fullName,
@@ -99,6 +109,7 @@ export default function BasicEditingGrid(props) {
               effectivePayment: new Date(item.data_pgto)
           };
       }))
+      
   }, [props])
     const [rows, setRows] = useState(initialRows);
     const handleEditClick = (id) => () => {
@@ -155,6 +166,7 @@ export default function BasicEditingGrid(props) {
 
     const columns = [
         { field: 'name', headerName: 'Consórcio/BRT', width: 180, editable: true },
+        { field: 'processNumber', headerName: 'N.º Processo', width: 180, editable: true },
         {
             field: 'toPay', headerName: 'Valor a Pagar', width: 180, editable: true, renderEditCell: (params) => (
                 <NumericFormat
@@ -259,7 +271,7 @@ export default function BasicEditingGrid(props) {
           <Box className="w-full md:mx-9 p-24 relative mt-32">
                 <header className="flex justify-between items-center">
                     <h3 className="font-semibold mb-24">
-                        Novo Registro
+                        Favorecidos
                     </h3>
                 </header>
         <div style={{ height: 300, width: '100%' }}>
@@ -280,6 +292,15 @@ export default function BasicEditingGrid(props) {
                 experimentalFeatures={{ newEditingApi: true }}
             />
         </div>
+            <Box>
+                    Valor Total:  <NumericFormat
+                        value={sumTotal}
+                        displayType={'text'}
+                        thousandSeparator={'.'}
+                        decimalSeparator={','}
+                        prefix={'R$'}
+                    />
+            </Box>
         </Box>
             <Modal
                 open={open}
@@ -326,7 +347,7 @@ export default function BasicEditingGrid(props) {
                             <h4  className="font-semibold mb-5">
                                 Valor Glosa
                             </h4>
-                            <TextField className='glosa' sx={{borderColor: 'red'}} prefix='R$' value={dataAuth?.glosa} disabled InputProps={{
+                            <TextField className='glosa'  prefix='R$' value={dataAuth?.glosa} disabled InputProps={{
                                 
                                 startAdornment: <InputAdornment position='start'>R$ -</InputAdornment>,
                             }} />
@@ -335,7 +356,7 @@ export default function BasicEditingGrid(props) {
                             <h4  className="font-semibold mb-5">
                                 Valor Recurso
                             </h4>
-                            <TextField prefix='R$' value={dataAuth?.recurso} disabled InputProps={{
+                            <TextField prefix='R$' className={sumOfItems === dataAuth?.valor_a_pagar ? "" : "glosa"} value={sumOfItems === dataAuth?.valor_a_pagar ? dataAuth?.recurso : -dataAuth?.recurso} disabled InputProps={{
                                 
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />

@@ -9,7 +9,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import ptBR from 'date-fns/locale/pt-BR';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { NumericFormat } from 'react-number-format';
-import { setRelease } from 'app/store/releaseSlice';
+import { getFavorecidos, setRelease } from 'app/store/releaseSlice';
 import { useDispatch } from 'react-redux';
 import { AuthContext } from 'src/app/auth/AuthContext';
 import dayjs from 'dayjs';
@@ -21,12 +21,17 @@ function FinanRelease() {
     const { success } = useContext(AuthContext)
     const dispatch = useDispatch()
     const [valuesState, setValuesState] = useState({});
+    const [selectedMes, setSelectedMes] = useState()
     const [dateFortnight, setDateFortnight] = useState();
     const [valueToPay, setValueToPay] = useState();
+    useEffect(() => {
+        dispatch(getFavorecidos())
+    }, [])
 
     const { handleSubmit, register, control, reset, clearErrors, setValue } = useForm({
         defaultValues: {
             descricao: null,
+            favorecido: null,
             mes: null,
             periodo: null,
             numero_processo: null,
@@ -65,21 +70,18 @@ function FinanRelease() {
             setValueToPay(valueToPayAuto)
         }
     }, [valuesState])
-    useEffect(() => {
 
-    }, [])
     const setDateFunction = (event) => {
-
+        
         if(event == 1){
-            const currentMonth = dayjs().month() + 1
-            const furtherDate = dayjs().month(currentMonth).set('D', 5)
+            const furtherDate = dayjs().month(selectedMes).set('D', 5)
             setValue('data_ordem', furtherDate.$d)
         } else {
-                const currentMonth = dayjs().month() + 1
-                const furtherDate = dayjs().month(currentMonth).set('D', 20)
+                const furtherDate = dayjs().month(selectedMes).set('D', 20)
                 setValue('data_ordem', furtherDate.$d)
         }
     }
+   
     const valueProps = {
         startAdornment: <InputAdornment position='start'>R$</InputAdornment>
     }
@@ -131,7 +133,8 @@ function FinanRelease() {
                                             <Select
                                                 labelId="select-mes"
                                                 label="Selecionar Mes"
-                                                {...field}
+                                                onChange={(e) => setSelectedMes(e.target.value)} 
+                                                // {...field} 
                                             >
 
                                                 <MenuItem value={1}>Janeiro</MenuItem>
@@ -180,7 +183,6 @@ function FinanRelease() {
                                             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
                                                 <DatePicker
                                                     label="Data Ordem de Pagamento"
-                                                    // value={dateFortnight}
                                                     renderInput={(params) => <TextField {...params} />}
                                                     {...field}
                                                 />
@@ -260,7 +262,11 @@ function FinanRelease() {
                                                 decimalSeparator={','}
                                                 label="Recurso"
                                                 customInput={TextField}
-                                                InputProps={valueProps}
+                                                
+                                                InputProps={{...valueProps,
+                                                    className: valuesState.recurso < 0 ? "glosa" : "" 
+                                                }}
+                                                
                                                 onValueChange={(values, sourceInfo) => {
                                                     const { name } = sourceInfo.event.target;
                                                     handleValueChange(name, values.value);
@@ -288,13 +294,6 @@ function FinanRelease() {
                                             />
                                         }
                                     />
-
-
-
-
-
-
-
 
                                 </Box>
                             </FormControl>

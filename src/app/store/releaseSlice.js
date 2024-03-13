@@ -3,6 +3,8 @@ import jwtServiceConfig from '../auth/services/jwtService/jwtServiceConfig';
 import { api } from 'app/configs/api/api';
 import { useHistory } from 'react-router-dom';
 import dayjs from 'dayjs';
+import axios from 'axios';
+import { cnab } from 'app/configs/api/cnab';
 
 
 const initialState = {
@@ -47,20 +49,30 @@ export const getData = (data) => (dispatch) => {
         })
 
 }
+export const getFavorecidos = () => (dispatch) => {
+    const token = window.localStorage.getItem('jwt_access_token');
+    
+    cnab.get('/cnab/clientes-favorecidos', {
+        headers: { "Authorization": `Bearer ${token}` },
+    })
+        .then((response) => {
+            console.log(response)
+           
+         
+        })
+
+}
 
 
 export const setRelease = (data)  => (dispatch) => {
-    console.log(data)
     return new Promise((resolve, reject) => {
         const parseDate = dayjs(data.data_ordem, 'DD/MM/YYYY')
         const isoDateString = parseDate.toISOString()
         const cleanedData = {
             ...data,
             recurso: parseInt(data.recurso.replace(/\D/g, '')),
-            // valor_a_pagar: parseInt(data.valor_a_pagar.replace(/\D/g, '')),
             algoritmo: parseInt(data.algoritmo.replace(/\D/g, '')),
             glosa: parseInt(data.glosa.replace(/\D/g, '')),
-            // valor: parseInt(data.valor_a_pagar.replace(/\D/g, '')),
             data_ordem: isoDateString
 
         };
@@ -83,6 +95,7 @@ export const setRelease = (data)  => (dispatch) => {
     });
 };
 export const editRelease = (data,id) => (dispatch) => {
+
     return new Promise((resolve, reject) => {
         
         const parseDate = dayjs(data.data_ordem, 'DD/MM/YYYY')
@@ -90,10 +103,10 @@ export const editRelease = (data,id) => (dispatch) => {
         const cleanedData = {
             ...data,
             recurso: parseInt(data.recurso.replace(/\D/g, '')),
-            valor_a_pagar: parseInt(data.valor_a_pagar.replace(/\D/g, '')),
+            // valor_a_pagar: parseInt(data.valor_a_pagar.replace(/\D/g, '')),
             algoritmo: parseInt(data.algoritmo.replace(/\D/g, '')),
             glosa: parseInt(data.glosa.replace(/\D/g, '')),
-            valor: parseInt(data.valor_a_pagar.replace(/\D/g, '')),
+            // valor: parseInt(data.valor_a_pagar.replace(/\D/g, '')),
             numero_processo: parseInt(data.numero_processo),
             data_ordem: isoDateString
 
