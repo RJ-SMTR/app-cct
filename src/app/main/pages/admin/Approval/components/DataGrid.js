@@ -173,7 +173,7 @@ export default function BasicEditingGrid(props) {
                     value={params.value}
                     thousandSeparator={'.'}
                     decimalSeparator={','}
-                    prefix={'R$'}
+                    prefix={'R$ '}
                     onValueChange={(values) => {
                         const { value } = values;
                         params.api.setEditCellValue({ id: params.id, field: params.field, value });
@@ -187,7 +187,7 @@ export default function BasicEditingGrid(props) {
                     displayType={'text'}
                     thousandSeparator={'.'}
                     decimalSeparator={','}
-                    prefix={'R$'}
+                    prefix={'R$ '}
                 />
             ), },
         { field: 'setBy', headerName: 'Lançado Por',  width: 180, editable: true },
@@ -298,7 +298,7 @@ export default function BasicEditingGrid(props) {
                         displayType={'text'}
                         thousandSeparator={'.'}
                         decimalSeparator={','}
-                        prefix={'R$'}
+                        prefix={'R$ '}
                     />
             </Box>
         </Box>
