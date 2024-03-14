@@ -157,6 +157,13 @@ function ConcludePage() {
             case 1:
                 return (
                     <>
+                       <Typography> Ela deve conter: 
+              <ul>
+                <li>- 8 caracteres</li>
+                <li>- Uma letra minúscula</li>
+                <li>- Uma letra maiúscula</li>
+              </ul>
+            </Typography>
                         <StepTwo
                             type="password"
                             label="Senha"
@@ -232,19 +239,6 @@ function ConcludePage() {
 
                                {renderFields(info.email, info.permitCode)}
 
-                               {/* <Controller
-              name="acceptTermsConditions"
-              control={control}
-              render={({ field }) => (
-                <FormControl className="items-center" error={!!errors.acceptTermsConditions}>
-                  <FormControlLabel
-                    label="I agree to the Terms of Service and Privacy Policy"
-                    control={<Checkbox size="small" {...field} />}
-                  />
-                  <FormHelperText>{errors?.acceptTermsConditions?.message}</FormHelperText>
-                </FormControl>
-              )}
-            />  */}
 
                                <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
                                    <Button
