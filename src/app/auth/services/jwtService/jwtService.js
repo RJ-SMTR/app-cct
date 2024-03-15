@@ -39,6 +39,7 @@ class JwtService extends FuseUtils.EventEmitter {
     }
 
     if (this.isAuthTokenValid(access_token)) {
+      console.log(access_token)
       this.setSession(access_token);
       this.emit('onAutoLogin', true);
     } else {
@@ -83,6 +84,7 @@ class JwtService extends FuseUtils.EventEmitter {
 
   signInWithToken = () => {
     const token = this.getAccessToken();
+    console.log(token)
     return new Promise((resolve, reject) => {
       api
         .get(jwtServiceConfig.userInfo, { headers: { "Authorization": `Bearer ${token}` } })
@@ -106,6 +108,24 @@ class JwtService extends FuseUtils.EventEmitter {
   adminSignIn = (email, password) => {
     return new Promise((resolve, reject) => {
       api.post(jwtServiceConfig.adminSignIn, {
+        email,
+        password
+      })
+        .then((response) => {
+          resolve(response)
+          this.setSession(response.data.token)
+          this.emit('onLogin', response.data.user)
+        })
+        .catch((error) => {
+          reject(error);
+        });
+    })
+
+  }
+  
+  adminFinace = (email, password) => {
+    return new Promise((resolve, reject) => {
+      api.post(jwtServiceConfig.adminFinanceSignIn, {
         email,
         password
       })

@@ -1,9 +1,9 @@
 import { lazy } from 'react';
 import { authRoles } from 'src/app/auth';
 
-const ForbiddenAppLazy = lazy(() => import('./ForbiddenApp'));
+const FinanReleaseLazy = lazy(() => import('./FinanReleaseApp'));
 
-const ForbiddenConfig = {
+const FinanReleaseConfig = {
     settings: {
         layout: {
             config: {
@@ -13,13 +13,13 @@ const ForbiddenConfig = {
             },
         },
     },
-    auth: authRoles.onlyGuest,
+    auth:  authRoles.commonFinan,
     routes: [
-        { 
-            path: '/not-auth',
-            element: <ForbiddenAppLazy />,
+        {
+            path: 'lancamentos',
+            element: <FinanReleaseLazy />,
         },
     ],
 };
 
-export default ForbiddenConfig;
+export default FinanReleaseConfig;

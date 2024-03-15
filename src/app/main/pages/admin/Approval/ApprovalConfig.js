@@ -1,9 +1,9 @@
 import { lazy } from 'react';
 import { authRoles } from 'src/app/auth';
 
-const ForbiddenAppLazy = lazy(() => import('./ForbiddenApp'));
+const ApprovalAppLazy = lazy(() => import('./ApprovalApp'));
 
-const ForbiddenConfig = {
+const ApprovalConfig = {
     settings: {
         layout: {
             config: {
@@ -13,13 +13,13 @@ const ForbiddenConfig = {
             },
         },
     },
-    auth: authRoles.onlyGuest,
+    auth: authRoles.commonFinan,
     routes: [
-        { 
-            path: '/not-auth',
-            element: <ForbiddenAppLazy />,
+        {
+            path: 'aprovação',
+            element: <ApprovalAppLazy />,
         },
     ],
 };
 
-export default ForbiddenConfig;
+export default ApprovalConfig;

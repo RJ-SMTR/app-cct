@@ -52,11 +52,19 @@ class FuseAuthorization extends Component {
     const ignoredPaths = ['/', '/callback', '/sign-in', '/sign-out', '/logout', '/404', matchedPath?.pathname, '/forgot-password'];
 
     if (matched && !userHasPermission && !ignoredPaths.includes(pathname) ) {
-      if(userRole === "Admin"){
-        setSessionRedirectUrl("/admin");
-      } else{
-        setSessionRedirectUrl("/");
-      }     
+      switch (userRole) {
+        case "Lançador financeiro":
+        case "Aprovador financeiro":
+        case "Admin Finan":
+          setSessionRedirectUrl("/lancamentos");
+          break;
+        case "User":
+          setSessionRedirectUrl("/");
+          break;
+        default:
+          setSessionRedirectUrl("/admin");
+      }
+
     }
 
     return {
@@ -69,9 +77,11 @@ class FuseAuthorization extends Component {
     const redirectUrl = getSessionRedirectUrl() || this.props.loginRedirectUrl;
     const lastUserRole = this.state.lastUserRole;
     if (!userRole || userRole.length === 0) {
-      if(lastUserRole === "Admin"){
+      if (lastUserRole !== 'User' && lastUserRole !== 'Admin'){
+        setTimeout(() => history.push('/financeiro/sign-in'), 0);
+      } else if (lastUserRole !== 'User'){
         setTimeout(() => history.push('/admin/sign-in'), 0);
-      } else {
+      } else{
         setTimeout(() => history.push('/sign-in'), 0);
       }
     } else {

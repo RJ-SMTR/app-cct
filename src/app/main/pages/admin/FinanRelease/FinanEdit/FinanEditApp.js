@@ -1,0 +1,347 @@
+import React, { useContext, useEffect, useState } from 'react'
+import { Card, Select, TextField, Typography, MenuItem, InputLabel, InputAdornment } from '@mui/material';
+import { Box } from '@mui/system';
+import { Controller, useForm } from 'react-hook-form';
+import { FormControl } from "@mui/material";
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import ptBR from 'date-fns/locale/pt-BR';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { NumericFormat } from 'react-number-format';
+import { editRelease } from 'app/store/releaseSlice';
+import { useDispatch } from 'react-redux';
+import { AuthContext } from 'src/app/auth/AuthContext';
+import { useParams } from 'react-router-dom';
+import { api } from 'app/configs/api/api';
+import jwtServiceConfig from 'src/app/auth/services/jwtService/jwtServiceConfig';
+import dayjs from 'dayjs';
+
+
+
+
+function FinanEdit() {
+    let { id } = useParams()
+    const dispatch = useDispatch()
+    const [showForm, setShowForm] = useState(false);
+    const { success } = useContext(AuthContext)
+    const [selectedMes, setSelectedMes] = useState()
+    const [releaseData, setReleaseData] = useState([])
+    const [valuesState, setValuesState] = useState({
+        algoritmo: null,
+        glosa: null,
+        recurso: null,
+    });
+    const [valueToPay, setValueToPay] = useState();
+    const [dateOrder, setDateOrder] = useState({
+        month: null,
+        period: null
+
+    })
+
+
+
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const token = window.localStorage.getItem('jwt_access_token');
+            const response = await api.get(jwtServiceConfig.finanGetInfo + `/${id}`, {
+                headers: { "Authorization": `Bearer ${token}` },
+            });
+            setReleaseData(response.data)
+            setShowForm(true)
+            const dateString = response.data.data_ordem;
+            const date = new Date(dateString);
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const period = day > 15 ? 2 : 1;
+            setDateOrder({
+                month: month,
+                period: period
+            });
+            setSelectedMes(month)
+            setValueToPay(response.data.valor_a_pagar)
+            setValuesState({
+                algoritmo: response.data.algoritmo,
+                glosa: response.data.glosa * -1,
+                recurso: response.data.recurso
+            })
+        };
+        fetchData()
+    }, [id]);
+
+
+
+    const { handleSubmit, register, setError, reset, control, setValue } = useForm({
+        defaultValues: {
+            descricao: releaseData.descricao,
+
+        }
+
+    })
+
+
+    const handleValueChange = (name, value) => {
+        setValuesState(prevState => ({
+            ...prevState,
+            [name]: value
+        }));
+    };
+
+    useEffect(() => {
+        if (valuesState.algoritmo && valuesState.recurso && valuesState.glosa) {
+            const valueToPayAuto = parseFloat(valuesState.algoritmo) + parseFloat(valuesState.glosa) + parseFloat(valuesState.recurso)
+            setValueToPay(valueToPayAuto)
+        } 
+    }, [valuesState])
+
+
+
+    const onSubmit = (info) => {
+        info.algoritmo = valuesState.algoritmo.toString();
+        info.recurso = valuesState.recurso.toString();
+        info.glosa = valuesState.glosa.toString();
+        info.valor_a_pagar = valueToPay
+        info.valor = valueToPay
+        dispatch(editRelease(info, id))
+            .then((response) => {
+                success(response, "Os dados foram atualizados!")
+                reset(info)
+            })
+    }
+
+    const setDateFunction = (event) => {
+
+        if (event == 1) {
+            const furtherDate = dayjs().month(selectedMes).set('D', 5)
+            setValue('data_ordem', furtherDate.$d)
+        } else {
+            const furtherDate = dayjs().month(selectedMes).set('D', 20)
+            setValue('data_ordem', furtherDate.$d)
+        }
+    }
+
+    const valueProps = {
+        startAdornment: <InputAdornment position='start'>R$</InputAdornment>
+    }
+    useEffect(() => {
+        console.log(releaseData)
+    }, [releaseData])
+    return (
+        <>
+            {showForm && <div className="p-24 pt-10">
+                <Typography className='font-medium text-3xl'>Lançamentos Financeiros</Typography>
+                <Box className='flex flex-col  justify-around'>
+                    <Card className="w-full md:mx-9 p-24 relative mt-32">
+                        <header className="flex justify-between items-center">
+                            <h1 className="font-semibold">
+                                Novo Registro
+                            </h1>
+                        </header>
+                        <form
+                            name="Personal"
+                            noValidate
+                            className="flex flex-col justify-center w-full mt-32"
+                            onSubmit={handleSubmit(onSubmit)}
+                        >
+                            <Box className="grid gap-10  md:grid-cols-3">
+                            <TextField
+                                    {...register('descricao')}
+                                    label='Selecionar Favorecido'
+                                    id="bank-autocomplete"
+                                    variant='outlined'
+                                    name='descricao'
+                                    disabled
+                                    value={releaseData.descricao}
+
+                                />
+                                <FormControl fullWidth>
+                                    <InputLabel id="select-mes">Selecionar Mês</InputLabel >
+                                 
+                                            <Select
+                                            {...register('mes')}
+                                                labelId="select-mes"
+                                                label="Selecionar Mes"
+                                                defaultValue={dateOrder.month}
+                                                onChange={(e) => setSelectedMes(e.target.value)}
+
+                                            >
+
+                                                <MenuItem value={1}>Janeiro</MenuItem>
+                                                <MenuItem value={2}>Fevereiro</MenuItem>
+                                                <MenuItem value={3}>Março</MenuItem>
+                                                <MenuItem value={4}>Abril</MenuItem>
+                                                <MenuItem value={5}>Maio</MenuItem>
+                                                <MenuItem value={6}>Junho</MenuItem>
+                                                <MenuItem value={7}>Julho</MenuItem>
+                                                <MenuItem value={8}>Agosto</MenuItem>
+                                                <MenuItem value={9}>Setembro</MenuItem>
+                                                <MenuItem value={10}>Outubro</MenuItem>
+                                                <MenuItem value={11}>Novembro</MenuItem>
+                                                <MenuItem value={12}>Dezembro</MenuItem>
+                                            </Select>
+                                </FormControl>
+                                <FormControl fullWidth>
+                                    <InputLabel id="select-periodo">Selecionar Período</InputLabel>
+                                    
+                                            <Select
+                                                {...register('periodo')}
+                                                name='periodo'
+                                                labelId="select-periodo"
+                                                label="Selecionar Período"
+                                                defaultValue={dateOrder.period}
+                                                onChange={(e) => setDateFunction(e.target.value)}
+                                            >
+                                                <MenuItem value={1}>1a Quinzena</MenuItem>
+                                                <MenuItem value={2}>2a Quinzena</MenuItem>
+                                            </Select>
+
+                                </FormControl>
+
+                                <FormControl>
+                                    <Controller
+                                        {...register('data_ordem')}
+                                        name="data_ordem"
+                                        defaultValue={dayjs(releaseData.data_ordem).toDate()}
+                                        control={control}
+                                        render={({ field }) =>
+                                            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                                                <DatePicker
+                                                    label="Data Ordem de Pagamento"
+                                                    renderInput={(params) =>
+                                                        <TextField
+                                                            {...params}
+                                                        />}
+                                                    {...field}
+                                                />
+                                            </LocalizationProvider>
+                                        }
+                                    />
+
+                                </FormControl>
+                                <TextField
+                                    {...register('numero_processo')}
+                                    label="Número do Processo"
+                                    type="string"
+                                    name='numero_processo'
+                                    variant="outlined"
+                                    fullWidth
+                                    defaultValue={releaseData.numero_processo}
+                                />
+
+                            </Box>
+
+                            <FormControl>
+                                <Box className="grid md:grid-cols-3 gap-10 mt-10">
+                                    <Controller
+                                        {...register('algoritmo')}
+                                        name="algoritmo"
+                                        control={control}
+                                        render={({ field }) =>
+                                            <NumericFormat
+                                            {...field}
+                                                defaultValue={releaseData.algoritmo}
+                                                labelId="algoritmo-label"
+                                                thousandSeparator={'.'}
+                                                decimalSeparator={','}
+                                                label="Algortimo"
+                                                customInput={TextField}
+                                                InputProps={valueProps}
+                                                onValueChange={(values, sourceInfo) => {
+                                                    const { name } = sourceInfo.event.target;
+                                                    handleValueChange(name, values.value);
+                                                }}
+                                            />
+                                        }
+                                    />
+                                    <Controller
+                                        {...register('glosa')}
+                                        name="glosa" 
+                                        control={control}
+                                        render={({ field }) =>
+                                            <NumericFormat
+                                                {...field}
+                                                thousandSeparator={'.'}
+                                                label="Glosa"
+                                                defaultValue={releaseData.glosa * -1}
+                                                allowNegative
+                                                className='glosa'
+                                                decimalSeparator={','}
+                                                customInput={TextField}
+                                                InputProps={valueProps}
+                                                onValueChange={(values, sourceInfo) => {
+                                                    const { name } = sourceInfo.event.target;
+                                                    handleValueChange(name, values.value);
+                                                }}
+                                            />
+                                        }
+                                    />
+
+
+                                    <Controller
+                                        {...register('recurso')}
+                                        name="recurso"
+                                        control={control}
+                                        render={({ field }) =>
+                                            <NumericFormat
+                                                {...field}
+                                                thousandSeparator={'.'}
+                                                decimalSeparator={','}
+                                                allowNegative
+                                                label="Recurso"
+                                                defaultValue={releaseData.recurso}
+                                                customInput={TextField}
+                                                InputProps={{
+                                                    ...valueProps,
+                                                    className: valuesState.recurso < 0 ? "glosa" : ""
+                                                }}
+                                                onValueChange={(values, sourceInfo) => {
+                                                    const { name } = sourceInfo.event.target;
+                                                    handleValueChange(name, values.value);
+                                                }}
+                                            />
+                                        }
+                                    />
+
+                                    <Controller
+                                        {...register('valor_a_pagar')}
+                                        name="valor_a_pagar"
+                                        control={control}
+                                        render={({ field }) =>
+                                            <NumericFormat
+                                                {...field}
+                                                value={valueToPay}
+                                                defaultValue={valueToPay}
+                                                disabled
+                                                thousandSeparator={'.'}
+                                                decimalSeparator={','}
+                                                customInput={TextField}
+                                                InputProps={valueProps}
+                                                label="Valor a Pagar"
+
+                                            />
+                                        }
+                                    />
+
+                                </Box>
+                            </FormControl>
+                            <div className='flex justify-end mt-24'>
+                                <a href="" className='rounded p-3 uppercase text-white bg-grey h-[27px] min-h-[27px] font-medium px-10 mx-10'>
+                                    Voltar
+                                </a>
+                                <button type='submit' className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10'>
+                                    Salvar
+                                </button>
+                            </div>
+
+
+                        </form>
+
+                    </Card>
+                </Box>
+                <br />
+            </div>}
+        </>
+    );
+}
+
+export default FinanEdit

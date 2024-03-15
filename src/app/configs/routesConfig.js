@@ -13,11 +13,15 @@ import profileAppConfig from '../main/pages/profile/profileAppConfig';
 import ExtractConfig from '../main/pages/extract/ExtractConfig';
 import ResumeConfig from '../main/pages/resume/ResumeConfig';
 import AdminSignIn from '../main/pages/auth/admin/sign-in/SignInConfig';
+import FinanSignInConfig from '../main/pages/auth/finan/SignInConfig';
 import AdminConfig from '../main/pages/admin/AdminConfig';
 import ForbiddenConfig from '../main/pages/errors/401/ForbiddenConfig';
 import AdminUserConfig from '../main/pages/admin/UserAnalysis/UserConfig';
 import UploadConfig from '../main/pages/admin/Upload/UploadConfig';
 import TriggerConfig from '../main/pages/admin/TriggerEmail/TriggerConfig';
+import FinanReleaseConfig from '../main/pages/admin/FinanRelease/FinanReleaseConfig';
+import ApprovalConfig from '../main/pages/admin/Approval/ApprovalConfig';
+import FinanEditConfig from '../main/pages/admin/FinanRelease/FinanEdit/FinanEditConfig';
 
 const routeConfigs = [
   // HomeConifg,
@@ -34,7 +38,11 @@ const routeConfigs = [
   ForbiddenConfig,
   AdminUserConfig,
   UploadConfig,
-  TriggerConfig
+  TriggerConfig,
+  FinanReleaseConfig,
+  ApprovalConfig,
+  FinanSignInConfig,
+  FinanEditConfig
 ];
 
 const routes = [
