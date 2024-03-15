@@ -8,7 +8,7 @@ import CancelIcon from '@mui/icons-material/Close';
 import { NumericFormat } from 'react-number-format';
 import {  useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { handleAuthRelease } from 'app/store/releaseSlice';
+import { handleAuthRelease, handleAuthValue } from 'app/store/releaseSlice';
 import { AuthContext } from 'src/app/auth/AuthContext';
 import { api } from 'app/configs/api/api';
 import jwtServiceConfig from 'src/app/auth/services/jwtService/jwtServiceConfig';
@@ -32,6 +32,7 @@ const style = {
     left: '50%',
     transform: 'translate(-50%, -50%)',
     width: '50rem',
+    maxWidth: '90%',
     borderRadius: '.5rem',
     bgcolor: 'background.paper',
     boxShadow: 24,
@@ -85,7 +86,6 @@ export default function BasicEditingGrid(props) {
     }
 
     const handleOpen = (id) => {
-      
         setSelectedId(id)
         getInfoAuth(id)
 
@@ -120,6 +120,8 @@ export default function BasicEditingGrid(props) {
             .then((response) => {
                 success(response, "Autorizado!");
                 setOpen(false);
+                
+                    
                 const updatedRows = rows.map(row => {
                     if (row.id === id) {
                         const updatedAutorizadopor = props.data.find(item => item.id === id);
@@ -160,9 +162,25 @@ export default function BasicEditingGrid(props) {
         return updatedRow;
     };
 ;
+    const AuthButton = (id ) => {
+        const targetRow = id.rows.find(row => row.id === id.id);
 
+        const hasMultipleAuthBy = targetRow  && targetRow.authBy.length > 1;
 
-   
+        return (
+            <button
+                onClick={() => handleOpen(id.id)}
+                className={`rounded p-3 uppercase text-white font-medium px-10 text-xs ${hasMultipleAuthBy ? 'bg-green-500' : 'bg-[#004A80]'}`}
+            >
+                {hasMultipleAuthBy ? 'Autorizado' : 'Autorizar'}
+            </button>
+        );
+    };
+
+    useEffect(() => {
+        dispatch(handleAuthValue(selectedDate))
+    }, [])
+
 
     const columns = [
         { field: 'name', headerName: 'Consórcio/BRT', width: 180, editable: true },
@@ -258,9 +276,7 @@ export default function BasicEditingGrid(props) {
                         }}
                     />,
                   
-                    <button onClick={() => handleOpen(id)} className='rounded p-3 uppercase text-white bg-[#004A80]  font-medium px-10 text-xs'>
-                        Autorizar
-                    </button>,
+                        <AuthButton id={id} rows={rows}/>
                 ];
             },
         },
@@ -317,7 +333,7 @@ export default function BasicEditingGrid(props) {
                             N.º Processo: {dataAuth?.numero_processo}
                         </h4>
                         <p>Mês: {dayjs().month(dateOrder?.month - 1).format('MMMM')}</p>
-                        <Box className="flex justify-between w-full">
+                        <Box className="md:flex justify-between w-full">
                             <p>
                                 Período: {dateOrder.period} Quinzena -{' '}
                                 {dateOrder.period === 1

@@ -13,7 +13,8 @@ const initialState = {
     selectedDate: {
         mes: '',
         periodo: ''
-    }
+    },
+    authValue: '',
 };
 
 const stepSlice = createSlice({
@@ -29,10 +30,13 @@ const stepSlice = createSlice({
         setSelectedDate: (state, action) => {
             state.selectedDate = action.payload;
         },
+        setAuthValue: (state, action) => {
+            state.authValue = action.payload;
+        },
     },
 });
 
-export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTransactions, selectDate, setSelectedDate} = stepSlice.actions;
+export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTransactions, selectDate, setSelectedDate, authValue, setAuthValue} = stepSlice.actions;
 export default stepSlice.reducer;
 
 export const getData = (data) => (dispatch) => {
@@ -129,7 +133,28 @@ export const editRelease = (data,id) => (dispatch) => {
             });
     });
 };
+export const handleAuthValue = (data, id) => (dispatch) => {
+    return new Promise((resolve, reject) => {
+        const token = window.localStorage.getItem('jwt_access_token');
+        api.get(jwtServiceConfig.finanGetInfo + `/getValorAutorizado?mes=${data.mes}&periodo=${data.periodo}&ano=2024`,
+         
+         {
+            headers: { "Authorization": `Bearer ${token}` } 
+        })
+        .then((response) => {
+            if (response.status === 200) {
+                resolve()
+                dispatch(getData(data))
+                dispatch(setAuthValue(response.data.valor_autorizado))
+            } else {
+                reject(new Error('Erro ao autorizar'));
+            }
+        })
+
+    })
+}
 export const handleAuthRelease = (data, id) => (dispatch) => {
+    console.log(data)
     return new Promise((resolve, reject) => {
         const token = window.localStorage.getItem('jwt_access_token');
         api.put(jwtServiceConfig.finanGetInfo + `/authorize?lancamentoId=${id}`,
@@ -141,6 +166,8 @@ export const handleAuthRelease = (data, id) => (dispatch) => {
             if (response.status === 200) {
                 resolve()
                 dispatch(getData(data))
+                dispatch(handleAuthValue(data))
+
             } else {
                 reject(new Error('Erro ao autorizar'));
             }
