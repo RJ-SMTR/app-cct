@@ -28,7 +28,7 @@ function FinanRelease() {
         dispatch(getFavorecidos())
     }, [])
 
-    const { handleSubmit, register, control, reset, clearErrors, setValue } = useForm({
+    const { handleSubmit, register, control, reset, setValue, getValues } = useForm({
         defaultValues: {
             descricao: null,
             favorecido: null,
@@ -38,7 +38,8 @@ function FinanRelease() {
             algoritmo: null,
             glosa: null,
             recurso: null,
-            data_ordem: null
+            data_ordem: null,
+            valor_a_pagar: null
         }
     })
     const handleValueChange = (name, value) => {
@@ -51,13 +52,19 @@ function FinanRelease() {
 
 
     const onSubmit = (info) => {
-        info.valor_a_pagar = valueToPay
-        info.valor = valueToPay
+       
+        info.valor = info.valor_a_pagar
         dispatch(setRelease(info))
             .then((response) => {
                 success(response, "Informações Lançadas!")
-                setValuesState({})
-                reset()
+                reset();
+                setValue('valor_a_pagar', '')
+                setValue('algoritmo', '')
+                setValue('mes', '')
+                setValue('periodo', '')
+                setValue('recurso', '')
+                setValue('glosa', '')
+
 
             })
 
@@ -67,14 +74,14 @@ function FinanRelease() {
     useEffect(() => {
         if (valuesState.algoritmo && valuesState.recurso && valuesState.glosa) {
             const valueToPayAuto = parseFloat(valuesState.algoritmo) + parseFloat(valuesState.glosa) + parseFloat(valuesState.recurso)
-            setValueToPay(valueToPayAuto)
+            setValue('valor_a_pagar', valueToPayAuto)
         }
     }, [valuesState])
 
     const setDateFunction = (event) => {
-        
         if(event == 1){
             const furtherDate = dayjs().month(selectedMes).set('D', 5)
+
             setValue('data_ordem', furtherDate.$d)
         } else {
                 const furtherDate = dayjs().month(selectedMes).set('D', 20)
@@ -133,10 +140,14 @@ function FinanRelease() {
                                             <Select
                                                 labelId="select-mes"
                                                 label="Selecionar Mes"
-                                                onChange={(e) => setSelectedMes(e.target.value)} 
-                                                // {...field} 
+                                                value={field.value}
+                                                onChange={(e) => {
+                                                    setValue('mes', e.target.value)
+                                                    setSelectedMes(e.target.value);
+                                                    const isMonthSelected = !!e.target.value;
+                                                    document.getElementById('select-periodo').disabled = !isMonthSelected;
+                                                }}
                                             >
-
                                                 <MenuItem value={1}>Janeiro</MenuItem>
                                                 <MenuItem value={2}>Fevereiro</MenuItem>
                                                 <MenuItem value={3}>Março</MenuItem>
@@ -154,24 +165,30 @@ function FinanRelease() {
                                     />
                                 </FormControl>
                                 <FormControl fullWidth>
-                                    <InputLabel id="select-periodo">Selecionar Período</InputLabel>
+                                    <InputLabel id="select-periodo">Selecionar Período (selecionar mês antes)</InputLabel>
                                     <Controller
-                                    {...register('periodo')}
+                                        {...register('periodo')}
                                         name='periodo'
                                         control={control}
                                         render={({ field }) => (
                                             <Select
                                                 labelId="select-periodo"
-                                                label="Selecionar Período"
-                                                onChange={(e) =>setDateFunction(e.target.value)} 
+                                                label="Selecionar Período (selecionar mês antes)"
+                                                id="select-periodo" 
+                                                disabled={!selectedMes} 
+                                                value={field.value}
+                                                onChange={(e) => {
+                                                    setValue('periodo', e.target.value)
+                                                    setDateFunction(e.target.value)
+                                                }}
                                             >
                                                 <MenuItem value={1}>1a Quinzena</MenuItem>
                                                 <MenuItem value={2}>2a Quinzena</MenuItem>
                                             </Select>
-                                         )} 
-                                    /> 
-
+                                        )}
+                                    />
                                 </FormControl>
+
 
                                 <FormControl>
 
@@ -214,6 +231,7 @@ function FinanRelease() {
                                         render={({ field }) =>
                                             <NumericFormat
                                                 {...field}
+                                                value={field.value}
                                                 labelId="algoritmo-label"
                                                 thousandSeparator={'.'}
                                                 decimalSeparator={','}
@@ -238,6 +256,7 @@ function FinanRelease() {
                                                 thousandSeparator={'.'}
                                                 label="Glosa"
                                                 allowNegative
+                                                value={field.value}
                                                 className='glosa'
                                                 decimalSeparator={','}
                                                 customInput={TextField}
@@ -250,11 +269,14 @@ function FinanRelease() {
                                         }
                                     />
 
+                                  
+                                </Box>
+                                <Box className="grid md:grid-cols-3 gap-10 mt-10">
+
                                     <Controller
                                         {...register('recurso')}
                                         name="recurso"
                                         control={control}
-
                                         render={({ field }) =>
                                             <NumericFormat
                                                 {...field}
@@ -262,15 +284,19 @@ function FinanRelease() {
                                                 decimalSeparator={','}
                                                 label="Recurso"
                                                 customInput={TextField}
-                                                
-                                                InputProps={{...valueProps,
-                                                    className: valuesState.recurso < 0 ? "glosa" : "" 
+                                                value={field.value}
+                                                InputProps={{
+                                                    ...valueProps,
+                                                    className: valuesState.recurso < 0 ? "glosa" : ""
                                                 }}
-                                                
+
                                                 onValueChange={(values, sourceInfo) => {
-                                                    const { name } = sourceInfo.event.target;
-                                                    handleValueChange(name, values.value);
+                                                    if (sourceInfo && sourceInfo.event && sourceInfo.event.target) {
+                                                        const { name } = sourceInfo.event.target;
+                                                        handleValueChange(name, values.value);
+                                                    }
                                                 }}
+
                                             />
                                         }
                                     />
@@ -282,8 +308,7 @@ function FinanRelease() {
                                         render={({ field }) =>
                                             <NumericFormat
                                                 {...field}
-                                                defaultValue={valueToPay}
-                                                value={valueToPay}
+                                                value={field.value} 
                                                 disabled
                                                 thousandSeparator={'.'}
                                                 decimalSeparator={','}
@@ -295,7 +320,10 @@ function FinanRelease() {
                                         }
                                     />
 
+                                  
                                 </Box>
+                                
+
                             </FormControl>
                             <div className='flex justify-end mt-24'>
                                 <a href='/aprovação' className='rounded p-3 uppercase text-white bg-grey h-[27px] min-h-[27px] font-medium px-10 mx-10'>
