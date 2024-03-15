@@ -77,9 +77,11 @@ class FuseAuthorization extends Component {
     const redirectUrl = getSessionRedirectUrl() || this.props.loginRedirectUrl;
     const lastUserRole = this.state.lastUserRole;
     if (!userRole || userRole.length === 0) {
-      if(lastUserRole !== "User"){
+      if (lastUserRole !== 'User' && lastUserRole !== 'Admin'){
+        setTimeout(() => history.push('/financeiro/sign-in'), 0);
+      } else if (lastUserRole !== 'User'){
         setTimeout(() => history.push('/admin/sign-in'), 0);
-      } else {
+      } else{
         setTimeout(() => history.push('/sign-in'), 0);
       }
     } else {
