@@ -134,6 +134,9 @@ export default function BasicEditingGrid(props) {
 
                 setRows(updatedRows);
             })
+            .catch((_error) => {
+                success(_error, "Não autorizado!");
+            })
     };
 
     const handleSaveClick = (id) => () => {
