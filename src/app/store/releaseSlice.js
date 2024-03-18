@@ -60,7 +60,6 @@ export const getFavorecidos = () => (dispatch) => {
         headers: { "Authorization": `Bearer ${token}` },
     })
         .then((response) => {
-            console.log(response)
            
          
         })
@@ -69,7 +68,6 @@ export const getFavorecidos = () => (dispatch) => {
 
 
 export const setRelease = (data)  => (dispatch) => {
-    console.log(data)
     return new Promise((resolve, reject) => {
         const parseDate = dayjs(data.data_ordem, 'DD/MM/YYYY')
         const isoDateString = parseDate.toISOString()
@@ -87,7 +85,6 @@ export const setRelease = (data)  => (dispatch) => {
             cleanedData,
             { headers: { "Authorization": `Bearer ${token}` } })
             .then((response) => {
-                console.log(response);
                 if (response.status === 201) {
                     resolve(); 
                 } else {
@@ -122,7 +119,6 @@ export const editRelease = (data,id) => (dispatch) => {
             cleanedData,
             { headers: { "Authorization": `Bearer ${token}` } })
             .then((response) => {
-                console.log(response);
                 if (response.status === 200) {
                     resolve();
                 } else {
@@ -135,6 +131,7 @@ export const editRelease = (data,id) => (dispatch) => {
     });
 };
 export const handleAuthValue = (data, id) => (dispatch) => {
+    
     return new Promise((resolve, reject) => {
         const token = window.localStorage.getItem('jwt_access_token');
         api.get(jwtServiceConfig.finanGetInfo + `/getValorAutorizado?mes=${data.mes}&periodo=${data.periodo}&ano=2024`,
@@ -155,7 +152,6 @@ export const handleAuthValue = (data, id) => (dispatch) => {
     })
 }
 export const handleAuthRelease = (data, id) => (dispatch) => {
-    console.log(data)
     return new Promise((resolve, reject) => {
         const token = window.localStorage.getItem('jwt_access_token');
         api.put(jwtServiceConfig.finanGetInfo + `/authorize?lancamentoId=${id}`,

@@ -46,6 +46,7 @@ export default function BasicEditingGrid(props) {
     const navigate = useNavigate()
     const dispatch = useDispatch()
     const selectedDate = useSelector(state => state.release.selectedDate)
+    const selectedPeriod = useSelector(state => state.release.selectedPeriod)
     const [open, setOpen] = useState(false)
     const [initialRows, setInitialRows] = useState(false)
     const [selectedId, setSelectedId] = useState()
@@ -119,9 +120,7 @@ export default function BasicEditingGrid(props) {
         dispatch(handleAuthRelease(selectedDate, id))
             .then((response) => {
                 success(response, "Autorizado!");
-                setOpen(false);
-                
-                    
+                setOpen(false);                    
                 const updatedRows = rows.map(row => {
                     if (row.id === id) {
                         const updatedAutorizadopor = props.data.find(item => item.id === id);
@@ -182,7 +181,7 @@ export default function BasicEditingGrid(props) {
 
     useEffect(() => {
         dispatch(handleAuthValue(selectedDate))
-    }, [])
+    }, [selectedDate, selectedPeriod])
 
 
     const columns = [
