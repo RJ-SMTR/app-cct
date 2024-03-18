@@ -69,14 +69,15 @@ export const getFavorecidos = () => (dispatch) => {
 
 
 export const setRelease = (data)  => (dispatch) => {
+    console.log(data)
     return new Promise((resolve, reject) => {
         const parseDate = dayjs(data.data_ordem, 'DD/MM/YYYY')
         const isoDateString = parseDate.toISOString()
         const cleanedData = {
             ...data,
-            recurso: parseInt(data.recurso.replace(/\D/g, '')),
+            recurso: data.recurso == 0 ? 0 : parseInt(data.recurso.replace(/\D/g, ''), 10),
             algoritmo: parseInt(data.algoritmo.replace(/\D/g, '')),
-            glosa: parseInt(data.glosa.replace(/\D/g, '')),
+            glosa: data.glosa == 0 ? 0 : parseInt(data.glosa.replace(/\D/g, ''), 10),
             data_ordem: isoDateString
 
         };
