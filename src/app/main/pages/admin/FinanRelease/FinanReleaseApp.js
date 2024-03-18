@@ -28,17 +28,20 @@ const schema = yup.object().shape({
     data_ordem: yup.date().required('Insira a data ordem de pagamento'),
     numero_processo: yup.string().required('Insira o número de processo'),
     algoritmo: yup.string().required('Insira o valor do algoritmo'),
-    glosa: yup.number().required('Campo opcional: se não houver valor digite 0'),
-    recurso: yup.number().required('Campo opcional: se não houver valor digite 0'),
+    glosa: yup.number().notRequired('Campo opcional: se não houver valor digite 0'),
+    recurso: yup.number().notRequired('Campo opcional: se não houver valor digite 0'),
     valor_a_pagar: yup.string().required('Valor a pagar não pode estar vazio'),
 });
 function FinanRelease() {
     const { success } = useContext(AuthContext)
     const dispatch = useDispatch()
-    const [valuesState, setValuesState] = useState({});
+    const [valuesState, setValuesState] = useState({
+        algoritmo: 0,
+        glosa: 0,
+        recurso: 0
+    });
     const [selectedMes, setSelectedMes] = useState()
-    const [dateFortnight, setDateFortnight] = useState();
-    const [valueToPay, setValueToPay] = useState();
+
 
 
     useEffect(() => {
@@ -94,7 +97,7 @@ function FinanRelease() {
 
 
     useEffect(() => {
-        if (valuesState.algoritmo && valuesState.recurso && valuesState.glosa) {
+        if (valuesState.algoritmo) {
             const valueToPayAuto = parseFloat(valuesState.algoritmo) + parseFloat(valuesState.glosa) + parseFloat(valuesState.recurso)
             setValue('valor_a_pagar', valueToPayAuto)
             clearErrors('valor_a_pagar')
@@ -104,7 +107,6 @@ function FinanRelease() {
     const setDateFunction = (event) => {
         if (event == 1) {
             const furtherDate = dayjs().month(selectedMes).set('D', 5)
-
             setValue('data_ordem', furtherDate.$d)
         } else {
             const furtherDate = dayjs().month(selectedMes).set('D', 20)
@@ -149,6 +151,7 @@ function FinanRelease() {
                                                 variant='outlined'
                                                 name='descricao'
                                                 error={!!errors.descricao}
+                                                onChange={() => clearErrors('descricao')}
                                                 helperText={errors.descricao?.message}
 
                                             />
@@ -172,6 +175,7 @@ function FinanRelease() {
                                                     setSelectedMes(e.target.value);
                                                     const isMonthSelected = !!e.target.value;
                                                     document.getElementById('select-periodo').disabled = !isMonthSelected;
+                                                    clearErrors('mes')
                                                 }}
                                                 error={!!errors.mes}
                                                 helperText={errors.mes?.message}
@@ -208,6 +212,7 @@ function FinanRelease() {
                                                 onChange={(e) => {
                                                     setValue('periodo', e.target.value)
                                                     setDateFunction(e.target.value)
+                                                    clearErrors('periodo')
                                                 }}
                                                 error={!!errors.periodo}
                                                 helperText={errors.periodo?.message}
