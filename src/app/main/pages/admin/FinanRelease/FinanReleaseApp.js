@@ -28,8 +28,8 @@ const schema = yup.object().shape({
     data_ordem: yup.date().required('Insira a data ordem de pagamento'),
     numero_processo: yup.string().required('Insira o número de processo'),
     algoritmo: yup.string().required('Insira o valor do algoritmo'),
-    glosa: yup.number().notRequired('Campo opcional: se não houver valor digite 0'),
-    recurso: yup.number().notRequired('Campo opcional: se não houver valor digite 0'),
+    glosa: yup.string().notRequired('Campo opcional: se não houver valor digite 0'),
+    recurso: yup.string().notRequired('Campo opcional: se não houver valor digite 0'),
     valor_a_pagar: yup.string().required('Valor a pagar não pode estar vazio'),
 });
 function FinanRelease() {
