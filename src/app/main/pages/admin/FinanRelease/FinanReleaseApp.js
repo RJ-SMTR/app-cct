@@ -13,35 +13,57 @@ import { getFavorecidos, setRelease } from 'app/store/releaseSlice';
 import { useDispatch } from 'react-redux';
 import { AuthContext } from 'src/app/auth/AuthContext';
 import dayjs from 'dayjs';
+import * as yup from 'yup';
+import _ from '@lodash';
+import { yupResolver } from '@hookform/resolvers/yup';
 
 
-
-
+const schema = yup.object().shape({
+    descricao: yup.string().oneOf([
+        'Auto-viação Norte',
+        'Transoeste International'
+    ]).required('Selecione um favorecido'),
+    mes: yup.string().required('Selecione um mês'),
+    periodo: yup.string().required('Selecione uma quinzena'),
+    data_ordem: yup.date().required('Insira a data ordem de pagamento'),
+    numero_processo: yup.string().required('Insira o número de processo'),
+    algoritmo: yup.string().required('Insira o valor do algoritmo'),
+    glosa: yup.number().notRequired('Campo opcional: se não houver valor digite 0'),
+    recurso: yup.number().notRequired('Campo opcional: se não houver valor digite 0'),
+    valor_a_pagar: yup.string().required('Valor a pagar não pode estar vazio'),
+});
 function FinanRelease() {
     const { success } = useContext(AuthContext)
     const dispatch = useDispatch()
-    const [valuesState, setValuesState] = useState({});
+    const [valuesState, setValuesState] = useState({
+        algoritmo: 0,
+        glosa: 0,
+        recurso: 0
+    });
     const [selectedMes, setSelectedMes] = useState()
-    const [dateFortnight, setDateFortnight] = useState();
-    const [valueToPay, setValueToPay] = useState();
+
+
+
     useEffect(() => {
         dispatch(getFavorecidos())
     }, [])
 
-    const { handleSubmit, register, control, reset, setValue, getValues } = useForm({
+    const { handleSubmit, register, control, reset, setValue, formState, clearErrors } = useForm({
         defaultValues: {
             descricao: null,
             favorecido: null,
-            mes: null,
-            periodo: null,
+            mes: '',
+            periodo: '',
             numero_processo: null,
             algoritmo: null,
             glosa: null,
             recurso: null,
             data_ordem: null,
             valor_a_pagar: null
-        }
+        },
+        resolver: yupResolver(schema),
     })
+    const { isValid, dirtyFields, errors } = formState;
     const handleValueChange = (name, value) => {
         setValuesState(prevState => ({
             ...prevState,
@@ -52,7 +74,7 @@ function FinanRelease() {
 
 
     const onSubmit = (info) => {
-       
+
         info.valor = info.valor_a_pagar
         dispatch(setRelease(info))
             .then((response) => {
@@ -67,28 +89,31 @@ function FinanRelease() {
 
 
             })
+        // .catch((_errors) => {
+
+        // });
 
     }
 
 
     useEffect(() => {
-        if (valuesState.algoritmo && valuesState.recurso && valuesState.glosa) {
+        if (valuesState.algoritmo) {
             const valueToPayAuto = parseFloat(valuesState.algoritmo) + parseFloat(valuesState.glosa) + parseFloat(valuesState.recurso)
             setValue('valor_a_pagar', valueToPayAuto)
+            clearErrors('valor_a_pagar')
         }
     }, [valuesState])
 
     const setDateFunction = (event) => {
-        if(event == 1){
+        if (event == 1) {
             const furtherDate = dayjs().month(selectedMes).set('D', 5)
-
             setValue('data_ordem', furtherDate.$d)
         } else {
-                const furtherDate = dayjs().month(selectedMes).set('D', 20)
-                setValue('data_ordem', furtherDate.$d)
+            const furtherDate = dayjs().month(selectedMes).set('D', 20)
+            setValue('data_ordem', furtherDate.$d)
         }
     }
-   
+
     const valueProps = {
         startAdornment: <InputAdornment position='start'>R$</InputAdornment>
     }
@@ -125,6 +150,9 @@ function FinanRelease() {
                                                 id="bank-autocomplete"
                                                 variant='outlined'
                                                 name='descricao'
+                                                error={!!errors.descricao}
+                                                onChange={() => clearErrors('descricao')}
+                                                helperText={errors.descricao?.message}
 
                                             />
                                         )}
@@ -138,6 +166,7 @@ function FinanRelease() {
                                         {...register('mes')}
                                         render={({ field }) => (
                                             <Select
+
                                                 labelId="select-mes"
                                                 label="Selecionar Mes"
                                                 value={field.value}
@@ -146,7 +175,10 @@ function FinanRelease() {
                                                     setSelectedMes(e.target.value);
                                                     const isMonthSelected = !!e.target.value;
                                                     document.getElementById('select-periodo').disabled = !isMonthSelected;
+                                                    clearErrors('mes')
                                                 }}
+                                                error={!!errors.mes}
+                                                helperText={errors.mes?.message}
                                             >
                                                 <MenuItem value={1}>Janeiro</MenuItem>
                                                 <MenuItem value={2}>Fevereiro</MenuItem>
@@ -174,13 +206,16 @@ function FinanRelease() {
                                             <Select
                                                 labelId="select-periodo"
                                                 label="Selecionar Período (selecionar mês antes)"
-                                                id="select-periodo" 
-                                                disabled={!selectedMes} 
+                                                id="select-periodo"
+                                                disabled={!selectedMes}
                                                 value={field.value}
                                                 onChange={(e) => {
                                                     setValue('periodo', e.target.value)
                                                     setDateFunction(e.target.value)
+                                                    clearErrors('periodo')
                                                 }}
+                                                error={!!errors.periodo}
+                                                helperText={errors.periodo?.message}
                                             >
                                                 <MenuItem value={1}>1a Quinzena</MenuItem>
                                                 <MenuItem value={2}>2a Quinzena</MenuItem>
@@ -202,6 +237,8 @@ function FinanRelease() {
                                                     label="Data Ordem de Pagamento"
                                                     renderInput={(params) => <TextField {...params} />}
                                                     {...field}
+                                                    error={!!errors.data_ordem}
+                                                    helperText={errors.data_ordem?.message}
                                                 />
                                             </LocalizationProvider>
                                         )}
@@ -216,6 +253,8 @@ function FinanRelease() {
                                         name='numero_processo'
                                         variant="outlined"
                                         fullWidth
+                                        error={!!errors.numero_processo}
+                                        helperText={errors.numero_processo?.message}
                                     />
                                 </FormControl>
 
@@ -242,6 +281,8 @@ function FinanRelease() {
                                                     const { name } = sourceInfo.event.target;
                                                     handleValueChange(name, values.value);
                                                 }}
+                                                error={!!errors.algoritmo}
+                                                helperText={errors.algoritmo?.message}
                                             />
                                         }
                                     />
@@ -265,11 +306,13 @@ function FinanRelease() {
                                                     const { name } = sourceInfo.event.target;
                                                     handleValueChange(name, values.value);
                                                 }}
+                                                error={!!errors.glosa}
+                                                helperText={errors.glosa?.message}
                                             />
                                         }
                                     />
 
-                                  
+
                                 </Box>
                                 <Box className="grid md:grid-cols-3 gap-10 mt-10">
 
@@ -296,6 +339,8 @@ function FinanRelease() {
                                                         handleValueChange(name, values.value);
                                                     }
                                                 }}
+                                                error={!!errors.recurso}
+                                                helperText={errors.recurso?.message}
 
                                             />
                                         }
@@ -308,21 +353,23 @@ function FinanRelease() {
                                         render={({ field }) =>
                                             <NumericFormat
                                                 {...field}
-                                                value={field.value} 
+                                                value={field.value}
                                                 disabled
                                                 thousandSeparator={'.'}
                                                 decimalSeparator={','}
                                                 customInput={TextField}
                                                 InputProps={valueProps}
                                                 label="Valor a Pagar"
+                                                error={!!errors.valor_a_pagar}
+                                                helperText={errors.valor_a_pagar?.message}
 
                                             />
                                         }
                                     />
 
-                                  
+
                                 </Box>
-                                
+
 
                             </FormControl>
                             <div className='flex justify-end mt-24'>
