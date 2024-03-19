@@ -30,7 +30,14 @@ const schema = yup.object().shape({
     algoritmo: yup.string().required('Insira o valor do algoritmo'),
     glosa: yup.string().notRequired('Campo opcional: se não houver valor digite 0'),
     recurso: yup.string().notRequired('Campo opcional: se não houver valor digite 0'),
-    valor_a_pagar: yup.string().required('Valor a pagar não pode estar vazio'),
+    valor_a_pagar: yup.string()
+        .test('is-not-negative', 'Valor a pagar não pode ser negativo', value => {
+            if (value && value.includes('-')) {
+                return false; 
+            }
+            return true;
+        })
+        .required('Valor a pagar não pode estar vazio')
 });
 function FinanRelease() {
     const { success } = useContext(AuthContext)
