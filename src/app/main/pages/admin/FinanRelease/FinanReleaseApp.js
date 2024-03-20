@@ -16,6 +16,8 @@ import dayjs from 'dayjs';
 import * as yup from 'yup';
 import _ from '@lodash';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { makeStyles } from '@mui/styles';
+import { styling } from './customStyles';
 
 
 const schema = yup.object().shape({
@@ -70,7 +72,7 @@ function FinanRelease() {
         },
         resolver: yupResolver(schema),
     })
-    const { isValid, dirtyFields, errors } = formState;
+    const { errors } = formState;
     const handleValueChange = (name, value) => {
         setValuesState(prevState => ({
             ...prevState,
@@ -79,6 +81,10 @@ function FinanRelease() {
     };
 
 
+    const useStyles = makeStyles(() => ({
+        glosa: styling,
+    }));
+    const c = useStyles()
 
     const onSubmit = (info) => {
 
@@ -96,9 +102,9 @@ function FinanRelease() {
 
 
             })
-        // .catch((_errors) => {
-
-        // });
+        .catch((_errors) => {
+            console.log(_errors)
+        });
 
     }
 
@@ -123,6 +129,9 @@ function FinanRelease() {
 
     const valueProps = {
         startAdornment: <InputAdornment position='start'>R$</InputAdornment>
+    }
+    const valuePropsGlosa = {
+        startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
     }
     return (
         <>
@@ -281,6 +290,7 @@ function FinanRelease() {
                                                 labelId="algoritmo-label"
                                                 thousandSeparator={'.'}
                                                 decimalSeparator={','}
+                                                decimalScale={2}
                                                 label="Algortimo"
                                                 customInput={TextField}
                                                 InputProps={valueProps}
@@ -305,10 +315,15 @@ function FinanRelease() {
                                                 label="Glosa"
                                                 allowNegative
                                                 value={field.value}
-                                                className='glosa'
+                                                className={c.glosa}
                                                 decimalSeparator={','}
+                                                decimalScale={2}
                                                 customInput={TextField}
-                                                InputProps={valueProps}
+                                                InputProps={{
+                                                    ...valuePropsGlosa,
+                                                 
+                                                }}
+
                                                 onValueChange={(values, sourceInfo) => {
                                                     const { name } = sourceInfo.event.target;
                                                     handleValueChange(name, values.value);
@@ -332,12 +347,13 @@ function FinanRelease() {
                                                 {...field}
                                                 thousandSeparator={'.'}
                                                 decimalSeparator={','}
+                                                decimalScale={2}
                                                 label="Recurso"
                                                 customInput={TextField}
                                                 value={field.value}
                                                 InputProps={{
                                                     ...valueProps,
-                                                    className: valuesState.recurso < 0 ? "glosa" : ""
+                                                    className: valuesState.recurso < 0 ? c.glosa : ""
                                                 }}
 
                                                 onValueChange={(values, sourceInfo) => {
@@ -348,7 +364,6 @@ function FinanRelease() {
                                                 }}
                                                 error={!!errors.recurso}
                                                 helperText={errors.recurso?.message}
-
                                             />
                                         }
                                     />
@@ -364,6 +379,7 @@ function FinanRelease() {
                                                 disabled
                                                 thousandSeparator={'.'}
                                                 decimalSeparator={','}
+                                                decimalScale={2}
                                                 customInput={TextField}
                                                 InputProps={valueProps}
                                                 label="Valor a Pagar"

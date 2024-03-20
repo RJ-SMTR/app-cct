@@ -13,6 +13,7 @@ import { AuthContext } from 'src/app/auth/AuthContext';
 import { api } from 'app/configs/api/api';
 import jwtServiceConfig from 'src/app/auth/services/jwtService/jwtServiceConfig';
 import dayjs from 'dayjs';
+import { selectUser } from 'app/store/userSlice';
 var updateLocale = require('dayjs/plugin/updateLocale')
 dayjs.extend(updateLocale)
 require('dayjs/locale/pt-br')
@@ -58,6 +59,7 @@ export default function BasicEditingGrid(props) {
 
     })
     const [sumTotal, setSumTotal] = useState()
+    const user = useSelector(selectUser);
     useEffect(() => {
         if (dataAuth) {
             const sum = dataAuth.algoritmo - dataAuth.glosa + dataAuth.recurso
@@ -91,6 +93,7 @@ export default function BasicEditingGrid(props) {
         getInfoAuth(id)
 
     };
+
     const handleClose = () => setOpen(false);
   
   useEffect(() => {
@@ -133,8 +136,8 @@ export default function BasicEditingGrid(props) {
 
                 setRows(updatedRows);
             })
-            .catch((_error) => {
-                success(_error, "Não autorizado!");
+            .catch((error) => {
+                success(error, "Não autorizado!");
             })
     };
 
@@ -178,9 +181,46 @@ export default function BasicEditingGrid(props) {
             </button>
         );
     };
+    const swapCommasAndPeriods = (value) => {
+        if (typeof value !== 'number') {
+            const containsCommas = value?.includes(',');
+            const containsPeriods = value?.includes('.');
+
+            if (!containsCommas && !containsPeriods) {
+                return value;
+            }
+
+            const step1 = containsCommas ? value.replace(/,/g, '#') : value;
+
+            const step2 = containsPeriods ? step1.replace(/\./g, ',') : step1;
+
+            const result = step2.replace(/#/g, '.');
+
+            return result;
+        }
+
+        const stringValue = value.toString();
+
+        const containsCommas = stringValue.includes(',');
+        const containsPeriods = stringValue.includes('.');
+
+        if (!containsCommas && !containsPeriods) {
+            return value;
+        }
+
+        const step1 = containsCommas ? stringValue.replace(/,/g, '#') : stringValue;
+
+        const step2 = containsPeriods ? step1.replace(/\./g, '.') : step1;
+
+        const result = step2.replace(/#/g, ',');
+        
+        return result
+    };
+
 
     useEffect(() => {
         dispatch(handleAuthValue(selectedDate))
+             
     }, [selectedDate, selectedPeriod])
 
 
@@ -345,7 +385,11 @@ export default function BasicEditingGrid(props) {
 
                             {dataAuth?.auth_usersIds?.length > 1 ? <button  className='rounded p-3 uppercase text-white bg-green-500  font-medium px-10 text-xs' disabled>
                                 Autorizado
-                            </button> : <button onClick={handleAuth(dataAuth?.id)} className='rounded p-3 uppercase text-white bg-[#004A80]  font-medium px-10 text-xs'>
+                            </button> : <button
+                                onClick={handleAuth(dataAuth?.id)}
+                                className='rounded p-3 uppercase text-white bg-[#004A80]  font-medium px-10 text-xs'
+                                disabled={user.role.id === 3}
+                            >
                                 Autorizar
                             </button>}
                         </Box>
@@ -356,7 +400,7 @@ export default function BasicEditingGrid(props) {
                             <h4  className="font-semibold mb-5">
                                 Valor Algoritmo
                             </h4>
-                            <TextField prefix='R$' value={dataAuth?.algoritmo} disabled InputProps={{
+                            <TextField prefix='R$' value={swapCommasAndPeriods(dataAuth?.algoritmo)} disabled InputProps={{
                                 
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
@@ -365,7 +409,7 @@ export default function BasicEditingGrid(props) {
                             <h4  className="font-semibold mb-5">
                                 Valor Glosa
                             </h4>
-                            <TextField className='glosa'  prefix='R$' value={dataAuth?.glosa} disabled InputProps={{
+                            <TextField className='glosa' prefix='R$' value={swapCommasAndPeriods(dataAuth?.glosa)} disabled InputProps={{
                                 
                                 startAdornment: <InputAdornment position='start'>R$ -</InputAdornment>,
                             }} />
@@ -374,7 +418,7 @@ export default function BasicEditingGrid(props) {
                             <h4  className="font-semibold mb-5">
                                 Valor Recurso
                             </h4>
-                            <TextField prefix='R$' className={sumOfItems === dataAuth?.valor_a_pagar ? "" : "glosa"} value={sumOfItems === dataAuth?.valor_a_pagar ? dataAuth?.recurso : -dataAuth?.recurso} disabled InputProps={{
+                            <TextField prefix='R$' className={sumOfItems === dataAuth?.valor_a_pagar ? "" : "glosa"} value={swapCommasAndPeriods(sumOfItems === dataAuth?.valor_a_pagar ? dataAuth?.recurso : -dataAuth?.recurso)} disabled InputProps={{
                                 
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
@@ -383,7 +427,7 @@ export default function BasicEditingGrid(props) {
                             <h4  className="font-semibold mb-5">
                                 Valor a Pagar
                             </h4>
-                            <TextField prefix='R$' value={dataAuth?.valor_a_pagar} disabled InputProps={{
+                            <TextField prefix='R$' value={swapCommasAndPeriods(dataAuth?.valor_a_pagar)} disabled InputProps={{
                                 
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
