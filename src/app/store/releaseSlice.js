@@ -145,8 +145,11 @@ export const handleAuthValue = (data, id) => (dispatch) => {
                 dispatch(getData(data))
                 dispatch(setAuthValue(response.data.valor_autorizado))
             } else {
-                reject(new Error('Erro ao autorizar'));
+                reject(new Error('Erro'));
             }
+        })
+        .catch((error) => {
+                reject(error);
         })
 
     })
@@ -166,7 +169,7 @@ export const handleAuthRelease = (data, id) => (dispatch) => {
                 dispatch(handleAuthValue(data))
 
             } else {
-                reject(new Error('Erro ao autorizar'));
+                reject(error)
             }
         })
 
