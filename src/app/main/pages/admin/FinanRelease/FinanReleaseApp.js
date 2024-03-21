@@ -65,8 +65,8 @@ function FinanRelease() {
             periodo: '',
             numero_processo: null,
             algoritmo: null,
-            glosa: null,
-            recurso: null,
+            glosa: '',
+            recurso: '',
             data_ordem: null,
             valor_a_pagar: null
         },
@@ -111,7 +111,7 @@ function FinanRelease() {
 
     useEffect(() => {
         if (valuesState.algoritmo) {
-            const valueToPayAuto = parseFloat(valuesState.algoritmo) + parseFloat(valuesState.glosa) + parseFloat(valuesState.recurso)
+            const valueToPayAuto = parseFloat(valuesState.algoritmo) - parseFloat(valuesState.glosa) + parseFloat(valuesState.recurso)
             setValue('valor_a_pagar', valueToPayAuto)
             clearErrors('valor_a_pagar')
         }
@@ -126,6 +126,7 @@ function FinanRelease() {
             setValue('data_ordem', furtherDate.$d)
         }
     }
+  
 
     const valueProps = {
         startAdornment: <InputAdornment position='start'>R$</InputAdornment>
@@ -291,13 +292,17 @@ function FinanRelease() {
                                                 thousandSeparator={'.'}
                                                 decimalSeparator={','}
                                                 decimalScale={2}
+                                                fixedDecimalScale
                                                 label="Algortimo"
                                                 customInput={TextField}
                                                 InputProps={valueProps}
                                                 onValueChange={(values, sourceInfo) => {
-                                                    const { name } = sourceInfo.event.target;
-                                                    handleValueChange(name, values.value);
+                                                    if (sourceInfo.event !== undefined && sourceInfo.event.target.value !== '') {
+                                                        const { name } = sourceInfo.event.target;
+                                                        handleValueChange(name, values.value);
+                                                    }
                                                 }}
+
                                                 error={!!errors.algoritmo}
                                                 helperText={errors.algoritmo?.message}
                                             />
@@ -314,19 +319,22 @@ function FinanRelease() {
                                                 thousandSeparator={'.'}
                                                 label="Glosa"
                                                 allowNegative
+                                                prefix='-'
                                                 value={field.value}
                                                 className={c.glosa}
                                                 decimalSeparator={','}
+                                                fixedDecimalScale
                                                 decimalScale={2}
                                                 customInput={TextField}
                                                 InputProps={{
                                                     ...valuePropsGlosa,
-                                                 
                                                 }}
 
                                                 onValueChange={(values, sourceInfo) => {
-                                                    const { name } = sourceInfo.event.target;
-                                                    handleValueChange(name, values.value);
+                                                    if (sourceInfo.event !== undefined && sourceInfo.event.target.value !== '') {
+                                                        const { name } = sourceInfo.event.target;
+                                                        handleValueChange(name, values.value);
+                                                    }
                                                 }}
                                                 error={!!errors.glosa}
                                                 helperText={errors.glosa?.message}
@@ -349,6 +357,7 @@ function FinanRelease() {
                                                 decimalSeparator={','}
                                                 decimalScale={2}
                                                 label="Recurso"
+                                                fixedDecimalScale
                                                 customInput={TextField}
                                                 value={field.value}
                                                 InputProps={{
@@ -379,6 +388,7 @@ function FinanRelease() {
                                                 disabled
                                                 thousandSeparator={'.'}
                                                 decimalSeparator={','}
+                                                fixedDecimalScale
                                                 decimalScale={2}
                                                 customInput={TextField}
                                                 InputProps={valueProps}

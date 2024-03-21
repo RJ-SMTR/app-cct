@@ -73,9 +73,7 @@ export const setRelease = (data)  => (dispatch) => {
         const isoDateString = parseDate.toISOString()
         const cleanedData = {
             ...data,
-            recurso: data.recurso == null ? 0 : parseInt(data.recurso.replace(/\D/g, ''), 10),
             algoritmo: parseInt(data.algoritmo.replace(/\D/g, '')),
-            glosa: data.glosa == null ? 0 : parseInt(data.glosa.replace(/\D/g, ''), 10),
             data_ordem: isoDateString
 
         };
@@ -104,12 +102,6 @@ export const editRelease = (data,id) => (dispatch) => {
         const isoDateString = parseDate.toISOString()
         const cleanedData = {
             ...data,
-            recurso: parseInt(data.recurso.replace(/\D/g, '')),
-            // valor_a_pagar: parseInt(data.valor_a_pagar.replace(/\D/g, '')),
-            algoritmo: parseInt(data.algoritmo.replace(/\D/g, '')),
-            glosa: parseInt(data.glosa.replace(/\D/g, '')),
-            // valor: parseInt(data.valor_a_pagar.replace(/\D/g, '')),
-            numero_processo: parseInt(data.numero_processo),
             data_ordem: isoDateString
 
         };

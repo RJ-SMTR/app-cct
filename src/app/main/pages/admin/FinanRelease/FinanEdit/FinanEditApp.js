@@ -62,7 +62,7 @@ function FinanEdit() {
             setValueToPay(response.data.valor_a_pagar)
             setValuesState({
                 algoritmo: response.data.algoritmo,
-                glosa: response.data.glosa * -1,
+                glosa: response.data.glosa ,
                 recurso: response.data.recurso
             })
         };
@@ -89,7 +89,7 @@ function FinanEdit() {
 
     useEffect(() => {
         if (valuesState.algoritmo && valuesState.recurso && valuesState.glosa) {
-            const valueToPayAuto = parseFloat(valuesState.algoritmo) + parseFloat(valuesState.glosa) + parseFloat(valuesState.recurso)
+            const valueToPayAuto = parseFloat(valuesState.algoritmo) - parseFloat(valuesState.glosa) + parseFloat(valuesState.recurso)
             setValueToPay(valueToPayAuto)
         } 
     }, [valuesState])
@@ -243,12 +243,16 @@ function FinanEdit() {
                                                 labelId="algoritmo-label"
                                                 thousandSeparator={'.'}
                                                 decimalSeparator={','}
+                                                fixedDecimalScale
+                                                decimalScale={2}
                                                 label="Algortimo"
                                                 customInput={TextField}
                                                 InputProps={valueProps}
                                                 onValueChange={(values, sourceInfo) => {
-                                                    const { name } = sourceInfo.event.target;
-                                                    handleValueChange(name, values.value);
+                                                    if (sourceInfo.event.target.value !== '') {
+                                                        const { name } = sourceInfo.event.target;
+                                                        handleValueChange(name, values.value);
+                                                    }
                                                 }}
                                             />
                                         }
@@ -262,9 +266,13 @@ function FinanEdit() {
                                                 {...field}
                                                 thousandSeparator={'.'}
                                                 label="Glosa"
-                                                defaultValue={releaseData.glosa * -1}
+                                                defaultValue={releaseData.glosa}
                                                 allowNegative
                                                 className='glosa'
+                                                fixedDecimalScale
+                                                prefix='-'
+
+                                                decimalScale={2}
                                                 decimalSeparator={','}
                                                 customInput={TextField}
                                                 InputProps={valueProps}
@@ -287,6 +295,8 @@ function FinanEdit() {
                                                 thousandSeparator={'.'}
                                                 decimalSeparator={','}
                                                 allowNegative
+                                                fixedDecimalScale
+                                                decimalScale={2}
                                                 label="Recurso"
                                                 defaultValue={releaseData.recurso}
                                                 customInput={TextField}
@@ -313,6 +323,8 @@ function FinanEdit() {
                                                 defaultValue={valueToPay}
                                                 disabled
                                                 thousandSeparator={'.'}
+                                                fixedDecimalScale
+                                                decimalScale={2}
                                                 decimalSeparator={','}
                                                 customInput={TextField}
                                                 InputProps={valueProps}
