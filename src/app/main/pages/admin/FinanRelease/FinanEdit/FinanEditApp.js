@@ -51,7 +51,7 @@ function FinanEdit() {
             setShowForm(true)
             const dateString = response.data.data_ordem;
             const date = new Date(dateString);
-            const month = date.getMonth() + 1;
+            const month = date.getMonth();
             const day = date.getDate();
             const period = day > 15 ? 2 : 1;
             setDateOrder({
@@ -337,7 +337,7 @@ function FinanEdit() {
                                 </Box>
                             </FormControl>
                             <div className='flex justify-end mt-24'>
-                                <a href="" className='rounded p-3 uppercase text-white bg-grey h-[27px] min-h-[27px] font-medium px-10 mx-10'>
+                                <a href="/aprovação" className='rounded p-3 uppercase text-white bg-grey h-[27px] min-h-[27px] font-medium px-10 mx-10'>
                                     Voltar
                                 </a>
                                 <button type='submit' className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10'>
