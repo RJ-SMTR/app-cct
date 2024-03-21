@@ -115,7 +115,6 @@ class JwtService extends FuseUtils.EventEmitter {
           resolve(response)
           this.setSession(response.data.token)
           this.emit('onLogin', response.data.user)
-          redirect('/admin')
         })
         .catch((error) => {
           reject(error);
@@ -133,7 +132,6 @@ class JwtService extends FuseUtils.EventEmitter {
         .then((response) => {
           resolve(response)
           this.setSession(response.data.token)
-          redirect('/lancamentos')
           this.emit('onLogin', response.data.user)
         })
         .catch((error) => {
