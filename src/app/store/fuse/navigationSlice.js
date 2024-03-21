@@ -5,6 +5,7 @@ import FuseUtils from '@fuse/utils';
 import i18next from 'i18next';
 import _ from '@lodash';
 import navFinanConfig from 'app/configs/navFinanConfig';
+import masterConfig from 'app/configs/masterConfig';
 
 const navigationAdapter = createEntityAdapter();
 const emptyInitialState = navigationAdapter.getInitialState();
@@ -72,9 +73,25 @@ export const selectNavigation = createSelector(
         return item;
       });
     }
-    const configToUse = userRole === 'Admin' ? navAdminConfig :
-      userRole == 'Lançador Financeiro' || userRole == 'Aprovador Financeiro' || userRole == 'Admin Finan' ? navFinanConfig :
-        navFinanConfig;
+    let configToUse;
+    switch (userRole) {
+      
+      case 'Admin Master':
+        configToUse = masterConfig;
+        break;
+      case 'Admin':
+        configToUse = navAdminConfig;
+        break;
+      case 'Lançador Financeiro':
+      case 'Aprovador Financeiro':
+      case 'Admin Finan':
+        configToUse = navFinanConfig;
+        break;
+      default:
+        configToUse = navigationConfig;
+    }
+    
+
 
     return setTranslationValues(
       _.merge(
