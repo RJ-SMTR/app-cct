@@ -222,33 +222,22 @@ export default function BasicEditingGrid(props) {
         dispatch(handleAuthValue(selectedDate))
              
     }, [selectedDate, selectedPeriod])
+ 
 
 
     const columns = [
         { field: 'name', headerName: 'Consórcio/BRT', width: 180, editable: true },
         { field: 'processNumber', headerName: 'N.º Processo', width: 180, editable: true },
         {
-            field: 'toPay', headerName: 'Valor a Pagar', width: 180, editable: true, renderEditCell: (params) => (
-                <NumericFormat
-                    value={params.value}
-                    thousandSeparator={'.'}
-                    decimalSeparator={','}
-                    prefix={'R$ '}
-                    onValueChange={(values) => {
-                        const { value } = values;
-                        params.api.setEditCellValue({ id: params.id, field: params.field, value });
-                    }}
-                    customInput={TextField}
-                />
-            ),
+            field: 'toPay', headerName: 'Valor a Pagar', width: 180, editable: true, 
+               
             renderCell: (params) => (
-                <NumericFormat
-                    value={params.value}
-                    displayType={'text'}
-                    thousandSeparator={'.'}
-                    decimalSeparator={','}
-                    prefix={'R$ '}
-                />
+                <td >
+                    {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                    }).format(params.value)}
+                </td>
             ), },
         { field: 'setBy', headerName: 'Lançado Por',  width: 180, editable: true },
         { field: 'paymentOrder', headerName: 'Data Ordem Pagamento', type: 'date', width: 200, editable: true },
@@ -351,13 +340,10 @@ export default function BasicEditingGrid(props) {
             />
         </div>
             <Box>
-                    Valor Total:  <NumericFormat
-                        value={sumTotal}
-                        displayType={'text'}
-                        thousandSeparator={'.'}
-                        decimalSeparator={','}
-                        prefix={'R$ '}
-                    />
+                    Valor Total:       {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                    }).format(sumTotal)}
             </Box>
         </Box>
             <Modal
@@ -400,7 +386,7 @@ export default function BasicEditingGrid(props) {
                             <h4  className="font-semibold mb-5">
                                 Valor Algoritmo
                             </h4>
-                            <TextField prefix='R$' value={swapCommasAndPeriods(dataAuth?.algoritmo)} disabled InputProps={{
+                            <TextField prefix='R$' value={dataAuth?.algoritmo} disabled InputProps={{
                                 
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
@@ -409,16 +395,16 @@ export default function BasicEditingGrid(props) {
                             <h4  className="font-semibold mb-5">
                                 Valor Glosa
                             </h4>
-                            <TextField className='glosa' prefix='R$' value={swapCommasAndPeriods(dataAuth?.glosa)} disabled InputProps={{
+                            <TextField className='glosa' prefix='R$' value={dataAuth?.glosa === '' ? '0,00' : dataAuth?.glosa} disabled InputProps={{
                                 
-                                startAdornment: <InputAdornment position='start'>R$ -</InputAdornment>,
+                                startAdornment: <InputAdornment position='start'>R$ </InputAdornment>,
                             }} />
                     </Box>
                     <Box>
                             <h4  className="font-semibold mb-5">
                                 Valor Recurso
                             </h4>
-                            <TextField prefix='R$' className={sumOfItems === dataAuth?.valor_a_pagar ? "" : "glosa"} value={swapCommasAndPeriods(sumOfItems === dataAuth?.valor_a_pagar ? dataAuth?.recurso : -dataAuth?.recurso)} disabled InputProps={{
+                            <TextField prefix='R$' className={dataAuth?.recurso.includes('-') ? "glosa" : ""} value={dataAuth?.recurso === '' ? '0,00' : dataAuth?.recurso} disabled InputProps={{
                                 
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
@@ -427,7 +413,7 @@ export default function BasicEditingGrid(props) {
                             <h4  className="font-semibold mb-5">
                                 Valor a Pagar
                             </h4>
-                            <TextField prefix='R$' value={swapCommasAndPeriods(dataAuth?.valor_a_pagar)} disabled InputProps={{
+                            <TextField prefix='R$' value={dataAuth?.valor_a_pagar} disabled InputProps={{
                                 
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
