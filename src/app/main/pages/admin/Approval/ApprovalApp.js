@@ -13,14 +13,8 @@ import { handleAuthValue, setSelectedPeriod } from "app/store/releaseSlice";
 function ApprovalApp() {
  const selectedPeriod = useSelector(state => state.release.selectedPeriod)
  const listTransactions = useSelector(state => state.release.listTransactions)
- const dispacth = useDispatch()
  const authValue = useSelector(state => state.release.authValue)
- useEffect(() => {
-     dispacth(
-         setSelectedPeriod(false)
-         
-     )
- }, [])
+
 
     return (
         <>

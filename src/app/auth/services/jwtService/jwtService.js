@@ -84,7 +84,6 @@ class JwtService extends FuseUtils.EventEmitter {
 
   signInWithToken = () => {
     const token = this.getAccessToken();
-    console.log(token)
     return new Promise((resolve, reject) => {
       api
         .get(jwtServiceConfig.userInfo, { headers: { "Authorization": `Bearer ${token}` } })

@@ -14,15 +14,11 @@ import { Link } from 'react-router-dom';
 
 function CardSelection() {
     const dispatch = useDispatch()
- const selectedPeriod = useSelector(state => state.release.selectedPeriod)
- const selectedDate = useSelector(state => state.release.selectedDate)
+     const selectedDate = useSelector(state => state.release.selectedDate)
     const { register } = useForm()
 
     function handleChange(event) {
         const { name, value } = event.target;
-
-        // dispatch(setSelectedPeriod(!selectedPeriod));
-
         dispatch(setSelectedDate({
             ...selectedDate,
             [name]: value
@@ -32,15 +28,9 @@ function CardSelection() {
     useEffect(() => {
         if (selectedDate.mes && selectedDate.periodo) {
             dispatch(getData({selectedDate}))
-            
         }
     }, [selectedDate]);
-    useEffect(() => {
-        dispatch(setSelectedDate({
-            mes: '',
-            periodo: ''
-        }))
-    }, []);
+ 
 
     return (
         <>
@@ -60,6 +50,7 @@ function CardSelection() {
                                         id="select-mes"
                                         label="Selecionar Mes"
                                     onChange={handleChange}
+                                value={selectedDate.mes} 
                                     >
                                         <MenuItem value={1}>Janeiro</MenuItem>
                                         <MenuItem value={2}>Fevereiro</MenuItem>
@@ -83,6 +74,7 @@ function CardSelection() {
                                         id="select-periodo"
                                         label="Selecionar Periodo"
                                     onChange={handleChange}
+                                value={selectedDate.periodo} 
 
 
                                     >

@@ -18,6 +18,7 @@ import _ from '@lodash';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { makeStyles } from '@mui/styles';
 import { styling } from './customStyles';
+import accounting from 'accounting';
 
 
 const schema = yup.object().shape({
@@ -111,8 +112,15 @@ function FinanRelease() {
 
     useEffect(() => {
         if (valuesState.algoritmo) {
+    
             const valueToPayAuto = parseFloat(valuesState.algoritmo) - parseFloat(valuesState.glosa) + parseFloat(valuesState.recurso)
-            setValue('valor_a_pagar', valueToPayAuto)
+            const formattedValue = accounting.formatMoney(valueToPayAuto, {
+                symbol: "",
+                decimal: ",",
+                thousand: ".",
+                precision: 2
+            });
+            setValue('valor_a_pagar', formattedValue)
             clearErrors('valor_a_pagar')
         }
     }, [valuesState])
