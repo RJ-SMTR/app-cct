@@ -89,6 +89,7 @@ export const selectNavigation = createSelector(
         break;
       default:
         configToUse = navFinanConfig;
+
     }
     
 
