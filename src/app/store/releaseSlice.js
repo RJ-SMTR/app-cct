@@ -73,7 +73,6 @@ export const setRelease = (data)  => (dispatch) => {
         const isoDateString = parseDate.toISOString()
         const cleanedData = {
             ...data,
-            algoritmo: parseInt(data.algoritmo.replace(/\D/g, '')),
             data_ordem: isoDateString
 
         };

@@ -14,7 +14,8 @@ const masterConfig = [
         translate: 'Home',
         type: 'item',
         icon: 'heroicons-outline:home',
-        url: '/',
+        url: 'admin',
+
     },
     {
         id: 'upload-component',
