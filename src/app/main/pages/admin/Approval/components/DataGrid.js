@@ -181,41 +181,7 @@ export default function BasicEditingGrid(props) {
             </button>
         );
     };
-    const swapCommasAndPeriods = (value) => {
-        if (typeof value !== 'number') {
-            const containsCommas = value?.includes(',');
-            const containsPeriods = value?.includes('.');
 
-            if (!containsCommas && !containsPeriods) {
-                return value;
-            }
-
-            const step1 = containsCommas ? value.replace(/,/g, '#') : value;
-
-            const step2 = containsPeriods ? step1.replace(/\./g, ',') : step1;
-
-            const result = step2.replace(/#/g, '.');
-
-            return result;
-        }
-
-        const stringValue = value.toString();
-
-        const containsCommas = stringValue.includes(',');
-        const containsPeriods = stringValue.includes('.');
-
-        if (!containsCommas && !containsPeriods) {
-            return value;
-        }
-
-        const step1 = containsCommas ? stringValue.replace(/,/g, '#') : stringValue;
-
-        const step2 = containsPeriods ? step1.replace(/\./g, '.') : step1;
-
-        const result = step2.replace(/#/g, ',');
-        
-        return result
-    };
 
 
     useEffect(() => {
@@ -413,10 +379,12 @@ export default function BasicEditingGrid(props) {
                             <h4  className="font-semibold mb-5">
                                 Valor a Pagar
                             </h4>
-                            <TextField prefix='R$' value={dataAuth?.valor_a_pagar} disabled InputProps={{
-                                
-                                startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
-                            }} />
+                            <TextField prefix='R$' value={
+                                new Intl.NumberFormat('pt-BR', {
+                                    style: 'currency',
+                                    currency: 'BRL'
+                                }).format(dataAuth?.valor_a_pagar)
+                            } disabled />
                     </Box>
                   </Box>
                 </Box>

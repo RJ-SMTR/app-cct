@@ -11,15 +11,17 @@ import { NumericFormat } from 'react-number-format';
 import { editRelease } from 'app/store/releaseSlice';
 import { useDispatch } from 'react-redux';
 import { AuthContext } from 'src/app/auth/AuthContext';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { api } from 'app/configs/api/api';
 import jwtServiceConfig from 'src/app/auth/services/jwtService/jwtServiceConfig';
 import dayjs from 'dayjs';
-
+import accounting from 'accounting';
 
 
 
 function FinanEdit() {
+
+    const navigate = useNavigate()
     let { id } = useParams()
     const dispatch = useDispatch()
     const [showForm, setShowForm] = useState(false);
@@ -81,18 +83,41 @@ function FinanEdit() {
 
 
     const handleValueChange = (name, value) => {
+        if (name === 'glosa') {
+            value = value.startsWith('-') ? value : '-' + value;
+        }
         setValuesState(prevState => ({
             ...prevState,
-            [name]: value
+            [name]: accounting.formatMoney(value, {
+                symbol: "R$ ",
+                decimal: ",",
+                thousand: ".",
+                precision: 2
+            })
         }));
     };
 
     useEffect(() => {
-        if (valuesState.algoritmo && valuesState.recurso && valuesState.glosa) {
-            const valueToPayAuto = parseFloat(valuesState.algoritmo) - parseFloat(valuesState.glosa) + parseFloat(valuesState.recurso)
-            setValueToPay(valueToPayAuto)
-        } 
-    }, [valuesState])
+        if (valuesState.algoritmo) {
+            const algoritmoAmount = accounting.unformat(valuesState.algoritmo.replace(/\./g, '').replace('.', ','), ',');
+            const glosaAmount = accounting.unformat(valuesState.glosa.replace(/\./g, '').replace('.', ','), ',');
+            const recursoAmount = accounting.unformat(valuesState.recurso.replace(/\./g, '').replace('.', ','), ',');
+
+            const valueToPayAuto = algoritmoAmount + glosaAmount + recursoAmount;
+
+            const formattedValue = accounting.formatMoney(valueToPayAuto, {
+                symbol: "",
+                decimal: ",",
+                thousand: ".",
+                precision: 2
+            });
+
+            setValueToPay(formattedValue);
+        }
+    }, [valuesState]);
+
+
+
 
 
 
@@ -123,9 +148,6 @@ function FinanEdit() {
     const valueProps = {
         startAdornment: <InputAdornment position='start'>R$</InputAdornment>
     }
-    useEffect(() => {
-        console.log(releaseData)
-    }, [releaseData])
     return (
         <>
             {showForm && <div className="p-24 pt-10">
@@ -337,7 +359,7 @@ function FinanEdit() {
                                 </Box>
                             </FormControl>
                             <div className='flex justify-end mt-24'>
-                                <a href="/aprovação" className='rounded p-3 uppercase text-white bg-grey h-[27px] min-h-[27px] font-medium px-10 mx-10'>
+                                <a onClick={() => navigate(-1)} className='rounded p-3 uppercase text-white bg-grey h-[27px] min-h-[27px] font-medium px-10 mx-10'>
                                     Voltar
                                 </a>
                                 <button type='submit' className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10'>
