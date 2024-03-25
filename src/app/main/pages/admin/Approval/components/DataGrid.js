@@ -113,7 +113,6 @@ export default function BasicEditingGrid(props) {
             response.data.auth_usersIds = auth_usersIdsArray;
         }
         setDataAuth(response.data)
-        setOpen(true)
         const dateString = response.data.data_ordem;
         const date = new Date(dateString);
         const month = date.getMonth() + 1;
@@ -127,6 +126,7 @@ export default function BasicEditingGrid(props) {
 
     const handleOpen = (id) => {
         getInfoAuth(id)
+        setOpen(true)
 
     };
     const deleteInfo = (id) => () => {
@@ -143,6 +143,7 @@ export default function BasicEditingGrid(props) {
     const handleDeleteClick = (id) => () => {
         setOpenDelete(true)
         setSelectedId(id)
+        getInfoAuth(id)
     };
 
 
@@ -219,7 +220,7 @@ export default function BasicEditingGrid(props) {
         },
         { field: 'setBy', headerName: 'Lançado Por', width: 180, editable: true },
         { field: 'paymentOrder', headerName: 'Data Ordem Pagamento', type: 'date', width: 200, editable: true },
-        { field: 'authBy', headerName: 'Autorizado Por', width: 180, editable: true },
+        { field: 'authBy', headerName: 'Autorizado Por', width: 180, editable: true, cellClassName: 'authCell' },
         { field: 'effectivePayment', headerName: 'Data Pagamento Efetivo', type: 'date', width: 200, editable: true },
         {
             field: 'actions',
@@ -228,9 +229,6 @@ export default function BasicEditingGrid(props) {
             width: 200,
             cellClassName: 'actions',
             getActions: ({ id }) => {
-                const isInEditMode = rowModesModel[id]?.mode === 'edit';
-
-
 
                 return [
                     <GridActionsCellItem
@@ -335,8 +333,7 @@ export default function BasicEditingGrid(props) {
                             <h4 className="font-semibold mb-5">
                                 Valor Algoritmo
                             </h4>
-                            <TextField prefix='R$' value={dataAuth?.algoritmo} disabled InputProps={{
-
+                            <TextField prefix='R$' value={dataAuth?.algoritmo?.replace(/R\$/g, '')} disabled InputProps={{
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
                         </Box>
@@ -362,7 +359,7 @@ export default function BasicEditingGrid(props) {
                             <h4 className="font-semibold mb-5">
                                 Valor a Pagar
                             </h4>
-                            <TextField prefix='R$' className={dataAuth?.recurso.includes('-') ? "glosa" : ""} value={dataAuth?.recurso === '' ? '0,00' : dataAuth?.recurso} disabled InputProps={{
+                            <TextField prefix='R$' value={dataAuth?.valor_a_pagar} disabled InputProps={{
 
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
@@ -381,9 +378,21 @@ export default function BasicEditingGrid(props) {
                 <Box sx={style}>
                     <Box>
                         <Typography id="modal-modal-title text-center" variant="h6" component="h2" className='text-center'>
-                            Tem certeza que deseja deletar?
+                            Tem certeza que deseja deletar este registro?
                         </Typography>
-                     
+                        <p variant="h6" component="h2">
+                            Favorecido: {dataAuth?.descricao}
+                        </p>
+                        <h4>
+                            N.º Processo: {dataAuth?.numero_processo}
+                        </h4>
+                        <p>Mês: {dayjs().month(dateOrder?.month - 1).format('MMMM')}</p>
+                            <p>
+                                Período: {dateOrder.period} Quinzena -{' '}
+                                {dateOrder.period === 1
+                                    ? `05/${dayjs().month(dateOrder.month - 1).format('MM')}`
+                                    : `20/${dayjs().month(dateOrder.month - 1).format('MM')}`}
+                            </p>
                         <Box className="md:flex justify-between w-full">
 
                             <button

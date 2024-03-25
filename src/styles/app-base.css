@@ -210,3 +210,7 @@ transform: scale(1) translate(2%, -55%) !important;
 .MuiDataGrid-root .MuiTablePagination-root{
 display: none !important;
 }
+.authCell{
+    overflow: visible !important;
+    white-space: pre-wrap !important;
+}
