@@ -179,13 +179,6 @@ export default function BasicEditingGrid(props) {
             })
     };
 
-
-
-
-
-
-
-
     const processRowUpdate = (newRow) => {
         const updatedRow = { ...newRow, isNew: false };
         setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
@@ -247,7 +240,7 @@ export default function BasicEditingGrid(props) {
                     <GridActionsCellItem
                         icon={<DeleteIcon sx={{ color: 'white' }} />}
                         label="Delete"
-                        onClick={ handleDeleteClick(id)}
+                        onClick={handleDeleteClick(id)}
                         color="inherit"
                         sx={{
                             backgroundColor: 'red',
@@ -341,7 +334,7 @@ export default function BasicEditingGrid(props) {
                             <h4 className="font-semibold mb-5">
                                 Valor Glosa
                             </h4>
-                            <TextField className='glosa' prefix='R$' value={dataAuth?.glosa === '' ? '0,00' : dataAuth?.glosa} disabled InputProps={{
+                            <TextField className='glosa' prefix='R$' value={dataAuth?.glosa === '' ? '0,00' : dataAuth?.glosa?.replace(/R\$/g, '')} disabled InputProps={{
 
                                 startAdornment: <InputAdornment position='start'>R$ </InputAdornment>,
                             }} />
@@ -350,7 +343,7 @@ export default function BasicEditingGrid(props) {
                             <h4 className="font-semibold mb-5">
                                 Valor Recurso
                             </h4>
-                            <TextField prefix='R$' className={dataAuth?.recurso.includes('-') ? "glosa" : ""} value={dataAuth?.recurso === '' ? '0,00' : dataAuth?.recurso} disabled InputProps={{
+                            <TextField prefix='R$' className={dataAuth?.recurso.includes('-') ? "glosa" : ""} value={dataAuth?.recurso === '' ? '0,00' : dataAuth?.recurso?.replace(/R\$/g, '')} disabled InputProps={{
 
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
@@ -359,7 +352,7 @@ export default function BasicEditingGrid(props) {
                             <h4 className="font-semibold mb-5">
                                 Valor a Pagar
                             </h4>
-                            <TextField prefix='R$' value={dataAuth?.valor_a_pagar} disabled InputProps={{
+                            <TextField prefix='R$' value={dataAuth?.valor_a_pagar?.replace(/R\$/g, '')} disabled InputProps={{
 
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
@@ -387,24 +380,23 @@ export default function BasicEditingGrid(props) {
                             N.º Processo: {dataAuth?.numero_processo}
                         </h4>
                         <p>Mês: {dayjs().month(dateOrder?.month - 1).format('MMMM')}</p>
-                            <p>
-                                Período: {dateOrder.period} Quinzena -{' '}
-                                {dateOrder.period === 1
-                                    ? `05/${dayjs().month(dateOrder.month - 1).format('MM')}`
-                                    : `20/${dayjs().month(dateOrder.month - 1).format('MM')}`}
-                            </p>
+                        <p>
+                            Período: {dateOrder.period} Quinzena -{' '}
+                            {dateOrder.period === 1
+                                ? `05/${dayjs().month(dateOrder.month - 1).format('MM')}`
+                                : `20/${dayjs().month(dateOrder.month - 1).format('MM')}`}
+                        </p>
                         <Box className="md:flex justify-between w-full">
 
                             <button
                                 onClick={deleteInfo(selectedId)}
                                 className='rounded p-3 uppercase text-white bg-red w-[100%]  font-medium px-10 mt-10'
-                                disabled={user.role.id === 3}
                             >
                                 Deletar
                             </button>
                         </Box>
                     </Box>
-              
+
                 </Box>
             </Modal>
         </>
