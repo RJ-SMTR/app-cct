@@ -99,8 +99,9 @@ function FinanEdit() {
 
     useEffect(() => {
         const sanitizedValuesState = Object.fromEntries(
-            Object.entries(valuesState).map(([key, value]) => [key, value === '' ? 0 : value])
+            Object.entries(valuesState).map(([key, value]) => [key, value === '' ? '' : value])
         );
+
         if (sanitizedValuesState.algoritmo) {
             const algoritmoAmount = accounting.unformat(sanitizedValuesState.algoritmo.replace(/\./g, '').replace('.', ','), ',');
             const glosaAmount = accounting.unformat(sanitizedValuesState.glosa.replace(/\./g, '').replace('.', ','), ',');
