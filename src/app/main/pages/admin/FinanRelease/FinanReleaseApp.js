@@ -118,9 +118,7 @@ function FinanRelease() {
         );
         if (sanitizedValuesState.algoritmo) {
             const valueToPayAuto = parseFloat(sanitizedValuesState.algoritmo) - parseFloat(sanitizedValuesState.glosa) + parseFloat(sanitizedValuesState.recurso)
-            console.log("glosa", parseFloat(valuesState.glosa))
-            console.log("recurso", parseFloat(valuesState.recurso))
-            console.log(valueToPayAuto)
+        
             const formattedValue = accounting.formatMoney(valueToPayAuto, {
                 symbol: "",
                 decimal: ",",
@@ -312,7 +310,7 @@ function FinanRelease() {
                                                 customInput={TextField}
                                                 InputProps={valueProps}
                                                 onValueChange={(values, sourceInfo) => {
-                                                    if (sourceInfo.event !== undefined && sourceInfo.event.target.value !== '') {
+                                                    if (sourceInfo && sourceInfo.event && sourceInfo.event.target) {
                                                         const { name } = sourceInfo.event.target;
                                                         handleValueChange(name, values.value);
                                                     }
@@ -346,7 +344,7 @@ function FinanRelease() {
                                                 }}
 
                                                 onValueChange={(values, sourceInfo) => {
-                                                    if (sourceInfo.event !== undefined && sourceInfo.event.target.value !== '') {
+                                                    if (sourceInfo && sourceInfo.event && sourceInfo.event.target) {
                                                         const { name } = sourceInfo.event.target;
                                                         handleValueChange(name, values.value);
                                                     }
