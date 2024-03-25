@@ -36,7 +36,7 @@ const schema = yup.object().shape({
     valor_a_pagar: yup.string()
         .test('is-not-negative', 'Valor a pagar não pode ser negativo', value => {
             if (value && value.includes('-')) {
-                return false; 
+                return false;
             }
             return true;
         })
@@ -65,11 +65,11 @@ function FinanRelease() {
             mes: '',
             periodo: '',
             numero_processo: null,
-            algoritmo: null,
+            algoritmo: '',
             glosa: '',
             recurso: '',
             data_ordem: null,
-            valor_a_pagar: null
+            valor_a_pagar: ''
         },
         resolver: yupResolver(schema),
     })
@@ -103,17 +103,24 @@ function FinanRelease() {
 
 
             })
-        .catch((_errors) => {
-            console.log(_errors)
-        });
+            .catch((_errors) => {
+                console.log(_errors)
+            });
 
     }
 
 
     useEffect(() => {
-        if (valuesState.algoritmo) {
-    
-            const valueToPayAuto = parseFloat(valuesState.algoritmo) - parseFloat(valuesState.glosa) + parseFloat(valuesState.recurso)
+
+        
+        const sanitizedValuesState = Object.fromEntries(
+            Object.entries(valuesState).map(([key, value]) => [key, value === '' ? 0 : value])
+        );
+        if (sanitizedValuesState.algoritmo) {
+            const valueToPayAuto = parseFloat(sanitizedValuesState.algoritmo) - parseFloat(sanitizedValuesState.glosa) + parseFloat(sanitizedValuesState.recurso)
+            console.log("glosa", parseFloat(valuesState.glosa))
+            console.log("recurso", parseFloat(valuesState.recurso))
+            console.log(valueToPayAuto)
             const formattedValue = accounting.formatMoney(valueToPayAuto, {
                 symbol: "",
                 decimal: ",",
@@ -134,7 +141,7 @@ function FinanRelease() {
             setValue('data_ordem', furtherDate.$d)
         }
     }
-  
+
 
     const valueProps = {
         startAdornment: <InputAdornment position='start'>R$</InputAdornment>

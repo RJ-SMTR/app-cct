@@ -98,10 +98,13 @@ function FinanEdit() {
     };
 
     useEffect(() => {
-        if (valuesState.algoritmo) {
-            const algoritmoAmount = accounting.unformat(valuesState.algoritmo.replace(/\./g, '').replace('.', ','), ',');
-            const glosaAmount = accounting.unformat(valuesState.glosa.replace(/\./g, '').replace('.', ','), ',');
-            const recursoAmount = accounting.unformat(valuesState.recurso.replace(/\./g, '').replace('.', ','), ',');
+        const sanitizedValuesState = Object.fromEntries(
+            Object.entries(valuesState).map(([key, value]) => [key, value === '' ? 0 : value])
+        );
+        if (sanitizedValuesState.algoritmo) {
+            const algoritmoAmount = accounting.unformat(sanitizedValuesState.algoritmo.replace(/\./g, '').replace('.', ','), ',');
+            const glosaAmount = accounting.unformat(sanitizedValuesState.glosa.replace(/\./g, '').replace('.', ','), ',');
+            const recursoAmount = accounting.unformat(sanitizedValuesState.recurso.replace(/\./g, '').replace('.', ','), ',');
 
             const valueToPayAuto = algoritmoAmount + glosaAmount + recursoAmount;
 
@@ -271,7 +274,7 @@ function FinanEdit() {
                                                 customInput={TextField}
                                                 InputProps={valueProps}
                                                 onValueChange={(values, sourceInfo) => {
-                                                    if (sourceInfo.event.target.value !== '') {
+                                                    if (sourceInfo.event !== undefined && sourceInfo.event.target.value !== '') {
                                                         const { name } = sourceInfo.event.target;
                                                         handleValueChange(name, values.value);
                                                     }
@@ -289,7 +292,6 @@ function FinanEdit() {
                                                 thousandSeparator={'.'}
                                                 label="Glosa"
                                                 defaultValue={releaseData.glosa}
-                                                allowNegative
                                                 className='glosa'
                                                 fixedDecimalScale
                                                 prefix='-'
@@ -299,8 +301,10 @@ function FinanEdit() {
                                                 customInput={TextField}
                                                 InputProps={valueProps}
                                                 onValueChange={(values, sourceInfo) => {
-                                                    const { name } = sourceInfo.event.target;
-                                                    handleValueChange(name, values.value);
+                                                    if (sourceInfo.event !== undefined && sourceInfo.event.target.value !== '') {
+                                                        const { name } = sourceInfo.event.target;
+                                                        handleValueChange(name, values.value);
+                                                    }
                                                 }}
                                             />
                                         }
@@ -327,8 +331,10 @@ function FinanEdit() {
                                                     className: valuesState.recurso < 0 ? "glosa" : ""
                                                 }}
                                                 onValueChange={(values, sourceInfo) => {
-                                                    const { name } = sourceInfo.event.target;
-                                                    handleValueChange(name, values.value);
+                                                    if (sourceInfo.event !== undefined && sourceInfo.event.target.value !== '') {
+                                                        const { name } = sourceInfo.event.target;
+                                                        handleValueChange(name, values.value);
+                                                    }
                                                 }}
                                             />
                                         }
