@@ -1,4 +1,4 @@
-import {useContext, useEffect, useState} from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { DataGrid, GridActionsCellItem, ptBR } from '@mui/x-data-grid';
 import { Box, Button, Card, Modal, TextField, Typography, InputAdornment } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
@@ -6,14 +6,15 @@ import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
 import { NumericFormat } from 'react-number-format';
-import {  useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { handleAuthRelease, handleAuthValue } from 'app/store/releaseSlice';
+import { deleteRelease, handleAuthRelease, handleAuthValue } from 'app/store/releaseSlice';
 import { AuthContext } from 'src/app/auth/AuthContext';
 import { api } from 'app/configs/api/api';
 import jwtServiceConfig from 'src/app/auth/services/jwtService/jwtServiceConfig';
 import dayjs from 'dayjs';
 import { selectUser } from 'app/store/userSlice';
+import accounting from 'accounting';
 var updateLocale = require('dayjs/plugin/updateLocale')
 dayjs.extend(updateLocale)
 require('dayjs/locale/pt-br')
@@ -25,6 +26,7 @@ dayjs.updateLocale('pt-br', {
 })
 
 dayjs.locale('pt-br')
+
 
 
 const style = {
@@ -44,11 +46,13 @@ const style = {
 export default function BasicEditingGrid(props) {
     const [rowModesModel, setRowModesModel] = useState({});
     const { success } = useContext(AuthContext)
+    const user = useSelector(selectUser);
     const navigate = useNavigate()
     const dispatch = useDispatch()
     const selectedDate = useSelector(state => state.release.selectedDate)
     const selectedPeriod = useSelector(state => state.release.selectedPeriod)
     const [open, setOpen] = useState(false)
+    const [openDelete, setOpenDelete] = useState(false)
     const [initialRows, setInitialRows] = useState(false)
     const [selectedId, setSelectedId] = useState()
     const [dataAuth, setDataAuth] = useState()
@@ -59,71 +63,105 @@ export default function BasicEditingGrid(props) {
 
     })
     const [sumTotal, setSumTotal] = useState()
-    const user = useSelector(selectUser);
+    const [rows, setRows] = useState(initialRows);
+
     useEffect(() => {
         if (dataAuth) {
             const sum = dataAuth.algoritmo - dataAuth.glosa + dataAuth.recurso
             setSumOfItems(sum);
         }
     }, [dataAuth]);
-   async function getInfoAuth(id){
-       const token = window.localStorage.getItem('jwt_access_token');
-       const response = await api.get(jwtServiceConfig.finanGetInfo + `/${id}`, {
-           headers: { "Authorization": `Bearer ${token}` },
-       });
-       if (response.data.auth_usersIds){
-           const auth_usersIdsArray = response.data.auth_usersIds.split(",");
-           response.data.auth_usersIds = auth_usersIdsArray;
-       }
-       setDataAuth(response.data)
-       setOpen(true)
-       const dateString = response.data.data_ordem;
-       const date = new Date(dateString);
-       const month = date.getMonth() + 1;
-       const day = date.getDate();
-       const period = day > 15 ? 2 : 1;
-       setDateOrder({
-           month: month,
-           period: period
-       });
+
+
+    useEffect(() => {
+        const sum = props.data.reduce((accumulator, item) => accumulator + accounting.unformat(item.valor.replace(/\./g, '').replace('.', ','), ','), 0);
+        const formattedValue = accounting.formatMoney(sum, {
+            symbol: "",
+            decimal: ",",
+            thousand: ".",
+            precision: 2
+        });
+        setSumTotal(formattedValue)
+        setRows(props.data.map((item, index) => {
+            return {
+                id: item.id,
+                processNumber: item.numero_processo,
+                name: item.descricao,
+                toPay: 'R$ ' + item.valor,
+                setBy: item.user.fullName,
+                paymentOrder: new Date(item.data_ordem),
+                authBy: item.autorizadopor.map(i => i.fullName
+
+                ),
+                effectivePayment: new Date(item.data_pgto)
+            };
+        }))
+    }, [props])
+
+    useEffect(() => {
+        dispatch(handleAuthValue(selectedDate))
+
+    }, [selectedDate, selectedPeriod])
+
+    async function getInfoAuth(id) {
+        const token = window.localStorage.getItem('jwt_access_token');
+        const response = await api.get(jwtServiceConfig.finanGetInfo + `/${id}`, {
+            headers: { "Authorization": `Bearer ${token}` },
+        });
+        if (response.data.auth_usersIds) {
+            const auth_usersIdsArray = response.data.auth_usersIds.split(",");
+            response.data.auth_usersIds = auth_usersIdsArray;
+        }
+        setDataAuth(response.data)
+        const dateString = response.data.data_ordem;
+        const date = new Date(dateString);
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        const period = day > 15 ? 2 : 1;
+        setDateOrder({
+            month: month,
+            period: period
+        });
     }
 
     const handleOpen = (id) => {
-        setSelectedId(id)
         getInfoAuth(id)
+        setOpen(true)
 
     };
+    const deleteInfo = (id) => () => {
+        dispatch(deleteRelease(id))
+            .then((response) => {
+                setRows(rows.filter((row) => row.id !== id));
+                success(response, "Deletado com sucesso!");
+                setOpenDelete(false);
+            })
+            .catch((error) => {
+                success(error, "Não autorizado!");
+            })
+    };
+    const handleDeleteClick = (id) => () => {
+        setOpenDelete(true)
+        setSelectedId(id)
+        getInfoAuth(id)
+    };
+
 
     const handleClose = () => setOpen(false);
-  
-  useEffect(() => {
-      const sum = props.data.reduce((accumulator, item) => accumulator + parseFloat(item.valor), 0);
-      setSumTotal(sum)
-        setRows(props.data.map((item, index) => {
-          return {
-              id: item.id,
-              processNumber: item.numero_processo,
-              name: item.descricao,
-              toPay: parseFloat(item.valor),
-              setBy: item.user.fullName,
-              paymentOrder: new Date(item.data_ordem),
-              authBy: item.autorizadopor.map(i => i.fullName
+    const handleCloseDelete = () => setOpenDelete(false);
 
-              ),
-              effectivePayment: new Date(item.data_pgto)
-          };
-      }))
-      
-  }, [props])
-    const [rows, setRows] = useState(initialRows);
+
+
+
     const handleEditClick = (id) => () => {
         navigate(`/lancamentos/editar/${id}`)
     };
+
     const handleAuth = (id) => () => {
         dispatch(handleAuthRelease(selectedDate, id))
             .then((response) => {
                 success(response, "Autorizado!");
-                setOpen(false);                    
+                setOpen(false);
                 const updatedRows = rows.map(row => {
                     if (row.id === id) {
                         const updatedAutorizadopor = props.data.find(item => item.id === id);
@@ -141,36 +179,23 @@ export default function BasicEditingGrid(props) {
             })
     };
 
-    const handleSaveClick = (id) => () => {
-        setRowModesModel({ ...rowModesModel, [id]: { mode: 'view' } });
-    };
 
-    const handleDeleteClick = (id) => () => {
-        setRows(rows.filter((row) => row.id !== id));
-    };
 
-    const handleCancelClick = (id) => () => {
-        setRowModesModel({
-            ...rowModesModel,
-            [id]: { mode: 'view', ignoreModifications: true },
-        });
 
-        const editedRow = rows.find((row) => row.id === id);
-        if (editedRow.isNew) {
-            setRows(rows.filter((row) => row.id !== id));
-        }
-    };
+
+
+
 
     const processRowUpdate = (newRow) => {
         const updatedRow = { ...newRow, isNew: false };
         setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
         return updatedRow;
     };
-;
-    const AuthButton = (id ) => {
+    ;
+    const AuthButton = (id) => {
         const targetRow = id.rows.find(row => row.id === id.id);
 
-        const hasMultipleAuthBy = targetRow  && targetRow.authBy.length > 1;
+        const hasMultipleAuthBy = targetRow && targetRow.authBy.length > 1;
 
         return (
             <button
@@ -184,30 +209,18 @@ export default function BasicEditingGrid(props) {
 
 
 
-    useEffect(() => {
-        dispatch(handleAuthValue(selectedDate))
-             
-    }, [selectedDate, selectedPeriod])
- 
+
 
 
     const columns = [
         { field: 'name', headerName: 'Consórcio/BRT', width: 180, editable: true },
         { field: 'processNumber', headerName: 'N.º Processo', width: 180, editable: true },
         {
-            field: 'toPay', headerName: 'Valor a Pagar', width: 180, editable: true, 
-               
-            renderCell: (params) => (
-                <td >
-                    {new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL'
-                    }).format(params.value)}
-                </td>
-            ), },
-        { field: 'setBy', headerName: 'Lançado Por',  width: 180, editable: true },
+            field: 'toPay', headerName: 'Valor a Pagar', width: 180, editable: false,
+        },
+        { field: 'setBy', headerName: 'Lançado Por', width: 180, editable: true },
         { field: 'paymentOrder', headerName: 'Data Ordem Pagamento', type: 'date', width: 200, editable: true },
-        { field: 'authBy', headerName: 'Autorizado Por', width: 180, editable: true },
+        { field: 'authBy', headerName: 'Autorizado Por', width: 180, editable: true, cellClassName: 'authCell' },
         { field: 'effectivePayment', headerName: 'Data Pagamento Efetivo', type: 'date', width: 200, editable: true },
         {
             field: 'actions',
@@ -216,35 +229,6 @@ export default function BasicEditingGrid(props) {
             width: 200,
             cellClassName: 'actions',
             getActions: ({ id }) => {
-                const isInEditMode = rowModesModel[id]?.mode === 'edit';
-
-                if (isInEditMode) {
-                    return [
-                        <GridActionsCellItem
-                            icon={<SaveIcon sx={{ color: 'white' }} />}
-                            label="Save"
-                            onClick={handleSaveClick(id)}
-                            sx={{
-                                backgroundColor: 'green',
-                                '&:hover': {
-                                    backgroundColor: 'green',
-                                },
-                            }}
-                        />,
-                        <GridActionsCellItem
-                            icon={<CancelIcon sx={{ color: 'white' }} />}
-                            label="Cancel"
-                            onClick={handleCancelClick(id)}
-                            color="inherit"
-                            sx={{
-                                backgroundColor: 'red',
-                                '&:hover': {
-                                    backgroundColor: 'red',
-                                },
-                            }}
-                        />,
-                    ];
-                }
 
                 return [
                     <GridActionsCellItem
@@ -253,17 +237,17 @@ export default function BasicEditingGrid(props) {
                         onClick={handleEditClick(id)}
                         color="inherit"
                         sx={{
-                            backgroundColor: '#004A80', 
+                            backgroundColor: '#004A80',
                             '&:hover': {
-                                backgroundColor: '#004A80', 
+                                backgroundColor: '#004A80',
                             },
                         }}
-                        
+
                     />,
                     <GridActionsCellItem
                         icon={<DeleteIcon sx={{ color: 'white' }} />}
                         label="Delete"
-                        onClick={handleDeleteClick(id)}
+                        onClick={ handleDeleteClick(id)}
                         color="inherit"
                         sx={{
                             backgroundColor: 'red',
@@ -272,8 +256,8 @@ export default function BasicEditingGrid(props) {
                             },
                         }}
                     />,
-                  
-                        <AuthButton id={id} rows={rows}/>
+
+                    <AuthButton id={id} rows={rows} />
                 ];
             },
         },
@@ -281,37 +265,34 @@ export default function BasicEditingGrid(props) {
 
     return (
         <>
-          <Box className="w-full md:mx-9 p-24 relative mt-32">
+            <Box className="w-full md:mx-9 p-24 relative mt-32">
                 <header className="flex justify-between items-center">
                     <h3 className="font-semibold mb-24">
                         Favorecidos
                     </h3>
                 </header>
-        <div style={{ height: 300, width: '100%' }}>
-            <DataGrid
-                localeText={ptBR.components.MuiDataGrid.defaultProps.localeText} 
-                rows={rows}
-                columns={columns}
-                editMode="row"
-                rowModesModel={rowModesModel}
-                onRowEditStop={(params, event) => {
-                    event.defaultMuiPrevented = true;
-                }}
-                processRowUpdate={processRowUpdate}
-           
-                componentsProps={{
-                    toolbar: { setRows, setRowModesModel },
-                }}
-                experimentalFeatures={{ newEditingApi: true }}
-            />
-        </div>
-            <Box>
-                    Valor Total:       {new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL'
-                    }).format(sumTotal)}
+                <div style={{ height: 300, width: '100%' }}>
+                    <DataGrid
+                        localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
+                        rows={rows}
+                        columns={columns}
+                        editMode="row"
+                        rowModesModel={rowModesModel}
+                        onRowEditStop={(params, event) => {
+                            event.defaultMuiPrevented = true;
+                        }}
+                        processRowUpdate={processRowUpdate}
+
+                        componentsProps={{
+                            toolbar: { setRows, setRowModesModel },
+                        }}
+                        experimentalFeatures={{ newEditingApi: true }}
+                    />
+                </div>
+                <Box>
+                    Valor Total:  R$ {sumTotal}
+                </Box>
             </Box>
-        </Box>
             <Modal
                 open={open}
                 onClose={handleClose}
@@ -335,7 +316,7 @@ export default function BasicEditingGrid(props) {
                                     : `20/${dayjs().month(dateOrder.month - 1).format('MM')}`}
                             </p>
 
-                            {dataAuth?.auth_usersIds?.length > 1 ? <button  className='rounded p-3 uppercase text-white bg-green-500  font-medium px-10 text-xs' disabled>
+                            {dataAuth?.auth_usersIds?.length > 1 ? <button className='rounded p-3 uppercase text-white bg-green-500  font-medium px-10 text-xs' disabled>
                                 Autorizado
                             </button> : <button
                                 onClick={handleAuth(dataAuth?.id)}
@@ -346,49 +327,86 @@ export default function BasicEditingGrid(props) {
                             </button>}
                         </Box>
                     </Box>
-                    <hr className='mt-10'/>
+                    <hr className='mt-10' />
                     <Box className="grid gap-10  md:grid-cols-2 mt-12">
-                    <Box>
-                            <h4  className="font-semibold mb-5">
+                        <Box>
+                            <h4 className="font-semibold mb-5">
                                 Valor Algoritmo
                             </h4>
-                            <TextField prefix='R$' value={dataAuth?.algoritmo} disabled InputProps={{
-                                
+                            <TextField prefix='R$' value={dataAuth?.algoritmo?.replace(/R\$/g, '')} disabled InputProps={{
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
-                    </Box>
-                    <Box>
-                            <h4  className="font-semibold mb-5">
+                        </Box>
+                        <Box>
+                            <h4 className="font-semibold mb-5">
                                 Valor Glosa
                             </h4>
                             <TextField className='glosa' prefix='R$' value={dataAuth?.glosa === '' ? '0,00' : dataAuth?.glosa} disabled InputProps={{
-                                
+
                                 startAdornment: <InputAdornment position='start'>R$ </InputAdornment>,
                             }} />
-                    </Box>
-                    <Box>
-                            <h4  className="font-semibold mb-5">
+                        </Box>
+                        <Box>
+                            <h4 className="font-semibold mb-5">
                                 Valor Recurso
                             </h4>
                             <TextField prefix='R$' className={dataAuth?.recurso.includes('-') ? "glosa" : ""} value={dataAuth?.recurso === '' ? '0,00' : dataAuth?.recurso} disabled InputProps={{
-                                
+
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
-                    </Box>
-                    <Box>
-                            <h4  className="font-semibold mb-5">
+                        </Box>
+                        <Box>
+                            <h4 className="font-semibold mb-5">
                                 Valor a Pagar
                             </h4>
-                            <TextField prefix='R$' value={
-                                new Intl.NumberFormat('pt-BR', {
-                                    style: 'currency',
-                                    currency: 'BRL'
-                                }).format(dataAuth?.valor_a_pagar)
-                            } disabled />
+                            <TextField prefix='R$' value={dataAuth?.valor_a_pagar} disabled InputProps={{
+
+                                startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
+                            }} />
+                        </Box>
                     </Box>
-                  </Box>
                 </Box>
             </Modal>
-    </>
+
+
+            <Modal
+                open={openDelete}
+                onClose={handleCloseDelete}
+                aria-labelledby="modal-modal-title"
+                aria-describedby="modal-modal-description"
+            >
+                <Box sx={style}>
+                    <Box>
+                        <Typography id="modal-modal-title text-center" variant="h6" component="h2" className='text-center'>
+                            Tem certeza que deseja deletar este registro?
+                        </Typography>
+                        <p variant="h6" component="h2">
+                            Favorecido: {dataAuth?.descricao}
+                        </p>
+                        <h4>
+                            N.º Processo: {dataAuth?.numero_processo}
+                        </h4>
+                        <p>Mês: {dayjs().month(dateOrder?.month - 1).format('MMMM')}</p>
+                            <p>
+                                Período: {dateOrder.period} Quinzena -{' '}
+                                {dateOrder.period === 1
+                                    ? `05/${dayjs().month(dateOrder.month - 1).format('MM')}`
+                                    : `20/${dayjs().month(dateOrder.month - 1).format('MM')}`}
+                            </p>
+                        <Box className="md:flex justify-between w-full">
+
+                            <button
+                                onClick={deleteInfo(selectedId)}
+                                className='rounded p-3 uppercase text-white bg-red w-[100%]  font-medium px-10 mt-10'
+                                disabled={user.role.id === 3}
+                            >
+                                Deletar
+                            </button>
+                        </Box>
+                    </Box>
+              
+                </Box>
+            </Modal>
+        </>
     );
 }

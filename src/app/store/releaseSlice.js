@@ -121,6 +121,22 @@ export const editRelease = (data,id) => (dispatch) => {
             });
     });
 };
+export const deleteRelease = (id) => (dispatch) => {
+
+    return new Promise((resolve, reject) => {
+   
+        const token = window.localStorage.getItem('jwt_access_token');
+        api.delete(jwtServiceConfig.finanGetInfo + `/${id}`,
+            { headers: { "Authorization": `Bearer ${token}` } })
+            .then((response) => {
+                    resolve();
+              
+            })
+            .catch((error) => {
+                reject(error);
+            });
+    });
+};
 export const handleAuthValue = (data, id) => (dispatch) => {
     
     return new Promise((resolve, reject) => {
