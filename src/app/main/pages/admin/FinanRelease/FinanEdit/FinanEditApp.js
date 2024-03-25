@@ -301,7 +301,9 @@ function FinanEdit() {
                                                 customInput={TextField}
                                                 InputProps={valueProps}
                                                 onValueChange={(values, sourceInfo) => {
+
                                                     if (sourceInfo && sourceInfo.event && sourceInfo.event.target) {
+
                                                         const { name } = sourceInfo.event.target;
                                                         handleValueChange(name, values.value);
                                                     }
@@ -331,7 +333,9 @@ function FinanEdit() {
                                                     className: valuesState.recurso < 0 ? "glosa" : ""
                                                 }}
                                                 onValueChange={(values, sourceInfo) => {
+
                                                     if (sourceInfo && sourceInfo.event && sourceInfo.event.target) {
+
                                                         const { name } = sourceInfo.event.target;
                                                         handleValueChange(name, values.value);
                                                     }
