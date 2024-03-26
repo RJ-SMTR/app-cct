@@ -6,7 +6,7 @@ import { FormControl, Autocomplete } from "@mui/material";
 import { NumericFormat } from 'react-number-format';
 import AddIcon from '@mui/icons-material/Add';
 import { useDispatch, useSelector } from 'react-redux';
-import { getData, selectedPeriod, setSelectedDate, setSelectedPeriod } from 'app/store/releaseSlice';
+import { getData, selectedPeriod, setSelectedDate, setSelectedPeriod, setSelectedStatus } from 'app/store/releaseSlice';
 import { Link } from 'react-router-dom';
 
 
@@ -14,7 +14,8 @@ import { Link } from 'react-router-dom';
 
 function CardSelection() {
     const dispatch = useDispatch()
-     const selectedDate = useSelector(state => state.release.selectedDate)
+    const selectedDate = useSelector(state => state.release.selectedDate)
+    const selectedStatus = useSelector(state => state.release.selectedStatus)
     const { register } = useForm()
 
     function handleChange(event) {
@@ -24,12 +25,30 @@ function CardSelection() {
             [name]: value
         }));
     }
+    function handleChangeStatus(event) {
+        const { name, value } = event.target;
+        dispatch(setSelectedStatus({
+            ...selectedStatus,
+            [name]: value
+        }));
+    }
 
     useEffect(() => {
-        if (selectedDate.mes && selectedDate.periodo) {
-            dispatch(getData({selectedDate}))
+    
+        if (selectedDate.mes && selectedDate.periodo && selectedStatus?.status) {
+
+            dispatch(getData({selectedDate, selectedStatus}))
+
+        } else if (selectedDate.mes && selectedDate.periodo) {
+
+            dispatch(getData(selectedDate))
+
+        } else if (selectedStatus?.status) {
+
+            dispatch(getData(selectedStatus))
         }
-    }, [selectedDate]);
+    }, [selectedDate, selectedStatus])
+
  
 
     return (
@@ -83,6 +102,32 @@ function CardSelection() {
                                     </Select>
                                 </FormControl>
                            
+
+                            </Box>
+                    <Link to={'/lancamentos'} className='absolute right-0 top-0 m-16 bg-[#004A80] pr-10 rounded text-white'>
+                <AddIcon/> Novo
+            </Link>
+                        <header className="flex justify-between items-center mt-40">
+                            <h3 className="font-semibold mb-24">
+                                Seleção de Status de Aprovação
+                            </h3>
+                        </header>
+                            <Box className="grid gap-x-10 grid-cols-3">
+                                <FormControl fullWidth>
+                                    <InputLabel id="select-status">Selecionar Status</InputLabel>
+                                    <Select
+                                        {...register('status')}
+                                        labelId="select-mes"
+                                        id="select-mes"
+                                        label="Selecionar Status"
+                                    onChange={handleChangeStatus}
+                                    value={selectedStatus?.status} 
+                                    >
+                                        <MenuItem value={1}>Não autorizado</MenuItem>
+                                        <MenuItem value={2}>Esperando Autorização</MenuItem>
+                                        <MenuItem value={3}>Autorizado</MenuItem>
+                                    </Select>
+                                </FormControl>
 
                             </Box>
                     <Link to={'/lancamentos'} className='absolute right-0 top-0 m-16 bg-[#004A80] pr-10 rounded text-white'>

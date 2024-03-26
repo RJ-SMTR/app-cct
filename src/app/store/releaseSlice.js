@@ -15,6 +15,7 @@ const initialState = {
         periodo: ''
     },
     authValue: '',
+    selectedStatus: null
 };
 
 const stepSlice = createSlice({
@@ -33,17 +34,33 @@ const stepSlice = createSlice({
         setAuthValue: (state, action) => {
             state.authValue = action.payload;
         },
+        setSelectedStatus: (state, action) => {
+            state.selectedStatus = action.payload;
+        },
     },
 });
 
-export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTransactions, selectDate, setSelectedDate, authValue, setAuthValue} = stepSlice.actions;
+export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTransactions, selectDate, setSelectedDate, authValue, setAuthValue, setSelectedStatus, selectedStatus} = stepSlice.actions;
 export default stepSlice.reducer;
 
 export const getData = (data) => (dispatch) => {
+    console.log(data)
     const token = window.localStorage.getItem('jwt_access_token');
-    const selectDate = data.selectedDate ?? data
+    // const selectDate = data.selectedDate ?? data
+    let url = ''
+
+    if (data.selectedDate && data.selectedStatus) {
+        
+        url = `?mes=${data.selectedDate.mes}&periodo=${data.selectedDate.periodo}&ano=2024&status=${data.selectedStatus.status}`
+    } else if (data.mes) {
+        
+        url = `?mes=${data.mes}&periodo=${data.periodo}&ano=2024`
+    } else if (data.status) {
+        url = `?status=${data.status}`
+    }
+
     
-    api.get(jwtServiceConfig.finanGetInfo + `?mes=${selectDate.mes}&periodo=${selectDate.periodo}&ano=2024`, {
+    api.get(jwtServiceConfig.finanGetInfo + url, {
         headers: { "Authorization": `Bearer ${token}` },
     })
         .then((response) => {
