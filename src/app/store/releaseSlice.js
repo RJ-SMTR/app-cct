@@ -75,11 +75,23 @@ export const getFavorecidos = () => (dispatch) => {
 
 export const setRelease = (data)  => (dispatch) => {
     return new Promise((resolve, reject) => {
+        const month = data.mes
+        const period = data.periodo
+        let dayOfMonth = 1
+
+        if (period === 2) {
+            dayOfMonth = 16
+        }
+
+
         const parseDate = dayjs(data.data_ordem, 'DD/MM/YYYY')
+        const releaseDate = dayjs().set('month', month - 1).set('date', dayOfMonth)
         const isoDateString = parseDate.toISOString()
+        const releaseIsoDate = releaseDate.toISOString()
         const cleanedData = {
             ...data,
-            data_ordem: isoDateString
+            data_ordem: isoDateString,
+            data_lancamento: releaseIsoDate
 
         };
 
@@ -99,15 +111,27 @@ export const setRelease = (data)  => (dispatch) => {
             });
     });
 };
+
 export const editRelease = (data,id) => (dispatch) => {
 
     return new Promise((resolve, reject) => {
-        
+        const month = data.mes
+        const period = data.periodo
+        let dayOfMonth = 1
+
+        if (period === 2) {
+            dayOfMonth = 16
+        }
+
+
         const parseDate = dayjs(data.data_ordem, 'DD/MM/YYYY')
+        const releaseDate = dayjs().set('month', month - 1).set('date', dayOfMonth)
         const isoDateString = parseDate.toISOString()
+        const releaseIsoDate = releaseDate.toISOString()
         const cleanedData = {
             ...data,
-            data_ordem: isoDateString
+            data_ordem: isoDateString,
+            data_lancamento: releaseIsoDate
 
         };
 
@@ -155,8 +179,8 @@ export const handleAuthValue = (data, id) => (dispatch) => {
         .then((response) => {
             if (response.status === 200) {
                 resolve()
-                dispatch(getData(data))
                 dispatch(setAuthValue(response.data.valor_autorizado))
+                dispatch(getData(data))
             } else {
                 reject(new Error('Erro'));
             }
