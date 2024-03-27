@@ -44,10 +44,9 @@ export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTrans
 export default stepSlice.reducer;
 
 export const getData = (data) => (dispatch) => {
-    const token = window.localStorage.getItem('jwt_access_token');
-    let url = `?mes=${data.selectedDate.mes}&periodo=${data.selectedDate.periodo}&ano=2024&autorizado=${data.selectedStatus?.status}`
 
-
+    const token = window.localStorage.getItem('jwt_access_token')
+       let url = `?mes=${data.selectedDate.mes}&periodo=${data.selectedDate.periodo}&ano=2024&autorizado=${data.selectedStatus?.status}`
     
     api.get(jwtServiceConfig.finanGetInfo + url, {
         headers: { "Authorization": `Bearer ${token}` },
@@ -168,6 +167,10 @@ export const deleteRelease = (id) => (dispatch) => {
     });
 };
 export const handleAuthValue = (data, id) => (dispatch) => {
+    const selectedDate = {
+        mes: data.mes,
+        periodo: data.periodo
+    }
     
     return new Promise((resolve, reject) => {
         const token = window.localStorage.getItem('jwt_access_token');
@@ -180,7 +183,7 @@ export const handleAuthValue = (data, id) => (dispatch) => {
             if (response.status === 200) {
                 resolve()
                 dispatch(setAuthValue(response.data.valor_autorizado))
-                dispatch(getData(data))
+                dispatch(getData({ selectedDate, selectedStatus }))
             } else {
                 reject(new Error('Erro'));
             }
@@ -192,6 +195,10 @@ export const handleAuthValue = (data, id) => (dispatch) => {
     })
 }
 export const handleAuthRelease = (data, id, password) => (dispatch) => {
+    const selectedDate = {
+        mes: data.mes,
+        periodo: data.periodo
+    }
     return new Promise((resolve, reject) => {
         const token = window.localStorage.getItem('jwt_access_token');
         api.put(jwtServiceConfig.finanGetInfo + `/authorize?lancamentoId=${id}`,
@@ -203,7 +210,7 @@ export const handleAuthRelease = (data, id, password) => (dispatch) => {
         .then((response) => {
             if (response.status === 200) {
                 resolve()
-                dispatch(getData(data))
+                dispatch(getData({ selectedDate, selectedStatus}))
                 dispatch(handleAuthValue(data))
 
             } else {
