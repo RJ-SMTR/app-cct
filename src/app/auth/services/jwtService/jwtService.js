@@ -39,7 +39,6 @@ class JwtService extends FuseUtils.EventEmitter {
     }
 
     if (this.isAuthTokenValid(access_token)) {
-      console.log(access_token)
       this.setSession(access_token);
       this.emit('onAutoLogin', true);
     } else {

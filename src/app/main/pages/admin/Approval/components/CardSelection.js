@@ -107,7 +107,7 @@ function CardSelection() {
                     <Link to={'/lancamentos'} className='absolute right-0 top-0 m-16 bg-[#004A80] pr-10 rounded text-white'>
                 <AddIcon/> Novo
             </Link>
-                        <header className="flex justify-between items-center mt-40">
+                        {/* <header className="flex justify-between items-center mt-40">
                             <h3 className="font-semibold mb-24">
                                 Seleção de Status de Aprovação
                             </h3>
@@ -129,7 +129,7 @@ function CardSelection() {
                                     </Select>
                                 </FormControl>
 
-                            </Box>
+                            </Box> */}
                     <Link to={'/lancamentos'} className='absolute right-0 top-0 m-16 bg-[#004A80] pr-10 rounded text-white'>
                 <AddIcon/> Novo
             </Link>
