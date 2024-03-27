@@ -44,20 +44,9 @@ export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTrans
 export default stepSlice.reducer;
 
 export const getData = (data) => (dispatch) => {
-    console.log(data)
     const token = window.localStorage.getItem('jwt_access_token');
-    // const selectDate = data.selectedDate ?? data
-    let url = ''
+    let url = `?mes=${data.selectedDate.mes}&periodo=${data.selectedDate.periodo}&ano=2024&autorizado=${data.selectedStatus?.status}`
 
-    if (data.selectedDate && data.selectedStatus) {
-        
-        url = `?mes=${data.selectedDate.mes}&periodo=${data.selectedDate.periodo}&ano=2024&status=${data.selectedStatus.status}`
-    } else if (data.mes) {
-        
-        url = `?mes=${data.mes}&periodo=${data.periodo}&ano=2024`
-    } else if (data.status) {
-        url = `?status=${data.status}`
-    }
 
     
     api.get(jwtServiceConfig.finanGetInfo + url, {
