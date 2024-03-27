@@ -230,7 +230,7 @@ export default function BasicEditingGrid(props) {
                         backgroundColor: '#004A80',
                     },
                     '&:disabled': {
-                        backgroundColor: '#004A80',
+                        backgroundColor: 'gray',
                         opacity: 0.8
                     },
                 }}
@@ -248,11 +248,11 @@ export default function BasicEditingGrid(props) {
                         backgroundColor: 'red',
                     },
                     '&:disabled': {
-                        backgroundColor: 'red',
-                        opacity: 0.5
+                        backgroundColor: 'gray',
+                        opacity: 0.8
                     },
 
-                    // backgroundColor: hasMultipleAuthBy ? 'red' : 'red'
+                    
                 }}
             />,
 
