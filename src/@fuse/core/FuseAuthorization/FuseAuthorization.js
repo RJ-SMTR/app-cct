@@ -74,14 +74,20 @@ class FuseAuthorization extends Component {
     const { userRole } = this.props;
     const redirectUrl = getSessionRedirectUrl() || this.props.loginRedirectUrl;
     const lastUserRole = this.state.lastUserRole;
-    console.log(userRole)
+ 
     if (!userRole || userRole.length === 0) {
-      if (lastUserRole !== 'User' && lastUserRole !== 'Admin'){
-        setTimeout(() => history.push('/financeiro/sign-in'), 0);
-      } else if (lastUserRole !== 'User'){
-        setTimeout(() => history.push('/admin/sign-in'), 0);
-      } else{
-        setTimeout(() => history.push('/sign-in'), 0);
+      switch (lastUserRole) {
+        case 'Admin Master':
+        case 'Lançador financeiro':
+        case 'Aprovador financeiro':
+        case 'Admin Finan':
+          setTimeout(() => history.push('/financeiro/sign-in'), 0);
+          break;
+        case 'Admin':
+          setTimeout(() => history.push('/admin/sign-in'), 0);
+          break;
+        default:
+          setTimeout(() => history.push('/sign-in'), 0);
       }
     } else {
       setTimeout(() => history.push(redirectUrl), 0);

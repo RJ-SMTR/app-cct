@@ -82,13 +82,13 @@ export const selectNavigation = createSelector(
       case 'Admin':
         configToUse = navAdminConfig;
         break;
-      case 'Lançador Financeiro':
-      case 'Aprovador Financeiro':
+      case 'Lançador financeiro':
+      case 'Aprovador financeiro':
       case 'Admin Finan':
         configToUse = navFinanConfig;
         break;
       default:
-        configToUse = navFinanConfig;
+        configToUse = navigationConfig;
 
     }
     
