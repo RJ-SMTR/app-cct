@@ -76,7 +76,7 @@ export const getFavorecidos = () => (dispatch) => {
 export const setRelease = (data)  => (dispatch) => {
     return new Promise((resolve, reject) => {
         const month = data.mes
-        const period = data.periodo
+        const period = parseFloat(data.periodo)
         let dayOfMonth = 1
 
         if (period === 2) {
@@ -116,7 +116,7 @@ export const editRelease = (data,id) => (dispatch) => {
 
     return new Promise((resolve, reject) => {
         const month = data.mes
-        const period = data.periodo
+        const period = parseFloat(data.periodo)
         let dayOfMonth = 1
 
         if (period === 2) {
