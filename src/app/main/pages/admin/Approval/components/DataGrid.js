@@ -63,7 +63,9 @@ export default function BasicEditingGrid(props) {
 
     })
     const [sumTotal, setSumTotal] = useState()
-    const [rows, setRows] = useState(initialRows);
+    const [rows, setRows] = useState(initialRows)
+    const [password, setPassword] = useState("")
+    const [openPasswordModal, setOpenPasswordModal] = useState(false)
 
     useEffect(() => {
         if (dataAuth) {
@@ -149,6 +151,13 @@ export default function BasicEditingGrid(props) {
 
     const handleClose = () => setOpen(false);
     const handleCloseDelete = () => setOpenDelete(false);
+    const handleOpenPasswordModal = () => {
+        setOpenPasswordModal(true);
+    };
+
+    const handleClosePasswordModal = () => {
+        setOpenPasswordModal(false);
+    };
 
 
 
@@ -157,8 +166,8 @@ export default function BasicEditingGrid(props) {
         navigate(`/lancamentos/editar/${id}`)
     };
 
-    const handleAuth = (id) => () => {
-        dispatch(handleAuthRelease(selectedDate, id))
+    const handleAuthWithPassword = (id) => () => {
+        dispatch(handleAuthRelease(selectedDate, id, password)) 
             .then((response) => {
                 success(response, "Autorizado!");
                 setOpen(false);
@@ -173,10 +182,11 @@ export default function BasicEditingGrid(props) {
                 });
 
                 setRows(updatedRows);
+                setOpenPasswordModal(false);
             })
             .catch((error) => {
                 success(error, "Não autorizado!");
-            })
+            });
     };
 
     const processRowUpdate = (newRow) => {
@@ -189,16 +199,65 @@ export default function BasicEditingGrid(props) {
         const targetRow = id.rows.find(row => row.id === id.id);
 
         const hasMultipleAuthBy = targetRow && targetRow.authBy.length > 1;
+        const hasSingleAuthBy = targetRow && targetRow.authBy.length === 1;
 
         return (
             <button
                 onClick={() => handleOpen(id.id)}
-                className={`rounded p-3 uppercase text-white font-medium px-10 text-xs ${hasMultipleAuthBy ? 'bg-green-500' : 'bg-[#004A80]'}`}
+                className={`rounded p-3 uppercase min-w-[91.98px] text-white font-medium px-10 text-xs ${hasMultipleAuthBy ? 'bg-green-500' : (hasSingleAuthBy ? 'bg-yellow-800' : 'bg-[#004A80]')
+                    }`}
             >
-                {hasMultipleAuthBy ? 'Autorizado' : 'Autorizar'}
+                {hasMultipleAuthBy ? 'Autorizado' : (hasSingleAuthBy ? 'Autorizar (1)' : 'Autorizar')}
             </button>
         );
     };
+    const CellActions = (id) => {
+        const targetRow = id.rows.find(row => row.id === id.id)
+
+        const hasMultipleAuthBy = targetRow && targetRow.authBy.length > 1;
+
+
+        return [
+            <GridActionsCellItem
+                icon={<EditIcon sx={{ color: 'white' }} />}
+                label="Edit"
+                onClick={handleEditClick(id.id)}
+                color="inherit"
+                disabled={hasMultipleAuthBy}
+                sx={{
+                    backgroundColor: '#004A80',
+                    '&:hover': {
+                        backgroundColor: '#004A80',
+                    },
+                    '&:disabled': {
+                        backgroundColor: '#004A80',
+                        opacity: 0.8
+                    },
+                }}
+
+            />,
+            <GridActionsCellItem
+                icon={<DeleteIcon sx={{ color: 'white' }} />}
+                label="Delete"
+                onClick={handleDeleteClick(id.id)}
+                color="inherit"
+                disabled={hasMultipleAuthBy}
+                sx={{
+                    backgroundColor: 'red',
+                    '&:hover': {
+                        backgroundColor: 'red',
+                    },
+                    '&:disabled': {
+                        backgroundColor: 'red',
+                        opacity: 0.5
+                    },
+
+                    // backgroundColor: hasMultipleAuthBy ? 'red' : 'red'
+                }}
+            />,
+
+        ]
+    }
 
 
 
@@ -224,31 +283,7 @@ export default function BasicEditingGrid(props) {
             getActions: ({ id }) => {
 
                 return [
-                    <GridActionsCellItem
-                        icon={<EditIcon sx={{ color: 'white' }} />}
-                        label="Edit"
-                        onClick={handleEditClick(id)}
-                        color="inherit"
-                        sx={{
-                            backgroundColor: '#004A80',
-                            '&:hover': {
-                                backgroundColor: '#004A80',
-                            },
-                        }}
-
-                    />,
-                    <GridActionsCellItem
-                        icon={<DeleteIcon sx={{ color: 'white' }} />}
-                        label="Delete"
-                        onClick={handleDeleteClick(id)}
-                        color="inherit"
-                        sx={{
-                            backgroundColor: 'red',
-                            '&:hover': {
-                                backgroundColor: 'red',
-                            },
-                        }}
-                    />,
+                   <CellActions id={id} rows={rows}/>,
 
                     <AuthButton id={id} rows={rows} />
                 ];
@@ -312,7 +347,7 @@ export default function BasicEditingGrid(props) {
                             {dataAuth?.auth_usersIds?.length > 1 ? <button className='rounded p-3 uppercase text-white bg-green-500  font-medium px-10 text-xs' disabled>
                                 Autorizado
                             </button> : <button
-                                onClick={handleAuth(dataAuth?.id)}
+                                onClick={() => handleOpenPasswordModal()}
                                 className='rounded p-3 uppercase text-white bg-[#004A80]  font-medium px-10 text-xs'
                                 disabled={user.role.id === 3}
                             >
@@ -397,6 +432,35 @@ export default function BasicEditingGrid(props) {
                         </Box>
                     </Box>
 
+                </Box>
+            </Modal>
+
+            {/* MODAL SENHA */}
+            <Modal
+                open={openPasswordModal}
+                onClose={handleClosePasswordModal}
+                aria-labelledby="password-modal-title"
+                aria-describedby="password-modal-description"
+            >
+                <Box sx={style}>
+                    <Typography variant="h6" component="h2" gutterBottom>
+                        Digite a senha:
+                    </Typography>
+                    <TextField
+                        label="Senha"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        fullWidth
+                        autoFocus
+                        margin="normal"
+                    />
+                    <button
+                        onClick={handleAuthWithPassword(dataAuth?.id)}
+                        className='rounded p-3 uppercase text-white bg-[#004A80]  w-[100%]  font-medium px-10 mt-10'
+                    >
+                        Autorizar
+                    </button>
                 </Box>
             </Modal>
         </>

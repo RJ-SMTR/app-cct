@@ -178,11 +178,12 @@ export const handleAuthValue = (data, id) => (dispatch) => {
 
     })
 }
-export const handleAuthRelease = (data, id) => (dispatch) => {
+export const handleAuthRelease = (data, id, password) => (dispatch) => {
     return new Promise((resolve, reject) => {
         const token = window.localStorage.getItem('jwt_access_token');
         api.put(jwtServiceConfig.finanGetInfo + `/authorize?lancamentoId=${id}`,
-         id,
+        { id: id,
+         password: password},
          {
             headers: { "Authorization": `Bearer ${token}` } 
         })
