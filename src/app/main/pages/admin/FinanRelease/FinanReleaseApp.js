@@ -33,6 +33,7 @@ const schema = yup.object().shape({
     algoritmo: yup.string().required('Insira o valor do algoritmo'),
     glosa: yup.string().notRequired('Campo opcional: se não houver valor digite 0'),
     recurso: yup.string().notRequired('Campo opcional: se não houver valor digite 0'),
+    anexo3: yup.string().notRequired('Campo opcional: se não houver valor digite 0'),
     valor_a_pagar: yup.string()
         .test('is-not-negative', 'Valor a pagar não pode ser negativo', value => {
             if (value && value.includes('-')) {
@@ -48,7 +49,8 @@ function FinanRelease() {
     const [valuesState, setValuesState] = useState({
         algoritmo: 0,
         glosa: 0,
-        recurso: 0
+        recurso: 0,
+        anexo3: 0,
     });
     const [selectedMes, setSelectedMes] = useState()
 
@@ -68,6 +70,7 @@ function FinanRelease() {
             algoritmo: '',
             glosa: '',
             recurso: '',
+            anexo3: '',
             data_ordem: null,
             valor_a_pagar: ''
         },
@@ -99,6 +102,7 @@ function FinanRelease() {
                 setValue('mes', '')
                 setValue('periodo', '')
                 setValue('recurso', '')
+                setValue('anexo3', '')
                 setValue('glosa', '')
 
 
@@ -117,7 +121,7 @@ function FinanRelease() {
             Object.entries(valuesState).map(([key, value]) => [key, value === '' ? 0 : value])
         );
         if (sanitizedValuesState.algoritmo) {
-            const valueToPayAuto = parseFloat(sanitizedValuesState.algoritmo) - parseFloat(sanitizedValuesState.glosa) + parseFloat(sanitizedValuesState.recurso)
+            const valueToPayAuto = parseFloat(sanitizedValuesState.algoritmo) - parseFloat(sanitizedValuesState.glosa) + parseFloat(sanitizedValuesState.recurso) + parseFloat(sanitizedValuesState.anexo3)
         
             const formattedValue = accounting.formatMoney(valueToPayAuto, {
                 symbol: "",
@@ -288,40 +292,41 @@ function FinanRelease() {
                                     />
                                 </FormControl>
 
+                                <Controller
+                                    {...register('algoritmo')}
+                                    name="algoritmo"
+                                    control={control}
+                                    render={({ field }) =>
+                                        <NumericFormat
+                                            {...field}
+                                            value={field.value}
+                                            labelId="algoritmo-label"
+                                            thousandSeparator={'.'}
+                                            decimalSeparator={','}
+                                            decimalScale={2}
+                                            fixedDecimalScale
+                                            label="Algortimo"
+                                            customInput={TextField}
+                                            InputProps={valueProps}
+                                            onValueChange={(values, sourceInfo) => {
+                                                if (sourceInfo && sourceInfo.event && sourceInfo.event.target) {
+                                                    const { name } = sourceInfo.event.target;
+                                                    handleValueChange(name, values.value);
+                                                }
+                                            }}
+
+                                            error={!!errors.algoritmo}
+                                            helperText={errors.algoritmo?.message}
+                                        />
+                                    }
+                                />
+
 
                             </Box>
                             <FormControl>
                                 <Box className="grid md:grid-cols-3 gap-10 mt-10">
 
-                                    <Controller
-                                        {...register('algoritmo')}
-                                        name="algoritmo"
-                                        control={control}
-                                        render={({ field }) =>
-                                            <NumericFormat
-                                                {...field}
-                                                value={field.value}
-                                                labelId="algoritmo-label"
-                                                thousandSeparator={'.'}
-                                                decimalSeparator={','}
-                                                decimalScale={2}
-                                                fixedDecimalScale
-                                                label="Algortimo"
-                                                customInput={TextField}
-                                                InputProps={valueProps}
-                                                onValueChange={(values, sourceInfo) => {
-                                                    if (sourceInfo && sourceInfo.event && sourceInfo.event.target) {
-                                                        const { name } = sourceInfo.event.target;
-                                                        handleValueChange(name, values.value);
-                                                    }
-                                                }}
-
-                                                error={!!errors.algoritmo}
-                                                helperText={errors.algoritmo?.message}
-                                            />
-                                        }
-                                    />
-
+                                 
                                     <Controller
                                         {...register('glosa')}
                                         name="glosa"
@@ -354,11 +359,6 @@ function FinanRelease() {
                                             />
                                         }
                                     />
-
-
-                                </Box>
-                                <Box className="grid md:grid-cols-3 gap-10 mt-10">
-
                                     <Controller
                                         {...register('recurso')}
                                         name="recurso"
@@ -389,7 +389,43 @@ function FinanRelease() {
                                             />
                                         }
                                     />
+                                    <Controller
+                                        {...register('anexo3')}
+                                        name="anexo3"
+                                        control={control}
+                                        render={({ field }) =>
+                                            <NumericFormat
+                                                {...field}
+                                                thousandSeparator={'.'}
+                                                decimalSeparator={','}
+                                                decimalScale={2}
+                                                label="Anexo 3"
+                                                fixedDecimalScale
+                                                customInput={TextField}
+                                                value={field.value}
+                                                InputProps={{
+                                                    ...valueProps,
+                                                    className: valuesState.anexo3 < 0 ? c.glosa : ""
+                                                }}
 
+                                                onValueChange={(values, sourceInfo) => {
+                                                    if (sourceInfo && sourceInfo.event && sourceInfo.event.target) {
+                                                        const { name } = sourceInfo.event.target;
+                                                        handleValueChange(name, values.value);
+                                                    }
+                                                }}
+                                                error={!!errors.anexo3}
+                                                helperText={errors.anexo3?.message}
+                                            />
+                                        }
+                                    />
+
+
+
+                                </Box>
+                                <Box className="grid md:grid-cols-3 gap-10 mt-10">
+
+                                   
                                     <Controller
                                         {...register('valor_a_pagar')}
                                         name="valor_a_pagar"
