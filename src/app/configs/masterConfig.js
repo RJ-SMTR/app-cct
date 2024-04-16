@@ -37,7 +37,7 @@ const masterConfig = [
     {
         id: 'trigger-component',
         title: 'trigger',
-        translate: 'Lançamentos',
+        translate: 'Lançamentos Financeiros',
         type: 'item',
         icon: 'heroicons-outline:plus-circle',
         url: 'lancamentos',
@@ -45,7 +45,7 @@ const masterConfig = [
     {
         id: 'trigger-component',
         title: 'trigger',
-        translate: 'Aprovação',
+        translate: 'Alçada de Aprovação',
         type: 'item',
         icon: 'heroicons-outline:currency-dollar',
         url: 'aprovação',

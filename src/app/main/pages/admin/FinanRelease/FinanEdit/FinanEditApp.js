@@ -32,6 +32,7 @@ function FinanEdit() {
         algoritmo: null,
         glosa: null,
         recurso: null,
+        anexo: null,
     });
     const [valueToPay, setValueToPay] = useState();
     const [dateOrder, setDateOrder] = useState({
@@ -106,8 +107,9 @@ function FinanEdit() {
             const algoritmoAmount = accounting.unformat(sanitizedValuesState.algoritmo.replace(/\./g, '').replace('.', ','), ',');
             const glosaAmount = accounting.unformat(sanitizedValuesState.glosa.replace(/\./g, '').replace('.', ','), ',');
             const recursoAmount = accounting.unformat(sanitizedValuesState.recurso.replace(/\./g, '').replace('.', ','), ',');
+            const anexoAmount = accounting.unformat(sanitizedValuesState.recurso.replace(/\./g, '').replace('.', ','), ',');
 
-            const valueToPayAuto = algoritmoAmount + glosaAmount + recursoAmount;
+            const valueToPayAuto = algoritmoAmount + glosaAmount + recursoAmount + anexoAmount;
 
             const formattedValue = accounting.formatMoney(valueToPayAuto, {
                 symbol: "",
@@ -129,6 +131,7 @@ function FinanEdit() {
         info.algoritmo = valuesState.algoritmo.toString();
         info.recurso = valuesState.recurso.toString();
         info.glosa = valuesState.glosa.toString();
+        info.anexo = valuesState.anexo.toString();
         info.valor_a_pagar = valueToPay
         info.valor = valueToPay
         dispatch(editRelease(info, id))
@@ -252,98 +255,131 @@ function FinanEdit() {
                                     variant="outlined"
                                     fullWidth
                                     defaultValue={releaseData.numero_processo}
+
+                                />
+                                <Controller
+                                    {...register('algoritmo')}
+                                    name="algoritmo"
+                                    control={control}
+                                    render={({ field }) =>
+                                        <NumericFormat
+                                            {...field}
+                                            defaultValue={releaseData.algoritmo}
+                                            labelId="algoritmo-label"
+                                            thousandSeparator={'.'}
+                                            decimalSeparator={','}
+                                            fixedDecimalScale
+                                            decimalScale={2}
+                                            label="Algortimo"
+                                            customInput={TextField}
+                                            InputProps={valueProps}
+                                            onValueChange={(values, sourceInfo) => {
+                                                if (sourceInfo.event !== undefined && sourceInfo.event.target.value !== '') {
+                                                    const { name } = sourceInfo.event.target;
+                                                    handleValueChange(name, values.value);
+                                                }
+                                            }}
+                                        />
+                                    }
+                                />
+
+                                <Controller
+                                    {...register('glosa')}
+                                    name="glosa"
+                                    control={control}
+                                    render={({ field }) =>
+                                        <NumericFormat
+                                            {...field}
+                                            thousandSeparator={'.'}
+                                            label="Glosa"
+                                            defaultValue={releaseData.glosa}
+                                            className='glosa'
+                                            fixedDecimalScale
+                                            prefix='-'
+
+                                            decimalScale={2}
+                                            decimalSeparator={','}
+                                            customInput={TextField}
+                                            InputProps={valueProps}
+                                            onValueChange={(values, sourceInfo) => {
+
+                                                if (sourceInfo && sourceInfo.event && sourceInfo.event.target) {
+
+                                                    const { name } = sourceInfo.event.target;
+                                                    handleValueChange(name, values.value);
+                                                }
+                                            }}
+                                        />
+                                    }
+                                />
+
+
+                                <Controller
+                                    {...register('recurso')}
+                                    name="recurso"
+                                    control={control}
+                                    render={({ field }) =>
+                                        <NumericFormat
+                                            {...field}
+                                            thousandSeparator={'.'}
+                                            decimalSeparator={','}
+                                            allowNegative
+                                            fixedDecimalScale
+                                            decimalScale={2}
+                                            label="Recurso"
+                                            defaultValue={releaseData.recurso}
+                                            customInput={TextField}
+                                            InputProps={{
+                                                ...valueProps,
+                                                className: valuesState.recurso < 0 ? "glosa" : ""
+                                            }}
+                                            onValueChange={(values, sourceInfo) => {
+
+                                                if (sourceInfo && sourceInfo.event && sourceInfo.event.target) {
+
+                                                    const { name } = sourceInfo.event.target;
+                                                    handleValueChange(name, values.value);
+                                                }
+                                            }}
+                                        />
+                                    }
+                                />
+                                <Controller
+                                    {...register('anexo')}
+                                    name="anexo"
+                                    control={control}
+                                    render={({ field }) =>
+                                        <NumericFormat
+                                            {...field}
+                                            thousandSeparator={'.'}
+                                            decimalSeparator={','}
+                                            allowNegative
+                                            fixedDecimalScale
+                                            decimalScale={2}
+                                            label="Anexo 3"
+                                            defaultValue={releaseData.anexo}
+                                            customInput={TextField}
+                                            InputProps={{
+                                                ...valueProps,
+                                                className: valuesState.anexo < 0 ? "glosa" : ""
+                                            }}
+                                            onValueChange={(values, sourceInfo) => {
+
+                                                if (sourceInfo && sourceInfo.event && sourceInfo.event.target) {
+
+                                                    const { name } = sourceInfo.event.target;
+                                                    handleValueChange(name, values.value);
+                                                }
+                                            }}
+                                        />
+                                    }
                                 />
 
                             </Box>
 
                             <FormControl>
                                 <Box className="grid md:grid-cols-3 gap-10 mt-10">
-                                    <Controller
-                                        {...register('algoritmo')}
-                                        name="algoritmo"
-                                        control={control}
-                                        render={({ field }) =>
-                                            <NumericFormat
-                                            {...field}
-                                                defaultValue={releaseData.algoritmo}
-                                                labelId="algoritmo-label"
-                                                thousandSeparator={'.'}
-                                                decimalSeparator={','}
-                                                fixedDecimalScale
-                                                decimalScale={2}
-                                                label="Algortimo"
-                                                customInput={TextField}
-                                                InputProps={valueProps}
-                                                onValueChange={(values, sourceInfo) => {
-                                                    if (sourceInfo.event !== undefined && sourceInfo.event.target.value !== '') {
-                                                        const { name } = sourceInfo.event.target;
-                                                        handleValueChange(name, values.value);
-                                                    }
-                                                }}
-                                            />
-                                        }
-                                    />
-                                    <Controller
-                                        {...register('glosa')}
-                                        name="glosa" 
-                                        control={control}
-                                        render={({ field }) =>
-                                            <NumericFormat
-                                                {...field}
-                                                thousandSeparator={'.'}
-                                                label="Glosa"
-                                                defaultValue={releaseData.glosa}
-                                                className='glosa'
-                                                fixedDecimalScale
-                                                prefix='-'
-
-                                                decimalScale={2}
-                                                decimalSeparator={','}
-                                                customInput={TextField}
-                                                InputProps={valueProps}
-                                                onValueChange={(values, sourceInfo) => {
-
-                                                    if (sourceInfo && sourceInfo.event && sourceInfo.event.target) {
-
-                                                        const { name } = sourceInfo.event.target;
-                                                        handleValueChange(name, values.value);
-                                                    }
-                                                }}
-                                            />
-                                        }
-                                    />
-
-
-                                    <Controller
-                                        {...register('recurso')}
-                                        name="recurso"
-                                        control={control}
-                                        render={({ field }) =>
-                                            <NumericFormat
-                                                {...field}
-                                                thousandSeparator={'.'}
-                                                decimalSeparator={','}
-                                                allowNegative
-                                                fixedDecimalScale
-                                                decimalScale={2}
-                                                label="Recurso"
-                                                defaultValue={releaseData.recurso}
-                                                customInput={TextField}
-                                                InputProps={{
-                                                    ...valueProps,
-                                                    className: valuesState.recurso < 0 ? "glosa" : ""
-                                                }}
-                                                onValueChange={(values, sourceInfo) => {
-
-                                                    if (sourceInfo && sourceInfo.event && sourceInfo.event.target) {
-
-                                                        const { name } = sourceInfo.event.target;
-                                                        handleValueChange(name, values.value);
-                                                    }
-                                                }}
-                                            />
-                                        }
-                                    />
+                                  
 
                                     <Controller
                                         {...register('valor_a_pagar')}

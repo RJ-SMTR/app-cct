@@ -62,7 +62,7 @@ export const selectNavigation = createSelector(
       // loop through every object in the array
       return data.map((item) => {
         if (item.translate && item.title) {
-          item.title = i18next.t(`navigation:${item.translate}`);
+          item.title = i18next.t(`${item.translate}`);
         }
 
         // see if there is a children node

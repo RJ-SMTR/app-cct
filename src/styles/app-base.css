@@ -214,3 +214,7 @@ display: none !important;
     overflow: visible !important;
     white-space: pre-wrap !important;
 }
+.MuiDataGrid-menuIcon{
+    width: auto !important;
+    visibility: visible !important;
+}
