@@ -33,7 +33,7 @@ const schema = yup.object().shape({
     algoritmo: yup.string().required('Insira o valor do algoritmo'),
     glosa: yup.string().notRequired('Campo opcional: se não houver valor digite 0'),
     recurso: yup.string().notRequired('Campo opcional: se não houver valor digite 0'),
-    anexo3: yup.string().notRequired('Campo opcional: se não houver valor digite 0'),
+    anexo: yup.string().notRequired('Campo opcional: se não houver valor digite 0'),
     valor_a_pagar: yup.string()
         .test('is-not-negative', 'Valor a pagar não pode ser negativo', value => {
             if (value && value.includes('-')) {
@@ -50,7 +50,7 @@ function FinanRelease() {
         algoritmo: 0,
         glosa: 0,
         recurso: 0,
-        anexo3: 0,
+        anexo: 0,
     });
     const [selectedMes, setSelectedMes] = useState()
 
@@ -70,7 +70,7 @@ function FinanRelease() {
             algoritmo: '',
             glosa: '',
             recurso: '',
-            anexo3: '',
+            anexo: '',
             data_ordem: null,
             valor_a_pagar: ''
         },
@@ -102,7 +102,7 @@ function FinanRelease() {
                 setValue('mes', '')
                 setValue('periodo', '')
                 setValue('recurso', '')
-                setValue('anexo3', '')
+                setValue('anexo', '')
                 setValue('glosa', '')
 
 
@@ -121,7 +121,7 @@ function FinanRelease() {
             Object.entries(valuesState).map(([key, value]) => [key, value === '' ? 0 : value])
         );
         if (sanitizedValuesState.algoritmo) {
-            const valueToPayAuto = parseFloat(sanitizedValuesState.algoritmo) - parseFloat(sanitizedValuesState.glosa) + parseFloat(sanitizedValuesState.recurso) + parseFloat(sanitizedValuesState.anexo3)
+            const valueToPayAuto = parseFloat(sanitizedValuesState.algoritmo) - parseFloat(sanitizedValuesState.glosa) + parseFloat(sanitizedValuesState.recurso) + parseFloat(sanitizedValuesState.anexo)
         
             const formattedValue = accounting.formatMoney(valueToPayAuto, {
                 symbol: "",
@@ -390,8 +390,8 @@ function FinanRelease() {
                                         }
                                     />
                                     <Controller
-                                        {...register('anexo3')}
-                                        name="anexo3"
+                                        {...register('anexo')}
+                                        name="anexo"
                                         control={control}
                                         render={({ field }) =>
                                             <NumericFormat
@@ -405,7 +405,7 @@ function FinanRelease() {
                                                 value={field.value}
                                                 InputProps={{
                                                     ...valueProps,
-                                                    className: valuesState.anexo3 < 0 ? c.glosa : ""
+                                                    className: valuesState.anexo < 0 ? c.glosa : ""
                                                 }}
 
                                                 onValueChange={(values, sourceInfo) => {
@@ -414,8 +414,8 @@ function FinanRelease() {
                                                         handleValueChange(name, values.value);
                                                     }
                                                 }}
-                                                error={!!errors.anexo3}
-                                                helperText={errors.anexo3?.message}
+                                                error={!!errors.anexo}
+                                                helperText={errors.anexo?.message}
                                             />
                                         }
                                     />

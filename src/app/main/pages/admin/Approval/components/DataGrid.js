@@ -271,9 +271,9 @@ export default function BasicEditingGrid(props) {
             field: 'toPay', headerName: 'Valor a Pagar', width: 180, editable: false,
         },
         { field: 'setBy', headerName: 'Lançado Por', width: 180, editable: true },
-        { field: 'paymentOrder', headerName: 'Data Ordem Pagamento', type: 'date', width: 200, editable: true },
+        { field: 'paymentOrder', headerName: 'Data Ordem Pagamento', type: 'date', width: 220, editable: true },
         { field: 'authBy', headerName: 'Autorizado Por', width: 180, editable: true, cellClassName: 'authCell' },
-        { field: 'effectivePayment', headerName: 'Data Pagamento Efetivo', type: 'date', width: 200, editable: true },
+        { field: 'effectivePayment', headerName: 'Data Pagamento Efetivo', type: 'date', width: 220, editable: true },
         {
             field: 'actions',
             type: 'actions',
@@ -379,6 +379,15 @@ export default function BasicEditingGrid(props) {
                                 Valor Recurso
                             </h4>
                             <TextField prefix='R$' className={dataAuth?.recurso.includes('-') ? "glosa" : ""} value={dataAuth?.recurso === '' ? '0,00' : dataAuth?.recurso?.replace(/R\$/g, '')} disabled InputProps={{
+
+                                startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
+                            }} />
+                        </Box>
+                        <Box>
+                            <h4 className="font-semibold mb-5">
+                               Anexo 3
+                            </h4>
+                            <TextField prefix='R$' className={dataAuth?.anexo.includes('-') ? "glosa" : ""} value={dataAuth?.anexo === '' ? '0,00' : dataAuth?.anexo?.replace(/R\$/g, '')} disabled InputProps={{
 
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />

@@ -32,7 +32,7 @@ function FinanEdit() {
         algoritmo: null,
         glosa: null,
         recurso: null,
-        anexo3: null,
+        anexo: null,
     });
     const [valueToPay, setValueToPay] = useState();
     const [dateOrder, setDateOrder] = useState({
@@ -107,9 +107,9 @@ function FinanEdit() {
             const algoritmoAmount = accounting.unformat(sanitizedValuesState.algoritmo.replace(/\./g, '').replace('.', ','), ',');
             const glosaAmount = accounting.unformat(sanitizedValuesState.glosa.replace(/\./g, '').replace('.', ','), ',');
             const recursoAmount = accounting.unformat(sanitizedValuesState.recurso.replace(/\./g, '').replace('.', ','), ',');
-            const anexo3Amount = accounting.unformat(sanitizedValuesState.recurso.replace(/\./g, '').replace('.', ','), ',');
+            const anexoAmount = accounting.unformat(sanitizedValuesState.recurso.replace(/\./g, '').replace('.', ','), ',');
 
-            const valueToPayAuto = algoritmoAmount + glosaAmount + recursoAmount + anexo3Amount;
+            const valueToPayAuto = algoritmoAmount + glosaAmount + recursoAmount + anexoAmount;
 
             const formattedValue = accounting.formatMoney(valueToPayAuto, {
                 symbol: "",
@@ -131,7 +131,7 @@ function FinanEdit() {
         info.algoritmo = valuesState.algoritmo.toString();
         info.recurso = valuesState.recurso.toString();
         info.glosa = valuesState.glosa.toString();
-        info.anexo3 = valuesState.anexo3.toString();
+        info.anexo = valuesState.anexo.toString();
         info.valor_a_pagar = valueToPay
         info.valor = valueToPay
         dispatch(editRelease(info, id))
@@ -345,8 +345,8 @@ function FinanEdit() {
                                     }
                                 />
                                 <Controller
-                                    {...register('anexo3')}
-                                    name="anexo3"
+                                    {...register('anexo')}
+                                    name="anexo"
                                     control={control}
                                     render={({ field }) =>
                                         <NumericFormat
@@ -357,11 +357,11 @@ function FinanEdit() {
                                             fixedDecimalScale
                                             decimalScale={2}
                                             label="Anexo 3"
-                                            defaultValue={releaseData.anexo3}
+                                            defaultValue={releaseData.anexo}
                                             customInput={TextField}
                                             InputProps={{
                                                 ...valueProps,
-                                                className: valuesState.anexo3 < 0 ? "glosa" : ""
+                                                className: valuesState.anexo < 0 ? "glosa" : ""
                                             }}
                                             onValueChange={(values, sourceInfo) => {
 
