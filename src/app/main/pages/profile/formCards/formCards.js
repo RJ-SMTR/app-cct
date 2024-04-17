@@ -228,17 +228,17 @@ export function BankInfo({ user }) {
             .catch((_errors) => {
                 if (_errors.bankAccountDigit) {
                     setError('bankAccountDigit', {
-                        message: 'O dígito deve ser maior ou igual a 1 caractere',
+                        message: 'O dígito deve ser menor ou igual a 2 dígitos',
                     });
                 }
                 if (_errors.bankAgency) {
                     setError('bankAgency', {
-                        message: 'A agência deve ser maior ou igual a 4 dígitos)'
+                        message: 'A agência deve ser menor ou igual a 4 dígitos)'
                     });
                 }
                 if (_errors.bankAccount) {
                     setError('bankAccount', {
-                        message: 'A conta bancária deve ser maior ou igual a 5 dígitos',
+                        message: 'A conta bancária deve ser menor ou igual a 5 dígitos',
                     });
                 }
             });
@@ -312,6 +312,7 @@ export function BankInfo({ user }) {
                         type="string"
                         variant="outlined"
                         fullWidth
+                        inputProps={{ maxLength: 4 }}
                         disabled={!isEditable}
                         error={!!errors.bankAgency}
                         helperText={errors?.bankAgency?.message}
@@ -324,6 +325,7 @@ export function BankInfo({ user }) {
                             type="string"
                             variant="outlined"
                             fullWidth
+                            inputProps={{ maxLength: 5 }}
                             error={!!errors.bankAccount}
                             helperText={errors?.bankAccount?.message}
                             disabled={!isEditable}
@@ -335,6 +337,7 @@ export function BankInfo({ user }) {
                             type="string"
                             variant="outlined"
                             fullWidth
+                            inputProps={{ maxLength: 2}}
                             disabled={!isEditable}
                             error={!!errors.bankAccountDigit}
                             helperText={errors?.bankAccountDigit?.message}
