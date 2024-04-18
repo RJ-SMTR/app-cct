@@ -66,6 +66,7 @@ function CardSelection() {
                                     onChange={handleChange}
                                 value={selectedDate.mes} 
                                     >
+                                        <MenuItem value={null}>Selecionar Mês</MenuItem>
                                         <MenuItem value={1}>Janeiro</MenuItem>
                                         <MenuItem value={2}>Fevereiro</MenuItem>
                                         <MenuItem value={3}>Março</MenuItem>
@@ -92,6 +93,7 @@ function CardSelection() {
 
 
                                     >
+                                        <MenuItem value={null}>Selecionar Período</MenuItem>
                                         <MenuItem value={1}>1a Quinzena</MenuItem>
                                         <MenuItem value={2}>2a Quinzena</MenuItem>
                                     </Select>
