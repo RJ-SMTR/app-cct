@@ -101,7 +101,9 @@ export default function BasicEditingGrid(props) {
     }, [props])
 
     useEffect(() => {
-        dispatch(handleAuthValue(selectedDate))
+        if (selectedDate.mes && selectedDate.periodo) {
+            dispatch(handleAuthValue(selectedDate))
+        }
 
     }, [selectedDate, selectedPeriod])
 
@@ -387,8 +389,8 @@ export default function BasicEditingGrid(props) {
                             <h4 className="font-semibold mb-5">
                                Anexo 3
                             </h4>
-                            <TextField prefix='R$' className={dataAuth?.anexo.includes('-') ? "glosa" : ""} value={dataAuth?.anexo === '' ? '0,00' : dataAuth?.anexo?.replace(/R\$/g, '')} disabled InputProps={{
-
+                            <TextField prefix='R$' className={dataAuth?.anexo?.includes('-') ? "glosa" : ""} value={dataAuth?.anexo === null ? '0,00' : dataAuth?.anexo?.replace(/R\$/g, '')} disabled InputProps={{
+                                
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
                         </Box>
