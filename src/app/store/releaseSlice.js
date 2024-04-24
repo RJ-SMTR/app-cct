@@ -56,7 +56,6 @@ export const getData = (data) => (dispatch) => {
             dispatch(setSelectedPeriod(true));
         });
 };
-
 export const getFavorecidos = () => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
     
