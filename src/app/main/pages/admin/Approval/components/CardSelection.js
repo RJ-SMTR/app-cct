@@ -35,7 +35,7 @@ function CardSelection() {
 
     useEffect(() => {
     
-        if (selectedDate.mes && selectedDate.periodo) {
+        if (selectedDate.mes && selectedDate.periodo || selectedStatus) {
 
             dispatch(getData({selectedDate, selectedStatus}))
 

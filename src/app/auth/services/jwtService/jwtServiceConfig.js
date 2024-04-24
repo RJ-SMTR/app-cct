@@ -21,7 +21,8 @@ const jwtServiceConfig = {
   adminFinanceSignIn: 'auth/finan/email/login',
   adminConclude: 'auth/admin/email/conclude-login',
   finanGetInfo: 'lancamento',
-  setRelease: 'lancamento/create'
+  setRelease: 'lancamento/create',
+  finanGetByStatus: 'lancamento/getbystatus'
 };
 
 export default jwtServiceConfig;
