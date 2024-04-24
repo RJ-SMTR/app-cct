@@ -11,8 +11,8 @@ const initialState = {
     selectedPeriod: false,
     listTransactions: [],
     selectedDate: {
-        mes: '',
-        periodo: ''
+        mes: null,
+        periodo: null
     },
     authValue: '',
     selectedStatus: null
@@ -45,23 +45,10 @@ export default stepSlice.reducer;
 
 export const getData = (data) => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
-    let base = ''
-    let url = ''
 
-    if (data.selectedDate.mes && data.selectedDate.periodo && data.selectedStatus) {
-        base = jwtServiceConfig.finanGetInfo 
-        url = `?mes=${data.selectedDate.mes}&periodo=${data.selectedDate.periodo}&ano=2024&autorizado=${data.selectedStatus.status}`;
-    }
-    else if (data.selectedStatus) {
-        base = jwtServiceConfig.finanGetByStatus
-        url = `?autorizado=${data.selectedStatus.status}`;
-    }
-    else if (data.selectedDate.mes && data.selectedDate.periodo) {
-        base = jwtServiceConfig.finanGetInfo 
-        url = `?mes=${data.selectedDate.mes}&periodo=${data.selectedDate.periodo}&ano=2024`;
-    }
 
-    api.get(base + url, {
+
+    api.get(jwtServiceConfig.finanGetInfo + `?mes=${data.selectedDate.mes}&periodo=${data.selectedDate.periodo}&ano=2024&autorizado=${data.selectedStatus.status}`, {
         headers: { "Authorization": `Bearer ${token}` },
     })
         .then((response) => {
@@ -69,7 +56,6 @@ export const getData = (data) => (dispatch) => {
             dispatch(setSelectedPeriod(true));
         });
 };
-
 export const getFavorecidos = () => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
     
