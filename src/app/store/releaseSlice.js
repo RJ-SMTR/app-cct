@@ -48,7 +48,7 @@ export const getData = (data) => (dispatch) => {
 
 
 
-    api.get(jwtServiceConfig.finanGetInfo + `?mes=${data.selectedDate.mes}&periodo=${data.selectedDate.periodo}&ano=2024&autorizado=${data.selectedStatus.status}`, {
+    api.get(jwtServiceConfig.finanGetInfo + `?mes=${data.selectedDate.mes}&periodo=${data.selectedDate.periodo}&ano=2024&autorizado=${data.selectedStatus?.status}`, {
         headers: { "Authorization": `Bearer ${token}` },
     })
         .then((response) => {
