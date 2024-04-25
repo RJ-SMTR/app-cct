@@ -44,6 +44,7 @@ const schema = yup.object().shape({
         .required('Valor a pagar não pode estar vazio')
 });
 function FinanRelease() {
+    const [year, setYear] = useState()
     const { success } = useContext(AuthContext)
     const dispatch = useDispatch()
     const [valuesState, setValuesState] = useState({
@@ -72,7 +73,8 @@ function FinanRelease() {
             recurso: '',
             anexo: '',
             data_ordem: null,
-            valor_a_pagar: ''
+            valor_a_pagar: '',
+            ano: ''
         },
         resolver: yupResolver(schema),
     })
@@ -104,6 +106,7 @@ function FinanRelease() {
                 setValue('recurso', '')
                 setValue('anexo', '')
                 setValue('glosa', '')
+                setValue('ano', '')
 
 
             })
@@ -257,6 +260,11 @@ function FinanRelease() {
                                         )}
                                     />
                                 </FormControl>
+                                <FormControl fullWidth>
+                                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                                        <DatePicker {...register('ano')} onChange={(newValue) => setYear(newValue)} label={'Selecionar Ano'} openTo="year" views={['year']} />
+                                    </LocalizationProvider>
+                                </FormControl>
 
 
                                 <FormControl>
@@ -320,75 +328,79 @@ function FinanRelease() {
                                         />
                                     }
                                 />
+                                <Controller
+                                    {...register('glosa')}
+                                    name="glosa"
+                                    control={control}
+                                    render={({ field }) =>
+                                        <NumericFormat
+                                            {...field}
+                                            thousandSeparator={'.'}
+                                            label="Glosa"
+                                            allowNegative
+                                            prefix='-'
+                                            value={field.value}
+                                            className={c.glosa}
+                                            decimalSeparator={','}
+                                            fixedDecimalScale
+                                            decimalScale={2}
+                                            customInput={TextField}
+                                            InputProps={{
+                                                ...valuePropsGlosa,
+                                            }}
+
+                                            onValueChange={(values, sourceInfo) => {
+                                                if (sourceInfo && sourceInfo.event && sourceInfo.event.target) {
+                                                    const { name } = sourceInfo.event.target;
+                                                    handleValueChange(name, values.value);
+                                                }
+                                            }}
+                                            error={!!errors.glosa}
+                                            helperText={errors.glosa?.message}
+                                        />
+                                    }
+                                />
+                                <Controller
+                                    {...register('recurso')}
+                                    name="recurso"
+                                    control={control}
+                                    render={({ field }) =>
+                                        <NumericFormat
+                                            {...field}
+                                            thousandSeparator={'.'}
+                                            decimalSeparator={','}
+                                            decimalScale={2}
+                                            label="Recurso"
+                                            fixedDecimalScale
+                                            customInput={TextField}
+                                            value={field.value}
+                                            InputProps={{
+                                                ...valueProps,
+                                                className: valuesState.recurso < 0 ? c.glosa : ""
+                                            }}
+
+                                            onValueChange={(values, sourceInfo) => {
+                                                if (sourceInfo && sourceInfo.event && sourceInfo.event.target) {
+                                                    const { name } = sourceInfo.event.target;
+                                                    handleValueChange(name, values.value);
+                                                }
+                                            }}
+                                            error={!!errors.recurso}
+                                            helperText={errors.recurso?.message}
+                                        />
+                                    }
+                                />
 
 
                             </Box>
                             <FormControl>
-                                <Box className="grid md:grid-cols-3 gap-10 mt-10">
 
                                  
-                                    <Controller
-                                        {...register('glosa')}
-                                        name="glosa"
-                                        control={control}
-                                        render={({ field }) =>
-                                            <NumericFormat
-                                                {...field}
-                                                thousandSeparator={'.'}
-                                                label="Glosa"
-                                                allowNegative
-                                                prefix='-'
-                                                value={field.value}
-                                                className={c.glosa}
-                                                decimalSeparator={','}
-                                                fixedDecimalScale
-                                                decimalScale={2}
-                                                customInput={TextField}
-                                                InputProps={{
-                                                    ...valuePropsGlosa,
-                                                }}
+                                  
+                                 
 
-                                                onValueChange={(values, sourceInfo) => {
-                                                    if (sourceInfo && sourceInfo.event && sourceInfo.event.target) {
-                                                        const { name } = sourceInfo.event.target;
-                                                        handleValueChange(name, values.value);
-                                                    }
-                                                }}
-                                                error={!!errors.glosa}
-                                                helperText={errors.glosa?.message}
-                                            />
-                                        }
-                                    />
-                                    <Controller
-                                        {...register('recurso')}
-                                        name="recurso"
-                                        control={control}
-                                        render={({ field }) =>
-                                            <NumericFormat
-                                                {...field}
-                                                thousandSeparator={'.'}
-                                                decimalSeparator={','}
-                                                decimalScale={2}
-                                                label="Recurso"
-                                                fixedDecimalScale
-                                                customInput={TextField}
-                                                value={field.value}
-                                                InputProps={{
-                                                    ...valueProps,
-                                                    className: valuesState.recurso < 0 ? c.glosa : ""
-                                                }}
 
-                                                onValueChange={(values, sourceInfo) => {
-                                                    if (sourceInfo && sourceInfo.event && sourceInfo.event.target) {
-                                                        const { name } = sourceInfo.event.target;
-                                                        handleValueChange(name, values.value);
-                                                    }
-                                                }}
-                                                error={!!errors.recurso}
-                                                helperText={errors.recurso?.message}
-                                            />
-                                        }
-                                    />
+                                <Box className="grid md:grid-cols-3 gap-10 mt-10">
                                     <Controller
                                         {...register('anexo')}
                                         name="anexo"
@@ -399,7 +411,7 @@ function FinanRelease() {
                                                 thousandSeparator={'.'}
                                                 decimalSeparator={','}
                                                 decimalScale={2}
-                                                label="Anexo 3"
+                                                label="Anexo III"
                                                 fixedDecimalScale
                                                 customInput={TextField}
                                                 value={field.value}
@@ -420,10 +432,6 @@ function FinanRelease() {
                                         }
                                     />
 
-
-
-                                </Box>
-                                <Box className="grid md:grid-cols-3 gap-10 mt-10">
 
                                    
                                     <Controller

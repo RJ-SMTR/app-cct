@@ -387,7 +387,7 @@ export default function BasicEditingGrid(props) {
                         </Box>
                         <Box>
                             <h4 className="font-semibold mb-5">
-                               Anexo 3
+                               Anexo III
                             </h4>
                             <TextField prefix='R$' className={dataAuth?.anexo?.includes('-') ? "glosa" : ""} value={dataAuth?.anexo === null ? '0,00' : dataAuth?.anexo?.replace(/R\$/g, '')} disabled InputProps={{
                                 

@@ -40,6 +40,7 @@ function FinanEdit() {
         period: null
 
     })
+    const [year, setYear] = useState()
 
 
 
@@ -225,6 +226,11 @@ function FinanEdit() {
                                             </Select>
 
                                 </FormControl>
+                                <FormControl fullWidth>
+                                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                                        <DatePicker {...register('ano')} onChange={(newValue) => setYear(newValue)} label={'Selecionar Ano'} openTo="year" views={['year']} />
+                                    </LocalizationProvider>
+                                </FormControl>
 
                                 <FormControl>
                                     <Controller
@@ -344,42 +350,42 @@ function FinanEdit() {
                                         />
                                     }
                                 />
-                                <Controller
-                                    {...register('anexo')}
-                                    name="anexo"
-                                    control={control}
-                                    render={({ field }) =>
-                                        <NumericFormat
-                                            {...field}
-                                            thousandSeparator={'.'}
-                                            decimalSeparator={','}
-                                            allowNegative
-                                            fixedDecimalScale
-                                            decimalScale={2}
-                                            label="Anexo 3"
-                                            defaultValue={releaseData.anexo}
-                                            customInput={TextField}
-                                            InputProps={{
-                                                ...valueProps,
-                                                className: valuesState.anexo < 0 ? "glosa" : ""
-                                            }}
-                                            onValueChange={(values, sourceInfo) => {
-
-                                                if (sourceInfo && sourceInfo.event && sourceInfo.event.target) {
-
-                                                    const { name } = sourceInfo.event.target;
-                                                    handleValueChange(name, values.value);
-                                                }
-                                            }}
-                                        />
-                                    }
-                                />
+                             
 
                             </Box>
 
                             <FormControl>
                                 <Box className="grid md:grid-cols-3 gap-10 mt-10">
-                                  
+                                    <Controller
+                                        {...register('anexo')}
+                                        name="anexo"
+                                        control={control}
+                                        render={({ field }) =>
+                                            <NumericFormat
+                                                {...field}
+                                                thousandSeparator={'.'}
+                                                decimalSeparator={','}
+                                                allowNegative
+                                                fixedDecimalScale
+                                                decimalScale={2}
+                                                label="Anexo III"
+                                                defaultValue={releaseData.anexo}
+                                                customInput={TextField}
+                                                InputProps={{
+                                                    ...valueProps,
+                                                    className: valuesState.anexo < 0 ? "glosa" : ""
+                                                }}
+                                                onValueChange={(values, sourceInfo) => {
+
+                                                    if (sourceInfo && sourceInfo.event && sourceInfo.event.target) {
+
+                                                        const { name } = sourceInfo.event.target;
+                                                        handleValueChange(name, values.value);
+                                                    }
+                                                }}
+                                            />
+                                        }
+                                    />
 
                                     <Controller
                                         {...register('valor_a_pagar')}

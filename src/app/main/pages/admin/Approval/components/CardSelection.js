@@ -6,14 +6,19 @@ import { FormControl, Autocomplete } from "@mui/material";
 import { NumericFormat } from 'react-number-format';
 import AddIcon from '@mui/icons-material/Add';
 import { useDispatch, useSelector } from 'react-redux';
-import { getData, selectedPeriod, setSelectedDate, setSelectedPeriod, setSelectedStatus } from 'app/store/releaseSlice';
+import { getData, selectedYear, setSelectedDate, setSelectedYear, setSelectedStatus } from 'app/store/releaseSlice';
 import { Link } from 'react-router-dom';
-
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import ptBR from 'date-fns/locale/pt-BR';
+import dayjs from 'dayjs';
 
 
 
 function CardSelection() {
     const dispatch = useDispatch()
+    const [year, setYear] = useState()
     const selectedDate = useSelector(state => state.release.selectedDate)
     const selectedStatus = useSelector(state => state.release.selectedStatus)
     const { register } = useForm()
@@ -32,17 +37,19 @@ function CardSelection() {
             [name]: value
         }));
     }
+   
 
     useEffect(() => {
+        const selectedYear = dayjs(year).year()
     
         if (selectedDate.mes && selectedDate.periodo || selectedStatus) {
 
-            dispatch(getData({selectedDate, selectedStatus}))
+            dispatch(getData({selectedDate, selectedStatus, selectedYear}))
 
         } 
 
            
-    }, [selectedDate, selectedStatus])
+    }, [selectedDate, selectedStatus, year])
 
  
 
@@ -97,6 +104,11 @@ function CardSelection() {
                                         <MenuItem value={1}>1a Quinzena</MenuItem>
                                         <MenuItem value={2}>2a Quinzena</MenuItem>
                                     </Select>
+                                </FormControl>
+                                <FormControl fullWidth>
+                            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                                <DatePicker {...register('ano')} onChange={(newValue) => setYear(newValue)} label={'Selecionar Ano'} openTo="year" views={['year']} />  
+                            </LocalizationProvider>
                                 </FormControl>
                            
 
