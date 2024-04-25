@@ -46,7 +46,6 @@ export default stepSlice.reducer;
 export const getData = (data) => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
 
-    console.log(data)
 
     api.get(jwtServiceConfig.finanGetInfo + `?mes=${data.selectedDate.mes}&periodo=${data.selectedDate.periodo}&ano=${data.selectedYear}&autorizado=${data.selectedStatus?.status}`, {
         headers: { "Authorization": `Bearer ${token}` },
