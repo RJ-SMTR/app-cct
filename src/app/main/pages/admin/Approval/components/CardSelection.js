@@ -18,6 +18,7 @@ import dayjs from 'dayjs';
 
 function CardSelection() {
     const dispatch = useDispatch()
+    const [year, setYear] = useState()
     const selectedDate = useSelector(state => state.release.selectedDate)
     const selectedStatus = useSelector(state => state.release.selectedStatus)
     const selectedYear = useSelector(state => state.release.selectedYear)
@@ -38,6 +39,7 @@ function CardSelection() {
         }));
     }
    
+
     const handleYearChange = (newValue) => {
         dispatch(setSelectedYear(newValue));
     };
@@ -53,6 +55,7 @@ function CardSelection() {
 
            
     }, [selectedDate, selectedStatus,selectedYear])
+
 
   
     return (
@@ -109,7 +112,9 @@ function CardSelection() {
                                 </FormControl>
                                 <FormControl fullWidth>
                             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+
                                 <DatePicker {...register('ano')} onChange={handleYearChange} label={'Selecionar Ano'} openTo="year" views={['year']} />  
+
                             </LocalizationProvider>
                                 </FormControl>
                            

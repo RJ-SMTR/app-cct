@@ -44,6 +44,7 @@ const schema = yup.object().shape({
         .required('Valor a pagar não pode estar vazio')
 });
 function FinanRelease() {
+    const [year, setYear] = useState()
     const { success } = useContext(AuthContext)
     const dispatch = useDispatch()
     const selectedYear = useSelector(state => state.release.selectedYear)
@@ -266,7 +267,9 @@ function FinanRelease() {
                                 </FormControl>
                                 <FormControl fullWidth>
                                     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+
                                         <DatePicker {...register('ano')} onChange={handleYearChange} label={'Selecionar Ano'} openTo="year" views={['year']} />
+
                                     </LocalizationProvider>
                                 </FormControl>
 
