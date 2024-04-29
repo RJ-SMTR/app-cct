@@ -9,7 +9,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import ptBR from 'date-fns/locale/pt-BR';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { NumericFormat } from 'react-number-format';
-import { getFavorecidos, setRelease } from 'app/store/releaseSlice';
+import { getFavorecidos, setRelease, setSelectedYear } from 'app/store/releaseSlice';
 import { useDispatch } from 'react-redux';
 import { AuthContext } from 'src/app/auth/AuthContext';
 import dayjs from 'dayjs';
@@ -47,6 +47,7 @@ function FinanRelease() {
     const [year, setYear] = useState()
     const { success } = useContext(AuthContext)
     const dispatch = useDispatch()
+    const selectedYear = useSelector(state => state.release.selectedYear)
     const [valuesState, setValuesState] = useState({
         algoritmo: 0,
         glosa: 0,
@@ -84,6 +85,10 @@ function FinanRelease() {
             ...prevState,
             [name]: value
         }));
+    };
+
+    const handleYearChange = (newValue) => {
+        dispatch(setSelectedYear(newValue));
     };
 
 
@@ -262,7 +267,9 @@ function FinanRelease() {
                                 </FormControl>
                                 <FormControl fullWidth>
                                     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                                        <DatePicker {...register('ano')} onChange={(newValue) => setYear(newValue)} label={'Selecionar Ano'} openTo="year" views={['year']} />
+
+                                        <DatePicker {...register('ano')} onChange={handleYearChange} label={'Selecionar Ano'} openTo="year" views={['year']} />
+
                                     </LocalizationProvider>
                                 </FormControl>
 
