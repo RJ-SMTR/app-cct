@@ -44,10 +44,8 @@ const schema = yup.object().shape({
         .required('Valor a pagar não pode estar vazio')
 });
 function FinanRelease() {
-    const [year, setYear] = useState()
     const { success } = useContext(AuthContext)
     const dispatch = useDispatch()
-    const selectedYear = useSelector(state => state.release.selectedYear)
     const [valuesState, setValuesState] = useState({
         algoritmo: 0,
         glosa: 0,
