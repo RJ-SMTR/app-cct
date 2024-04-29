@@ -18,9 +18,9 @@ import dayjs from 'dayjs';
 
 function CardSelection() {
     const dispatch = useDispatch()
-    const [year, setYear] = useState()
     const selectedDate = useSelector(state => state.release.selectedDate)
     const selectedStatus = useSelector(state => state.release.selectedStatus)
+    const selectedYear = useSelector(state => state.release.selectedYear)
     const { register } = useForm()
 
     function handleChange(event) {
@@ -38,21 +38,23 @@ function CardSelection() {
         }));
     }
    
+    const handleYearChange = (newValue) => {
+        dispatch(setSelectedYear(newValue));
+    };
 
     useEffect(() => {
-        const selectedYear = dayjs(year).year()
+        const selectedYearFormat = dayjs(selectedYear).year()
     
         if (selectedDate.mes && selectedDate.periodo || selectedStatus) {
 
-            dispatch(getData({selectedDate, selectedStatus, selectedYear}))
+            dispatch(getData({selectedDate, selectedStatus, selectedYearFormat}))
 
         } 
 
            
-    }, [selectedDate, selectedStatus, year])
+    }, [selectedDate, selectedStatus,selectedYear])
 
- 
-
+  
     return (
         <>
                 <Box className='flex flex-col  justify-around'>
@@ -107,7 +109,7 @@ function CardSelection() {
                                 </FormControl>
                                 <FormControl fullWidth>
                             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                                <DatePicker {...register('ano')} onChange={(newValue) => setYear(newValue)} label={'Selecionar Ano'} openTo="year" views={['year']} />  
+                                <DatePicker {...register('ano')} onChange={handleYearChange} label={'Selecionar Ano'} openTo="year" views={['year']} />  
                             </LocalizationProvider>
                                 </FormControl>
                            

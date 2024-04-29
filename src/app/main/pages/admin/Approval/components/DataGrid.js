@@ -8,7 +8,7 @@ import CancelIcon from '@mui/icons-material/Close';
 import { NumericFormat } from 'react-number-format';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { deleteRelease, handleAuthRelease, handleAuthValue } from 'app/store/releaseSlice';
+import { deleteRelease, handleAuthRelease, handleAuthValue, listTransactions } from 'app/store/releaseSlice';
 import { AuthContext } from 'src/app/auth/AuthContext';
 import { api } from 'app/configs/api/api';
 import jwtServiceConfig from 'src/app/auth/services/jwtService/jwtServiceConfig';
@@ -50,7 +50,7 @@ export default function BasicEditingGrid(props) {
     const navigate = useNavigate()
     const dispatch = useDispatch()
     const selectedDate = useSelector(state => state.release.selectedDate)
-    const selectedPeriod = useSelector(state => state.release.selectedPeriod)
+    const listTransactions = useSelector(state => state.release.listTransactions)
     const [open, setOpen] = useState(false)
     const [openDelete, setOpenDelete] = useState(false)
     const [initialRows, setInitialRows] = useState(false)
@@ -101,11 +101,9 @@ export default function BasicEditingGrid(props) {
     }, [props])
 
     useEffect(() => {
-        if (selectedDate.mes && selectedDate.periodo) {
             dispatch(handleAuthValue(selectedDate))
-        }
 
-    }, [selectedDate, selectedPeriod])
+    }, [listTransactions])
 
     async function getInfoAuth(id) {
         const token = window.localStorage.getItem('jwt_access_token');

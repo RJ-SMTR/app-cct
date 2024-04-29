@@ -15,7 +15,8 @@ const initialState = {
         periodo: null
     },
     authValue: '',
-    selectedStatus: null
+    selectedStatus: null,
+    selectedYear: null
 };
 
 const stepSlice = createSlice({
@@ -37,16 +38,17 @@ const stepSlice = createSlice({
         setSelectedStatus: (state, action) => {
             state.selectedStatus = action.payload;
         },
+        setSelectedYear: (state, action) => {
+            state.selectedYear = action.payload;
+        },
     },
 });
 
-export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTransactions, selectDate, setSelectedDate, authValue, setAuthValue, setSelectedStatus, selectedStatus} = stepSlice.actions;
+export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTransactions, selectDate, setSelectedDate, authValue, setAuthValue, setSelectedStatus, selectedStatus, setSelectedYear , selectedYear} = stepSlice.actions;
 export default stepSlice.reducer;
 
 export const getData = (data) => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
-
-
     api.get(jwtServiceConfig.finanGetInfo + `?mes=${data.selectedDate.mes}&periodo=${data.selectedDate.periodo}&ano=${data.selectedYear}&autorizado=${data.selectedStatus?.status}`, {
         headers: { "Authorization": `Bearer ${token}` },
     })
@@ -164,10 +166,10 @@ export const deleteRelease = (id) => (dispatch) => {
     });
 };
 export const handleAuthValue = (data, id) => (dispatch) => {
-    const selectedDate = {
-        mes: data.mes,
-        periodo: data.periodo
-    }
+    // const selectedDate = {
+    //     mes: data.mes,
+    //     periodo: data.periodo
+    // }
     
     return new Promise((resolve, reject) => {
         const token = window.localStorage.getItem('jwt_access_token');
@@ -180,7 +182,7 @@ export const handleAuthValue = (data, id) => (dispatch) => {
             if (response.status === 200) {
                 resolve()
                 dispatch(setAuthValue(response.data.valor_autorizado))
-                dispatch(getData({ selectedDate, selectedStatus }))
+                // dispatch(getData({ selectedDate, selectedStatus, selectedYear }))
             } else {
                 reject(new Error('Erro'));
             }
