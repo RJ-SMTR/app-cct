@@ -28,7 +28,7 @@ const navAdminConfig = [
     {
         id: 'trigger-component',
         title: 'trigger',
-        translate: 'Extrato',
+        translate: 'Movimentações Financeiras',
         type: 'item',
         icon: 'heroicons-outline:currency-dollar',
         url: 'extrato-lançamentos',

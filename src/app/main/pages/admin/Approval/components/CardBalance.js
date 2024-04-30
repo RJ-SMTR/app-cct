@@ -13,7 +13,7 @@ function CardBalance({ type, amount }) {
 
     return (
         <>
-            <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden mx-5 mt-10 md:mt-0">
+            <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl max-w-[280px] shadow overflow-hidden mx-5 mt-10 md:mt-0">
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col">
                         <Typography className="text-lg font-medium tracking-tight leading-6 truncate">

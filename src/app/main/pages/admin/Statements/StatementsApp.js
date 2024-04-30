@@ -3,12 +3,9 @@ import DataGridStatements from "../Approval/components/DataGridStatements"
 import DataGridStatementsCB from "../Approval/components/DataGridStatementsCB"
 import { useSelector } from "react-redux";
 import CardBalance from "../Approval/components/CardBalance";
-import CardSelection from "../Approval/components/CardSelection";
 
 function StatementsApp() {
-    const selectedPeriod = useSelector(state => state.release.selectedPeriod)
     const listTransactions = useSelector(state => state.release.listTransactions)
-    const authValue = useSelector(state => state.release.authValue)
 
   return (
       <>
