@@ -25,6 +25,14 @@ const navAdminConfig = [
         icon: 'heroicons-outline:currency-dollar',
         url: 'aprovação',
     },
+    {
+        id: 'trigger-component',
+        title: 'trigger',
+        translate: 'Movimentações Financeiras',
+        type: 'item',
+        icon: 'heroicons-outline:currency-dollar',
+        url: 'extrato-lançamentos',
+    },
 
 
 ];
