@@ -45,7 +45,10 @@ function CardSelection() {
     };
 
     useEffect(() => {
-        const selectedYearFormat = dayjs(selectedYear).year()
+        let selectedYearFormat = null
+        if(selectedYear){
+             selectedYearFormat = dayjs(selectedYear).year()
+        }
     
         if (selectedDate.mes && selectedDate.periodo || selectedStatus) {
 
