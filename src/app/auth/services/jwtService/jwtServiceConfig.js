@@ -15,9 +15,14 @@ const jwtServiceConfig = {
   invite: `auth/licensee/invite`,
   bankStatement: 'bank-statements/me',
   revenues: 'ticket-revenues/me/grouped',
+  revenuesDay: 'ticket-revenues/me/individual',
   revenuesUn: 'ticket-revenues/me',
   adminSignIn: 'auth/admin/email/login',
+  adminFinanceSignIn: 'auth/finan/email/login',
   adminConclude: 'auth/admin/email/conclude-login',
+  finanGetInfo: 'lancamento',
+  setRelease: 'lancamento/create',
+  finanGetByStatus: 'lancamento/getbystatus'
 };
 
 export default jwtServiceConfig;

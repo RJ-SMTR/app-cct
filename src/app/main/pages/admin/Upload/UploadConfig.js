@@ -1,4 +1,5 @@
 import { lazy } from 'react';
+import { authRoles } from 'src/app/auth';
 
 const UploadAppLazy = lazy(() => import('./UploadApp'));
 
@@ -12,7 +13,7 @@ const UploadConfig = {
             },
         },
     },
-    auth: ['Admin'],
+    auth: authRoles.admin,
     routes: [
         {
             path: 'upload',

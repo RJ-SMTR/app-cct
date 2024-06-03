@@ -334,7 +334,7 @@ function TableTransactions({id}) {
                             
                         <TableBody>
                        
-                            {isLoading ? <TableCell colSpan={4}>
+                            {isLoading || statements.length < 1? <TableCell colSpan={4}>
                                 {/* <Box className="flex justify-center items-center m-10">
                                     <CircularProgress />
                                 </Box> */}
@@ -350,7 +350,17 @@ function TableTransactions({id}) {
                         </TableBody>
                     </Table>
                 </TableContainer>
-                {searchingWeek && !searchingDay && (
+                {searchingWeek ? searchingDay ? <TablePagination
+                    className={`overflow-visible ${c.root}`}
+                    rowsPerPageOptions={[5]}
+                    component="div"
+                    rowsPerPage={rowsPerPage}
+                    count={statements.length}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                    
+                /> : 
                     <TablePagination
                         className={`overflow-visible ${c.root}`}
                         rowsPerPageOptions={[5]}
@@ -369,7 +379,7 @@ function TableTransactions({id}) {
                             </div>
                         )}
                     />
-                )}
+                : <></>}
             </Box>
         </Paper>
     );

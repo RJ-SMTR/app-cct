@@ -1,9 +1,9 @@
 import { lazy } from 'react';
 import { authRoles } from 'src/app/auth';
 
-const TriggerAppLazy = lazy(() => import('./TriggerApp'));
+const ApprovalAppLazy = lazy(() => import('./ApprovalApp'));
 
-const TriggerConfig = {
+const ApprovalConfig = {
     settings: {
         layout: {
             config: {
@@ -13,13 +13,13 @@ const TriggerConfig = {
             },
         },
     },
-    auth: authRoles.admin,
+    auth: authRoles.commonFinan,
     routes: [
         {
-            path: 'disparo',
-            element: <TriggerAppLazy />,
+            path: 'aprovação',
+            element: <ApprovalAppLazy />,
         },
     ],
 };
 
-export default TriggerConfig;
+export default ApprovalConfig;

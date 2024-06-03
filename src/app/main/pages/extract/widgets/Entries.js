@@ -30,10 +30,8 @@ function Entries(type) {
     useEffect(() => {
             const date = new Date()
             const today = format(date, 'dd/MM/yyyy')
-            console.log(today)
             setTodayInfo(today)
-
-    }, [])
+    }, [statements])
 
   return (
       <>{statements.length ? <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden mx-5 mt-10 md:mt-0">
