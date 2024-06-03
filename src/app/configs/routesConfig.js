@@ -27,7 +27,7 @@ const routeConfigs = [
   ResetPasswordConfig,
   ConcludeConfig,
   profileAppConfig,
-  // ExtractConfig,
+  ExtractConfig,
   // ResumeConfig,
   AdminSignIn,
   AdminConfig,

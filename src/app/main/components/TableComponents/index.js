@@ -33,13 +33,7 @@ export function CustomTable(data) {
   const CustomBadge = (data) => {
     const i = data.data.data
     const getStatus = (i) => {
-      if (i.status == "accumulated") {
-        return 'A ser pago'
-      } else if (i.status == "paid") {
-        return 'Pago'
-      } else {
-        return 'Falha'
-      }
+      return i.status
     }
   
     return <Badge className={data.c?.root}
@@ -65,6 +59,9 @@ export function CustomTable(data) {
           )}
         </Typography>
 
+      </TableCell>
+      <TableCell component="th" scope="row">
+        {/* {searchingWeek ? data.data.count?.toLocaleString() : <CustomBadge data={data} />} */}
       </TableCell>
       <TableCell component="th" scope="row">
         {searchingWeek ? data.data.count?.toLocaleString() : <CustomBadge data={data} />}

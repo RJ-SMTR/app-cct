@@ -192,6 +192,7 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
 
         if (searchingWeek || searchingDay) {
             dispatch(setMapInfo(response.data.data));
+            console.log("statements", response.data.data)
             dispatch(setStatements(response.data.data));
             dispatch(setSumInfoWeek(response.data))
             dispatch(getFirstTypes(null, dateRange, searchingWeek, searchingDay));
@@ -205,6 +206,7 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             dispatch(setSumInfo(response.data))
 
             dispatch(setStatements(response.data.data));
+            console.log("statements", response.data.data)
         }
 
         return response.data;

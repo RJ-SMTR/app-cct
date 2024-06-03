@@ -308,7 +308,12 @@ function TableTransactions({id}) {
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                            {searchingWeek ? 'Arrecadado' : 'Valor'}
+                                        Valor Transação
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                            Valor Pago
                                         </Typography>
                                     </TableCell>
                                     <TableCell>
