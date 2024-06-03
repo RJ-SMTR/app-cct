@@ -53,6 +53,7 @@ function TableTransactions({id}) {
     const [lastDate, setLastDate] = useState([])
     const [rowsPerPage, setRowsPerPage] = useState(8);
     const [isLoading, setIsLoading] = useState(true)
+    const [selectedDateRange, setSelectedDateRange] = useState([]);
 
     const navigate =  useNavigate()
     const useStyles = makeStyles(() => ({
@@ -119,6 +120,7 @@ function TableTransactions({id}) {
     }
 
     useEffect(() => {
+        console.log(dateRange)
         setPreviousDays("lastMonth");
         if (user.role.name === "Admin") {
             dispatch(getStatements(previousDays, dateRange, searchingDay, searchingWeek, id))
@@ -188,6 +190,13 @@ function TableTransactions({id}) {
         navigate('/extrato')
        }
     }
+
+    const handleDateRange = (newValue) => {
+        console.log("new", newValue)
+        setSelectedDateRange(newValue);
+        dispatch(setDateRange(newValue));
+        dispatch(setSearchingWeek(false));
+    };
     
     const handleBack = () => {
       
@@ -200,12 +209,13 @@ function TableTransactions({id}) {
         } else {
             if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Semanal'));
             if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'));
-            dispatch(setDateRange([]))
+            dispatch(setDateRange(selectedDateRange))
             setPage(0)
             setIsLoading(true)
             dispatch(setSearchingWeek(false))
         }
     }
+  
 
 
     return (
@@ -234,7 +244,8 @@ function TableTransactions({id}) {
                             format='dd/MM/yy'
                             locale={locale}
                             character=' - '
-                            onChange={(newValue) => (dispatch(setDateRange(newValue)), dispatch(setSearchingWeek(false)))}
+                            onChange={(newValue) => handleDateRange(newValue)}
+                              value={selectedDateRange}
 
                         />
                     </div>
@@ -276,7 +287,8 @@ function TableTransactions({id}) {
                                 format='dd/MM/yy'
                                 character=' - '
                                 locale={locale}
-                                onChange={(newValue) => (dispatch(setDateRange(newValue)), dispatch(setSearchingWeek(false)))}
+                                onChange={(newValue) => handleDateRange(newValue)}
+                                  value={selectedDateRange}
 
                             />
                             <Button className={previousDays == 'lastWeek' ? 'active' : ''} variant="contained" onClick={handleDays} data-value={'lastWeek'}>7 dias</Button>
