@@ -272,17 +272,17 @@ function TableTransactions({ id }) {
 
                     <Hidden smDown>
                         <div className='flex flex-wrap content-center justify-center'>
-//                             <DateRangePicker
-//                                 showOneCalendar
-//                                 placeholder="Selecionar datas"
-//                                 className='mr-5'
-//                                 disabledDate={afterToday()}
-//                                 format='dd/MM/yy'
-//                                 character=' - '
-//                                 locale={locale}
-//                                 onChange={(newValue) => (dispatch(setDateRange(newValue)), dispatch(setSearchingWeek(false)))}
+                            {/* <DateRangePicker
+                                showOneCalendar
+                                placeholder="Selecionar datas"
+                                className='mr-5'
+                                disabledDate={afterToday()}
+                                format='dd/MM/yy'
+                                character=' - '
+                                locale={locale}
+                                onChange={(newValue) => (dispatch(setDateRange(newValue)), dispatch(setSearchingWeek(false)))}
 
-//                             />
+                            /> */}
                             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
                                 <DatePicker label={'Selecionar Mês'} openTo="month" views={['year', 'month']} onChange={(newValue) => handleSelectedDate(newValue)} />
                             </LocalizationProvider>
@@ -342,12 +342,7 @@ function TableTransactions({ id }) {
 
                         <TableBody>
 
-
                             {isLoading ? <TableCell colSpan={4}>
-
-                       
-                            {isLoading || statements.length < 1? <TableCell colSpan={4}>
-
                                 {/* <Box className="flex justify-center items-center m-10">
                                     <CircularProgress />
                                 </Box> */}
@@ -363,17 +358,7 @@ function TableTransactions({ id }) {
                         </TableBody>
                     </Table>
                 </TableContainer>
-                {searchingWeek ? searchingDay ? <TablePagination
-                    className={`overflow-visible ${c.root}`}
-                    rowsPerPageOptions={[5]}
-                    component="div"
-                    rowsPerPage={rowsPerPage}
-                    count={statements.length}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                    
-                /> : 
+                {searchingWeek && !searchingDay && (
                     <TablePagination
                         className={`overflow-visible ${c.root}`}
                         rowsPerPageOptions={[5]}
@@ -392,7 +377,7 @@ function TableTransactions({ id }) {
                             </div>
                         )}
                     />
-                : <></>}
+                )}
             </Box>
         </Paper>
     );
