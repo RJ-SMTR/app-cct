@@ -5,6 +5,7 @@ export const lightPaletteText = {
   primary: 'rgb(17, 24, 39)',
   secondary: 'rgb(107, 114, 128)',
   disabled: 'rgb(149, 156, 169)',
+  seeT: 'rgb(149, 156, 169, 0)',
 };
 
 export const darkPaletteText = {
@@ -34,6 +35,12 @@ const themesConfig = {
         main: '#0DB1E3',
         dark: '#097B9E',
         contrastText: darkPaletteText.primary,
+      },
+      op: {
+        light: 'rgb(255, 255, 255, 0)',
+        main: 'rgb(255, 255, 255, 0)',
+        dark: 'rgb(255, 255, 255, 0)',
+        contrastText: lightPaletteText.seeT,
       },
       background: {
         paper: '#FFFFFF',
@@ -70,6 +77,7 @@ const themesConfig = {
         dark: '#097B9E',
         contrastText: darkPaletteText.primary,
       },
+     
       background: {
         paper: '#1e293b',
         default: '#004a80',

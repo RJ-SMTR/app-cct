@@ -4,9 +4,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from "react";
 import { getMultipliedEntries } from "app/store/extractSlice";
 import { format } from "date-fns";
+import { utcToZonedTime } from 'date-fns-tz';
 
 function Entries(type) {
     const [todayInfo, setTodayInfo] = useState()
+    const [firstDate, setFirstDate] = useState('')
+    const [lastDate, setLastDate] = useState('')
     const dispatch = useDispatch()
   
     const formatter = new Intl.NumberFormat('pt-BR', {
@@ -19,9 +22,8 @@ function Entries(type) {
     const sumInfoWeek = useSelector(state => state.extract.sumInfoWeek)
     const searchingWeek = useSelector(state => state.extract.searchingWeek)
     const searchingDay = useSelector(state => state.extract.searchingDay)
-    const firstDate = new Date(`${statements[0]?.date ?? statements[0]?.partitionDate}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
-    const lastDate = new Date(`${statements[statements.length - 1]?.date ?? statements[statements.length - 1]?.partitionDate }T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
-    const dayDate = new Date(`${statements[0]?.partitionDate}`).toLocaleDateString('pt-BR', { timeZone: 'Etc/UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
+   
+    const dayDate = new Date(`${statements[0]?.partitionDate}`);
  
 
     useEffect(() => {
@@ -31,8 +33,21 @@ function Entries(type) {
             const date = new Date()
             const today = format(date, 'dd/MM/yyyy')
             setTodayInfo(today)
-    }, [statements])
 
+    }, [])
+
+    useEffect( () => {
+        if(statements.length >= 1){
+            const tz = 'UTC';
+            const dateFirst = new Date(`${statements[statements.length - 1]?.date ?? statements[statements.length - 1]?.partitionDate}`)
+            const dateLast = new Date(`${statements[0]?.date ?? statements[0]?.partitionDate}`)
+            const zonedDateFirst = utcToZonedTime(dateFirst, tz);
+            const zonedDateLast = utcToZonedTime(dateLast, tz);
+             setFirstDate(format(zonedDateFirst, 'dd/MM/yyyy'))
+             setLastDate(format(zonedDateLast, 'dd/MM/yyyy'))
+        }
+        
+    }, [statements])
   return (
       <>{statements.length ? <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden mx-5 mt-10 md:mt-0">
           <div className="flex items-center justify-between">

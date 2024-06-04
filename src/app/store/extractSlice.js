@@ -15,7 +15,9 @@ const initialState = {
     multipliedEntries: [],
     listByType: [],
     firstDate: [],
-    valorAcumuladoLabel: 'Valor acumulado Mensal',
+    valorAcumuladoLabel:'Valor Transação - Acumulado Mensal',
+    valorPagoLabel:'Valor Pago - Acumulado Mensal',
+  
     sumInfo: [],
     sumInfoWeek: [],
     pendingValue: [],
@@ -68,11 +70,15 @@ const extractSlice = createSlice({
         setValorAcumuladoLabel: (state, action) => {
             state.valorAcumuladoLabel = action.payload;
         },
+        setValorPagoLabel: (state, action) => {
+            state.valorPagoLabel = action.payload;
+        },
         setPendingValue: (state, action) => {
             state.pendingValue = action.payload;
         },
         setPendingList: (state, action) => {
             state.pendingList = action.payload;
+
         },
     },
 });
@@ -101,6 +107,7 @@ export const {
     setListByType,
     setFirstDate,
     setValorAcumuladoLabel,
+    setValorPagoLabel,
     sumInfo,
     setSumInfo,
     sumInfoWeek,
@@ -113,7 +120,7 @@ export const {
 
 export default extractSlice.reducer;
 function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek) {
-    if (dateRange?.length > 0 && !searchingDay) {
+    if (dateRange?.length > 0 && !searchingDay && searchingWeek) {
         const separateDate = dateRange.map((i) => {
             const inputDateString = i;
             const dateObj = new Date(inputDateString);
@@ -125,8 +132,7 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
         });
         if (!searchingDay && !searchingWeek) {
             return {
-                startDate: separateDate[0], 
-                endDate: separateDate[1]
+                yearMonth: dateRange
             }
         }
         return {
@@ -139,7 +145,7 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
             endDate: dateRange[1]
         };
     } else {
-        return previousDays > 0 ? { timeInterval: previousDays } : { timeInterval: 'lastMonth' }
+        return previousDays > 0 ? { timeInterval: previousDays } : { timeInterval: 'lastMonth', yearMonth: dateRange }
     }
 }
 export const  getPreviousDays = (dateRange) => (dispatch) => {
@@ -189,8 +195,6 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
     const requestData = handleRequestData(previousDays, dateRange, searchingDay, searchingWeek);
     let apiRoute = ''
     if(!userId){
-        console.log("searchingWeek", searchingWeek)
-        console.log("searchingDay", searchingDay)
         apiRoute = searchingWeek && searchingDay
             ? jwtServiceConfig.revenuesDay
             : searchingWeek 
@@ -219,7 +223,6 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
         const response = await api(config);
 
         if (searchingWeek || searchingDay) {
-            console.log("response.data", response.data)
             dispatch(getPreviousDays(requestData.endDate))
             dispatch(setMapInfo(response.data.data));
             dispatch(setStatements(response.data.data));
