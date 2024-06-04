@@ -20,6 +20,8 @@ const initialState = {
   
     sumInfo: [],
     sumInfoWeek: [],
+    pendingValue: [],
+    pendingList: [],
 };
 
 const extractSlice = createSlice({
@@ -70,6 +72,13 @@ const extractSlice = createSlice({
         },
         setValorPagoLabel: (state, action) => {
             state.valorPagoLabel = action.payload;
+
+        setPendingValue: (state, action) => {
+            state.pendingValue = action.payload;
+        },
+        setPendingList: (state, action) => {
+            state.pendingList = action.payload;
+
         },
     },
 });
@@ -102,7 +111,11 @@ export const {
     sumInfo,
     setSumInfo,
     sumInfoWeek,
-    setSumInfoWeek
+    setSumInfoWeek,
+    setPendingList,
+    pendingList,
+    setPendingValue,
+    pendingValue
 } = extractSlice.actions;
 
 export default extractSlice.reducer;
@@ -136,6 +149,17 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
         return previousDays > 0 ? { timeInterval: previousDays } : { timeInterval: 'lastMonth' }
     }
 }
+export const  getPreviousDays = (dateRange) => (dispatch) => {
+    const token = window.localStorage.getItem('jwt_access_token');
+    api.get(jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=lastMonth`, {
+        headers: { "Authorization": `Bearer ${token}` },
+    })
+        .then((response) => {
+            dispatch(setPendingValue(response.data.statusCounts))
+            dispatch(setPendingList(response.data.data))
+        })
+
+}
 
 export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) => async (dispatch) => {
     const requestData = handleRequestData(null, dateRange, searchingDay, searchingWeek)
@@ -162,7 +186,6 @@ export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) =>
             Object.entries(response.data.transactionTypeCounts)
                 .sort(([keyA], [keyB]) => order.indexOf(keyA) - order.indexOf(keyB))
         );
-
         dispatch(setListByType(sortedObject))
     } catch (error) {
         console.error(error);
@@ -173,7 +196,13 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
     const requestData = handleRequestData(previousDays, dateRange, searchingDay, searchingWeek);
     let apiRoute = ''
     if(!userId){
-        apiRoute = searchingWeek ? jwtServiceConfig.revenuesUn : jwtServiceConfig.bankStatement;
+        console.log("searchingWeek", searchingWeek)
+        console.log("searchingDay", searchingDay)
+        apiRoute = searchingWeek && searchingDay
+            ? jwtServiceConfig.revenuesDay
+            : searchingWeek 
+                ? jwtServiceConfig.revenuesUn
+                : jwtServiceConfig.bankStatement
     } else {
         apiRoute = searchingWeek ? jwtServiceConfig.revenuesUn + `?userId=${userId}` : jwtServiceConfig.bankStatement + `?userId=${userId}`;
     }
@@ -197,6 +226,8 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
         const response = await api(config);
 
         if (searchingWeek || searchingDay) {
+            console.log("response.data", response.data)
+            dispatch(getPreviousDays(requestData.endDate))
             dispatch(setMapInfo(response.data.data));
             console.log("statements", response.data.data)
             dispatch(setStatements(response.data.data));
@@ -209,6 +240,7 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             } else {
                 dispatch(getFirstTypes(null, null, searchingWeek, searchingDay));
             }
+            
             dispatch(setSumInfo(response.data))
 
             dispatch(setStatements(response.data.data));

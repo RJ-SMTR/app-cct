@@ -35,13 +35,7 @@ function Entries(type) {
             setTodayInfo(today)
 
     }, [])
-    useEffect(() => {
-        console.log(type)
-        console.log("date", [firstDate, lastDate])
-    }, [type])
 
-    useEffect(() => {
-        console.log(statements)
 
         if(statements.length >= 1){
             const tz = 'UTC';

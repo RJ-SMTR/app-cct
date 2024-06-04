@@ -4,6 +4,8 @@ import navAdminConfig from 'app/configs/navAdminConfig';
 import FuseUtils from '@fuse/utils';
 import i18next from 'i18next';
 import _ from '@lodash';
+import navFinanConfig from 'app/configs/navFinanConfig';
+import masterConfig from 'app/configs/masterConfig';
 
 const navigationAdapter = createEntityAdapter();
 const emptyInitialState = navigationAdapter.getInitialState();
@@ -60,7 +62,7 @@ export const selectNavigation = createSelector(
       // loop through every object in the array
       return data.map((item) => {
         if (item.translate && item.title) {
-          item.title = i18next.t(`navigation:${item.translate}`);
+          item.title = i18next.t(`${item.translate}`);
         }
 
         // see if there is a children node
@@ -71,7 +73,27 @@ export const selectNavigation = createSelector(
         return item;
       });
     }
-    const configToUse = userRole === 'Admin' ? navAdminConfig : navigationConfig;
+    let configToUse;
+    switch (userRole) {
+      
+      case 'Admin Master':
+        configToUse = masterConfig;
+        break;
+      case 'Admin':
+        configToUse = navAdminConfig;
+        break;
+      case 'Lançador financeiro':
+      case 'Aprovador financeiro':
+      case 'Admin Finan':
+        configToUse = navFinanConfig;
+        break;
+      default:
+        configToUse = navigationConfig;
+
+    }
+    
+
+
     return setTranslationValues(
       _.merge(
         [],
