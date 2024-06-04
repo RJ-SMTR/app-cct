@@ -125,6 +125,22 @@ function generateMuiTheme(theme, direction) {
     _.merge({}, data, {
       mixins: extendThemeWithMixins(data),
       direction,
+      components: {
+        MuiPickersToolbar: {
+          styleOverrides: {
+            root: {
+              display: 'none',
+            },
+          },
+        },
+        MuiDialogActions: {
+          styleOverrides: {
+            root: {
+              display: 'none',
+            },
+          },
+        },
+      },
     })
   );
   return response;

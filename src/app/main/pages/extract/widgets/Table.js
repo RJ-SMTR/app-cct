@@ -31,7 +31,7 @@ import { getStatements, setPreviousDays, setDateRange, setSearchingWeek, setSear
 import { useNavigate } from 'react-router-dom';
 import { selectUser } from 'app/store/userSlice';
 
-import { DatePicker } from '@mui/x-date-pickers';
+import { DatePicker, MobileDatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import ptBR from 'date-fns/locale/pt-BR';
@@ -237,7 +237,7 @@ function TableTransactions({ id }) {
                         </Button>
                    
                         <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                            <DatePicker label={'Mês'} openTo="month" views={['year', 'month']} onChange={(newValue) => handleSelectedDate(newValue)} />
+                            <MobileDatePicker label={'Selecionar Mês'} openTo="month" disableFuture closeOnSelect views={['year', 'month']} onChange={(newValue) => handleSelectedDate(newValue)} />
                         </LocalizationProvider>
                     </div>
                 </Hidden>
@@ -276,7 +276,7 @@ function TableTransactions({ id }) {
 
                             /> */}
                             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                                <DatePicker label={'Selecionar Mês'} openTo="month" views={['year', 'month']} onChange={(newValue) => handleSelectedDate(newValue)} />
+                                <MobileDatePicker label={'Selecionar Mês'} openTo="month" disableFuture closeOnSelect  views={['year', 'month']} onChange={(newValue) => handleSelectedDate(newValue)} />
                             </LocalizationProvider>
 
                             {/* <Button className={previousDays == 'lastWeek' ? 'active' : ''} variant="contained" onClick={handleDays} data-value={'lastWeek'}>7 dias</Button>
