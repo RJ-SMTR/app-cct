@@ -36,7 +36,7 @@ function Entries(type) {
 
     }, [])
 
-
+    useEffect( () => {
         if(statements.length >= 1){
             const tz = 'UTC';
             const dateFirst = new Date(`${statements[0]?.date ?? statements[0]?.partitionDate}`)

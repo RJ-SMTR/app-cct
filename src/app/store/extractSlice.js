@@ -72,7 +72,7 @@ const extractSlice = createSlice({
         },
         setValorPagoLabel: (state, action) => {
             state.valorPagoLabel = action.payload;
-
+        },
         setPendingValue: (state, action) => {
             state.pendingValue = action.payload;
         },
