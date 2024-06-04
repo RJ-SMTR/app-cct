@@ -45,14 +45,15 @@ function TableTypes() {
                                             Tipo
                                         </Typography>
                                     </TableCell>
+                                   
                                     <TableCell>
                                         <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                            Valor arrecadado
+                                            Catracadas
                                         </Typography>
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                            Catracadas
+                                            Valor Transação
                                         </Typography>
                                     </TableCell>
                                 </TableRow>

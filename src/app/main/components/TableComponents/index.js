@@ -31,13 +31,14 @@ export function CustomTable(data) {
     }
   }
   const CustomBadge = (data) => {
+    console.log(data)
     const i = data.data.data
     const getStatus = (i) => {
       return i.status
     }
-  
-    return <Badge className={data.c?.root}
-      color={i.status === 'falha' ? 'error' : i.status === 'paid' ? 'success' : 'warning'}
+
+    return <Badge className={`${data.c?.root}  whitespace-nowrap`}
+      color={i.status === 'Falha' ? 'error' : i.status === 'Pago' ? 'success' : i.status === 'A pagar' ? 'warning' : 'op'}
       badgeContent={getStatus(i)}
     />
   }
@@ -48,6 +49,11 @@ export function CustomTable(data) {
           {data.date}
         </Typography>
       </TableCell>
+
+      {searchingWeek ?
+        <TableCell component="th" scope="row">
+          {data.data.count?.toLocaleString()}
+        </TableCell> : <></>}
       <TableCell component="th" scope="row">
         <Typography className="whitespace-nowrap">
           {searchingDay ? (
@@ -61,12 +67,13 @@ export function CustomTable(data) {
 
       </TableCell>
       <TableCell component="th" scope="row">
+        {/* VALOR PAGO */}
         {/* {searchingWeek ? data.data.count?.toLocaleString() : <CustomBadge data={data} />} */}
       </TableCell>
-      <TableCell component="th" scope="row">
-        {searchingWeek ? data.data.count?.toLocaleString() : <CustomBadge data={data} />}
-      </TableCell>
-     
+      {!searchingWeek ? <TableCell component="th" scope='row'> <CustomBadge data={data} /> </TableCell> : <></>}
+
+
+
 
     </TableRow> : <p>Loading</p>
   )

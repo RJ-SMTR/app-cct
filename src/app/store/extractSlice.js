@@ -15,7 +15,9 @@ const initialState = {
     multipliedEntries: [],
     listByType: [],
     firstDate: [],
-    valorAcumuladoLabel: 'Valor acumulado Mensal',
+    valorAcumuladoLabel:'Valor Transação - Acumulado Mensal',
+    valorPagoLabel:'Valor Pago - Acumulado Mensal',
+  
     sumInfo: [],
     sumInfoWeek: [],
 };
@@ -66,6 +68,9 @@ const extractSlice = createSlice({
         setValorAcumuladoLabel: (state, action) => {
             state.valorAcumuladoLabel = action.payload;
         },
+        setValorPagoLabel: (state, action) => {
+            state.valorPagoLabel = action.payload;
+        },
     },
 });
 
@@ -93,6 +98,7 @@ export const {
     setListByType,
     setFirstDate,
     setValorAcumuladoLabel,
+    setValorPagoLabel,
     sumInfo,
     setSumInfo,
     sumInfoWeek,

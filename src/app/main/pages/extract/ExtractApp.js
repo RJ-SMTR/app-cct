@@ -6,8 +6,7 @@ import { selectUser } from 'app/store/userSlice';
 import Chart from './widgets/Chart';
 import Entries from './widgets/Entries';
 import TableTransactions from './widgets/Table'
-import { TripsResume } from '../home/widgets/Widgets';
-import {  getFirstByType, getFirstTypes, setFullReport} from 'app/store/extractSlice';
+import { setFullReport} from 'app/store/extractSlice';
 import TableTypes from './widgets/TableTypes';
 
 
@@ -16,11 +15,10 @@ function ExtractApp() {
   const dispatch = useDispatch()
   const user = useSelector(selectUser);
   const fullName = user.fullName ?? 'Admin';
-  const valorAcumulado = useSelector(state => state.extract.valorAcumuladoLabel);
+  const valorTransação = useSelector(state => state.extract.valorAcumuladoLabel);
+  const valorPago = useSelector(state => state.extract.valorPagoLabel);
   const [first] = fullName?.split(' ');
-  const mapInfo = useSelector(state => state.extract.mapInfo)
   const searchingDay = useSelector(state => state.extract.searchingDay)
-  const statements = useSelector(state => state.extract.statements)
   dispatch(setFullReport(true))
 
 
@@ -34,9 +32,10 @@ function ExtractApp() {
       </div>
       <div className="p-24 pt-10">
         <Typography className='font-medium text-3xl'>Resumo dos Valores</Typography>
-        <Box className='flex flex-col md:flex-row mt-24 justify-around max-w-[684px] spacing-x-1'>
-          <Entries  type="Valor diário" isDay="true" />
-          <Entries type={valorAcumulado} isDay="false" />
+        <Box className='flex flex-col md:flex-row mt-24 justify-around spacing-x-1'>
+          <Entries  type="Valor Transação - Diário" isDay="true" />
+          <Entries type={valorTransação} isDay="false" />
+          <Entries type={valorPago} isDay="false" />
         </Box>
         <Box className='flex flex-col md:flex-row  justify-around'>
           <TableTransactions />
