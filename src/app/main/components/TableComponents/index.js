@@ -16,7 +16,6 @@ export function CustomTable(data) {
   useEffect(() => {
 
     setDayAmount(parseInt(data.data.transactions) * 4.3);
-    console.log(data)
   }, [data, searchingDay]);
 
   const formatter = new Intl.NumberFormat('pt-BR', {

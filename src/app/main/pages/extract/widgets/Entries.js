@@ -39,8 +39,8 @@ function Entries(type) {
     useEffect( () => {
         if(statements.length >= 1){
             const tz = 'UTC';
-            const dateFirst = new Date(`${statements[0]?.date ?? statements[0]?.partitionDate}`)
-            const dateLast = new Date(`${statements[statements.length - 1]?.date ?? statements[statements.length - 1]?.partitionDate}`)
+            const dateFirst = new Date(`${statements[statements.length - 1]?.date ?? statements[statements.length - 1]?.partitionDate}`)
+            const dateLast = new Date(`${statements[0]?.date ?? statements[0]?.partitionDate}`)
             const zonedDateFirst = utcToZonedTime(dateFirst, tz);
             const zonedDateLast = utcToZonedTime(dateLast, tz);
              setFirstDate(format(zonedDateFirst, 'dd/MM/yyyy'))

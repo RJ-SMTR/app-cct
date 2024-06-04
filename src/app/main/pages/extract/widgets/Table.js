@@ -72,7 +72,6 @@ function TableTransactions({ id }) {
 
     const previousStatementsRef = useRef([]);
     useEffect(() => {
-
         if (searchingWeek || searchingDay) {
             if (dateRange !== previousStatementsRef.current) {
                 setLastDate([previousStatementsRef.current[0], previousStatementsRef.current[previousStatementsRef.current.length - 1]]);
@@ -167,7 +166,6 @@ function TableTransactions({ id }) {
 
 
     const handleSelectedDate = (newValue) => {
-        console.log(formatISO(newValue).substring(0, 7))
         const newDate = formatISO(newValue).substring(0, 7)
         dispatch(setDateRange(newDate))
     }
@@ -259,14 +257,8 @@ function TableTransactions({ id }) {
                             paper: 'py-8',
                         }}
                     >
-                        <MenuItem role="button" onClick={handleDays} data-value={7}>
-                            <ListItemText primary="7 dias" />
-                        </MenuItem>
-                        <MenuItem role="button" onClick={handleDays} data-value={14}>
-                            <ListItemText primary="14 dias" />
-                        </MenuItem>
                         <MenuItem role="button" onClick={handleDays} data-value=''>
-                            <ListItemText primary="Mês todo" />
+                            <ListItemText primary="Mês Atual" />
                         </MenuItem>
                     </Popover>
 

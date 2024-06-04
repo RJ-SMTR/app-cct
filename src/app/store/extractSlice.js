@@ -120,7 +120,7 @@ export const {
 
 export default extractSlice.reducer;
 function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek) {
-    if (dateRange?.length > 0 && !searchingDay) {
+    if (dateRange?.length > 0 && !searchingDay && searchingWeek) {
         const separateDate = dateRange.map((i) => {
             const inputDateString = i;
             const dateObj = new Date(inputDateString);
@@ -132,8 +132,7 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
         });
         if (!searchingDay && !searchingWeek) {
             return {
-                startDate: separateDate[0], 
-                endDate: separateDate[1]
+                yearMonth: dateRange
             }
         }
         return {
@@ -146,7 +145,7 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
             endDate: dateRange[1]
         };
     } else {
-        return previousDays > 0 ? { timeInterval: previousDays } : { timeInterval: 'lastMonth' }
+        return previousDays > 0 ? { timeInterval: previousDays } : { timeInterval: 'lastMonth', yearMonth: dateRange }
     }
 }
 export const  getPreviousDays = (dateRange) => (dispatch) => {
@@ -196,8 +195,6 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
     const requestData = handleRequestData(previousDays, dateRange, searchingDay, searchingWeek);
     let apiRoute = ''
     if(!userId){
-        console.log("searchingWeek", searchingWeek)
-        console.log("searchingDay", searchingDay)
         apiRoute = searchingWeek && searchingDay
             ? jwtServiceConfig.revenuesDay
             : searchingWeek 
@@ -226,10 +223,8 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
         const response = await api(config);
 
         if (searchingWeek || searchingDay) {
-            console.log("response.data", response.data)
             dispatch(getPreviousDays(requestData.endDate))
             dispatch(setMapInfo(response.data.data));
-            console.log("statements", response.data.data)
             dispatch(setStatements(response.data.data));
             dispatch(setSumInfoWeek(response.data))
             dispatch(getFirstTypes(null, dateRange, searchingWeek, searchingDay));
@@ -244,7 +239,6 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             dispatch(setSumInfo(response.data))
 
             dispatch(setStatements(response.data.data));
-            console.log("statements", response.data.data)
         }
 
         return response.data;
