@@ -38,7 +38,7 @@ function TableTypes() {
 
 
                 <TableContainer>
-                    <Table className="min-w-full">
+                    <Table className="min-w-full table-fixed">
                         {listByType ? (
                             <TableHead>
                                 <TableRow>
