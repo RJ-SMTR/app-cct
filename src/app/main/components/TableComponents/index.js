@@ -72,10 +72,10 @@ export function CustomTable(data) {
       </TableCell>
       <TableCell component="th" scope="row">
         {/* VALOR PAGO */}
-        {/* {searchingWeek ? data.data.count?.toLocaleString() : <CustomBadge data={data} />} */}
+        {formatter.format(data.data.paidAmount ?? data.data.paidValueSum ?? 0)}
 
       </TableCell>
-      {!searchingWeek ? <TableCell component="th" scope='row'> <CustomBadge data={data} /> </TableCell> : <></>}
+      {!searchingWeek ? <TableCell className='status' component="th" scope='row'> <CustomBadge data={data} /> </TableCell> : <> </>}
 
 
 

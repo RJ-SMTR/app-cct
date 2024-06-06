@@ -75,12 +75,12 @@ function TableTypes() {
                                                 </Typography>
                                             </TableCell>
                                             <TableCell component="th" scope="row">
-                                                <Typography className="whitespace-nowrap">
-                                                {formatter.format(count.transactionValue)}
-                                                </Typography>
+                                                {count.count.toLocaleString()}
                                             </TableCell>
                                             <TableCell component="th" scope="row">
-                                                {count.count.toLocaleString()}
+                                                <Typography className="whitespace-nowrap">
+                                                    {formatter.format(count.transactionValue)}
+                                                </Typography>
                                             </TableCell>
                                         </TableRow>
                                     );

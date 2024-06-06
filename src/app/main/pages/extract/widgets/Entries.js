@@ -10,6 +10,7 @@ function Entries(type) {
     const [todayInfo, setTodayInfo] = useState()
     const [firstDate, setFirstDate] = useState('')
     const [lastDate, setLastDate] = useState('')
+    const [dayDate, setDayDate] = useState('')
     const dispatch = useDispatch()
   
     const formatter = new Intl.NumberFormat('pt-BR', {
@@ -23,7 +24,6 @@ function Entries(type) {
     const searchingWeek = useSelector(state => state.extract.searchingWeek)
     const searchingDay = useSelector(state => state.extract.searchingDay)
    
-    const dayDate = new Date(`${statements[0]?.partitionDate}`);
  
 
     useEffect(() => {
@@ -33,8 +33,16 @@ function Entries(type) {
             const date = new Date()
             const today = format(date, 'dd/MM/yyyy')
             setTodayInfo(today)
-
+      
     }, [])
+    useEffect(() => {
+        if(searchingDay){
+            const baseDate = new Date(`${statements[0]?.processingDateTime}`);
+            setDayDate(format(baseDate, 'dd/MM/yyyy'))
+        }
+        
+      
+    }, [statements])
 
     useEffect( () => {
         if(statements.length >= 1){
@@ -46,7 +54,6 @@ function Entries(type) {
              setFirstDate(format(zonedDateFirst, 'dd/MM/yyyy'))
              setLastDate(format(zonedDateLast, 'dd/MM/yyyy'))
         }
-        
     }, [statements])
   return (
       <>{statements.length ? <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden mx-5 mt-10 md:mt-0">
@@ -62,9 +69,7 @@ function Entries(type) {
           </div>
           <div className="flex flex-row flex-wrap mt-8 ">
               <Typography className="mt-8 font-medium text-3xl leading-none">
-                  {type.isDay == "true" ? formatter.format(sumInfo?.todaySum) : searchingWeek ? formatter.format(sumInfoWeek.amountSum) : formatter.format(sumInfo?.amountSum) 
-                      
-                   }
+                  {type.isDay == "true" ? formatter.format(sumInfo?.todaySum) : searchingWeek ? formatter.format(sumInfoWeek.amountSum) : formatter.format(sumInfo?.amountSum)                    }
               </Typography>
           </div>
 

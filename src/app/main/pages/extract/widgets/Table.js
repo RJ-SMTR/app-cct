@@ -58,7 +58,7 @@ function TableTransactions({ id }) {
     const [lastDate, setLastDate] = useState([])
     const [rowsPerPage, setRowsPerPage] = useState(8);
     const [isLoading, setIsLoading] = useState(true)
-    const [selectedDate, setSelectedDate] = useState([])
+    const [selectedDate, setSelectedDate] = useState(null)
 
     const navigate = useNavigate()
     const useStyles = makeStyles(() => ({
@@ -166,8 +166,12 @@ function TableTransactions({ id }) {
 
 
     const handleSelectedDate = (newValue) => {
-        const newDate = formatISO(newValue).substring(0, 7)
-        dispatch(setDateRange(newDate))
+            setSelectedDate(newValue); 
+            const newDate = formatISO(newValue).substring(0, 7)
+            dispatch(setDateRange(newDate))
+            
+        
+  
     }
 
 
@@ -202,7 +206,7 @@ function TableTransactions({ id }) {
     }
 
     const handleBack = () => {
-
+        setSelectedDate(null); 
         if (searchingDay) {
             dispatch(setValorAcumuladoLabel('Valor acumulado Semanal'));
             dispatch(setDateRange(lastDate))
@@ -237,7 +241,15 @@ function TableTransactions({ id }) {
                         </Button>
                    
                         <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                            <MobileDatePicker label={'Selecionar Mês'} openTo="month" disableFuture closeOnSelect views={['year', 'month']} onChange={(newValue) => handleSelectedDate(newValue)} />
+                            <MobileDatePicker
+                                label="Selecionar Mês"
+                                openTo="month"
+                                disableFuture
+                                closeOnSelect
+                                views={['year', 'month']}
+                                value={selectedDate}
+                                onChange={handleSelectedDate}
+                            />
                         </LocalizationProvider>
                     </div>
                 </Hidden>
@@ -264,23 +276,21 @@ function TableTransactions({ id }) {
 
                     <Hidden smDown>
                         <div className='flex flex-wrap content-center justify-center'>
-                            {/* <DateRangePicker
-                                showOneCalendar
-                                placeholder="Selecionar datas"
-                                className='mr-5'
-                                disabledDate={afterToday()}
-                                format='dd/MM/yy'
-                                character=' - '
-                                locale={locale}
-                                onChange={(newValue) => (dispatch(setDateRange(newValue)), dispatch(setSearchingWeek(false)))}
-
-                            /> */}
+                         
                             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                                <MobileDatePicker label={'Selecionar Mês'} openTo="month" disableFuture closeOnSelect  views={['year', 'month']} onChange={(newValue) => handleSelectedDate(newValue)} />
+                                <MobileDatePicker
+                                    label="Selecionar Mês"
+                                    openTo="month"
+                                    disableFuture
+                                    closeOnSelect
+                                    views={['year', 'month']}
+                                    value={selectedDate}
+                                    onChange={handleSelectedDate}
+                                />
+
                             </LocalizationProvider>
 
-                            {/* <Button className={previousDays == 'lastWeek' ? 'active' : ''} variant="contained" onClick={handleDays} data-value={'lastWeek'}>7 dias</Button>
-                            <Button className={`${previousDays == 'last2Weeks' ? 'active' : ''} mx-5 `} variant="contained" onClick={handleDays} data-value={'last2Weeks'}>14 dias</Button> */}
+                         
                             <Button className='self-center ml-10' variant="contained" onClick={handleDays} data-value={'lastMonth'}>Mês Atual</Button>
 
                         </div>

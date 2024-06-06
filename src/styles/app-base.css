@@ -198,6 +198,10 @@ display: none !important;
     position: relative !important;
 transform: scale(1) translate(2%, -55%) !important;
 }
+.status .MuiBadge-badge{
+    position: relative !important;
+transform: scale(1) translate(2%, -0%) !important;
+}
 .muiltr-9r3zz9-MuiTableCell-root{
     padding-left: .725rem !important;
 }
