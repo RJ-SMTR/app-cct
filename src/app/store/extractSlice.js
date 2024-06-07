@@ -233,7 +233,7 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             if(userId){
                 dispatch(getFirstTypes(userId));
             } else {
-                dispatch(getFirstTypes(null, null, searchingWeek, searchingDay));
+                dispatch(getFirstTypes(null, dateRange, searchingWeek, searchingDay));
             }
             
             dispatch(setSumInfo(response.data))

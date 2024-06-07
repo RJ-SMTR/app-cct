@@ -69,9 +69,17 @@ function Entries(type) {
           </div>
           <div className="flex flex-row flex-wrap mt-8 ">
               <Typography className="mt-8 font-medium text-3xl leading-none">
-                  {type.isDay == "true" ? formatter.format(sumInfo?.todaySum) : searchingWeek ? formatter.format(sumInfoWeek.amountSum) : formatter.format(sumInfo?.amountSum)                    }
+                  {
+                      type.isDay == "true"
+                          ? formatter.format(sumInfo?.todaySum)
+                          : searchingWeek
+                              ? formatter.format(type.type.includes("Pago") ? sumInfoWeek?.paidSum ?? 0 : sumInfoWeek?.amountSum)
+                              : formatter.format(type.type.includes("Pago") ? sumInfo?.paidSum : sumInfo?.amountSum)
+                  }
+
               </Typography>
           </div>
+                       
 
           <div className="absolute bottom-0 ltr:right-0 rtl:left-0 w-96 h-96 -m-24">
               <FuseSvgIcon size={90} className="opacity-25 text-green-500 dark:text-green-400">

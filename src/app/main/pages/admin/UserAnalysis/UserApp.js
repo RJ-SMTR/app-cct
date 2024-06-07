@@ -35,6 +35,7 @@ function UserApp() {
   const [user, setUser] = useState()
   let {id} = useParams()
   const valorAcumulado = useSelector(state => state.extract.valorAcumuladoLabel);
+  const paidValue = useSelector(state => state.extract.valorPagoLabel);
   const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
   const dispatch = useDispatch()
   useEffect(() => {
@@ -131,9 +132,10 @@ function UserApp() {
           </div>
           {user && (
             <>
-           <div className='md:flex mt-10 md:max-w-[50%]'>
+           <div className='md:flex mt-10 '>
                 <Entries type="Valor diário" isDay="true" />
                 <Entries type={valorAcumulado} isDay="false" />
+                <Entries type={paidValue} isDay="false" />
            </div>
               <div>
                 <Table id={id} />
