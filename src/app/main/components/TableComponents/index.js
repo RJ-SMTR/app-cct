@@ -49,7 +49,7 @@ export function CustomTable(data) {
       <TableCell component="th" scope="row" onClick={searchingDay ? undefined : data.handleClickRow}>
         <Typography className={searchingDay ? "whitespace-nowrap " : "whitespace-nowrap underline"}>
        
-          {searchingDay ? format(new Date(data.data.processingDateTime), 'dd/MM/yyyy hh:mm:ss')  : data.date }
+          {searchingDay ? format(new Date(data.data.date), 'dd/MM/yyyy hh:mm:ss')  : data.date }
           
         </Typography>
       </TableCell>
@@ -62,7 +62,7 @@ export function CustomTable(data) {
         <Typography className="whitespace-nowrap">
           {searchingDay ? (
             <>
-              {data.data.transactionType == "Botoeria" ? "R$ 0" : formatter.format(data.data.transactionValue)}
+              {data.data.transactionType == "Botoeria" ? "R$ 0" : formatter.format(data.data.transactionValue ?? data.data.transactionValueSum)}
             </>
           ) : (
             <>{formatter.format(data.data.amount ?? data.data.transactionValueSum)}</>
