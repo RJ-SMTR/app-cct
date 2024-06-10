@@ -151,6 +151,7 @@ function TableTransactions({ id }) {
         setFilterMenu(null);
     }
     const handleDays = (event) => {
+        setSelectedDate(null); 
         const previousDays = event.currentTarget.dataset.value;
         dispatch(setPreviousDays(previousDays))
         setFilterMenu(null)
@@ -169,9 +170,6 @@ function TableTransactions({ id }) {
             setSelectedDate(newValue); 
             const newDate = formatISO(newValue).substring(0, 7)
             dispatch(setDateRange(newDate))
-            
-        
-  
     }
 
 
