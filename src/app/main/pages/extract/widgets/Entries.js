@@ -10,7 +10,7 @@ function Entries(type) {
     const [todayInfo, setTodayInfo] = useState()
     const [firstDate, setFirstDate] = useState('')
     const [lastDate, setLastDate] = useState('')
-    const [dayDate, setDayDate] = useState('')
+    // const [dayDate, setDayDate] = useState('')
     const dispatch = useDispatch()
   
     const formatter = new Intl.NumberFormat('pt-BR', {
@@ -35,14 +35,15 @@ function Entries(type) {
             setTodayInfo(today)
       
     }, [])
-    useEffect(() => {
-        if(searchingDay){
-            const baseDate = new Date(`${statements[0]?.processingDateTime}`);
-            setDayDate(format(baseDate, 'dd/MM/yyyy'))
-        }
+    // useEffect(() => {
+    //     if(searchingDay){
+    //         console.log(statements)
+    //         const baseDate = new Date(statements[0]?.date);
+    //         setDayDate(format(baseDate, 'dd/MM/yyyy'))
+    //     }
         
       
-    }, [statements])
+    // }, [statements])
 
     useEffect( () => {
         if(statements.length >= 1){
@@ -62,7 +63,7 @@ function Entries(type) {
                   <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
                       {type.type}
                   </Typography>
-                  <Typography className="font-medium text-sm"> {type.isDay == "true" ? todayInfo ?? '' :  searchingDay ? dayDate : `${firstDate} - ${lastDate}`}</Typography>
+                  <Typography className="font-medium text-sm"> {type.isDay == "true" ? todayInfo ?? '' :  searchingDay ? firstDate : `${firstDate} - ${lastDate}`}</Typography>
 
               </div>
 
