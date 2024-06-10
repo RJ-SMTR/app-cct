@@ -185,7 +185,8 @@ function TableTransactions({ id }) {
         if (fullReport) {
             if (searchingWeek) {
                 dispatch(setSearchingDay(true))
-                dispatch(setValorAcumuladoLabel('Valor acumulado Diário'));
+                dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Diário'));
+                dispatch(setValorPagoLabel('Valor Pago - Acumulado Diário'));
 
                 dispatch(setDateRange([transformedDate, transformedDate]));
             } else {
@@ -208,7 +209,8 @@ function TableTransactions({ id }) {
     const handleBack = () => {
         setSelectedDate(null); 
         if (searchingDay) {
-            dispatch(setValorAcumuladoLabel('Valor acumulado Semanal'));
+            dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Semanal'));
+            dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
             dispatch(setDateRange(lastDate))
             setPage(0)
             dispatch(setSearchingDay(false))
