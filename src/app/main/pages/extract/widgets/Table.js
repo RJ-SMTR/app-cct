@@ -328,7 +328,7 @@ function TableTransactions({ id }) {
                                 </TableCell>
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        Valor Pago
+                                       {searchingWeek ? 'valor pago' : 'a receber'}
                                     </Typography>
                                 </TableCell>
                                 {searchingWeek ? <></> :
