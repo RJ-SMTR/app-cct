@@ -328,7 +328,7 @@ function TableTransactions({ id }) {
                                 </TableCell>
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                       {searchingWeek ? 'valor pago' : 'a receber'}
+                                  Valor para pagamento
                                     </Typography>
                                 </TableCell>
                                 {searchingWeek ? <></> :
@@ -345,15 +345,15 @@ function TableTransactions({ id }) {
                         <TableBody>
 
                             {isLoading ? <TableCell colSpan={4}>
-                                {/* <Box className="flex justify-center items-center m-10">
-                                    <CircularProgress />
-                                </Box> */}
+                         
                                 <p>Não há dados para sem exibidos</p>
                             </TableCell> : statements &&
 
                             statements?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
+                                const tz = 'UTC'
                                 const date = parseISO(i.date ?? i.dateTime ?? i.partitionDate);
-                                const formattedDate = format(date, 'dd/MM/yyyy', { timeZone: 'Etc/UTC' });
+                                const zonedDate = utcToZonedTime(date,tz )
+                                const formattedDate = format(zonedDate, 'dd/MM/yyyy');
                                 return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={handleClickRow} />
                             })
                             }
