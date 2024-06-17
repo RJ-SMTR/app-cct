@@ -74,7 +74,7 @@ export function CustomTable(data) {
         {/* VALOR PAGO */}
         {searchingDay ? (
           <>
-            {formatter.format(data.data.paidValue)}
+            {formatter.format(data.data.paidValue ?? data.data.paidValueSum ?? 0)}
           </>
         ) : (
             <>  {formatter.format(data.data.paidAmount ?? data.data.paidValueSum ?? 0)}</>
