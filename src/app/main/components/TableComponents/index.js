@@ -4,7 +4,8 @@ import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
 import { useSelector } from 'react-redux';
 import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
+import { utcToZonedTime } from 'date-fns-tz';
 
 
 
@@ -22,14 +23,12 @@ export function CustomTable(data) {
     style: 'currency',
     currency: 'BRL',
   });
-  const transactionType = (i) => {
-    if (i.transactionType === "free") {
-      return 'Gratuidade'
-    } else if (i.transactionType === 'half') {
-      return 'Integração'
-    } else {
-      return 'Integral'
-    }
+  const dateUTC = (i) => {
+    const tz = 'UTC'
+      const parsed = parseISO(i)
+    const zonedDate = utcToZonedTime(parsed, tz)
+    const formattedDate = format(zonedDate, 'dd/MM/yyyy HH:MM:ss');
+    return formattedDate
   }
   const CustomBadge = (data) => {
     const i = data.data.data
@@ -37,7 +36,6 @@ export function CustomTable(data) {
 
       return i.status
     }
-
     return <Badge className={`${data.c?.root}  whitespace-nowrap`}
       color={i.status === 'Falha' ? 'error' : i.status === 'Pago' ? 'success' : i.status === 'A pagar' ? 'warning' : 'op'}
 
@@ -49,7 +47,7 @@ export function CustomTable(data) {
       <TableCell component="th" scope="row" onClick={searchingDay ? undefined : data.handleClickRow}>
         <Typography className={searchingDay ? "whitespace-nowrap " : "whitespace-nowrap underline"}>
        
-          {searchingDay ? format(new Date(data.data.date), 'dd/MM/yyyy hh:mm:ss')  : data.date }
+          {searchingDay ? dateUTC(data.data.date) : data.date }
           
         </Typography>
       </TableCell>
