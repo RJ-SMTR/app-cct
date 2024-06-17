@@ -72,7 +72,14 @@ export function CustomTable(data) {
       </TableCell>
       <TableCell component="th" scope="row">
         {/* VALOR PAGO */}
-        {formatter.format(data.data.paidAmount ?? data.data.paidValueSum ?? 0)}
+        {searchingDay ? (
+          <>
+            {formatter.format(data.data.paidValue)}
+          </>
+        ) : (
+            <>  {formatter.format(data.data.paidAmount ?? data.data.paidValueSum ?? 0)}</>
+        )}
+      
 
       </TableCell>
       {!searchingWeek ? <TableCell className='status' component="th" scope='row'> <CustomBadge data={data} /> </TableCell> : <> </>}
