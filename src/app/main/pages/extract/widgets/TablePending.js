@@ -20,6 +20,9 @@ function TablePending() {
     const [values, setValues] = useState({})
     const pendingList = useSelector(state => state.extract.pendingList)
     const pendingValue = useSelector(state => state.extract.pendingValue)
+    const {
+        dateRange
+    } = useSelector((state) => state.extract);
     const formatter = new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL',
@@ -31,15 +34,17 @@ function TablePending() {
         />
     }
     useEffect(() => {
-        if (pendingList && pendingList.data.length > 0) {
+        const now = new Date(); 
+        const isoString = now.toISOString();
+        setSelectedDate(format(parseISO(isoString), 'dd/MM/yyyy'));
+        // if (pendingList && pendingList.data.length > 0) {
 
-            const date = pendingList.data[0].date;
-            const formattedDateToday = format(parseISO(date), 'dd/MM/yyyy');
-            setValues(pendingValue)
-            setSelectedDate(formattedDateToday);
-        } else {
-            setSelectedDate('--');
-        }
+        //     const date = pendingList.data[0].date;
+        //     const formattedDateToday = format(parseISO(date), 'dd/MM/yyyy');
+        //     setValues(pendingValue)
+        //     setSelectedDate(formattedDateToday);
+        // } else {
+        // }
     }, [pendingList]);
 
 
