@@ -201,7 +201,7 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
                 ? jwtServiceConfig.revenuesUn
                 : jwtServiceConfig.bankStatement
     } else {
-        apiRoute = searchingWeek ? jwtServiceConfig.revenuesUn + `?userId=${userId}` : jwtServiceConfig.bankStatement + `?userId=${userId}`;
+        apiRoute = searchingWeek && searchingDay ? jwtServiceConfig.revenuesDay + `?userId=${userId}` : searchingWeek  ? jwtServiceConfig.revenuesUn + `?userId=${userId}` : jwtServiceConfig.bankStatement + `?userId=${userId}`;
     }
     const method = 'get';
     const token = window.localStorage.getItem('jwt_access_token');
