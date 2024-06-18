@@ -31,9 +31,9 @@ function TablePending() {
         />
     }
     useEffect(() => {
-        if (pendingList && pendingList.length > 0) {
-       
-            const date = pendingList[0].date;
+        if (pendingList && pendingList.data.length > 0) {
+
+            const date = pendingList.data[0].date;
             const formattedDateToday = format(parseISO(date), 'dd/MM/yyyy');
             setValues(pendingValue)
             setSelectedDate(formattedDateToday);
@@ -62,103 +62,103 @@ function TablePending() {
 
                 <TableContainer>
                     <Table className="min-w-full">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>
-                                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                            Data Transação
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>
+                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                        Data Transação
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
                                         Data Processamento
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                            Valor da Transação
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                        Valor da Transação
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
                                         Data Ordem Pagamento
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
                                         Valor para pagamento
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
                                         Data Pagamento Efetivo
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                        Status
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                        Erro
+                                    </Typography>
+                                </TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {pendingList ? pendingList.data?.map((i) => {
+                                return <TableRow key={Math.random()}>
+                                    <TableCell component="th" scope="row">
+                                        <Typography className="whitespace-nowrap">
+                                            {format(parseISO(i.transactionDate), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' })}
+
                                         </Typography>
                                     </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                            Status
+                                    <TableCell component="th" scope="row">
+                                        <Typography className="whitespace-nowrap">
+                                            {format(parseISO(i.processingDate), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' })}
                                         </Typography>
                                     </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                            Erro
+                                    <TableCell component="th" scope="row">
+                                        {formatter.format(i.amount ?? 0)}
+                                    </TableCell>
+                                    <TableCell component="th" scope="row">
+                                        <Typography className="whitespace-nowrap">
+                                            {i.paymentOrderDate ? format(parseISO(i.paymentOrderDate), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }) : ''}
+
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell component="th" scope="row">
+                                        <Typography className="whitespace-nowrap">
+                                            {formatter.format(i.paidAmount ?? 0)}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell component="th" scope="row">
+                                        <Typography className="whitespace-nowrap">
+                                            {i.effectivePaymentDate ? format(parseISO(i.effectivePaymentDate), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }) : ''}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell component="th" scope="row">
+                                        <Typography className="whitespace-nowrap">
+                                            <CustomBadge data={i} />
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell component="th" scope="row">
+                                        <Typography className="whitespace-nowrap underline cursor-pointer">
+                                            <Tooltip title={i.error} placement="top-start">
+                                                {/* {i.errorCode} */}
+                                            </Tooltip>
                                         </Typography>
                                     </TableCell>
                                 </TableRow>
-                            </TableHead>
-                        <TableBody>
-                           {pendingList ? pendingList.map((i) => {
-                               return <TableRow key={Math.random()}>
-                                   <TableCell component="th" scope="row">
-                                       <Typography className="whitespace-nowrap">
-                                         {format(parseISO(i.transactionDate), 'dd/MM/yyyy', {timeZone: 'Etc/UTC' })}
-                                           
-                                       </Typography>
-                                   </TableCell>
-                                   <TableCell component="th" scope="row">
-                                       <Typography className="whitespace-nowrap">
-                                           {format(parseISO(i.processingDate), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' })}
-                                       </Typography>
-                                   </TableCell>
-                                   <TableCell component="th" scope="row">
-                                       {formatter.format(i.amount ?? 0)}
-                                   </TableCell>
-                                   <TableCell component="th" scope="row">
-                                       <Typography className="whitespace-nowrap">
-                                           {i.paymentOrderDate ? format(parseISO(i.paymentOrderDate), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }) : ''}
-                                           
-                                       </Typography>
-                                   </TableCell>
-                                   <TableCell component="th" scope="row">
-                                       <Typography className="whitespace-nowrap">
-                                           {formatter.format(i.paidAmount ?? 0)}
-                                       </Typography>
-                                   </TableCell>
-                                   <TableCell component="th" scope="row">
-                                       <Typography className="whitespace-nowrap">
-                                           {i.effectivePaymentDate ? format(parseISO(i.effectivePaymentDate), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }) : ''}
-                                       </Typography>
-                                   </TableCell>
-                                   <TableCell component="th" scope="row">
-                                       <Typography className="whitespace-nowrap">
-                                         <CustomBadge data={i}/>
-                                       </Typography>
-                                   </TableCell>
-                                   <TableCell component="th" scope="row">
-                                       <Typography className="whitespace-nowrap underline cursor-pointer">
-                                           <Tooltip title={i.error} placement="top-start">
-                                              {/* {i.errorCode} */}
-                                           </Tooltip>
-                                       </Typography>
-                                   </TableCell>
-                               </TableRow>
-                           }) : <>
-                           
-                                   
-                           </>}
-                       
-                              
-                       
+                            }) : <>
+
+
+                            </>}
+
+
+
                         </TableBody>
 
                         {/* <TableFooter>
@@ -175,18 +175,18 @@ function TablePending() {
                         Total Pago:  {formatter.format(pendingList.paidValue)}
                     </Typography>
                 </Box>
-                           <Box className="mr-16">
+                <Box className="mr-16">
                     <Typography className="font-bold">
-                        
-                        Total a Pagar:  {formatter.format(pendingList.toPayValue) }
+
+                        Total a Pagar:  {formatter.format(pendingList.toPayValue)}
                     </Typography>
-                           </Box>
-                   
-                           <Box>
+                </Box>
+
+                <Box>
                     <Typography className="text-red font-bold">
-                        Total Pendente:  {formatter.format(pendingList.pendingValue) }
+                        Total Pendente:  {formatter.format(pendingList.pendingValue)}
                     </Typography>
-                           </Box>
+                </Box>
 
             </Box>
         </Paper>

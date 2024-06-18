@@ -155,7 +155,7 @@ export const  getPreviousDays = (dateRange) => (dispatch) => {
     })
         .then((response) => {
             dispatch(setPendingValue(response.data.statusCounts))
-            dispatch(setPendingList(response.data.data))
+            dispatch(setPendingList(response.data))
         })
 
 }
