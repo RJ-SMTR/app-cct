@@ -32,10 +32,13 @@ function TablePending() {
     }
     useEffect(() => {
         if (pendingList && pendingList.length > 0) {
+       
             const date = pendingList[0].date;
-            const formattedDate = format(parseISO(date), 'dd/MM/yyyy');
+            const formattedDateToday = format(parseISO(date), 'dd/MM/yyyy');
             setValues(pendingValue)
-            setSelectedDate(formattedDate);
+            setSelectedDate(formattedDateToday);
+        } else {
+            setSelectedDate('--');
         }
     }, [pendingList]);
 
@@ -73,12 +76,17 @@ function TablePending() {
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                            Valor
+                                            Valor da Transação
                                         </Typography>
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="body2" className="font-semibold whitespace-nowrap">
                                         Data Ordem Pagamento
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                        Valor para pagamento
                                         </Typography>
                                     </TableCell>
                                     <TableCell>
@@ -123,6 +131,11 @@ function TablePending() {
                                    </TableCell>
                                    <TableCell component="th" scope="row">
                                        <Typography className="whitespace-nowrap">
+                                           {formatter.format(i.paidAmount ?? 0)}
+                                       </Typography>
+                                   </TableCell>
+                                   <TableCell component="th" scope="row">
+                                       <Typography className="whitespace-nowrap">
                                            {i.effectivePaymentDate ? format(parseISO(i.effectivePaymentDate), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }) : ''}
                                        </Typography>
                                    </TableCell>
@@ -134,7 +147,7 @@ function TablePending() {
                                    <TableCell component="th" scope="row">
                                        <Typography className="whitespace-nowrap underline cursor-pointer">
                                            <Tooltip title={i.error} placement="top-start">
-                                              {i.errorCode}
+                                              {/* {i.errorCode} */}
                                            </Tooltip>
                                        </Typography>
                                    </TableCell>
@@ -147,6 +160,10 @@ function TablePending() {
                               
                        
                         </TableBody>
+
+                        {/* <TableFooter>
+                        ADD paginação
+                        </TableFooter> */}
                     </Table>
                 </TableContainer>
 
@@ -155,19 +172,19 @@ function TablePending() {
                 <Box className="mr-16">
                     <Typography className="font-bold">
 
-                        Total Pago:  {formatter.format(values.paid?.amountSum ?? 0)}
+                        Total Pago:  {formatter.format(pendingList.paidValue)}
                     </Typography>
                 </Box>
                            <Box className="mr-16">
                     <Typography className="font-bold">
                         
-                        Total a Pagar:  {formatter.format(values.toPay?.amountSum ?? 0) }
+                        Total a Pagar:  {formatter.format(pendingList.toPayValue) }
                     </Typography>
                            </Box>
                    
                            <Box>
                     <Typography className="text-red font-bold">
-                        Total Pendente:  {formatter.format(values.pending?.amountSum ?? 0) }
+                        Total Pendente:  {formatter.format(pendingList.pendingValue) }
                     </Typography>
                            </Box>
 

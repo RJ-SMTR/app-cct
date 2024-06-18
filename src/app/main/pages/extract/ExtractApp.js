@@ -49,10 +49,10 @@ function ExtractApp() {
         </Box> 
 
         <Box className='flex flex-col  justify-around mt-24'>
-          {/* {searchingWeek && searchingDay ? */}
-            <TablePending></TablePending>
-            {/* : <></>
-          } */}
+          {searchingWeek || searchingDay ?
+            <TablePending/>
+           : <></>
+          }
         </Box>
 
         <br />
