@@ -19,6 +19,7 @@ import Table from '../../extract/widgets/Table';
 import { setFullReport } from 'app/store/extractSlice';
 import TableTypes from '../../extract/widgets/TableTypes';
 import Entries from '../../extract/widgets/Entries';
+import TablePending from '../../extract/widgets/TablePending';
 const Root = styled(FusePageSimple)(({ theme }) => ({
   '& .FusePageSimple-header': {
     backgroundColor: theme.palette.background.paper,
@@ -37,6 +38,8 @@ function UserApp() {
   const valorAcumulado = useSelector(state => state.extract.valorAcumuladoLabel);
   const paidValue = useSelector(state => state.extract.valorPagoLabel);
   const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
+  const searchingWeek = useSelector(state => state.extract.searchingWeek)
+  const searchingDay = useSelector(state => state.extract.searchingDay)
   const dispatch = useDispatch()
   useEffect(() => {
     dispatch(setFullReport(true))
@@ -143,6 +146,12 @@ function UserApp() {
            
               <div>
                 <TableTypes id={id} />
+              </div>
+              <div>
+                {searchingWeek || searchingDay ?
+                  <TablePending />
+                  : <></>
+                }
               </div>
             </>
           )}

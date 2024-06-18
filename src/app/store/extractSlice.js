@@ -148,9 +148,11 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
         return previousDays > 0 ? { timeInterval: previousDays } : { timeInterval: 'lastMonth', yearMonth: dateRange }
     }
 }
-export const  getPreviousDays = (dateRange, interval='lastWeek') => (dispatch) => {
+export const  getPreviousDays = (dateRange, interval='lastWeek', userId) => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
-    api.get(jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=${interval}`, {
+    const url = userId ? jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=${interval}&userId=${userId}` : jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=${interval}`
+    
+    api.get(url, {
         headers: { "Authorization": `Bearer ${token}` },
     })
         .then((response) => {
@@ -227,14 +229,15 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
         if (searchingWeek || searchingDay) {
             console.log(searchingWeek, searchingDay)
             const interval = searchingDay ? 'lastDay' : 'lastWeek';
-            dispatch(getPreviousDays(requestData.endDate, interval))
             dispatch(setStatements(response.data.data));
             dispatch(setSumInfoWeek(response.data))
             if(userId){
-
+                
+                dispatch(getPreviousDays(requestData.endDate, interval, userId))
                 dispatch(getFirstTypes(userId, dateRange, searchingWeek, searchingDay));
             } else {
                 dispatch(getFirstTypes(null, dateRange, searchingWeek, searchingDay));
+                dispatch(getPreviousDays(requestData.endDate, interval))
             }
 
         } else {
@@ -243,7 +246,7 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             } else {
                 dispatch(getFirstTypes(null, dateRange, searchingWeek, searchingDay));
             }
-            dispatch(getPreviousDays(requestData.endDate ?? formattedDate))
+           
             dispatch(setSumInfo(response.data))
             dispatch(setStatements(response.data.data));
         }
