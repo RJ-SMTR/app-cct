@@ -148,9 +148,9 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
         return previousDays > 0 ? { timeInterval: previousDays } : { timeInterval: 'lastMonth', yearMonth: dateRange }
     }
 }
-export const  getPreviousDays = (dateRange) => (dispatch) => {
+export const  getPreviousDays = (dateRange, interval='lastWeek') => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
-    api.get(jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=lastMonth`, {
+    api.get(jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=${interval}`, {
         headers: { "Authorization": `Bearer ${token}` },
     })
         .then((response) => {
@@ -225,7 +225,9 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
         const response = await api(config);
 
         if (searchingWeek || searchingDay) {
-            dispatch(getPreviousDays(requestData.endDate))
+            console.log(searchingWeek, searchingDay)
+            const interval = searchingDay ? 'lastDay' : 'lastWeek';
+            dispatch(getPreviousDays(requestData.endDate, interval))
             dispatch(setStatements(response.data.data));
             dispatch(setSumInfoWeek(response.data))
             if(userId){
