@@ -193,6 +193,8 @@ export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) =>
 
 export const getStatements = (previousDays, dateRange, searchingDay, searchingWeek, userId) => async (dispatch) => {
     const requestData = handleRequestData(previousDays, dateRange, searchingDay, searchingWeek);
+    const todayDate = new Date()
+    const formattedDate = format(todayDate, 'yyyy-MM-dd')
     let apiRoute = ''
     if(!userId){
         apiRoute = searchingWeek && searchingDay
@@ -239,9 +241,8 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             } else {
                 dispatch(getFirstTypes(null, dateRange, searchingWeek, searchingDay));
             }
-            
+            dispatch(getPreviousDays(requestData.endDate ?? formattedDate))
             dispatch(setSumInfo(response.data))
-
             dispatch(setStatements(response.data.data));
         }
 
