@@ -164,7 +164,7 @@ export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) =>
     const requestData = handleRequestData(null, dateRange, searchingDay, searchingWeek)
     const token = window.localStorage.getItem('jwt_access_token');
 
-  
+  console.log(userId)
     let config = {
         method: 'get',
         maxBodyLength: Infinity,
@@ -226,7 +226,12 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             dispatch(getPreviousDays(requestData.endDate))
             dispatch(setStatements(response.data.data));
             dispatch(setSumInfoWeek(response.data))
-            dispatch(getFirstTypes(null, dateRange, searchingWeek, searchingDay));
+            if(userId){
+
+                dispatch(getFirstTypes(userId, dateRange, searchingWeek, searchingDay));
+            } else {
+                dispatch(getFirstTypes(null, dateRange, searchingWeek, searchingDay));
+            }
 
         } else {
             if(userId){
