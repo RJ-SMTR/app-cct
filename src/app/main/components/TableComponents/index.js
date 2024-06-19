@@ -25,9 +25,9 @@ export function CustomTable(data) {
   });
   const dateUTC = (i) => {
     const tz = 'UTC'
-      const parsed = parseISO(i)
+      const parsed = new Date(i)
     const zonedDate = utcToZonedTime(parsed, tz)
-    const formattedDate = format(zonedDate, 'dd/MM/yyyy HH:MM:ss');
+    const formattedDate = format(zonedDate, 'dd/MM/yyyy HH:mm:ss');
     return formattedDate
   }
   const CustomBadge = (data) => {
