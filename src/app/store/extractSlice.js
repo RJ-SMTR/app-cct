@@ -165,8 +165,9 @@ export const  getPreviousDays = (dateRange, interval='lastWeek', userId) => (dis
 export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) => async (dispatch) => {
     const requestData = handleRequestData(null, dateRange, searchingDay, searchingWeek)
     const token = window.localStorage.getItem('jwt_access_token');
-
-  console.log(userId)
+    
+    console.log(requestData)
+    console.log(dateRange, searchingDay, searchingWeek)
     let config = {
         method: 'get',
         maxBodyLength: Infinity,
@@ -234,7 +235,7 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             if(userId){
                 
                 dispatch(getPreviousDays(requestData.endDate, interval, userId))
-                dispatch(getFirstTypes(userId, dateRange, searchingWeek, searchingDay));
+                dispatch(getFirstTypes(userId, requestData.endDate, searchingWeek, searchingDay));
             } else {
                 dispatch(getFirstTypes(null, dateRange, searchingWeek, searchingDay));
                 dispatch(getPreviousDays(requestData.endDate, interval))
@@ -242,7 +243,7 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
 
         } else {
             if(userId){
-                dispatch(getFirstTypes(userId));
+                dispatch(getFirstTypes(userId, dateRange, searchingWeek, searchingDay));
             } else {
                 dispatch(getFirstTypes(null, dateRange, searchingWeek, searchingDay));
             }
