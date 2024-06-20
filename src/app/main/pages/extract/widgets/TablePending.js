@@ -173,27 +173,27 @@ function TablePending() {
                 </TableContainer>
 
             </Box>
-            {/* <Box className="flex justify-end">
-                <Box className="mr-16">
+            <Box className="flex justify-end">
+                {/* <Box className="mr-16">
                     <Typography className="font-bold">
 
                         Total Pago:  {formatter.format(pendingList.paidValue)}
                     </Typography>
-                </Box>
+                </Box> */}
                 <Box className="mr-16">
                     <Typography className="font-bold">
 
-                        Total a Pagar:  {formatter.format(pendingList.toPayValue)}
+                        Total a Pagar:  {formatter.format(pendingList.toPayValue ?? 0)}
                     </Typography>
                 </Box>
 
-                <Box>
+                {/* <Box>
                     <Typography className="text-red font-bold">
                         Total Pendente:  {formatter.format(pendingList.pendingValue)}
                     </Typography>
-                </Box>
+                </Box> */}
 
-            </Box> */}
+            </Box>
         </Paper>
     );
 }
