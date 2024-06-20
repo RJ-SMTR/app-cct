@@ -157,10 +157,10 @@ function TablePending() {
                                         </Typography>
                                     </TableCell>
                                 </TableRow>
-                            }) : <>
+                            }) : <TableCell colSpan={4}>
+                                Não há dados para serem exibidos
 
-
-                            </>}
+                            </TableCell>}
 
 
 
@@ -173,7 +173,7 @@ function TablePending() {
                 </TableContainer>
 
             </Box>
-            <Box className="flex justify-end">
+            {/* <Box className="flex justify-end">
                 <Box className="mr-16">
                     <Typography className="font-bold">
 
@@ -193,7 +193,7 @@ function TablePending() {
                     </Typography>
                 </Box>
 
-            </Box>
+            </Box> */}
         </Paper>
     );
 }

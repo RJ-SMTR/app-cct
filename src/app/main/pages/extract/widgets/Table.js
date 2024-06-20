@@ -344,7 +344,7 @@ function TableTransactions({ id }) {
 
                         <TableBody>
 
-                            {isLoading ? <TableCell colSpan={4}>
+                            {isLoading || statements.length == 0 ? <TableCell colSpan={4}>
                          
                                 <p>Não há dados para sem exibidos</p>
                             </TableCell> : statements &&
