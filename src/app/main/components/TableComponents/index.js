@@ -45,7 +45,7 @@ export function CustomTable(data) {
   const ErrorBadge = (data) => {
   
     const i = data.data.data
-    const errorDescription = i.errors.length > 0 ? i.errors.map(error => error).join(", ") : <></>;
+    const errorDescription = i.errors.length > 0 ? i.errors.map(error => `${error.code} - ${error.message}`).join(", ") : <></>;
     const getStatus = (i) => {
       return 'Erro'
     }
