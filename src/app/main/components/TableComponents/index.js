@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
-import InfoIcon from '@mui/icons-material/Info';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 
 
@@ -49,7 +49,7 @@ export function CustomTable(data) {
     const errorDescription = i.errors.length > 0 ? i.errors.map(error => `${error.code} - ${error.message}`).join(", ") : <></>;
     const getStatus = (i) => {
       return  (
-        <span className='underline'> Erro  <InfoIcon /></span>
+        <span className='underline'> Erro  <InfoOutlinedIcon fontSize='small' /></span>
       )
     }
     if(i.errors.length > 0){
