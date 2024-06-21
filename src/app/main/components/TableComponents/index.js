@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
+import InfoIcon from '@mui/icons-material/Info';
 
 
 
@@ -47,7 +48,9 @@ export function CustomTable(data) {
     const i = data.data.data
     const errorDescription = i.errors.length > 0 ? i.errors.map(error => `${error.code} - ${error.message}`).join(", ") : <></>;
     const getStatus = (i) => {
-      return 'Erro'
+      return  (
+        <span className='underline'> Erro  <InfoIcon /></span>
+      )
     }
     if(i.errors.length > 0){
       return (
