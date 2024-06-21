@@ -191,6 +191,9 @@ display: none !important;
 .MuiTablePagination-displayedRows{
     display: none !important;
 }
+.MuiTablePagination-toolbar{
+    padding-left: 0 !important;
+}
 .muiltr-1u155r9-MuiTableCell-root{
     padding: 6px !important;
 }

@@ -81,6 +81,14 @@ function TableTransactions({ id }) {
 
     }, [dateRange])
 
+    const handleBackPage = (event) => {
+        setPage(page - 1)
+    }
+
+    const handleNextPage = (event) => {
+        setPage(page + 1)
+    }
+
     const handleNextWeek = () => {
         const nextWeekStart = new Date(currentWeekStart)
         nextWeekStart.setDate(nextWeekStart.getDate() + 7)
@@ -151,7 +159,7 @@ function TableTransactions({ id }) {
         setFilterMenu(null);
     }
     const handleDays = (event) => {
-        setSelectedDate(null); 
+        setSelectedDate(null);
         const previousDays = event.currentTarget.dataset.value;
         dispatch(setPreviousDays(previousDays))
         setFilterMenu(null)
@@ -167,9 +175,9 @@ function TableTransactions({ id }) {
 
 
     const handleSelectedDate = (newValue) => {
-            setSelectedDate(newValue); 
-            const newDate = formatISO(newValue).substring(0, 7)
-            dispatch(setDateRange(newDate))
+        setSelectedDate(newValue);
+        const newDate = formatISO(newValue).substring(0, 7)
+        dispatch(setDateRange(newDate))
     }
 
 
@@ -190,7 +198,7 @@ function TableTransactions({ id }) {
             } else {
                 if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Semanal'));
                 if (!searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
-                
+
                 if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Mensal'));
                 if (searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'));
                 const clickedDate = parseISO(transformedDate);
@@ -205,7 +213,7 @@ function TableTransactions({ id }) {
     }
 
     const handleBack = () => {
-        setSelectedDate(null); 
+        setSelectedDate(null);
         if (searchingDay) {
             dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Semanal'));
             dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
@@ -239,18 +247,20 @@ function TableTransactions({ id }) {
                         <Button onClick={filterMenuClick}>
                             <FuseSvgIcon className="text-48" size={24} color="action">feather:filter</FuseSvgIcon>
                         </Button>
-                   
-                        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                            <MobileDatePicker
-                                label="Selecionar Mês"
-                                openTo="month"
-                                disableFuture
-                                closeOnSelect
-                                views={['year', 'month']}
-                                value={selectedDate}
-                                onChange={handleSelectedDate}
-                            />
-                        </LocalizationProvider>
+
+                        {!searchingWeek && !searchingDay ?
+                            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                                <MobileDatePicker
+                                    label="Selecionar Mês"
+                                    openTo="month"
+                                    disableFuture
+                                    closeOnSelect
+                                    views={['year', 'month']}
+                                    value={selectedDate}
+                                    onChange={handleSelectedDate}
+                                />
+
+                            </LocalizationProvider> : <></>}
                     </div>
                 </Hidden>
                     <Popover
@@ -276,21 +286,22 @@ function TableTransactions({ id }) {
 
                     <Hidden smDown>
                         <div className='flex flex-wrap content-center justify-center'>
-                         
-                            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                                <MobileDatePicker
-                                    label="Selecionar Mês"
-                                    openTo="month"
-                                    disableFuture
-                                    closeOnSelect
-                                    views={['year', 'month']}
-                                    value={selectedDate}
-                                    onChange={handleSelectedDate}
-                                />
 
-                            </LocalizationProvider>
+                            {!searchingWeek && !searchingDay ?
+                                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                                    <MobileDatePicker
+                                        label="Selecionar Mês"
+                                        openTo="month"
+                                        disableFuture
+                                        closeOnSelect
+                                        views={['year', 'month']}
+                                        value={selectedDate}
+                                        onChange={handleSelectedDate}
+                                    />
 
-                         
+                                </LocalizationProvider> : <></>}
+
+
                             <Button className='self-center ml-10' variant="contained" onClick={handleDays} data-value={'lastMonth'}>Mês Atual</Button>
 
                         </div>
@@ -313,7 +324,7 @@ function TableTransactions({ id }) {
                             <TableRow>
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        Data
+                                        {!searchingWeek ? 'Data' : 'Data Processamento'}
                                     </Typography>
                                 </TableCell>
                                 {searchingWeek ? <TableCell>
@@ -328,15 +339,22 @@ function TableTransactions({ id }) {
                                 </TableCell>
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                  Valor para pagamento
+                                        Valor para pagamento
                                     </Typography>
                                 </TableCell>
                                 {searchingWeek ? <></> :
-                                    <TableCell>
-                                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                            Status
-                                        </Typography>
-                                    </TableCell>}
+                                    <>
+                                        <TableCell>
+                                            <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                                Status
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                                Erro
+                                            </Typography>
+                                        </TableCell>
+                                    </>}
 
 
                             </TableRow>
@@ -345,14 +363,14 @@ function TableTransactions({ id }) {
                         <TableBody>
 
                             {isLoading || statements.length == 0 ? <TableCell colSpan={4}>
-                         
+
                                 <p>Não há dados para sem exibidos</p>
                             </TableCell> : statements &&
 
                             statements?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
                                 const tz = 'UTC'
                                 const date = parseISO(i.date ?? i.dateTime ?? i.partitionDate);
-                                const zonedDate = utcToZonedTime(date,tz )
+                                const zonedDate = utcToZonedTime(date, tz)
                                 const formattedDate = format(zonedDate, 'dd/MM/yyyy');
                                 return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={handleClickRow} />
                             })
@@ -360,6 +378,7 @@ function TableTransactions({ id }) {
                         </TableBody>
                     </Table>
                 </TableContainer>
+
                 {searchingWeek && !searchingDay && (
                     <TablePagination
                         className={`overflow-visible ${c.root}`}
@@ -378,6 +397,29 @@ function TableTransactions({ id }) {
                                 </Button>
                             </div>
                         )}
+                    />
+                )}
+                {searchingDay && (
+                    //  Add legenda, 
+                    <TablePagination
+                        className={`overflow-visible ${c.root}`}
+                        rowsPerPageOptions={[8]}
+                        component="div"
+                        count={statements.length}
+                        rowsPerPage={rowsPerPage}
+                        page={page}
+                        onPageChange={handleChangePage}
+                        onRowsPerPageChange={handleChangeRowsPerPage}
+                        ActionsComponent={() => (
+                            <div className="my-4 flex space-x-2">
+                                <Button variant="text" onClick={handleBackPage} disabled={page === 0}>
+                                    &lt; Página Anterior                                </Button>
+                                <Button variant="text" onClick={handleNextPage} disabled={page >= Math.ceil(statements.length / rowsPerPage) - 1}>
+                                    Próxima Página &gt;
+                                </Button>
+                            </div>
+                        )}
+
                     />
                 )}
             </Box>
