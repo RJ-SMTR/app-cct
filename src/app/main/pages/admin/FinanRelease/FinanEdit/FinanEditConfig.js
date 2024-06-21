@@ -1,9 +1,9 @@
 import { lazy } from 'react';
 import { authRoles } from 'src/app/auth';
 
-const TriggerAppLazy = lazy(() => import('./TriggerApp'));
+const FinanEdit = lazy(() => import('./FinanEditApp'));
 
-const TriggerConfig = {
+const FinanEditConfig = {
     settings: {
         layout: {
             config: {
@@ -13,13 +13,13 @@ const TriggerConfig = {
             },
         },
     },
-    auth: authRoles.admin,
+    auth: authRoles.commonFinan,
     routes: [
         {
-            path: 'disparo',
-            element: <TriggerAppLazy />,
+            path: 'lancamentos/editar/:id',
+            element: <FinanEdit />,
         },
     ],
 };
 
-export default TriggerConfig;
+export default FinanEditConfig;

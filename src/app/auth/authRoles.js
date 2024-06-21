@@ -2,9 +2,13 @@
  * Authorization Roles
  */
 const authRoles = {
-  admin: ['Admin'],
-  staff: ['admin', 'staff'],
-  user: ['Admin', 'staff', 'User'],
+  adminFinan: ['Admin Finan', , 'Admin Master'],
+  commonFinan: [ 'Lançador financeiro', 'Aprovador financeiro', 'Admin Master', 'Admin Finan' ],
+  releases: ['Lançador financeiro', 'Admin Master'],
+  approval: ['Aprovador financeiro', 'Admin Master'],
+  admin: ['Admin', 'Admin Master'],
+  staff: ['Admin', 'staff', 'Admin Master'],
+  user: ['User'],
   onlyGuest: [],
 };
 

@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import AdminApp from './AdminApp';
+import { authRoles } from 'src/app/auth';
 
 const AdminAppLazy = lazy(() => import('./AdminApp'));
 
@@ -13,7 +14,7 @@ const AdminConfig = {
             },
         },
     },
-    auth: ['Admin'],
+    auth: authRoles.admin,
     routes: [
         {
             path: 'admin',

@@ -226,7 +226,7 @@ export function BankInfo({ user }) {
                 }
             })
             .catch((_errors) => {
-                if (_errors.bankAccountDigit) {
+                 if (_errors.bankAccountDigit) {
                     setError('bankAccountDigit', {
                         message: 'O dígito deve ser maior ou igual a 1 caractere',
                     });
@@ -312,6 +312,7 @@ export function BankInfo({ user }) {
                         type="string"
                         variant="outlined"
                         fullWidth
+                        inputProps={{ maxLength: 4 }}
                         disabled={!isEditable}
                         error={!!errors.bankAgency}
                         helperText={errors?.bankAgency?.message}
@@ -324,12 +325,13 @@ export function BankInfo({ user }) {
                             type="string"
                             variant="outlined"
                             fullWidth
+
                             inputProps={{ maxLength: 12 }}
+
                             error={!!errors.bankAccount}
                             helperText={errors?.bankAccount?.message}
                             disabled={!isEditable}
                         />
-
                         <TextField
                             {...register("bankAccountDigit")}
                             className="mb-24 w-[30%]"
@@ -337,6 +339,7 @@ export function BankInfo({ user }) {
                             type="string"
                             variant="outlined"
                             fullWidth
+                            inputProps={{ maxLength: 2}}
                             disabled={!isEditable}
                             error={!!errors.bankAccountDigit}
                             helperText={errors?.bankAccountDigit?.message}

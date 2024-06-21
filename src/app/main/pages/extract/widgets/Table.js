@@ -22,16 +22,21 @@ import { makeStyles } from '@mui/styles';
 import { locale } from '../utils/locale';
 
 import { CustomTable } from 'src/app/main/components/TableComponents';
-import { format, parseISO, startOfWeek, endOfWeek, addDays, isAfter, startOfDay } from 'date-fns';
+import { format, parseISO, startOfWeek, endOfWeek, addDays, isAfter, startOfDay, getMonth, getYear, formatISO } from 'date-fns';
 import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz';
 
 import { useDispatch, useSelector } from 'react-redux';
 
-import { getStatements, setPreviousDays,  setDateRange,  setSearchingWeek, setSearchingDay, setValorAcumuladoLabel } from 'app/store/extractSlice';
+import { getStatements, setPreviousDays, setDateRange, setSearchingWeek, setSearchingDay, setValorAcumuladoLabel, setValorPagoLabel } from 'app/store/extractSlice';
 import { useNavigate } from 'react-router-dom';
 import { selectUser } from 'app/store/userSlice';
 
-function TableTransactions({id}) {
+import { DatePicker, MobileDatePicker } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import ptBR from 'date-fns/locale/pt-BR';
+
+function TableTransactions({ id }) {
     const dispatch = useDispatch()
     const user = useSelector(selectUser)
     const {
@@ -44,7 +49,7 @@ function TableTransactions({id}) {
     } = useSelector((state) => state.extract);
     const MemoizedCustomTable = memo(CustomTable);
 
- 
+
 
     const [currentWeekStart, setCurrentWeekStart] = useState()
     const [isGreaterThanToday, setIsGreaterThanToday] = useState(false)
@@ -53,36 +58,45 @@ function TableTransactions({id}) {
     const [lastDate, setLastDate] = useState([])
     const [rowsPerPage, setRowsPerPage] = useState(8);
     const [isLoading, setIsLoading] = useState(true)
+    const [selectedDate, setSelectedDate] = useState(null)
 
-    const navigate =  useNavigate()
+    const navigate = useNavigate()
     const useStyles = makeStyles(() => ({
         root: {
             "& .MuiTablePagination-spacer": { display: "none" },
-            "& .MuiBadge-badge": {display: "inline", position: 'relative', padding: '3px'},
-            "& .MuiBadge-badge": {display: "inline", position: 'relative', padding: '3px'},
+            "& .MuiBadge-badge": { display: "inline", position: 'relative', padding: '3px' },
+            "& .MuiBadge-badge": { display: "inline", position: 'relative', padding: '3px' },
         },
     }));
     const c = useStyles()
 
     const previousStatementsRef = useRef([]);
     useEffect(() => {
-        if(searchingWeek || searchingDay){
+        if (searchingWeek || searchingDay) {
             if (dateRange !== previousStatementsRef.current) {
                 setLastDate([previousStatementsRef.current[0], previousStatementsRef.current[previousStatementsRef.current.length - 1]]);
                 previousStatementsRef.current = dateRange;
             }
         }
-    
+
     }, [dateRange])
+
+    const handleBackPage = (event) => {
+        setPage(page - 1)
+    }
+
+    const handleNextPage = (event) => {
+        setPage(page + 1)
+    }
 
     const handleNextWeek = () => {
         const nextWeekStart = new Date(currentWeekStart)
-        nextWeekStart.setDate(nextWeekStart.getDate() + 7) 
+        nextWeekStart.setDate(nextWeekStart.getDate() + 7)
         setCurrentWeekStart(nextWeekStart)
         setIsLoading(true)
- 
+
     }
- 
+
 
     const handlePreviousWeek = () => {
         const previousWeekStart = new Date(currentWeekStart)
@@ -100,10 +114,10 @@ function TableTransactions({id}) {
     useEffect(() => {
         const startDate = new Date(currentWeekStart)
         const endDate = new Date(currentWeekStart)
-        endDate.setDate(endDate.getDate() - 6) 
-        startDate.setDate(startDate.getDate()) 
-        if(currentWeekStart){
-           setIsGreaterThanToday(isEndDateGreaterThanToday(startDate))
+        endDate.setDate(endDate.getDate() - 6)
+        startDate.setDate(startDate.getDate())
+        if (currentWeekStart) {
+            setIsGreaterThanToday(isEndDateGreaterThanToday(startDate))
             dispatch(setDateRange([endDate, startDate]))
         }
     }, [currentWeekStart])
@@ -131,11 +145,11 @@ function TableTransactions({id}) {
                     setIsLoading(false)
                 })
         }
-                
-     
+
+
     }, [previousDays, dateRange])
 
-    
+
 
     const filterMenuClick = (event) => {
         setFilterMenu(event.currentTarget);
@@ -145,6 +159,7 @@ function TableTransactions({id}) {
         setFilterMenu(null);
     }
     const handleDays = (event) => {
+        setSelectedDate(null);
         const previousDays = event.currentTarget.dataset.value;
         dispatch(setPreviousDays(previousDays))
         setFilterMenu(null)
@@ -153,14 +168,18 @@ function TableTransactions({id}) {
         dispatch(setSearchingWeek(false))
         dispatch(setSearchingDay(false))
         setIsLoading(true)
-        dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'))
+        dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Mensal'))
+        dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'))
 
     }
 
-   
-    const { afterToday } = DateRangePicker;
 
-   
+    const handleSelectedDate = (newValue) => {
+        setSelectedDate(newValue);
+        const newDate = formatISO(newValue).substring(0, 7)
+        dispatch(setDateRange(newDate))
+    }
+
 
     const handleClickRow = (event) => {
         setIsLoading(true)
@@ -168,38 +187,45 @@ function TableTransactions({id}) {
         const [day, month, year] = start.split('/');
         const transformedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
         const tz = 'America/Sao_Paulo';
-    
-        if(fullReport){
+
+        if (fullReport) {
             if (searchingWeek) {
                 dispatch(setSearchingDay(true))
-                dispatch(setValorAcumuladoLabel('Valor acumulado Diário'));
-        
-               dispatch(setDateRange([transformedDate, transformedDate]));
-           } else {
-                if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Semanal'));
-                if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'));
-               const clickedDate = parseISO(transformedDate);
-               const clickedDateToday = utcToZonedTime(clickedDate, tz);
-               setCurrentWeekStart(clickedDateToday);
-               dispatch(setSearchingWeek(true));
-               setPage(0);
-           }
-       } else {
-        navigate('/extrato')
-       }
+                dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Diário'));
+                dispatch(setValorPagoLabel('Valor Pago - Acumulado Diário'));
+
+                dispatch(setDateRange([transformedDate, transformedDate]));
+            } else {
+                if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Semanal'));
+                if (!searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
+
+                if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Mensal'));
+                if (searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'));
+                const clickedDate = parseISO(transformedDate);
+                const clickedDateToday = utcToZonedTime(clickedDate, tz);
+                setCurrentWeekStart(clickedDateToday);
+                dispatch(setSearchingWeek(true));
+                setPage(0);
+            }
+        } else {
+            navigate('/extrato')
+        }
     }
-    
+
     const handleBack = () => {
-      
-        if(searchingDay){
-            dispatch(setValorAcumuladoLabel('Valor acumulado Semanal'));
+        setSelectedDate(null);
+        if (searchingDay) {
+            dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Semanal'));
+            dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
             dispatch(setDateRange(lastDate))
             setPage(0)
             dispatch(setSearchingDay(false))
             setIsLoading(true)
         } else {
-            if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Semanal'));
-            if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'));
+            if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Semanal'));
+            if (!searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
+            if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Mensal'));
+            if (searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'));
             dispatch(setDateRange([]))
             setPage(0)
             setIsLoading(true)
@@ -207,6 +233,7 @@ function TableTransactions({id}) {
         }
     }
 
+    const { afterToday } = DateRangePicker;
 
     return (
         <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
@@ -221,22 +248,19 @@ function TableTransactions({id}) {
                             <FuseSvgIcon className="text-48" size={24} color="action">feather:filter</FuseSvgIcon>
                         </Button>
 
-                        <label htmlFor="custom-date-input" className='py-6 px-8' >
-                            <FuseSvgIcon className="text-48" size={24} color="action">material-outline:edit_calendar</FuseSvgIcon>
-                        </label>
-                        <DateRangePicker
-                            id="custom-date-input"
-                            showOneCalendar
-                            className='mobile'
-                            placeholder="Selecionar Data"
-                            appearance='subtle'
-                            disabledDate={afterToday()}
-                            format='dd/MM/yy'
-                            locale={locale}
-                            character=' - '
-                            onChange={(newValue) => (dispatch(setDateRange(newValue)), dispatch(setSearchingWeek(false)))}
+                        {!searchingWeek && !searchingDay ?
+                            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                                <MobileDatePicker
+                                    label="Selecionar Mês"
+                                    openTo="month"
+                                    disableFuture
+                                    closeOnSelect
+                                    views={['year', 'month']}
+                                    value={selectedDate}
+                                    onChange={handleSelectedDate}
+                                />
 
-                        />
+                            </LocalizationProvider> : <></>}
                     </div>
                 </Hidden>
                     <Popover
@@ -255,33 +279,30 @@ function TableTransactions({id}) {
                             paper: 'py-8',
                         }}
                     >
-                        <MenuItem role="button" onClick={handleDays} data-value={7}>
-                            <ListItemText primary="7 dias" />
-                        </MenuItem>
-                        <MenuItem role="button" onClick={handleDays} data-value={14}>
-                            <ListItemText primary="14 dias" />
-                        </MenuItem>
                         <MenuItem role="button" onClick={handleDays} data-value=''>
-                            <ListItemText primary="Mês todo" />
+                            <ListItemText primary="Mês Atual" />
                         </MenuItem>
                     </Popover>
 
                     <Hidden smDown>
-                        <div>
-                            <DateRangePicker
-                                showOneCalendar
-                                placeholder="Selecionar datas"
-                                className='mr-5'
-                                disabledDate={afterToday()}
-                                format='dd/MM/yy'
-                                character=' - '
-                                locale={locale}
-                                onChange={(newValue) => (dispatch(setDateRange(newValue)), dispatch(setSearchingWeek(false)))}
+                        <div className='flex flex-wrap content-center justify-center'>
 
-                            />
-                            <Button className={previousDays == 'lastWeek' ? 'active' : ''} variant="contained" onClick={handleDays} data-value={'lastWeek'}>7 dias</Button>
-                            <Button className={`${previousDays == 'last2Weeks' ? 'active' : ''} mx-5 `} variant="contained" onClick={handleDays} data-value={'last2Weeks'}>14 dias</Button>
-                            <Button className={previousDays !== 'lastWeek' && previousDays !== 'last2Weeks' ? 'active' : ''} variant="contained" onClick={handleDays} data-value={'lastMonth'}>Mês todo</Button>
+                            {!searchingWeek && !searchingDay ?
+                                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                                    <MobileDatePicker
+                                        label="Selecionar Mês"
+                                        openTo="month"
+                                        disableFuture
+                                        closeOnSelect
+                                        views={['year', 'month']}
+                                        value={selectedDate}
+                                        onChange={handleSelectedDate}
+                                    />
+
+                                </LocalizationProvider> : <></>}
+
+
+                            <Button className='self-center ml-10' variant="contained" onClick={handleDays} data-value={'lastMonth'}>Mês Atual</Button>
 
                         </div>
                     </Hidden></> : <></>}
@@ -299,45 +320,65 @@ function TableTransactions({id}) {
 
                 <TableContainer>
                     <Table className="min-w-full">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>
-                                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                            Data
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                            {searchingWeek ? 'Arrecadado' : 'Valor'}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                            {searchingWeek ? 'Catracadas' : 'Status'}
-                                        </Typography>
-                                    </TableCell>
-                                  
-                                </TableRow>
-                            </TableHead>
-                            
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>
+                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                        {!searchingWeek ? 'Data' : 'Data Processamento'}
+                                    </Typography>
+                                </TableCell>
+                                {searchingWeek ? <TableCell>
+                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                        Catracadas
+                                    </Typography>
+                                </TableCell> : <></>}
+                                <TableCell>
+                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                        Valor Transação
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                        Valor para pagamento
+                                    </Typography>
+                                </TableCell>
+                                {searchingWeek ? <></> :
+                                    <>
+                                        <TableCell>
+                                            <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                                Status
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                                Erro
+                                            </Typography>
+                                        </TableCell>
+                                    </>}
+
+
+                            </TableRow>
+                        </TableHead>
+
                         <TableBody>
-                       
-                            {isLoading ? <TableCell colSpan={4}>
-                                {/* <Box className="flex justify-center items-center m-10">
-                                    <CircularProgress />
-                                </Box> */}
+
+                            {isLoading || statements.length == 0 ? <TableCell colSpan={4}>
+
                                 <p>Não há dados para sem exibidos</p>
-                            </TableCell> :  statements &&
-                              
-                                statements?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
-                                    const date = parseISO(i.date ?? i.dateTime ?? i.partitionDate);
-                                    const formattedDate = format(date, 'dd/MM/yyyy', { timeZone: 'Etc/UTC' });
-                                    return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={handleClickRow} />
-                                })
-                                }
+                            </TableCell> : statements &&
+
+                            statements?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
+                                const tz = 'UTC'
+                                const date = parseISO(i.date ?? i.dateTime ?? i.partitionDate);
+                                const zonedDate = utcToZonedTime(date, tz)
+                                const formattedDate = format(zonedDate, 'dd/MM/yyyy');
+                                return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={handleClickRow} />
+                            })
+                            }
                         </TableBody>
                     </Table>
                 </TableContainer>
+
                 {searchingWeek && !searchingDay && (
                     <TablePagination
                         className={`overflow-visible ${c.root}`}
@@ -358,10 +399,32 @@ function TableTransactions({id}) {
                         )}
                     />
                 )}
+                {searchingDay && (
+                    //  Add legenda, 
+                    <TablePagination
+                        className={`overflow-visible ${c.root}`}
+                        rowsPerPageOptions={[8]}
+                        component="div"
+                        count={statements.length}
+                        rowsPerPage={rowsPerPage}
+                        page={page}
+                        onPageChange={handleChangePage}
+                        onRowsPerPageChange={handleChangeRowsPerPage}
+                        ActionsComponent={() => (
+                            <div className="my-4 flex space-x-2">
+                                <Button variant="text" onClick={handleBackPage} disabled={page === 0}>
+                                    &lt; Página Anterior                                </Button>
+                                <Button variant="text" onClick={handleNextPage} disabled={page >= Math.ceil(statements.length / rowsPerPage) - 1}>
+                                    Próxima Página &gt;
+                                </Button>
+                            </div>
+                        )}
+
+                    />
+                )}
             </Box>
         </Paper>
     );
 }
 
 export default memo(TableTransactions);
- 

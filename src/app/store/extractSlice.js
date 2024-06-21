@@ -15,9 +15,13 @@ const initialState = {
     multipliedEntries: [],
     listByType: [],
     firstDate: [],
-    valorAcumuladoLabel: 'Valor acumulado Mensal',
+    valorAcumuladoLabel:'Valor Transação - Acumulado Mensal',
+    valorPagoLabel:'Valor Pago - Acumulado Mensal',
+  
     sumInfo: [],
     sumInfoWeek: [],
+    pendingValue: [],
+    pendingList: [],
 };
 
 const extractSlice = createSlice({
@@ -66,6 +70,16 @@ const extractSlice = createSlice({
         setValorAcumuladoLabel: (state, action) => {
             state.valorAcumuladoLabel = action.payload;
         },
+        setValorPagoLabel: (state, action) => {
+            state.valorPagoLabel = action.payload;
+        },
+        setPendingValue: (state, action) => {
+            state.pendingValue = action.payload;
+        },
+        setPendingList: (state, action) => {
+            state.pendingList = action.payload;
+
+        },
     },
 });
 
@@ -93,15 +107,20 @@ export const {
     setListByType,
     setFirstDate,
     setValorAcumuladoLabel,
+    setValorPagoLabel,
     sumInfo,
     setSumInfo,
     sumInfoWeek,
-    setSumInfoWeek
+    setSumInfoWeek,
+    setPendingList,
+    pendingList,
+    setPendingValue,
+    pendingValue
 } = extractSlice.actions;
 
 export default extractSlice.reducer;
 function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek) {
-    if (dateRange?.length > 0 && !searchingDay) {
+    if (dateRange?.length > 0 && !searchingDay && searchingWeek) {
         const separateDate = dateRange.map((i) => {
             const inputDateString = i;
             const dateObj = new Date(inputDateString);
@@ -113,8 +132,7 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
         });
         if (!searchingDay && !searchingWeek) {
             return {
-                startDate: separateDate[0], 
-                endDate: separateDate[1]
+                yearMonth: dateRange
             }
         }
         return {
@@ -127,15 +145,29 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
             endDate: dateRange[1]
         };
     } else {
-        return previousDays > 0 ? { timeInterval: previousDays } : { timeInterval: 'lastMonth' }
+        return previousDays > 0 ? { timeInterval: previousDays } : { timeInterval: 'lastMonth', yearMonth: dateRange }
     }
+}
+export const  getPreviousDays = (dateRange, interval='lastWeek', userId) => (dispatch) => {
+    const token = window.localStorage.getItem('jwt_access_token');
+    const url = userId ? jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=${interval}&userId=${userId}` : jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=${interval}`
+    
+    api.get(url, {
+        headers: { "Authorization": `Bearer ${token}` },
+    })
+        .then((response) => {
+            dispatch(setPendingValue(response.data.statusCounts))
+            dispatch(setPendingList(response.data))
+        })
+
 }
 
 export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) => async (dispatch) => {
     const requestData = handleRequestData(null, dateRange, searchingDay, searchingWeek)
     const token = window.localStorage.getItem('jwt_access_token');
-
-  
+    
+    console.log(requestData)
+    console.log(dateRange, searchingDay, searchingWeek)
     let config = {
         method: 'get',
         maxBodyLength: Infinity,
@@ -156,7 +188,6 @@ export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) =>
             Object.entries(response.data.transactionTypeCounts)
                 .sort(([keyA], [keyB]) => order.indexOf(keyA) - order.indexOf(keyB))
         );
-
         dispatch(setListByType(sortedObject))
     } catch (error) {
         console.error(error);
@@ -165,11 +196,17 @@ export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) =>
 
 export const getStatements = (previousDays, dateRange, searchingDay, searchingWeek, userId) => async (dispatch) => {
     const requestData = handleRequestData(previousDays, dateRange, searchingDay, searchingWeek);
+    const todayDate = new Date()
+    const formattedDate = format(todayDate, 'yyyy-MM-dd')
     let apiRoute = ''
     if(!userId){
-        apiRoute = searchingWeek ? jwtServiceConfig.revenuesUn : jwtServiceConfig.bankStatement;
+        apiRoute = searchingWeek && searchingDay
+            ? jwtServiceConfig.revenuesDay
+            : searchingWeek 
+                ? jwtServiceConfig.revenuesUn
+                : jwtServiceConfig.bankStatement
     } else {
-        apiRoute = searchingWeek ? jwtServiceConfig.revenuesUn + `?userId=${userId}` : jwtServiceConfig.bankStatement + `?userId=${userId}`;
+        apiRoute = searchingWeek && searchingDay ? jwtServiceConfig.revenuesDay + `?userId=${userId}` : searchingWeek  ? jwtServiceConfig.revenuesUn + `?userId=${userId}` : jwtServiceConfig.bankStatement + `?userId=${userId}`;
     }
     const method = 'get';
     const token = window.localStorage.getItem('jwt_access_token');
@@ -191,19 +228,27 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
         const response = await api(config);
 
         if (searchingWeek || searchingDay) {
-            dispatch(setMapInfo(response.data.data));
+            console.log(searchingWeek, searchingDay)
+            const interval = searchingDay ? 'lastDay' : 'lastWeek';
             dispatch(setStatements(response.data.data));
             dispatch(setSumInfoWeek(response.data))
-            dispatch(getFirstTypes(null, dateRange, searchingWeek, searchingDay));
+            if(userId){
+                
+                dispatch(getPreviousDays(requestData.endDate, interval, userId))
+                dispatch(getFirstTypes(userId, requestData.endDate, searchingWeek, searchingDay));
+            } else {
+                dispatch(getFirstTypes(null, dateRange, searchingWeek, searchingDay));
+                dispatch(getPreviousDays(requestData.endDate, interval))
+            }
 
         } else {
             if(userId){
-                dispatch(getFirstTypes(userId));
+                dispatch(getFirstTypes(userId, dateRange, searchingWeek, searchingDay));
             } else {
-                dispatch(getFirstTypes(null, null, searchingWeek, searchingDay));
+                dispatch(getFirstTypes(null, dateRange, searchingWeek, searchingDay));
             }
+           
             dispatch(setSumInfo(response.data))
-
             dispatch(setStatements(response.data.data));
         }
 

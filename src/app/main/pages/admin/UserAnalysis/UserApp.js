@@ -19,6 +19,7 @@ import Table from '../../extract/widgets/Table';
 import { setFullReport } from 'app/store/extractSlice';
 import TableTypes from '../../extract/widgets/TableTypes';
 import Entries from '../../extract/widgets/Entries';
+import TablePending from '../../extract/widgets/TablePending';
 const Root = styled(FusePageSimple)(({ theme }) => ({
   '& .FusePageSimple-header': {
     backgroundColor: theme.palette.background.paper,
@@ -35,7 +36,10 @@ function UserApp() {
   const [user, setUser] = useState()
   let {id} = useParams()
   const valorAcumulado = useSelector(state => state.extract.valorAcumuladoLabel);
+  const paidValue = useSelector(state => state.extract.valorPagoLabel);
   const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
+  const searchingWeek = useSelector(state => state.extract.searchingWeek)
+  const searchingDay = useSelector(state => state.extract.searchingDay)
   const dispatch = useDispatch()
   useEffect(() => {
     dispatch(setFullReport(true))
@@ -98,12 +102,7 @@ function UserApp() {
            <div className='flex flex-col md:flex-row'>
              <div className="-mt-96 lg:-mt-88 rounded-full">
                <motion.div initial={{ scale: 0 }} animate={{ scale: 1, transition: { delay: 0.1 } }}>
-                 {/* <Avatar
-                   sx={{ borderColor: 'background.paper' }}
-                   className="w-128 h-128 border-4"
-                   src="assets/images/pages/profile/pfp.png"
-                   alt="User avatar"
-                 /> */}
+                
                   <Avatar sx={{ borderColor: 'background.white' }} className="w-128 h-128 border-4"  />
                </motion.div>
              </div>
@@ -136,9 +135,10 @@ function UserApp() {
           </div>
           {user && (
             <>
-           <div className='md:flex mt-10 md:max-w-[50%]'>
+           <div className='md:flex mt-10 '>
                 <Entries type="Valor diário" isDay="true" />
                 <Entries type={valorAcumulado} isDay="false" />
+                <Entries type={paidValue} isDay="false" />
            </div>
               <div>
                 <Table id={id} />
@@ -147,11 +147,16 @@ function UserApp() {
               <div>
                 <TableTypes id={id} />
               </div>
+              <div>
+                {searchingWeek || searchingDay ?
+                  <TablePending />
+                  : <></>
+                }
+              </div>
             </>
           )}
         </div>
       }
-
 
       scroll={isMobile ? 'normal' : 'page'}
     />

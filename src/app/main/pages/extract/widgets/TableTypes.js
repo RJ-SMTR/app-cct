@@ -13,6 +13,7 @@ import { Box, CircularProgress, Skeleton } from '@mui/material';
 
 import { useSelector } from 'react-redux';
 import { useEffect } from 'react';
+import _ from 'lodash';
 
 
 function TableTypes() {
@@ -21,6 +22,7 @@ function TableTypes() {
         currency: 'BRL',
     });
     const listByType = useSelector(state => state.extract.listByType)
+
  
     return (
         <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
@@ -36,7 +38,7 @@ function TableTypes() {
 
 
                 <TableContainer>
-                    <Table className="min-w-full">
+                    <Table className="min-w-full table-fixed">
                         {listByType ? (
                             <TableHead>
                                 <TableRow>
@@ -45,14 +47,15 @@ function TableTypes() {
                                             Tipo
                                         </Typography>
                                     </TableCell>
+                                   
                                     <TableCell>
                                         <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                            Valor arrecadado
+                                            Catracadas
                                         </Typography>
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                            Catracadas
+                                            Valor Transação
                                         </Typography>
                                     </TableCell>
                                 </TableRow>
@@ -62,7 +65,7 @@ function TableTypes() {
                         )}
 
                         <TableBody>
-                            {listByType ?
+                            {!_.isEmpty(listByType)  ? 
                                 Object.entries(listByType).map(([type, count]) => {
                                     return (
                                         <TableRow key={type} className="hover:bg-gray-100 cursor-pointer">
@@ -72,24 +75,24 @@ function TableTypes() {
                                                 </Typography>
                                             </TableCell>
                                             <TableCell component="th" scope="row">
-                                                <Typography className="whitespace-nowrap">
-                                                {formatter.format(count.transactionValue)}
-                                                </Typography>
+                                                {count.count.toLocaleString()}
                                             </TableCell>
                                             <TableCell component="th" scope="row">
-                                                {count.count.toLocaleString()}
+                                                <Typography className="whitespace-nowrap">
+                                                    {formatter.format(count.transactionValue)}
+                                                </Typography>
                                             </TableCell>
                                         </TableRow>
                                     );
                                 })
-                            :  (
+                            :  
                                     <TableCell colSpan={4}> 
                                         <p>Não há dados para sem exibidos</p>
                                         {/* <Box className="flex justify-center items-center m-10">
                                             <CircularProgress />
                                         </Box> */}
                                     </TableCell> 
-                        ) }
+                         }
                         </TableBody>
                     </Table>
                 </TableContainer>
