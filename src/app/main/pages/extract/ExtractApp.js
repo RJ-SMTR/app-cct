@@ -41,19 +41,23 @@ function ExtractApp() {
           <Entries type={valorTransação} isDay="false" />
           <Entries type={valorPago} isDay="false" />
         </Box>
-        <Box className='flex flex-col md:flex-row  justify-around'>
-          <TableTransactions />
-        </Box>
-     <Box className='flex flex-col md:flex-row   justify-around'>
-          <TableTypes />
-        </Box> 
+        
+        <div className={`flex flex-col ${searchingDay && 'flex-col-reverse'}`}>
+          <Box className='flex flex-col md:flex-row  justify-around'>
+            <TableTransactions />
+          </Box>
+          <Box className='flex flex-col md:flex-row   justify-around'>
+            <TableTypes />
+          </Box>
 
-        <Box className='flex flex-col  justify-around mt-24'>
-          {searchingWeek || searchingDay ?
-            <TablePending/>
-           : <></>
-          }
-        </Box>
+          <Box className='flex flex-col  justify-around mt-24'>
+            {searchingWeek || searchingDay ?
+              <TablePending />
+              : <></>
+            }
+          </Box>
+        </div>
+       
 
         <br />
       </div>
