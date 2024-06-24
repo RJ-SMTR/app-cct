@@ -120,7 +120,7 @@ export const {
 
 export default extractSlice.reducer;
 function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek) {
-    if (dateRange?.length > 0 && !searchingDay && searchingWeek) {
+    if (Array.isArray(dateRange) && !searchingDay && searchingWeek) {
         const endDate = format(new Date(dateRange[1]), 'yyyy-MM-dd');
         if (!searchingDay && !searchingWeek) {
             return {
@@ -131,6 +131,12 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
             endDate
         };
     } 
+    else if (!searchingDay && searchingWeek) {
+        const endDate = dateRange
+        return {
+            endDate
+        };
+    }
     else if (searchingDay && searchingWeek) {
         return {
             startDate: dateRange[0],
@@ -156,6 +162,7 @@ export const  getPreviousDays = (dateRange, interval='lastWeek', userId) => (dis
 
 export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) => async (dispatch) => {
     const requestData = handleRequestData(null, dateRange, searchingDay, searchingWeek)
+    console.log("types", requestData)
     const token = window.localStorage.getItem('jwt_access_token');
     
     let config = {
@@ -222,9 +229,13 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             dispatch(setStatements(response.data.data));
             dispatch(setSumInfoWeek(response.data))
             if(userId){
-                
+                if(!searchingDay ){
+                    console.log(requestData.endDate)
+                    dispatch(getFirstTypes(userId, requestData.endDate, searchingWeek, searchingDay));
+                } else {
+                    dispatch(getFirstTypes(userId, dateRange, searchingWeek, searchingDay));
+                }
                 dispatch(getPreviousDays(requestData.endDate, interval, userId))
-                dispatch(getFirstTypes(userId, requestData.endDate, searchingWeek, searchingDay));
             } else {
                 dispatch(getFirstTypes(null, dateRange, searchingWeek, searchingDay));
                 dispatch(getPreviousDays(requestData.endDate, interval))

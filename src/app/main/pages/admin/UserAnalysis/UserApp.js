@@ -140,19 +140,21 @@ function UserApp() {
                 <Entries type={valorAcumulado} isDay="false" />
                 <Entries type={paidValue} isDay="false" />
            </div>
-              <div>
-                <Table id={id} />
-              </div>
-           
-              <div>
-                <TableTypes id={id} />
-              </div>
-              <div>
-                {searchingWeek || searchingDay ?
-                  <TablePending />
-                  : <></>
-                }
-              </div>
+              <div className={`flex flex-col ${searchingDay && 'flex-col-reverse'}`}>
+               <div>
+                 <Table id={id} />
+               </div>
+            
+               <div>
+                 <TableTypes id={id} />
+               </div>
+               <div>
+                 {searchingWeek || searchingDay ?
+                   <TablePending />
+                   : <></>
+                 }
+               </div>
+         </div>
             </>
           )}
         </div>

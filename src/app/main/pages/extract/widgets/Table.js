@@ -401,15 +401,17 @@ function TableTransactions({ id }) {
                     />
                 )}
                 {searchingDay && (
-                    //  Add legenda, 
+                    
                     <TablePagination
                         className={`overflow-visible ${c.root}`}
-                        rowsPerPageOptions={[8]}
                         component="div"
                         count={statements.length}
                         rowsPerPage={rowsPerPage}
                         page={page}
                         onPageChange={handleChangePage}
+                        labelRowsPerPage="Linhas por página"
+                        labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+                        rowsPerPageOptions={[50, 100, 150]}
                         onRowsPerPageChange={handleChangeRowsPerPage}
                         ActionsComponent={() => (
                             <div className="my-4 flex space-x-2">
