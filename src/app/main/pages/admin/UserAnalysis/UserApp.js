@@ -99,7 +99,7 @@ function UserApp() {
           />
 
           <div className="flex flex-col flex-0 lg:flex-row items-center max-w-[95%] w-full mx-auto px-32 lg:h-72 md:justify-between">
-           <div className='flex flex-col md:flex-row'>
+           <div className='flex flex-col md:flex-row items-center'>
              <div className="-mt-96 lg:-mt-88 rounded-full">
                <motion.div initial={{ scale: 0 }} animate={{ scale: 1, transition: { delay: 0.1 } }}>
                 

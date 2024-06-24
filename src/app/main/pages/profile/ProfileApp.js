@@ -38,12 +38,6 @@ function ProfileApp() {
           <div className="flex flex-col flex-0 lg:flex-row items-center max-w-[95%] w-full mx-auto px-32 lg:h-72">
             <div className="-mt-96 lg:-mt-88 rounded-full">
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1, transition: { delay: 0.1 } }}>
-                {/* <Avatar
-                  sx={{ borderColor: 'background.paper' }}
-                  className="w-128 h-128 border-4"
-                  src="assets/images/pages/profile/pfp.png"
-                  alt="User avatar"
-                /> */}
                 <Avatar sx={{ borderColor: 'background.white' }} className="w-128 h-128 border-4"/>
               </motion.div>
             </div>

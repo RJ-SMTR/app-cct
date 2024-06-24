@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { api } from 'app/configs/api/api';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import jwtServiceConfig from '../auth/services/jwtService/jwtServiceConfig';
 
 const initialState = {
@@ -121,22 +121,14 @@ export const {
 export default extractSlice.reducer;
 function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek) {
     if (dateRange?.length > 0 && !searchingDay && searchingWeek) {
-        const separateDate = dateRange.map((i) => {
-            const inputDateString = i;
-            const dateObj = new Date(inputDateString);
-            const year = dateObj.getFullYear();
-            const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-            const day = String(dateObj.getDate()).padStart(2, "0");
-            const formattedDate = `${year}-${month}-${day}`;
-            return formattedDate;
-        });
+        const endDate = format(new Date(dateRange[1]), 'yyyy-MM-dd');
         if (!searchingDay && !searchingWeek) {
             return {
                 yearMonth: dateRange
             }
         }
         return {
-            endDate: separateDate[1]
+            endDate
         };
     } 
     else if (searchingDay && searchingWeek) {
@@ -166,8 +158,6 @@ export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) =>
     const requestData = handleRequestData(null, dateRange, searchingDay, searchingWeek)
     const token = window.localStorage.getItem('jwt_access_token');
     
-    console.log(requestData)
-    console.log(dateRange, searchingDay, searchingWeek)
     let config = {
         method: 'get',
         maxBodyLength: Infinity,
@@ -228,7 +218,6 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
         const response = await api(config);
 
         if (searchingWeek || searchingDay) {
-            console.log(searchingWeek, searchingDay)
             const interval = searchingDay ? 'lastDay' : 'lastWeek';
             dispatch(setStatements(response.data.data));
             dispatch(setSumInfoWeek(response.data))
