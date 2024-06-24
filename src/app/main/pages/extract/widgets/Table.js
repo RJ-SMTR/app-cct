@@ -175,6 +175,7 @@ function TableTransactions({ id }) {
 
 
     const handleSelectedDate = (newValue) => {
+        console.log("newDate", newDate)
         setSelectedDate(newValue);
         const newDate = formatISO(newValue).substring(0, 7)
         dispatch(setDateRange(newDate))
