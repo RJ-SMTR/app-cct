@@ -144,16 +144,20 @@ function UserApp() {
                <div>
                  <Table id={id} />
                </div>
-            
-               <div>
-                 <TableTypes id={id} />
-               </div>
-               <div>
-                 {searchingWeek || searchingDay ?
-                   <TablePending />
+
+                {searchingWeek || searchingDay ?
+                  <>
+                    <div>
+                      <TableTypes id={id} />
+                    </div>
+                    <div>
+
+                      <TablePending />
+                    </div>
+                    </>
                    : <></>
                  }
-               </div>
+
          </div>
             </>
           )}

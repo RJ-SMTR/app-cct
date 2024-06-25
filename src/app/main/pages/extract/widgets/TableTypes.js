@@ -16,19 +16,23 @@ import { useEffect } from 'react';
 import _ from 'lodash';
 
 
+
 function TableTypes() {
     const formatter = new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL',
     });
     const listByType = useSelector(state => state.extract.listByType)
+    const searchingWeek = useSelector(state => state.extract.searchingWeek)
+    const searchingDay = useSelector(state => state.extract.searchingDay)
+    const isLoadingWeek = useSelector((state) => state.extract.isLoadingWeek);
 
  
     return (
         <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
             <div className="flex flex-row justify-between">
                 <Typography className="mr-16 text-lg font-medium tracking-tight leading-6 truncate">
-                    Tipos de transação
+                    {searchingWeek && !searchingDay ? 'Total das Transações da Semana' : 'Transações para o dia'}
                 </Typography>
 
 
@@ -65,32 +69,38 @@ function TableTypes() {
                         )}
 
                         <TableBody>
-                            {!_.isEmpty(listByType)  ? 
-                                Object.entries(listByType).map(([type, count]) => {
-                                    return (
-                                        <TableRow key={type} className="hover:bg-gray-100 cursor-pointer">
-                                            <TableCell component="th" scope="row">
-                                                <Typography className="whitespace-nowrap">
-                                                    {type}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell component="th" scope="row">
-                                                {count.count.toLocaleString()}
-                                            </TableCell>
-                                            <TableCell component="th" scope="row">
-                                                <Typography className="whitespace-nowrap">
-                                                    {formatter.format(count.transactionValue)}
-                                                </Typography>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })
+                            {isLoadingWeek ? 
+                                    <TableRow>
+                                        <TableCell colSpan={5}>
+                                        <Box className="flex justify-center items-center m-10">
+                                            <CircularProgress />
+                                        </Box> 
+                                        </TableCell>
+                                    </TableRow>
+                            : 
+                                !_.isEmpty(listByType) ?
+                                    Object.entries(listByType).map(([type, count]) => {
+                                        return (
+                                            <TableRow key={type} className="hover:bg-gray-100 cursor-pointer">
+                                                <TableCell component="th" scope="row">
+                                                    <Typography className="whitespace-nowrap">
+                                                        {type}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell component="th" scope="row">
+                                                    {count.count.toLocaleString()}
+                                                </TableCell>
+                                                <TableCell component="th" scope="row">
+                                                    <Typography className="whitespace-nowrap">
+                                                        {formatter.format(count.transactionValue)}
+                                                    </Typography>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
                             :  
                                     <TableCell colSpan={4}> 
                                         <p>Não há dados para sem exibidos</p>
-                                        {/* <Box className="flex justify-center items-center m-10">
-                                            <CircularProgress />
-                                        </Box> */}
                                     </TableCell> 
                          }
                         </TableBody>

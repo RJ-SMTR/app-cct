@@ -35,15 +35,7 @@ function Entries(type) {
             setTodayInfo(today)
       
     }, [])
-    // useEffect(() => {
-    //     if(searchingDay){
-    //         console.log(statements)
-    //         const baseDate = new Date(statements[0]?.date);
-    //         setDayDate(format(baseDate, 'dd/MM/yyyy'))
-    //     }
-        
-      
-    // }, [statements])
+  
 
     useEffect( () => {
         if(statements.length >= 1){
