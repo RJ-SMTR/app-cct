@@ -27,7 +27,7 @@ import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz';
 
 import { useDispatch, useSelector } from 'react-redux';
 
-import { getStatements, setPreviousDays, setDateRange, setSearchingWeek, setSearchingDay, setValorAcumuladoLabel, setValorPagoLabel } from 'app/store/extractSlice';
+import { getStatements, setPreviousDays, setDateRange, setSearchingWeek, setSearchingDay, setValorAcumuladoLabel, setValorPagoLabel, setLoading, setLoadingWeek, setLoadingPrevious } from 'app/store/extractSlice';
 import { useNavigate } from 'react-router-dom';
 import { selectUser } from 'app/store/userSlice';
 
@@ -46,6 +46,8 @@ function TableTransactions({ id }) {
         searchingDay,
         searchingWeek,
         fullReport,
+        isLoadingWeek,
+        isLoading
     } = useSelector((state) => state.extract);
     const MemoizedCustomTable = memo(CustomTable);
 
@@ -57,7 +59,7 @@ function TableTransactions({ id }) {
     const [page, setPage] = useState(0);
     const [lastDate, setLastDate] = useState([])
     const [rowsPerPage, setRowsPerPage] = useState(8);
-    const [isLoading, setIsLoading] = useState(true)
+    
     const [selectedDate, setSelectedDate] = useState(null)
 
     const navigate = useNavigate()
@@ -93,7 +95,9 @@ function TableTransactions({ id }) {
         const nextWeekStart = new Date(currentWeekStart)
         nextWeekStart.setDate(nextWeekStart.getDate() + 7)
         setCurrentWeekStart(nextWeekStart)
-        setIsLoading(true)
+        dispatch( setLoading(true))
+        dispatch(setLoadingWeek(true))
+        dispatch(setLoadingPrevious(true))
 
     }
 
@@ -102,7 +106,9 @@ function TableTransactions({ id }) {
         const previousWeekStart = new Date(currentWeekStart)
         previousWeekStart.setDate(previousWeekStart.getDate() - 7)
         setCurrentWeekStart(previousWeekStart)
-        setIsLoading(true)
+        dispatch(setLoading(true))
+        dispatch(setLoadingWeek(true))
+        dispatch(setLoadingPrevious(true))
     }
 
     function isEndDateGreaterThanToday(endDate) {
@@ -136,14 +142,10 @@ function TableTransactions({ id }) {
         setPreviousDays("lastMonth");
         if (user.role.name === "Admin") {
             dispatch(getStatements(previousDays, dateRange, searchingDay, searchingWeek, id))
-                .then((response) => {
-                    setIsLoading(false)
-                })
+             
         } else {
             dispatch(getStatements(previousDays, dateRange, searchingDay, searchingWeek))
-                .then((response) => {
-                    setIsLoading(false)
-                })
+
         }
 
 
@@ -167,7 +169,9 @@ function TableTransactions({ id }) {
         dispatch(setDateRange([]))
         dispatch(setSearchingWeek(false))
         dispatch(setSearchingDay(false))
-        setIsLoading(true)
+        dispatch(setLoading(true))
+        dispatch(setLoadingWeek(true))
+        dispatch(setLoadingPrevious(true))
         dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Mensal'))
         dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'))
 
@@ -183,7 +187,9 @@ function TableTransactions({ id }) {
 
 
     const handleClickRow = (event) => {
-        setIsLoading(true)
+        dispatch(setLoading(true))
+        dispatch(setLoadingWeek(true))
+        dispatch(setLoadingPrevious(true))
         const start = event.target.innerText;
         const [day, month, year] = start.split('/');
         const transformedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
@@ -215,13 +221,17 @@ function TableTransactions({ id }) {
 
     const handleBack = () => {
         setSelectedDate(null);
+        dispatch(setLoadingWeek(true))
+        dispatch(setLoadingPrevious(true))
+        dispatch(setLoading(true))
         if (searchingDay) {
             dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Semanal'));
             dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
             dispatch(setDateRange(lastDate))
             setPage(0)
             dispatch(setSearchingDay(false))
-            setIsLoading(true)
+            
+
         } else {
             if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Semanal'));
             if (!searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
@@ -229,7 +239,6 @@ function TableTransactions({ id }) {
             if (searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'));
             dispatch(setDateRange([]))
             setPage(0)
-            setIsLoading(true)
             dispatch(setSearchingWeek(false))
         }
     }
@@ -363,18 +372,23 @@ function TableTransactions({ id }) {
 
                         <TableBody>
 
-                            {isLoading || statements.length == 0 ? <TableCell colSpan={4}>
-
-                                <p>Não há dados para sem exibidos</p>
-                            </TableCell> : statements &&
-
+                            {isLoading  ? 
+                                <TableCell colSpan={4}>
+                                    <Box className="flex justify-center items-center m-10">
+                                        <CircularProgress />
+                                    </Box> 
+                                </TableCell>
+                            : statements.length > 0 ?
                             statements?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
                                 const tz = 'UTC'
                                 const date = parseISO(i.date ?? i.dateTime ?? i.partitionDate);
                                 const zonedDate = utcToZonedTime(date, tz)
                                 const formattedDate = format(zonedDate, 'dd/MM/yyyy');
                                 return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={handleClickRow} />
-                            })
+                            }) : 
+                                <TableCell colSpan={4}>
+                                    <p>Não há dados para sem exibidos</p>
+                                </TableCell>
                             }
                         </TableBody>
                     </Table>
