@@ -144,6 +144,7 @@ function UserApp() {
                <div>
                  <Table id={id} />
                </div>
+
                 {searchingWeek || searchingDay ?
                   <>
                     <div>
@@ -156,6 +157,7 @@ function UserApp() {
                     </>
                    : <></>
                  }
+
          </div>
             </>
           )}

@@ -46,6 +46,7 @@ function ExtractApp() {
           <Box className='flex flex-col md:flex-row  justify-around'>
             <TableTransactions />
           </Box>
+
           {searchingWeek || searchingDay ?
             <>
 
@@ -58,6 +59,7 @@ function ExtractApp() {
               </>
               : <></>
             }
+
         </div>
        
 

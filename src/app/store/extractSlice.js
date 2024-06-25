@@ -184,7 +184,9 @@ export const  getPreviousDays = (dateRange, interval='lastWeek', userId) => asyn
 }
 
 export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) => async (dispatch) => {
+
     const requestData = handleRequestData(null, dateRange, searchingDay, searchingWeek);
+
     const token = window.localStorage.getItem('jwt_access_token');
 
     let config = {
