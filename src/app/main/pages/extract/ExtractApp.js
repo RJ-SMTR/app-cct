@@ -46,16 +46,18 @@ function ExtractApp() {
           <Box className='flex flex-col md:flex-row  justify-around'>
             <TableTransactions />
           </Box>
-          <Box className='flex flex-col md:flex-row   justify-around'>
-            <TableTypes />
-          </Box>
+          {searchingWeek || searchingDay ?
+            <>
 
-          <Box className='flex flex-col  justify-around mt-24'>
-            {searchingWeek || searchingDay ?
-              <TablePending />
+              <Box className='flex flex-col md:flex-row   justify-around'>
+                <TableTypes />
+              </Box>
+              <Box className='flex flex-col  justify-around mt-24'>
+                <TablePending />
+              </Box>
+              </>
               : <></>
             }
-          </Box>
         </div>
        
 

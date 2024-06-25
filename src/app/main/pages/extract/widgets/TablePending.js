@@ -19,7 +19,7 @@ function TablePending() {
     const [selectedDate, setSelectedDate] = useState('')
     const [values, setValues] = useState({})
     const pendingList = useSelector(state => state.extract.pendingList)
-    const pendingValue = useSelector(state => state.extract.pendingValue)
+    const isLoadingPrevious = useSelector(state => state.extract.isLoadingPrevious)
     const {
         dateRange
     } = useSelector((state) => state.extract);
@@ -37,14 +37,7 @@ function TablePending() {
         const now = new Date(); 
         const isoString = now.toISOString();
         setSelectedDate(format(parseISO(isoString), 'dd/MM/yyyy'));
-        // if (pendingList && pendingList.data.length > 0) {
-
-        //     const date = pendingList.data[0].date;
-        //     const formattedDateToday = format(parseISO(date), 'dd/MM/yyyy');
-        //     setValues(pendingValue)
-        //     setSelectedDate(formattedDateToday);
-        // } else {
-        // }
+      console.log(pendingList)
     }, [pendingList]);
 
 
@@ -112,7 +105,15 @@ function TablePending() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {pendingList ? pendingList.data?.map((i) => {
+                            {isLoadingPrevious ?
+                                    <TableRow>
+                                    <TableCell colSpan={8}>
+                                        <Box className="flex justify-center items-center m-10">
+                                            <CircularProgress />
+                                        </Box>
+                                    </TableCell>
+                                    </TableRow>
+                            :  pendingList.count > 0 ? pendingList.data?.map((i) => {
                                 return <TableRow key={Math.random()}>
                                     <TableCell component="th" scope="row">
                                         <Typography className="whitespace-nowrap">
@@ -152,7 +153,6 @@ function TablePending() {
                                     <TableCell component="th" scope="row">
                                         <Typography className="whitespace-nowrap underline cursor-pointer">
                                             <Tooltip title={i.error} placement="top-start">
-                                                {/* {i.errorCode} */}
                                             </Tooltip>
                                         </Typography>
                                     </TableCell>

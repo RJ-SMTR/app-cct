@@ -22,6 +22,9 @@ const initialState = {
     sumInfoWeek: [],
     pendingValue: [],
     pendingList: [],
+    isLoading: false,
+    isLoadingWeek: false,
+    isLoadingPrevious: false,
 };
 
 const extractSlice = createSlice({
@@ -80,6 +83,15 @@ const extractSlice = createSlice({
             state.pendingList = action.payload;
 
         },
+        setLoading: (state, action) => {
+            state.isLoading = action.payload;
+        },
+        setLoadingWeek: (state, action) => {
+            state.isLoadingWeek = action.payload;
+        },
+        setLoadingPrevious: (state, action) => {
+            state.isLoadingPrevious = action.payload;
+        },
     },
 });
 
@@ -115,7 +127,10 @@ export const {
     setPendingList,
     pendingList,
     setPendingValue,
-    pendingValue
+    pendingValue,
+    setLoading,
+    setLoadingWeek,
+    setLoadingPrevious
 } = extractSlice.actions;
 
 export default extractSlice.reducer;
@@ -146,29 +161,36 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
         return previousDays > 0 ? { timeInterval: previousDays } : { timeInterval: 'lastMonth', yearMonth: dateRange }
     }
 }
-export const  getPreviousDays = (dateRange, interval='lastWeek', userId) => (dispatch) => {
+export const  getPreviousDays = (dateRange, interval='lastWeek', userId) => async (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
-    const url = userId ? jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=${interval}&userId=${userId}` : jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=${interval}`
-    
-    api.get(url, {
+   
+    let config ={
+        method: 'get',
+        maxBodyLength: Infinity,
+        url : userId ? jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=${interval}&userId=${userId}` : jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=${interval}`,
         headers: { "Authorization": `Bearer ${token}` },
-    })
-        .then((response) => {
-            dispatch(setPendingValue(response.data.statusCounts))
-            dispatch(setPendingList(response.data))
-        })
+    }
+   try{
+    dispatch(setLoadingPrevious(true))
+    const response = await api.request(config)
+       dispatch(setPendingValue(response.data.statusCounts))
+       dispatch(setPendingList(response.data))
+    }   catch (error) {
+        console.error(error);
+    } finally {
+    dispatch(setLoadingPrevious(false))
+}
 
 }
 
 export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) => async (dispatch) => {
-    const requestData = handleRequestData(null, dateRange, searchingDay, searchingWeek)
-    console.log("types", requestData)
+    const requestData = handleRequestData(null, dateRange, searchingDay, searchingWeek);
     const token = window.localStorage.getItem('jwt_access_token');
-    
+
     let config = {
         method: 'get',
         maxBodyLength: Infinity,
-        url: userId ? jwtServiceConfig.revenues + `?userId=${userId}` : jwtServiceConfig.revenues ,
+        url: userId ? jwtServiceConfig.revenues + `?userId=${userId}` : jwtServiceConfig.revenues,
         headers: {
             "Authorization": `Bearer ${token}`
         },
@@ -178,16 +200,19 @@ export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) =>
     };
 
     try {
-        const response = await api.request(config)
+        dispatch(setLoadingWeek(true))
+        const response = await api.request(config);
         const order = ["Integral", "Integração", "Gratuidade"];
 
         const sortedObject = Object.fromEntries(
             Object.entries(response.data.transactionTypeCounts)
                 .sort(([keyA], [keyB]) => order.indexOf(keyA) - order.indexOf(keyB))
         );
-        dispatch(setListByType(sortedObject))
+        dispatch(setListByType(sortedObject));
     } catch (error) {
         console.error(error);
+    } finally {
+        dispatch(setLoadingWeek(false))
     }
 };
 
@@ -222,6 +247,7 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
     };
 
     try {
+        dispatch(setLoading(true))
         const response = await api(config);
 
         if (searchingWeek || searchingDay) {
@@ -242,12 +268,6 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             }
 
         } else {
-            if(userId){
-                dispatch(getFirstTypes(userId, dateRange, searchingWeek, searchingDay));
-            } else {
-                dispatch(getFirstTypes(null, dateRange, searchingWeek, searchingDay));
-            }
-           
             dispatch(setSumInfo(response.data))
             dispatch(setStatements(response.data.data));
         }
@@ -255,6 +275,8 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
         return response.data;
     } catch (error) {
         throw error;
+    } finally {
+        dispatch(setLoading(false))
     }
 };
 
