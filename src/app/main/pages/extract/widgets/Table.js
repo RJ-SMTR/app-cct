@@ -401,6 +401,7 @@ function TableTransactions({ id }) {
                         component="div"
                         rowsPerPage={rowsPerPage}
                         page={page}
+                        labelDisplayedRows={({ from, to, count }) => ``}
                         onPageChange={handleChangePage}
                         onRowsPerPageChange={handleChangeRowsPerPage}
                         ActionsComponent={() => (
