@@ -23,7 +23,7 @@ import FinanReleaseConfig from '../main/pages/admin/FinanRelease/FinanReleaseCon
 import ApprovalConfig from '../main/pages/admin/Approval/ApprovalConfig';
 import FinanEditConfig from '../main/pages/admin/FinanRelease/FinanEdit/FinanEditConfig';
 import StatementsConfig from '../main/pages/admin/Statements/StatementsConfig';
-
+import ReportConfig from '../main/pages/admin/Report/ReportConfig';
 const routeConfigs = [
   // HomeConifg,
   SignOutConfig,
@@ -44,7 +44,8 @@ const routeConfigs = [
   ApprovalConfig,
   FinanSignInConfig,
   FinanEditConfig,
-  StatementsConfig
+  StatementsConfig,
+  ReportConfig
 ];
 
 const routes = [

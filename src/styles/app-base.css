@@ -225,3 +225,7 @@ display: none !important;
     width: auto !important;
     visibility: visible !important;
 }
+.noWrapName{
+    overflow: auto !important;
+    white-space: pre-wrap !important;
+}
