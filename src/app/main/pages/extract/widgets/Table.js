@@ -140,7 +140,7 @@ function TableTransactions({ id }) {
 
     useEffect(() => {
         setPreviousDays("lastMonth");
-        if (user.role.name === "Admin") {
+        if (user.role.name.includes("Admin")) {
             dispatch(getStatements(previousDays, dateRange, searchingDay, searchingWeek, id))
              
         } else {
