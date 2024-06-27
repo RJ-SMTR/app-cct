@@ -1,125 +1,112 @@
 import { useEffect, useState } from 'react';
-import { DataGrid, GridFilterListIcon, GridToolbar,ptBR as pt, useGridApiRef } from '@mui/x-data-grid';
+import { DataGrid, GridLogicOperator, GridPrintExportMenuItem, GridToolbar,  GridToolbarContainer,  GridToolbarExport,  GridToolbarQuickFilter,  useGridApiRef } from '@mui/x-data-grid';
 import { Box, MenuItem, Stack, IconButton, FormGroup, Menu, FormControlLabel, Checkbox } from '@mui/material';
-
-import { format } from 'date-fns';
-import { useSelect } from '@mui/base';
 import { DateRangePicker } from 'rsuite';
-import { useDispatch } from 'react-redux';
 import jwtServiceConfig from 'src/app/auth/services/jwtService/jwtServiceConfig';
 import { api } from 'app/configs/api/api';
+import { ptBR as pt} from '@mui/x-data-grid'
+import FilterListIcon from '@mui/icons-material/FilterList';;
+import { parseISO, format } from 'date-fns';
 
-const locale = pt
-
+const locale = pt;
 
 
 
 const predefinedFilters = [
-    {
-        label: 'Todos',
-        filterModel: { items: [] },
-    },
-    {
-        label: 'STPC',
-        filterModel: { items: [{ field: 'consorcio', operator: 'contains', value: 'STPC' }] },
-    },
-    {
-        label: 'Processo B',
-        filterModel: { items: [{ field: 'consorcio', operator: 'contains', value: 'Processo B' }] },
-    },
-    {
-        label: 'Processo C',
-        filterModel: { items: [{ field: 'consorcio', operator: 'contains', value: 'Processo C' }] },
-    },
-
-]
-
-
+    { label: 'Todos', filterFn: () => true }, 
+    { label: 'STPC', filterFn: (row) => row.consorcio.includes('STPC') },
+    { label: 'MobiRio', filterFn: (row) => row.consorcio.includes('MobiRio') },
+    { label: 'Internorte', filterFn: (row) => row.consorcio.includes('Internorte') },
+    { label: 'Intersul', filterFn: (row) => row.consorcio.includes('Intersul') },
+    { label: 'Transcarioca', filterFn: (row) => row.consorcio.includes('Transcarioca') },
+    { label: 'VLT', filterFn: (row) => row.consorcio.includes('VLT') },
+];
 const columns = [
-    { field: 'date', headerName: 'Data Efetivação', type: 'date', width: 180, editable: false },
+    { field: 'date', headerName: 'Data Efetivação', width: 180, editable: false },
+    { field: 'dateExpire', headerName: 'Data Vencimento', width: 180, editable: false },
     { field: 'favorecido', headerName: 'Favorecido', width: 220, editable: false, cellClassName: 'noWrapName' },
-    {
-        field: 'consorcio', headerName: 'Consórcio', width: 180, editable: false,
-    },
+    { field: 'consorcio', headerName: 'Consórcio', width: 180, editable: false },
     { field: 'value', headerName: 'Valor Real Efetivado', width: 180, editable: false },
     { field: 'status', headerName: 'Status', width: 180, editable: false },
     { field: 'ocorrencia', headerName: 'Ocorrência', width: 220, editable: false, cellClassName: 'noWrapName' },
-
 ];
 
 export default function BasicEditingGrid() {
     const [rowModesModel, setRowModesModel] = useState({});
-    const [initialRows, setInitialRows] = useState(false)
-    const [sumTotal, setSumTotal] = useState()
-    const [rows, setRows] = useState(initialRows)
-    const [date, setDate] = useState([])
-    const [checkedFilters, setCheckedFilters] = useState(
-        new Array(predefinedFilters.length).fill(false)
-    )
-    const [anchorEl, setAnchorEl] = useState(null)
+    const [rows, setRows] = useState([]);
+    const [date, setDate] = useState([]);
+    const [checkedFilters, setCheckedFilters] = useState(new Array(predefinedFilters.length).fill(false));
+    const [loading, setLoading] = useState(false);
+    const [anchorEl, setAnchorEl] = useState(null);
     const openMenu = Boolean(anchorEl);
-    const apiRef = useGridApiRef()
-    
-
+    const apiRef = useGridApiRef();
 
     useEffect(() => {
         if (date.length > 0) {
-        const fetch = async () => {
-            const token = window.localStorage.getItem('jwt_access_token');
-
-            let config = {
-                method: 'get',
-                maxBodyLength: Infinity,
-                url: jwtServiceConfig.report + `?dt_inicio=${date[0]}&dt_fim=${date[1]}`,
-                headers: { "Authorization": `Bearer ${token}` },
-            }
-            try {
-                const response = await api.request(config)
-                const formattedRows = response.data.map((item) => ({
-                    id: item.id,
-                    date: new Date(item.dataEfetivacao),
-                    favorecido: item.favorecido,
-                    consorcio: item.nomeConsorcio,
-                    value: 'R$ ' + item.valor,
-                    status: item.isPago,
-                    ocorrencia: item.ocorrencias.map((i) => i).join(','),
-                }));
-                setRows(formattedRows);
-            } catch (error) {
-                console.error(error);
-            }
-        }
-    fetch();
+            const fetchData = async () => {
+                const token = window.localStorage.getItem('jwt_access_token');
+                const config = {
+                    method: 'get',
+                    maxBodyLength: Infinity,
+                    url: `${jwtServiceConfig.report}?dt_inicio=${date[0]}&dt_fim=${date[1]}`,
+                    headers: { "Authorization": `Bearer ${token}` },
+                };
+                try {
+                    setLoading(true);
+                    const formatDate = (data) => {
+                        const parsed = parseISO(data)
+                        const correctedParse = new Date(parsed.valueOf() + parsed.getTimezoneOffset() * 60 * 1000)
+                       const formatted = format(new Date(correctedParse), 'dd/MM/yyyy')
+                       return formatted
+                    }
+                    const response = await api.request(config);
+                    const formattedRows = response.data.map((item) => ({
+                        id: item.id,
+                        date: item.dataEfetivacao === null ? '--/--/--' : format(new Date(item.dataEfetivacao), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }),
+                        dateExpire: formatDate(item.dataVencimento),
+                        favorecido: item.favorecido,
+                        consorcio: item.nomeConsorcio,
+                        value: 'R$ ' + item.valor,
+                        status: item.isPago,
+                        ocorrencia: item.ocorrencias.join(', '),
+                    }));
+                    setRows(formattedRows);
+                } catch (error) {
+                    console.error(error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchData();
         }
     }, [date]);
-    const handleDateChange = (data) => {
-        if(data?.length > 0){
-            const firstDate = format(data[0], 'yyyy-MM-dd')
-            const lastDate = format(data[1], 'yyyy-MM-dd')
-            setDate([firstDate, lastDate])
-        }
-    }
 
-  
-  
+    const handleDateChange = (data) => {
+ 
+        if (data?.length > 0) {
+            const firstDate = format(data[0], 'yyyy-MM-dd');
+            const lastDate = format(data[1], 'yyyy-MM-dd');
+            setDate([firstDate, lastDate]);
+        }
+    };
+
     const handleCheckboxChange = (index) => {
-        console.log(index)
         const newCheckedFilters = [...checkedFilters];
         newCheckedFilters[index] = !newCheckedFilters[index];
         setCheckedFilters(newCheckedFilters);
-
-        const activeFilters = predefinedFilters
-            .filter((_, i) => newCheckedFilters[i])
-            .map(({ filterModel }) => filterModel.items)
-            .flat();
-
-        apiRef.current.setFilterModel({
-            items: activeFilters,
-        });
-        console.log(activeFilters)
     };
 
+    const applyFilters = () => {
+        const activeFilters = predefinedFilters
+            .filter((_, i) => checkedFilters[i])
+            .map(({ filterFn }) => filterFn);
 
+        if (activeFilters.length === 0) {
+            return rows; 
+        }
+
+        return rows.filter(row => activeFilters.some(filterFn => filterFn(row)));
+    };
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);
     };
@@ -127,91 +114,90 @@ export default function BasicEditingGrid() {
     const handleCloseMenu = () => {
         setAnchorEl(null);
     };
+    const filteredRows = applyFilters();
+
+
+
+    const ToolBarCustom = () => (
+        <GridToolbarContainer className='w-[100%] flex justify-between'>
+            <GridToolbarQuickFilter />
+         
+            <GridToolbarExport printOptions={{ allColumns: true }} />
+        </GridToolbarContainer>
+    );
 
     return (
-        <>
-            <Box className="w-full md:mx-9 p-24 relative mt-32">
-                <header className="flex justify-between items-center">
-                    <h3 className="font-semibold mb-24">
-                       Data Vigente: {format(new Date(), 'dd/MM/yyyy')}
-                    </h3>
-                    <DateRangePicker
-                        id="custom-date-input"
-                        showOneCalendar
-                        showHeader={false}
-                        placement='auto'
-                        placeholder="Selecionar Data"
-                        format='dd/MM/yy'
-                        character=' - '
-                        onChange={(newValue) => handleDateChange(newValue)}
-                    />
-
-                </header>
-             
-                {/* <Stack direction="row" gap={1} mb={1} flexWrap="wrap">
-                    <IconButton onClick={handleClick}>
-                        <GridFilterListIcon />
+        <Box className="w-full md:mx-9 p-24 relative mt-32">
+            <header className="flex justify-between items-center">
+                <h3 className="font-semibold mb-24">
+                    Data Vigente: {format(new Date(), 'dd/MM/yyyy')}
+                </h3>
+                <DateRangePicker
+                    id="custom-date-input"
+                    showOneCalendar
+                    showHeader={false}
+                    placement='auto'
+                    placeholder="Selecionar Data"
+                    format='dd/MM/yy'
+                    character=' - '
+                    onChange={(newValue) => handleDateChange(newValue)}
+                />
+            </header>
+            <Stack direction="row" gap={1} mb={1} flexWrap="wrap">
+                <Box className="flex items-center">
+                    <p onClick={handleClick}>Filtrar por consórcio</p>
+                    <IconButton className='fs-small' onClick={handleClick}>
+                        <FilterListIcon />
                     </IconButton>
-                    <Menu anchorEl={anchorEl} open={openMenu} onClose={handleCloseMenu}>
-                        <FormGroup>
-                            {predefinedFilters.map(({ label }, index) => {
-                                return (
-                                    <MenuItem key={label}>
-                                        <FormControlLabel
-                                            control={
-                                                <Checkbox
-                                                    checked={checkedFilters[index]}
-                                                    onChange={() => handleCheckboxChange(index)}
-                                                    name={label}
-                                                />
-                                            }
-                                            label={`${label}`}
-                                        />
-                                    </MenuItem>
-                                );
-                            })}
-                        </FormGroup>
-                    </Menu>
-                </Stack> */}
-
-                <div style={{ height: 600, width: '100%' }}>
-                    <DataGrid
-                        localeText={locale.components.MuiDataGrid.defaultProps.localeText}
-                        rows={rows}
-                        disableColumnFilter
-                        disableColumnSelector
-                        disableDensitySelector
-                        apiRef={apiRef}
-                        columns={columns}
-                        pagination
-                        slots={{ toolbar: GridToolbar }}
-                        editMode="row"
-                        slotProps={{
-                            toolbar: {
-                                showQuickFilter: true,
-                            },
-                        }}
-                        rowModesModel={rowModesModel}
-                        onRowEditStop={(params, event) => {
-                            event.defaultMuiPrevented = true;
-                        }}
-
-                        componentsProps={{
-                            toolbar: { setRows, setRowModesModel },
-                        }}
-                        experimentalFeatures={{ newEditingApi: true }}
-                    />
-                </div>
-                <Box>
-                    Valor Total:  R$ {sumTotal}
                 </Box>
+                <Menu anchorEl={anchorEl} open={openMenu} onClose={handleCloseMenu}>
+                    <FormGroup>
+                        {predefinedFilters.map(({ label }, index) => (
+                            <MenuItem key={label}>
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            checked={checkedFilters[index]}
+                                            onChange={() => handleCheckboxChange(index)}
+                                            name={label}
+                                        />
+                                    }
+                                    label={`${label}`}
+                                />
+                            </MenuItem>
+                        ))}
+                    </FormGroup>
+                </Menu>
+            </Stack>
+            <div style={{ height: 600, width: '100%' }}>
+                <DataGrid
+                    localeText={locale.components.MuiDataGrid.defaultProps.localeText}
+                    rows={filteredRows}
+                    disableColumnFilter
+                    disableColumnSelector
+                    disableDensitySelector
+                    disableMultipleColumnsFiltering={false}
+                    apiRef={apiRef}
+                    columns={columns}
+                    slots={{ toolbar: ToolBarCustom }}
+                    loading={loading}
+                    slotProps={{
+                        toolbar: {
+                            showQuickFilter: true,
+                        },
+                    }}
+                    rowModesModel={rowModesModel}
+                    onRowEditStop={(params, event) => {
+                        event.defaultMuiPrevented = true;
+                    }}
+                    componentsProps={{
+                        toolbar: { setRows, setRowModesModel },
+                    }}
+                />
+            </div>
+            <Box>
+                {/* Valor Total: R$ {sumTotal} */}
             </Box>
-         
-
-
-           
-
-        
-        </>
+        </Box>
     );
 }
