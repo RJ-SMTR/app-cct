@@ -1,19 +1,34 @@
-import { useEffect, useState } from 'react';
-import { DataGrid, GridLogicOperator, GridPrintExportMenuItem, GridToolbar,  GridToolbarContainer,  GridToolbarExport,  GridToolbarQuickFilter,  useGridApiRef } from '@mui/x-data-grid';
-import { Box, MenuItem, Stack, IconButton, FormGroup, Menu, FormControlLabel, Checkbox } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import {
+    DataGrid,
+    GridToolbarContainer,
+    GridToolbarExport,
+    GridToolbarQuickFilter,
+    useGridApiRef
+} from '@mui/x-data-grid';
+import {
+    Box,
+    MenuItem,
+    Stack,
+    IconButton,
+    FormGroup,
+    Menu,
+    FormControlLabel,
+    Checkbox,
+    Button
+} from '@mui/material';
 import { DateRangePicker } from 'rsuite';
 import jwtServiceConfig from 'src/app/auth/services/jwtService/jwtServiceConfig';
 import { api } from 'app/configs/api/api';
-import { ptBR as pt} from '@mui/x-data-grid'
-import FilterListIcon from '@mui/icons-material/FilterList';;
+import { ptBR as pt } from '@mui/x-data-grid';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import { parseISO, format } from 'date-fns';
+import { Badge } from '@mui/material';
 
 const locale = pt;
 
-
-
 const predefinedFilters = [
-    { label: 'Todos', filterFn: () => true }, 
+    { label: 'Todos', filterFn: () => true },
     { label: 'STPC', filterFn: (row) => row.consorcio.includes('STPC') },
     { label: 'MobiRio', filterFn: (row) => row.consorcio.includes('MobiRio') },
     { label: 'Internorte', filterFn: (row) => row.consorcio.includes('Internorte') },
@@ -21,15 +36,35 @@ const predefinedFilters = [
     { label: 'Transcarioca', filterFn: (row) => row.consorcio.includes('Transcarioca') },
     { label: 'VLT', filterFn: (row) => row.consorcio.includes('VLT') },
 ];
+
 const columns = [
     { field: 'date', headerName: 'Data Efetivação', width: 180, editable: false },
     { field: 'dateExpire', headerName: 'Data Vencimento', width: 180, editable: false },
     { field: 'favorecido', headerName: 'Favorecido', width: 220, editable: false, cellClassName: 'noWrapName' },
     { field: 'consorcio', headerName: 'Consórcio', width: 180, editable: false },
     { field: 'value', headerName: 'Valor Real Efetivado', width: 180, editable: false },
-    { field: 'status', headerName: 'Status', width: 180, editable: false },
+    {
+        field: 'status',
+        headerName: 'Status',
+        width: 180,
+        editable: false,
+        renderCell: (params) => <CustomBadge data={params.value} />
+    },
     { field: 'ocorrencia', headerName: 'Ocorrência', width: 220, editable: false, cellClassName: 'noWrapName' },
 ];
+
+const formatToBRL = (value) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+};
+
+const CustomBadge = (data) => {
+    return (
+        <Badge
+            badgeContent={data.data === true ? 'Pago' : 'Erro'}
+            color={data.data === true ? 'success' : 'error'}
+        />
+    );
+};
 
 export default function BasicEditingGrid() {
     const [rowModesModel, setRowModesModel] = useState({});
@@ -54,11 +89,11 @@ export default function BasicEditingGrid() {
                 try {
                     setLoading(true);
                     const formatDate = (data) => {
-                        const parsed = parseISO(data)
-                        const correctedParse = new Date(parsed.valueOf() + parsed.getTimezoneOffset() * 60 * 1000)
-                       const formatted = format(new Date(correctedParse), 'dd/MM/yyyy')
-                       return formatted
-                    }
+                        const parsed = parseISO(data);
+                        const correctedParse = new Date(parsed.valueOf() + parsed.getTimezoneOffset() * 60 * 1000);
+                        const formatted = format(new Date(correctedParse), 'dd/MM/yyyy');
+                        return formatted;
+                    };
                     const response = await api.request(config);
                     const formattedRows = response.data.map((item) => ({
                         id: item.id,
@@ -66,7 +101,7 @@ export default function BasicEditingGrid() {
                         dateExpire: formatDate(item.dataVencimento),
                         favorecido: item.favorecido,
                         consorcio: item.nomeConsorcio,
-                        value: 'R$ ' + item.valor,
+                        value: formatToBRL(item.valor),
                         status: item.isPago,
                         ocorrencia: item.ocorrencias.join(', '),
                     }));
@@ -82,7 +117,6 @@ export default function BasicEditingGrid() {
     }, [date]);
 
     const handleDateChange = (data) => {
- 
         if (data?.length > 0) {
             const firstDate = format(data[0], 'yyyy-MM-dd');
             const lastDate = format(data[1], 'yyyy-MM-dd');
@@ -102,11 +136,12 @@ export default function BasicEditingGrid() {
             .map(({ filterFn }) => filterFn);
 
         if (activeFilters.length === 0) {
-            return rows; 
+            return rows;
         }
 
         return rows.filter(row => activeFilters.some(filterFn => filterFn(row)));
     };
+
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);
     };
@@ -114,6 +149,7 @@ export default function BasicEditingGrid() {
     const handleCloseMenu = () => {
         setAnchorEl(null);
     };
+
     const filteredRows = applyFilters();
 
 
@@ -121,8 +157,13 @@ export default function BasicEditingGrid() {
     const ToolBarCustom = () => (
         <GridToolbarContainer className='w-[100%] flex justify-between'>
             <GridToolbarQuickFilter />
-         
-            <GridToolbarExport printOptions={{ allColumns: true }} />
+            <GridToolbarExport  printOptions={{
+                allColumns: true,
+                fileName: 'my_exported_file',
+                orientation: 'landscape',
+                pageSize: 'A4',
+                scale: 0.8,
+            }}  />
         </GridToolbarContainer>
     );
 
