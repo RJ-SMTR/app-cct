@@ -6,6 +6,7 @@ import {
     GridToolbarQuickFilter,
     useGridApiRef
 } from '@mui/x-data-grid';
+import accounting from 'accounting';
 import {
     Box,
     MenuItem,
@@ -38,19 +39,19 @@ const predefinedFilters = [
 ];
 
 const columns = [
-    { field: 'date', headerName: 'Data Efetivação', width: 180, editable: false },
-    { field: 'dateExpire', headerName: 'Data Vencimento', width: 180, editable: false },
-    { field: 'favorecido', headerName: 'Favorecido', width: 220, editable: false, cellClassName: 'noWrapName' },
-    { field: 'consorcio', headerName: 'Consórcio', width: 180, editable: false },
+    { field: 'date', headerName: 'Dt. Efetivação', width: 145, editable: false, },
+    { field: 'dateExpire', headerName: 'Dt. Vencimento', width: 150, editable: false },
+    { field: 'favorecido', headerName: 'Favorecido', width: 150, editable: false, cellClassName: 'noWrapName' },
+    { field: 'consorcio', headerName: 'Consórcio', width: 130, editable: false },
     { field: 'value', headerName: 'Valor Real Efetivado', width: 180, editable: false },
     {
         field: 'status',
         headerName: 'Status',
-        width: 180,
+        width: 130,
         editable: false,
         renderCell: (params) => <CustomBadge data={params.value} />
     },
-    { field: 'ocorrencia', headerName: 'Ocorrência', width: 220, editable: false, cellClassName: 'noWrapName' },
+    { field: 'ocorrencia', headerName: 'Ocorrência', width: 150, editable: false, cellClassName: 'noWrapName' },
 ];
 
 const formatToBRL = (value) => {
@@ -66,6 +67,7 @@ const CustomBadge = (data) => {
     );
 };
 
+
 export default function BasicEditingGrid() {
     const [rowModesModel, setRowModesModel] = useState({});
     const [rows, setRows] = useState([]);
@@ -75,6 +77,7 @@ export default function BasicEditingGrid() {
     const [anchorEl, setAnchorEl] = useState(null);
     const openMenu = Boolean(anchorEl);
     const apiRef = useGridApiRef();
+    const [sumTotal, setSumTotal] = useState(0);
 
     useEffect(() => {
         if (date.length > 0) {
@@ -103,9 +106,19 @@ export default function BasicEditingGrid() {
                         consorcio: item.nomeConsorcio,
                         value: formatToBRL(item.valor),
                         status: item.isPago,
-                        ocorrencia: item.ocorrencias.join(', '),
+                        ocorrencia: item.isPago ? '' : item.ocorrencias.join(', '),
                     }));
+
+                    const sum = formattedRows.reduce((accumulator, item) => accumulator + accounting.unformat(item.value.replace(/\./g, '').replace('.', ','), ','), 0)
+                    const formattedValue = accounting.formatMoney(sum, {
+                        symbol: "",
+                        decimal: ",",
+                        thousand: ".",
+                        precision: 2
+                    })
+                    setSumTotal(formattedValue)
                     setRows(formattedRows);
+                 
                 } catch (error) {
                     console.error(error);
                 } finally {
@@ -115,6 +128,7 @@ export default function BasicEditingGrid() {
             fetchData();
         }
     }, [date]);
+  
 
     const handleDateChange = (data) => {
         if (data?.length > 0) {
@@ -152,20 +166,21 @@ export default function BasicEditingGrid() {
 
     const filteredRows = applyFilters();
 
-
-
     const ToolBarCustom = () => (
         <GridToolbarContainer className='w-[100%] flex justify-between'>
             <GridToolbarQuickFilter />
-            <GridToolbarExport  printOptions={{
-                allColumns: true,
-                fileName: 'my_exported_file',
-                orientation: 'landscape',
-                pageSize: 'A4',
-                scale: 0.8,
-            }}  />
+            <GridToolbarExport printOptions={{
+                hideToolbar: true,
+            }} />
         </GridToolbarContainer>
     );
+    const CustomFooter = () => {
+        return (
+            <Box >
+                Valor Total: {loading ? <></> : `R$ ${sumTotal}`}
+            </Box >
+        );
+    };
 
     return (
         <Box className="w-full md:mx-9 p-24 relative mt-32">
@@ -210,18 +225,20 @@ export default function BasicEditingGrid() {
                     </FormGroup>
                 </Menu>
             </Stack>
-            <div style={{ height: 600, width: '100%' }}>
+            <div style={{ height: '65vh', width: '100%' }}>
                 <DataGrid
+                    id='data-table'
                     localeText={locale.components.MuiDataGrid.defaultProps.localeText}
                     rows={filteredRows}
-                    disableColumnFilter
+                    disableColumnMenu
                     disableColumnSelector
                     disableDensitySelector
-                    disableMultipleColumnsFiltering={false}
+                    disableMultipleColumnsFiltering
                     apiRef={apiRef}
                     columns={columns}
-                    slots={{ toolbar: ToolBarCustom }}
+                    slots={{ toolbar: ToolBarCustom, footer: CustomFooter }}
                     loading={loading}
+                    rowHeight={85}
                     slotProps={{
                         toolbar: {
                             showQuickFilter: true,
@@ -236,9 +253,7 @@ export default function BasicEditingGrid() {
                     }}
                 />
             </div>
-            <Box>
-                {/* Valor Total: R$ {sumTotal} */}
-            </Box>
+            
         </Box>
     );
 }
