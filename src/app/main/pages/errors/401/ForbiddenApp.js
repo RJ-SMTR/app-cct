@@ -53,7 +53,7 @@ function ForbiddenApp() {
             Parece que você não tem autorização para acessar essa página
           </Typography>
         </motion.div>
-        {user.role.name == "Admin" ?
+        {user.role.name.includes('Admin') ?
           <Link className="block font-normal mt-48" to="/admin">
             Voltar para página inicial
           </Link> :
