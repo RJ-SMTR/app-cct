@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import { utils, writeFile as writeFileXLSX } from 'xlsx';
+
 import {
     DataGrid,
+    GridCsvExportMenuItem,
+    GridPrintExportMenuItem,
     GridToolbarContainer,
     GridToolbarExport,
+    GridToolbarExportContainer,
     GridToolbarQuickFilter,
     useGridApiRef
 } from '@mui/x-data-grid';
@@ -16,7 +21,7 @@ import {
     Menu,
     FormControlLabel,
     Checkbox,
-    Button
+    Badge
 } from '@mui/material';
 import { DateRangePicker } from 'rsuite';
 import jwtServiceConfig from 'src/app/auth/services/jwtService/jwtServiceConfig';
@@ -24,7 +29,6 @@ import { api } from 'app/configs/api/api';
 import { ptBR as pt } from '@mui/x-data-grid';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { parseISO, format } from 'date-fns';
-import { Badge } from '@mui/material';
 
 const locale = pt;
 
@@ -38,10 +42,16 @@ const predefinedFilters = [
     { label: 'VLT', filterFn: (row) => row.consorcio.includes('VLT') },
 ];
 
+const predefinedFiltersStatus = [
+    { label: 'Todos', filterFn: () => true },
+    { label: 'Pago', filterFn: (row) => row.status.includes('Pago') },
+    { label: 'Erro', filterFn: (row) => row.status.includes('Erro') },
+];
+
 const columns = [
-    { field: 'date', headerName: 'Dt. Efetivação', width: 145, editable: false, },
+    { field: 'date', headerName: 'Dt. Efetivação', width: 145, editable: false },
     { field: 'dateExpire', headerName: 'Dt. Vencimento', width: 150, editable: false },
-    { field: 'favorecido', headerName: 'Favorecido', width: 150, editable: false, cellClassName: 'noWrapName' },
+    { field: 'favorecido', headerName: 'Favorecido', width: 180, editable: false, cellClassName: 'noWrapName' },
     { field: 'consorcio', headerName: 'Consórcio', width: 130, editable: false },
     { field: 'value', headerName: 'Valor Real Efetivado', width: 180, editable: false },
     {
@@ -58,24 +68,26 @@ const formatToBRL = (value) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 };
 
-const CustomBadge = (data) => {
+const CustomBadge = ({ data }) => {
     return (
         <Badge
-            badgeContent={data.data === true ? 'Pago' : 'Erro'}
-            color={data.data === true ? 'success' : 'error'}
+            badgeContent={data}
+            color={data === "Pago" ? 'success' : 'error'}
         />
     );
 };
-
 
 export default function BasicEditingGrid() {
     const [rowModesModel, setRowModesModel] = useState({});
     const [rows, setRows] = useState([]);
     const [date, setDate] = useState([]);
     const [checkedFilters, setCheckedFilters] = useState(new Array(predefinedFilters.length).fill(false));
+    const [checkedFiltersStatus, setCheckedFiltersStatus] = useState(new Array(predefinedFiltersStatus.length).fill(false));
     const [loading, setLoading] = useState(false);
-    const [anchorEl, setAnchorEl] = useState(null);
-    const openMenu = Boolean(anchorEl);
+    const [consorcioAnchorEl, setConsorcioAnchorEl] = useState(null);
+    const [statusAnchorEl, setStatusAnchorEl] = useState(null);
+    const openConsorcioMenu = Boolean(consorcioAnchorEl);
+    const openStatusMenu = Boolean(statusAnchorEl);
     const apiRef = useGridApiRef();
     const [sumTotal, setSumTotal] = useState(0);
 
@@ -105,20 +117,20 @@ export default function BasicEditingGrid() {
                         favorecido: item.favorecido,
                         consorcio: item.nomeConsorcio,
                         value: formatToBRL(item.valor),
-                        status: item.isPago,
+                        status: item.isPago ? 'Pago' : 'Erro',
                         ocorrencia: item.isPago ? '' : item.ocorrencias.join(', '),
                     }));
 
-                    const sum = formattedRows.reduce((accumulator, item) => accumulator + accounting.unformat(item.value.replace(/\./g, '').replace('.', ','), ','), 0)
+                    const sum = formattedRows.reduce((accumulator, item) => accumulator + accounting.unformat(item.value.replace(/\./g, '').replace('.', ','), ','), 0);
                     const formattedValue = accounting.formatMoney(sum, {
                         symbol: "",
                         decimal: ",",
                         thousand: ".",
                         precision: 2
-                    })
-                    setSumTotal(formattedValue)
+                    });
+                    setSumTotal(formattedValue);
                     setRows(formattedRows);
-                 
+
                 } catch (error) {
                     console.error(error);
                 } finally {
@@ -128,7 +140,17 @@ export default function BasicEditingGrid() {
             fetchData();
         }
     }, [date]);
-  
+
+    useEffect(() => {
+        const sum = filteredRows.reduce((accumulator, item) => accumulator + accounting.unformat(item.value.replace(/\./g, '').replace('.', ','), ','), 0);
+        const formattedValue = accounting.formatMoney(sum, {
+            symbol: "",
+            decimal: ",",
+            thousand: ".",
+            precision: 2
+        });
+        setSumTotal(formattedValue);
+    }, [rows, checkedFilters, checkedFiltersStatus]);
 
     const handleDateChange = (data) => {
         if (data?.length > 0) {
@@ -144,41 +166,79 @@ export default function BasicEditingGrid() {
         setCheckedFilters(newCheckedFilters);
     };
 
+    const handleCheckboxChangeStatus = (index) => {
+        const newCheckedFiltersStatus = [...checkedFiltersStatus];
+        newCheckedFiltersStatus[index] = !newCheckedFiltersStatus[index];
+        setCheckedFiltersStatus(newCheckedFiltersStatus);
+    };
+
     const applyFilters = () => {
         const activeFilters = predefinedFilters
             .filter((_, i) => checkedFilters[i])
             .map(({ filterFn }) => filterFn);
 
-        if (activeFilters.length === 0) {
+        const activeFiltersStatus = predefinedFiltersStatus
+            .filter((_, i) => checkedFiltersStatus[i])
+            .map(({ filterFn }) => filterFn);
+
+        if (activeFilters.length === 0 && activeFiltersStatus.length === 0) {
             return rows;
         }
 
-        return rows.filter(row => activeFilters.some(filterFn => filterFn(row)));
+        return rows.filter(row =>
+            (activeFilters.length === 0 || activeFilters.some(filterFn => filterFn(row))) &&
+            (activeFiltersStatus.length === 0 || activeFiltersStatus.some(filterFn => filterFn(row)))
+        );
     };
 
-    const handleClick = (event) => {
-        setAnchorEl(event.currentTarget);
+    const handleConsorcioClick = (event) => {
+        setConsorcioAnchorEl(event.currentTarget);
     };
 
-    const handleCloseMenu = () => {
-        setAnchorEl(null);
+    const handleStatusClick = (event) => {
+        setStatusAnchorEl(event.currentTarget);
+    };
+
+    const handleCloseConsorcioMenu = () => {
+        setConsorcioAnchorEl(null);
+    };
+
+    const handleCloseStatusMenu = () => {
+        setStatusAnchorEl(null);
     };
 
     const filteredRows = applyFilters();
+    function gg() {
+        const wb = utils.book_new();
+        utils.book_append_sheet(wb, utils.json_to_sheet(rows));
+        writeFileXLSX(wb, `cct_report_${date[0]}_${date[1]}.xlsx`);
+    }
 
     const ToolBarCustom = () => (
         <GridToolbarContainer className='w-[100%] flex justify-between'>
             <GridToolbarQuickFilter />
-            <GridToolbarExport printOptions={{
-                hideToolbar: true,
-            }} />
+            <GridToolbarExportContainer>
+                <GridCsvExportMenuItem
+                    options={{
+                        fileName: `cct_report_${date[0]}_${date[1]}` 
+                    }} />
+                <button className='px-[16px]' onClick={gg}>Baixar como XLSX</button>
+                <GridPrintExportMenuItem options={{
+                    hideToolbar: true,
+                    fileName: `cct_report_${date[0]}_${date[1]}`
+                }} />
+               
+            </GridToolbarExportContainer >
+           
+          
         </GridToolbarContainer>
     );
+
     const CustomFooter = () => {
         return (
-            <Box >
+            <Box>
                 Valor Total: {loading ? <></> : `R$ ${sumTotal}`}
-            </Box >
+            </Box>
         );
     };
 
@@ -199,32 +259,76 @@ export default function BasicEditingGrid() {
                     onChange={(newValue) => handleDateChange(newValue)}
                 />
             </header>
-            <Stack direction="row" gap={1} mb={1} flexWrap="wrap">
+            <div className="flex items-center mb-4">
                 <Box className="flex items-center">
-                    <p onClick={handleClick}>Filtrar por consórcio</p>
-                    <IconButton className='fs-small' onClick={handleClick}>
+                    <p>Filtrar por consórcio</p>
+                    <IconButton
+                        id="consorcio-filter-button"
+                        aria-controls={openConsorcioMenu ? 'consorcio-menu' : undefined}
+                        aria-haspopup="true"
+                        aria-expanded={openConsorcioMenu ? 'true' : undefined}
+                        onClick={handleConsorcioClick}
+                    >
                         <FilterListIcon />
                     </IconButton>
+                    <Menu
+                        id="consorcio-menu"
+                        anchorEl={consorcioAnchorEl}
+                        open={openConsorcioMenu}
+                        onClose={handleCloseConsorcioMenu}
+                    >
+                        <FormGroup>
+                            {predefinedFilters.map((filter, index) => (
+                                <MenuItem key={filter.label}>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={checkedFilters[index]}
+                                                onChange={() => handleCheckboxChange(index)}
+                                            />
+                                        }
+                                        label={filter.label}
+                                    />
+                                </MenuItem>
+                            ))}
+                        </FormGroup>
+                    </Menu>
                 </Box>
-                <Menu anchorEl={anchorEl} open={openMenu} onClose={handleCloseMenu}>
-                    <FormGroup>
-                        {predefinedFilters.map(({ label }, index) => (
-                            <MenuItem key={label}>
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            checked={checkedFilters[index]}
-                                            onChange={() => handleCheckboxChange(index)}
-                                            name={label}
-                                        />
-                                    }
-                                    label={`${label}`}
-                                />
-                            </MenuItem>
-                        ))}
-                    </FormGroup>
-                </Menu>
-            </Stack>
+                <Box className="flex items-center">
+                    <p>Filtrar por status</p>
+                    <IconButton
+                        id="status-filter-button"
+                        aria-controls={openStatusMenu ? 'status-menu' : undefined}
+                        aria-haspopup="true"
+                        aria-expanded={openStatusMenu ? 'true' : undefined}
+                        onClick={handleStatusClick}
+                    >
+                        <FilterListIcon />
+                    </IconButton>
+                    <Menu
+                        id="status-menu"
+                        anchorEl={statusAnchorEl}
+                        open={openStatusMenu}
+                        onClose={handleCloseStatusMenu}
+                    >
+                        <FormGroup>
+                            {predefinedFiltersStatus.map((filter, index) => (
+                                <MenuItem key={filter.label}>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={checkedFiltersStatus[index]}
+                                                onChange={() => handleCheckboxChangeStatus(index)}
+                                            />
+                                        }
+                                        label={filter.label}
+                                    />
+                                </MenuItem>
+                            ))}
+                        </FormGroup>
+                    </Menu>
+                </Box>
+            </div>
             <div style={{ height: '65vh', width: '100%' }}>
                 <DataGrid
                     id='data-table'
@@ -253,7 +357,7 @@ export default function BasicEditingGrid() {
                     }}
                 />
             </div>
-            
+
         </Box>
     );
 }
