@@ -31,7 +31,7 @@ import { getStatements, setPreviousDays, setDateRange, setSearchingWeek, setSear
 import { useNavigate } from 'react-router-dom';
 import { selectUser } from 'app/store/userSlice';
 
-import { DatePicker, MobileDatePicker } from '@mui/x-date-pickers';
+import {  MobileDatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import ptBR from 'date-fns/locale/pt-BR';
