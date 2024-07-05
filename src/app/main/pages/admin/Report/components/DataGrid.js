@@ -39,6 +39,7 @@ const predefinedFilters = [
     { label: 'Internorte', filterFn: (row) => row.consorcio.includes('Internorte') },
     { label: 'Intersul', filterFn: (row) => row.consorcio.includes('Intersul') },
     { label: 'Transcarioca', filterFn: (row) => row.consorcio.includes('Transcarioca') },
+    { label: 'Santa Cruz', filterFn: (row) => row.consorcio.includes('Santa Cruz') },
     { label: 'VLT', filterFn: (row) => row.consorcio.includes('VLT') },
 ];
 
@@ -90,11 +91,13 @@ export default function BasicEditingGrid() {
     const openStatusMenu = Boolean(statusAnchorEl);
     const apiRef = useGridApiRef();
     const [sumTotal, setSumTotal] = useState(0);
+    const [sumTotalErro, setSumTotalErro] = useState(0);
 
     useEffect(() => {
         if (date.length > 0) {
             const fetchData = async () => {
                 const token = window.localStorage.getItem('jwt_access_token');
+                console.log(token)
                 const config = {
                     method: 'get',
                     maxBodyLength: Infinity,
@@ -121,14 +124,7 @@ export default function BasicEditingGrid() {
                         ocorrencia: item.isPago ? '' : item.ocorrencias.join(', '),
                     }));
 
-                    const sum = formattedRows.reduce((accumulator, item) => accumulator + accounting.unformat(item.value.replace(/\./g, '').replace('.', ','), ','), 0);
-                    const formattedValue = accounting.formatMoney(sum, {
-                        symbol: "",
-                        decimal: ",",
-                        thousand: ".",
-                        precision: 2
-                    });
-                    setSumTotal(formattedValue);
+                
                     setRows(formattedRows);
 
                 } catch (error) {
@@ -142,14 +138,24 @@ export default function BasicEditingGrid() {
     }, [date]);
 
     useEffect(() => {
-        const sum = filteredRows.reduce((accumulator, item) => accumulator + accounting.unformat(item.value.replace(/\./g, '').replace('.', ','), ','), 0);
+        const filteredPago = filteredRows.filter((item) => item.status.includes('Pago'))
+        const filteredErro = filteredRows.filter((item) => item.status.includes('Erro'))
+        const sum = filteredPago.reduce((accumulator, item) => accumulator + accounting.unformat(item.value.replace(/\./g, '').replace('.', ','), ','), 0);
         const formattedValue = accounting.formatMoney(sum, {
             symbol: "",
             decimal: ",",
             thousand: ".",
             precision: 2
         });
-        setSumTotal(formattedValue);
+        setSumTotal(formattedValue)
+        const sumErro = filteredErro.reduce((accumulator, item) => accumulator + accounting.unformat(item.value.replace(/\./g, '').replace('.', ','), ','), 0);
+        const formattedValueErro = accounting.formatMoney(sumErro, {
+            symbol: "",
+            decimal: ",",
+            thousand: ".",
+            precision: 2
+        });
+        setSumTotalErro(formattedValueErro);
     }, [rows, checkedFilters, checkedFiltersStatus]);
 
     const handleDateChange = (data) => {
@@ -236,8 +242,9 @@ export default function BasicEditingGrid() {
 
     const CustomFooter = () => {
         return (
-            <Box>
-                Valor Total: {loading ? <></> : `R$ ${sumTotal}`}
+            <Box className='mt-10 flex flex-col md:flex-row gap-x-10'>
+                Valor Total Pago: {loading ? <></> : `R$ ${sumTotal}`}
+                <span className='text-red-600'>Valor Total Pendente (erro): {loading ? <></> : `R$ ${sumTotalErro}`}</span>
             </Box>
         );
     };
