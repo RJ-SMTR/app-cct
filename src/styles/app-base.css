@@ -188,9 +188,9 @@ display: none !important;
 .muiltr-1c32n2y-MuiBadge-root{
     display: inline-block !important;
 }
-.MuiTablePagination-displayedRows{
+/* .MuiTablePagination-displayedRows{
     display: none !important;
-}
+} */
 .MuiTablePagination-toolbar{
     padding-left: 0 !important;
 }

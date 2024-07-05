@@ -46,7 +46,7 @@ export function CustomTable(data) {
   const ErrorBadge = (data) => {
   
     const i = data.data.data
-    const errorDescription = i.errors.length > 0 ? i.errors.map(error => `${error.message}`).join(", ") : <></>;
+    const errorDescription = i.errors.length > 0 ? i.errors.map(error => `${error.message}`).join("\n") : <></>;
     const getStatus = (i) => {
       return  (
         <span className='underline'> Erro  <InfoOutlinedIcon fontSize='small' /></span>

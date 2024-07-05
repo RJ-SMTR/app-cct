@@ -101,6 +101,7 @@ function UserApp() {
           <div className="flex flex-col flex-0 lg:flex-row items-center max-w-[95%] w-full mx-auto px-32 lg:h-72 md:justify-between">
            <div className='flex flex-col md:flex-row items-center'>
              <div className="-mt-96 lg:-mt-88 rounded-full">
+              
                <motion.div initial={{ scale: 0 }} animate={{ scale: 1, transition: { delay: 0.1 } }}>
                 
                   <Avatar sx={{ borderColor: 'background.white' }} className="w-128 h-128 border-4"  />
@@ -115,6 +116,7 @@ function UserApp() {
              </div>
            </div>
             <div>
+              
               <button onClick={() => onSubmit()} className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-12 mb-12 '>
               Reenviar e-mail de cadastro
              </button>
@@ -125,6 +127,9 @@ function UserApp() {
       }
       content={
         <div className='flex flex-col max-w-[95%] w-full mx-auto my-32'>
+          <Link to='/admin' className='p-8 underline mb-4'>
+            ←Voltar
+          </Link>
           <div className="flex flex-col md:flex-row">
             {user && (
               <>
