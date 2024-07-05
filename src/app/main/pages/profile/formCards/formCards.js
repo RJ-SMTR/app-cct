@@ -10,6 +10,7 @@ import { AuthContext } from "src/app/auth/AuthContext";
 import { api } from 'app/configs/api/api';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { Link } from "react-router-dom";
 
 
 const personalInfoSchema = yup.object().shape({
@@ -47,7 +48,7 @@ export function PersonalInfo({ user }) {
         resolver: yupResolver(personalInfoSchema),
     });
     const { isValid, errors } = formState;
-
+    
 
     function onSubmit({ phone }) {
         patchInfo({phone}, user.id)
@@ -176,10 +177,11 @@ export function PersonalInfo({ user }) {
 
 export function BankInfo({ user }) {
     const [isEditable, setIsEditable] = useState(false)
-    const [selectedBankCode, setSelectedBankCode] = useState(user.bankCode ?? '');
+    const [selectedBankCode, setSelectedBankCode] = useState(user.bankCode);
     const { patchInfo, success } = useContext(AuthContext)
     const [bankOptions, setBankOptions] = useState([]);
     const [saved, setSaved] = useState(false)
+    const [userBank, setUserBank] = useState('')
 
 
     const { handleSubmit, register, setError, formState, clearErrors, setValue } = useForm({
@@ -193,17 +195,23 @@ export function BankInfo({ user }) {
     const { isValid, errors } = formState;
 
 
-
+  
     useEffect(() => {
         fetchBankOptions();
+        if (user.bankCode === 184) {
+            setError('bankCode', { message: `Erro: Código do banco 184 não é permitido. Por favor, contacte o suporte!` });
+        }
         setSaved(false)
-    }, []);
+    }, [user]);
+
 
     const fetchBankOptions = async () => {
         try {
             const response = await api.get('/banks');
             response.data = response.data.sort((a, b) => a.name.localeCompare(b.name));
-            setBankOptions(response.data);
+            setUserBank(response.data.find((bank) => bank.code === selectedBankCode) || null)
+            const filteredData = response.data.filter(({ code }) => code !== 184 )
+            setBankOptions(filteredData);
         } catch (error) {
             console.error('Error fetching bank options:', error);
         }
@@ -217,31 +225,38 @@ export function BankInfo({ user }) {
 
 
     function onSubmit(info) {
-        patchInfo(info, user.id)
-            .then((response) => {
-                if (isValid) {
-                    setIsEditable(false)
-                    setSaved(true)
-                    success(response, "Seus dados foram salvos!")
-                }
+        if (info.bankCode === 184) {
+            setError('bankCode', {
+                message: 'Você deve alterar seu banco antes de salvar'
             })
-            .catch((_errors) => {
-                 if (_errors.bankAccountDigit) {
-                    setError('bankAccountDigit', {
-                        message: 'O dígito deve ser maior ou igual a 1 caractere',
-                    });
-                }
-                if (_errors.bankAgency) {
-                    setError('bankAgency', {
-                        message: 'A agência deve ser maior ou igual a 4 dígitos'
-                    });
-                }
-                if (_errors.bankAccount) {
-                    setError('bankAccount', {
-                        message: 'A conta bancária deve ser menor ou igual a 12 dígitos',
-                    });
-                }
-            });
+        } else {
+            patchInfo(info, user.id)
+                .then((response) => {
+                    if (isValid) {
+                        setIsEditable(false)
+                        setSaved(true)
+                        success(response, "Seus dados foram salvos!")
+                    }
+                })
+                .catch((_errors) => {
+                    if (_errors.bankAccountDigit) {
+                        setError('bankAccountDigit', {
+                            message: 'O dígito deve ser maior ou igual a 1 caractere',
+                        });
+                    }
+                    if (_errors.bankAgency) {
+                        setError('bankAgency', {
+                            message: 'A agência deve ser maior ou igual a 4 dígitos'
+                        });
+                    }
+                    if (_errors.bankAccount) {
+                        setError('bankAccount', {
+                            message: 'A conta bancária deve ser menor ou igual a 12 dígitos',
+                        });
+                    }
+                });
+        }
+      
     }
 
 
@@ -288,7 +303,7 @@ export function BankInfo({ user }) {
                             id='bank-code-autocomplete'
                             options={bankOptions}
                             getOptionLabel={(option) => `${option.code} - ${option.name}`}
-                            value={bankOptions.find((bank) => bank.code === selectedBankCode) || null}
+                            value={userBank}
                             onChange={handleAutocompleteChange}
                             disabled={!isEditable}
                             renderInput={(params) => (
