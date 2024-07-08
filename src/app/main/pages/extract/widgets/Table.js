@@ -179,7 +179,6 @@ function TableTransactions({ id }) {
 
 
     const handleSelectedDate = (newValue) => {
-        console.log("newDate", newDate)
         setSelectedDate(newValue);
         const newDate = formatISO(newValue).substring(0, 7)
         dispatch(setDateRange(newDate))
@@ -200,7 +199,6 @@ function TableTransactions({ id }) {
                 dispatch(setSearchingDay(true))
                 dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Diário'));
                 dispatch(setValorPagoLabel('Valor Pago - Acumulado Diário'));
-
                 dispatch(setDateRange([transformedDate, transformedDate]));
             } else {
                 if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Semanal'));
@@ -220,7 +218,7 @@ function TableTransactions({ id }) {
     }
 
     const handleBack = () => {
-        setSelectedDate(null);
+        // setSelectedDate(null);
         dispatch(setLoadingWeek(true))
         dispatch(setLoadingPrevious(true))
         dispatch(setLoading(true))
@@ -237,9 +235,17 @@ function TableTransactions({ id }) {
             if (!searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
             if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Mensal'));
             if (searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'));
-            dispatch(setDateRange([]))
             setPage(0)
             dispatch(setSearchingWeek(false))
+            if(selectedDate !== null) {
+                const newDate = formatISO(selectedDate).substring(0, 7)
+                dispatch(setDateRange(newDate))
+            } else {
+                dispatch(setDateRange([]))
+
+            }
+            
+            
         }
     }
 
