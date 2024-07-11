@@ -32,6 +32,14 @@ const navAdminConfig = [
         icon: 'heroicons-solid:mail',
         url: 'disparo',
     },
+    {
+        id: 'report-component',
+        title: 'report',
+        translate: 'Relatório',
+        type: 'item',
+        icon: 'heroicons-outline:document-report',
+        url: 'relatorio',
+    },
   
    
 ];
