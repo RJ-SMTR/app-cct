@@ -69,9 +69,9 @@ export function PersonalInfo({ user }) {
 
     }
     function clear() {
-            setIsEditable(false)
-            handleOpen()
-      
+        setIsEditable(false)
+        handleOpen()
+
     }
     const renderButton = () => {
         if (!isEditable) {
@@ -86,7 +86,7 @@ export function PersonalInfo({ user }) {
                     <button type="button" className='flex items-center rounded p-3 uppercase text-white bg-[#707070] hover:bg-[#4a4a4a ]  mr-2 h-[27px] min-h-[27px]' onClick={() => clear()}>
                         <FuseSvgIcon className="text-48 text-white" size={24} color="action">heroicons-outline:x</FuseSvgIcon>
                     </button>
-                    <button type='submit' className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10' onClick={() => {setIsEditable(true), clearErrors()}}>
+                    <button type='submit' className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10' onClick={() => { setIsEditable(true), clearErrors() }}>
                         Salvar
                     </button>
                 </div>
@@ -202,13 +202,18 @@ export function PersonalInfo({ user }) {
 
 export function BankInfo({user}) {
     const [bankCode, setBankCode] = useState()
+    const [bankRm, setBankRm] = useState(false)
     useEffect(() => {
         if (user.aux_bank != null) {
             setBankCode(`${user.bankCode} - ${user.aux_bank.name}`);
         } else {
             setBankCode(user.bankCode)
         }
-    }, [])
+        if (user.bankCode === 184 || user.bankCode === 29) {
+            setBankRm(true)
+
+        }
+    }, [user])
     return (
         <>
 
@@ -229,10 +234,11 @@ export function BankInfo({user}) {
                         value={bankCode}
                         disabled
                         label='Banco'
-                        className="mb-24"
+                        className=""
                         id="bank-autocomplete"
                         variant='outlined'
                     />
+                    {bankRm ? <span className="my-10 text-red-600">Erro: Código do banco {user.bankCode} não é permitido. Por favor, contacte o suporte!</span> : <></>}
 
                     <TextField
                         value={user.bankAgency}
