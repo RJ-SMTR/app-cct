@@ -202,13 +202,18 @@ export function PersonalInfo({ user }) {
 
 export function BankInfo({user}) {
     const [bankCode, setBankCode] = useState()
+    const [bankRm, setBankRm] = useState(false)
     useEffect(() => {
         if (user.aux_bank != null) {
             setBankCode(`${user.bankCode} - ${user.aux_bank.name}`);
         } else {
             setBankCode(user.bankCode)
         }
-    }, [])
+        if (user.bankCode === 184 || user.bankCode === 29){
+            setBankRm(true)
+
+        }
+    }, [user])
     return (
         <>
 
@@ -225,14 +230,15 @@ export function BankInfo({user}) {
                 >
 
 
-                    <TextField
-                        value={bankCode}
-                        disabled
-                        label='Banco'
-                        className="mb-24"
-                        id="bank-autocomplete"
-                        variant='outlined'
-                    />
+                        <TextField
+                            value={bankCode}
+                            disabled
+                            label='Banco'
+                            className=""
+                            id="bank-autocomplete"
+                            variant='outlined'
+                        />
+                        {bankRm ? <span className="my-10 text-red-600">Erro: Código do banco {user.bankCode} não é permitido. Por favor, contacte o suporte!</span> : <></> }
 
                     <TextField
                         value={user.bankAgency}
