@@ -40,6 +40,14 @@ const navAdminConfig = [
         icon: 'heroicons-outline:document-report',
         url: 'relatorio',
     },
+    {
+        id: 'schedule-component',
+        title: 'schedule',
+        translate: 'Agendamento',
+        type: 'item',
+        icon: 'heroicons-outline:document-report',
+        url: 'agendamento',
+    },
   
    
 ];
