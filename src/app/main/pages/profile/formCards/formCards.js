@@ -48,7 +48,7 @@ export function PersonalInfo({ user }) {
         resolver: yupResolver(personalInfoSchema),
     });
     const { isValid, errors } = formState;
-    
+        
 
     function onSubmit({ phone }) {
         patchInfo({phone}, user.id)
@@ -195,11 +195,13 @@ export function BankInfo({ user }) {
     const { isValid, errors } = formState;
 
 
-  
+
     useEffect(() => {
         fetchBankOptions();
+
         if (user.bankCode === 184 || user.bankCode === 29) {
             setError('bankCode', { message: `Erro: Código do banco ${user.bankCode} não é permitido. Por favor, contacte o suporte!` });
+
         }
         setSaved(false)
     }, [user]);

@@ -225,3 +225,21 @@ display: none !important;
     width: auto !important;
     visibility: visible !important;
 }
+.noWrapName{
+    overflow: auto !important;
+    white-space: pre-wrap !important;
+}
+.MuiDataGrid-cell--withRenderer .success .MuiBadge-badge{
+    background: green;
+    padding: .2rem .9rem;
+    border-radius: 1rem;
+    font-size: 1.2rem;
+    color:#fff;
+}
+.MuiDataGrid-cell--withRenderer .error .MuiBadge-badge{
+    background: red;
+    padding: .2rem .9rem;
+        border-radius: 1rem;
+        font-size: 1.2rem;
+    color:#fff;
+}
