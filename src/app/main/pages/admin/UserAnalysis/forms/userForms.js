@@ -243,7 +243,7 @@ export function BankInfo({user}) {
                     <TextField
                         value={user.bankAgency}
                         disabled
-                        className="mb-24"
+                        className="my-24"
                         label="Agência"
                         type="string"
                         variant="outlined"
