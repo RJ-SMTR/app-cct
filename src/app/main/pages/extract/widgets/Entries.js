@@ -38,9 +38,9 @@ function Entries(type) {
   
 
     useEffect( () => {
-        if(statements.length >= 1){
+        if(statements?.length >= 1){
             const tz = 'UTC';
-            const dateFirst = new Date(`${statements[statements.length - 1]?.date ?? statements[statements.length - 1]?.partitionDate}`)
+            const dateFirst = new Date(`${statements[statements?.length - 1]?.date ?? statements[statements?.length - 1]?.partitionDate}`)
             const dateLast = new Date(`${statements[0]?.date ?? statements[0]?.partitionDate}`)
             const zonedDateFirst = utcToZonedTime(dateFirst, tz);
             const zonedDateLast = utcToZonedTime(dateLast, tz);
@@ -49,7 +49,7 @@ function Entries(type) {
         }
     }, [statements])
   return (
-      <>{statements.length ? <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden mx-5 mt-10 md:mt-0">
+      <>{statements?.length ? <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden mx-5 mt-10 md:mt-0">
           <div className="flex items-center justify-between">
               <div className="flex flex-col">
                   <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
