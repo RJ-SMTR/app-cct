@@ -210,6 +210,7 @@ export function BankInfo({user}) {
             setBankCode(user.bankCode)
         }
         if (user.bankCode === 184 || user.bankCode === 29) {
+
             setBankRm(true)
 
         }
@@ -239,6 +240,7 @@ export function BankInfo({user}) {
                         variant='outlined'
                     />
                     {bankRm ? <span className="my-10 text-red-600">Erro: Código do banco {user.bankCode} não é permitido. Por favor, contacte o suporte!</span> : <></>}
+
 
                     <TextField
                         value={user.bankAgency}
