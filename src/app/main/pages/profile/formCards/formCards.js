@@ -198,8 +198,6 @@ export function BankInfo({ user }) {
   
     useEffect(() => {
         fetchBankOptions();
-
-
         if (user.bankCode === 184 || user.bankCode === 29) {
             setError('bankCode', { message: `Erro: Código do banco ${user.bankCode} não é permitido. Por favor, contacte o suporte!` });
 
@@ -213,8 +211,6 @@ export function BankInfo({ user }) {
             const response = await api.get('/banks');
             response.data = response.data.sort((a, b) => a.name.localeCompare(b.name));
             setUserBank(response.data.find((bank) => bank.code === selectedBankCode) || null)
-
-
             const filteredData = response.data.filter(({ code }) => code !== 184 && code !== 29 )
 
             setBankOptions(filteredData);

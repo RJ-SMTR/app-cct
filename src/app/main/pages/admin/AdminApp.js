@@ -4,16 +4,18 @@ import { Box } from '@mui/system';
 import  { TableUsers } from './components/Table';
 import { useDispatch, useSelector } from 'react-redux';
 import { getUser, getInfo } from 'app/store/adminSlice';
-import { setSearchingWeek, setSearchingDay } from 'app/store/extractSlice';
+import { setSearchingWeek, setSearchingDay, setStatements } from 'app/store/extractSlice';
 
 
 function AdminApp() {
     const dispatch = useDispatch()
-    useEffect(() => {   
+    useEffect(() => {  
+        dispatch(setSearchingWeek(false))
+        dispatch(setSearchingDay(false)) 
+        dispatch(setStatements([]))
         dispatch(getUser())
         dispatch(getInfo())
-        dispatch(setSearchingWeek(false))
-        dispatch(setSearchingDay(false))
+        
     }, [])
     return (
         <>
