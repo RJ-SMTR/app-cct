@@ -29,6 +29,8 @@ import { api } from 'app/configs/api/api';
 import { ptBR as pt } from '@mui/x-data-grid';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { parseISO, format } from 'date-fns';
+import { useDispatch } from 'react-redux';
+import { handleSynthData, setSynthData } from 'app/store/extractSlice';
 
 const locale = pt;
 
@@ -79,6 +81,9 @@ const CustomBadge = ({ data }) => {
 };
 
 export default function BasicEditingGrid() {
+    const dispatch = useDispatch()
+
+    
     const [rowModesModel, setRowModesModel] = useState({});
     const [rows, setRows] = useState([]);
     const [date, setDate] = useState([]);
@@ -92,12 +97,13 @@ export default function BasicEditingGrid() {
     const apiRef = useGridApiRef();
     const [sumTotal, setSumTotal] = useState(0);
     const [sumTotalErro, setSumTotalErro] = useState(0);
+    
 
     useEffect(() => {
         if (date.length > 0) {
             const fetchData = async () => {
                 const token = window.localStorage.getItem('jwt_access_token');
-                console.log(token)
+  
                 const config = {
                     method: 'get',
                     maxBodyLength: Infinity,
@@ -126,6 +132,7 @@ export default function BasicEditingGrid() {
 
                 
                     setRows(formattedRows);
+                    dispatch(handleSynthData(formattedRows))
 
                 } catch (error) {
                     console.error(error);
