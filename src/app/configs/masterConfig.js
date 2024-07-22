@@ -50,6 +50,14 @@ const masterConfig = [
         icon: 'heroicons-outline:currency-dollar',
         url: 'aprovação',
     },
+    {
+        id: 'trigger-component',
+        title: 'report',
+        translate: 'Relatório',
+        type: 'item',
+        icon: 'heroicons-outline:document-report',
+        url: 'relatorio',
+    },
 
 ];
 
