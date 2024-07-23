@@ -34,6 +34,7 @@ const locale = pt;
 
 const predefinedFilters = [
     { label: 'Todos', filterFn: () => true },
+    { label: 'STPL', filterFn: (row) => row.consorcio.includes('STPL') },
     { label: 'STPC', filterFn: (row) => row.consorcio.includes('STPC') },
     { label: 'MobiRio', filterFn: (row) => row.consorcio.includes('MobiRio') },
     { label: 'Internorte', filterFn: (row) => row.consorcio.includes('Internorte') },
