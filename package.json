@@ -40,6 +40,8 @@
         "google-map-react": "2.2.1",
         "history": "5.3.0",
         "i18next": "23.2.6",
+        "jspdf": "^2.5.1",
+        "jspdf-autotable": "^3.8.2",
         "jwt-decode": "3.1.2",
         "keycode": "2.2.1",
         "leaflet": "^1.9.4",
@@ -86,6 +88,7 @@
         "stylis": "4.3.0",
         "stylis-plugin-rtl": "2.1.1",
         "web-vitals": "3.3.2",
+        "xlsx": "^0.18.5",
         "yup": "1.2.0"
     },
     "peerDependencies": {
