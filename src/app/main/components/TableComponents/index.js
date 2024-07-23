@@ -54,7 +54,8 @@ export function CustomTable(data) {
     }
     if(i.errors.length > 0){
       return (
-        <Tooltip title={errorDescription} arrow  enterTouchDelay={0}>
+            
+        <Tooltip   title={errorDescription} arrow enterTouchDelay={10} leaveTouchDelay={10000}>
           <Badge className={`${data.c?.root}  whitespace-nowrap`}
             color='error'
             badgeContent={getStatus(i)}
