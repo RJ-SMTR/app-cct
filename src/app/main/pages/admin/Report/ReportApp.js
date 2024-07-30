@@ -1,16 +1,28 @@
 import { Box, Paper, Card, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DataGridInfos from './components/DataGrid';
 import SynthReport from './components/SynthReport';
 import ConsolidatedReport from './components/ConsolidatedReport';
+import { useDispatch } from "react-redux";
+import { setReportType } from "app/store/reportSlice";
 
 
 function ReportApp() {
+
+    const dispatch = useDispatch()
+
+
+
+
     const [selectedReport, setSelectedReport] = useState('');
+
 
     const handleSelectChange = (event) => {
         setSelectedReport(event.target.value);
     };
+    useEffect(() => {
+        dispatch(setReportType(selectedReport))
+    }, [selectedReport])
 
     return (
         <>
@@ -32,7 +44,7 @@ function ReportApp() {
                         >
                             <MenuItem value="dataGrid">Relatório Analítico</MenuItem>
                             <MenuItem value="synthReport">Relatório Sintético</MenuItem>
-                            <MenuItem value="consolidatedReport">Relatório Consolidado</MenuItem>
+                            <MenuItem value="consolidado">Relatório Consolidado</MenuItem>
                         </Select>
                     </FormControl>
                 </Card>
@@ -41,7 +53,7 @@ function ReportApp() {
                     <Paper>
                         {selectedReport === 'dataGrid' && <DataGridInfos />}
                         {selectedReport === 'synthReport' && <SynthReport />}
-                        {selectedReport === 'consolidatedReport' && <ConsolidatedReport />}
+                        {selectedReport === 'consolidado' && <ConsolidatedReport />}
                     </Paper>
                 </Box>
             </div>

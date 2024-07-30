@@ -1,8 +1,11 @@
 import { createSlice } from '@reduxjs/toolkit';
+import jwtServiceConfig from '../auth/services/jwtService/jwtServiceConfig';
+import { api } from 'app/configs/api/api';
 
 const initialState = {
     synthData: [],
     reportType: '',
+    reportList: []
 };
 
 const reportSlice = createSlice({
@@ -15,16 +18,49 @@ const reportSlice = createSlice({
         setReportType: (state, action) => {
             state.reportType = action.payload;
         },
+        setReportList: (state, action) => {
+            state.reportList = action.payload;
+        },
     },
 });
 
 
-export const { synthData,
-    setSynthData, setReportType } = reportSlice.actions;
+export const { 
+    synthData,
+    setSynthData, 
+    setReportType,
+    reportList,
+    setReportList
+ } = reportSlice.actions;
 
 export default reportSlice.reducer;
 
+export const handleReportInfo = (data, reportType) => async (dispatch) => {
+    console.log(data, reportType)
+    const token = window.localStorage.getItem('jwt_access_token');
 
+    const reportTypeUrl = reportType
+
+    let config = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: jwtServiceConfig.report + `/${reportTypeUrl}`,
+        headers: {
+            "Authorization": `Bearer ${token}`
+        },
+        params: {
+           data
+        }
+    };
+
+    try {
+        const response = await api.request(config);
+        
+        dispatch(setReportList(response.data.data));
+    } catch (error) {
+        console.error(error);
+    } 
+}
 export const handleSynthData = (reportData) => async (dispatch) => {
     const groupedData = reportData.reduce((acc, item) => {
         const key = item.consorcio;

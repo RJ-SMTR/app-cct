@@ -12,14 +12,17 @@ import {
     TableBody,
     Autocomplete,
     TextField,
-    Button
+    Button,
+    TableRow,
+    TableCell,
 } from '@mui/material';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { ptBR as pt } from '@mui/x-data-grid';
 import { format } from 'date-fns';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { DateRangePicker } from 'rsuite';
 import { useForm, Controller } from 'react-hook-form';
+import { handleReportInfo } from 'app/store/reportSlice';
 
 const locale = pt;
 
@@ -41,8 +44,9 @@ const predefinedFilters = [
 ];
 
 export default function BasicEditingGrid() {
-    const [rows, setRows] = useState([]);
-    const synthData = useSelector(state => state.extract.synthData);
+    const reportType = useSelector(state => state.report.reportType);
+    const reportList = useSelector(state => state.report.reportList)
+    const [isLoading, setIsLoading] = useState(true)
     const [checkedFilters, setCheckedFilters] = useState(new Array(predefinedFilters.length).fill(false));
     const [checkedFiltersStatus, setCheckedFiltersStatus] = useState(new Array(predefinedFiltersStatus.length).fill(false));
     const [consorcioAnchorEl, setConsorcioAnchorEl] = useState(null);
@@ -50,9 +54,9 @@ export default function BasicEditingGrid() {
     const openConsorcioMenu = Boolean(consorcioAnchorEl);
     const openStatusMenu = Boolean(statusAnchorEl);
 
-    useEffect(() => {
-        setRows(synthData);
-    }, [synthData]);
+    const dispatch = useDispatch()
+
+
 
     const handleCheckboxChange = (index) => {
         const newCheckedFilters = [...checkedFilters];
@@ -90,8 +94,14 @@ export default function BasicEditingGrid() {
     });
 
     const onSubmit = (data) => {
-        console.log(data);
+        dispatch(handleReportInfo(data, reportType))
     };
+    useEffect(() => {
+        if(reportList.length > 0){
+            setIsLoading(false)
+            console.log(reportList)
+        }
+    }, [reportList])
 
     return (
         <Box className="w-full md:mx-9 p-24 relative mt-32">
@@ -230,9 +240,20 @@ export default function BasicEditingGrid() {
                             </form>
 
                         </Box>
+                        <TableRow>
+                            <TableCell>Nome</TableCell>
+                            <TableCell>Valor</TableCell>
+                            <TableCell>Count</TableCell>
+                        </TableRow>
                     </TableHead>
                     <TableBody>
-                        {/* Your table rows go here */}
+                        {!isLoading ? reportList.map((report, index) => (
+                            <TableRow key={index}>
+                                <TableCell>{report.nomeFavorecido}</TableCell>
+                                <TableCell>{report.valorRealEfetivado}</TableCell>
+                                <TableCell>{report.count}</TableCell>
+                            </TableRow>
+                        )): <></>}
                     </TableBody>
                 </Table>
             </div>
