@@ -30,7 +30,7 @@ import { ptBR as pt } from '@mui/x-data-grid';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { parseISO, format } from 'date-fns';
 import { useDispatch } from 'react-redux';
-import { handleSynthData, setSynthData } from 'app/store/extractSlice';
+import { handleSynthData, setSynthData } from 'app/store/reportSlice';
 
 const locale = pt;
 

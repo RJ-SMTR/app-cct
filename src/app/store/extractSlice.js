@@ -26,7 +26,6 @@ const initialState = {
     isLoading: false,
     isLoadingWeek: false,
     isLoadingPrevious: false,
-    synthData: []
 };
 
 const extractSlice = createSlice({
@@ -94,9 +93,7 @@ const extractSlice = createSlice({
         setLoadingPrevious: (state, action) => {
             state.isLoadingPrevious = action.payload;
         },
-        setSynthData: (state, action) => {
-            state.synthData = action.payload;
-        },
+       
     },
 });
 
@@ -136,8 +133,7 @@ export const {
     setLoading,
     setLoadingWeek,
     setLoadingPrevious,
-    synthData,
-    setSynthData
+
 } = extractSlice.actions;
 
 export default extractSlice.reducer;
@@ -340,47 +336,5 @@ export const getMultipliedEntries = (statements, searchingDay, searchingWeek) =>
         }
     }
 
-
-}
-export const handleSynthData = (reportData) => async (dispatch) => {
-    const groupedData = reportData.reduce((acc, item) => {
-        const key = item.consorcio;
-        if (!acc[key]) {
-            acc[key] = { items: [], total: 0, totalsByStatus: {} };
-        }
-
-        const unformattedValue = accounting.unformat(item.value.replace(/\./g, '').replace(',', '.'));
-
-        acc[key].items.push(item);
-        acc[key].total += unformattedValue;
-
-        const status = item.status;
-        if (!acc[key].totalsByStatus[status]) {
-            acc[key].totalsByStatus[status] = 0;
-        }
-        acc[key].totalsByStatus[status] += unformattedValue;
-
-        return acc;
-    }, {});
-
-    for (const key in groupedData) {
-        groupedData[key].total = accounting.formatMoney(groupedData[key].total, {
-            symbol: 'R$',
-            decimal: ',',
-            thousand: '.',
-            precision: 2
-        });
-
-        for (const status in groupedData[key].totalsByStatus) {
-            groupedData[key].totalsByStatus[status] = accounting.formatMoney(groupedData[key].totalsByStatus[status], {
-                symbol: 'R$',
-                decimal: ',',
-                thousand: '.',
-                precision: 2
-            });
-        }
-    }
-
-    dispatch(setSynthData(groupedData));
 
 }

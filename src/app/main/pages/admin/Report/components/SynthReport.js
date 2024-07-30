@@ -52,7 +52,8 @@ const predefinedFilters = [
 
 export default function BasicEditingGrid() {
     const [rows, setRows] = useState([]);
-    const synthData = useSelector(state => state.extract.synthData)
+    const synthData = useSelector(state => state.report.synthData)
+    const userList = useSelector((state) => state.admin.userList)
     const [checkedFilters, setCheckedFilters] = useState(new Array(predefinedFilters.length).fill(false));
     const [checkedFiltersStatus, setCheckedFiltersStatus] = useState(new Array(predefinedFiltersStatus.length).fill(false));
     const [consorcioAnchorEl, setConsorcioAnchorEl] = useState(null);
@@ -110,8 +111,9 @@ export default function BasicEditingGrid() {
                                 id='favorecidos'
                                 className='w-[25rem] p-1'
                                 options={[
-                                    'João Salles de albuquerrque',
-                                    'Transoeste International'
+                                    '233232332 - João Salles de albuquerque',
+                                    '44444444 - Maria da Guia',
+                                    '55555555 - Domingos',
                                 ]}
                                 renderInput={(params) => (
                                     <TextField

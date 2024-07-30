@@ -2,6 +2,8 @@ import { Box, Paper, Card, FormControl, InputLabel, MenuItem, Select } from "@mu
 import { useState } from "react";
 import DataGridInfos from './components/DataGrid';
 import SynthReport from './components/SynthReport';
+import ConsolidatedReport from './components/ConsolidatedReport';
+
 
 function ReportApp() {
     const [selectedReport, setSelectedReport] = useState('');
@@ -30,8 +32,7 @@ function ReportApp() {
                         >
                             <MenuItem value="dataGrid">Relatório Analítico</MenuItem>
                             <MenuItem value="synthReport">Relatório Sintético</MenuItem>
-                            <MenuItem value="report3">Relatório Consolidado</MenuItem>
-                            {/* <MenuItem value="anotherReport">Another Report</MenuItem> */}
+                            <MenuItem value="consolidatedReport">Relatório Consolidado</MenuItem>
                         </Select>
                     </FormControl>
                 </Card>
@@ -40,7 +41,7 @@ function ReportApp() {
                     <Paper>
                         {selectedReport === 'dataGrid' && <DataGridInfos />}
                         {selectedReport === 'synthReport' && <SynthReport />}
-                        {/* {selectedReport === 'report3' && <report3Component />} */}
+                        {selectedReport === 'consolidatedReport' && <ConsolidatedReport />}
                     </Paper>
                 </Box>
             </div>
