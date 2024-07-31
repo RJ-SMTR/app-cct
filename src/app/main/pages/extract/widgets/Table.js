@@ -269,7 +269,6 @@ function TableTransactions({ id }) {
                                 <MobileDatePicker
                                     label="Selecionar Mês"
                                     openTo="month"
-                                    disableFuture
                                     closeOnSelect
                                     views={['year', 'month']}
                                     value={selectedDate}
@@ -308,7 +307,6 @@ function TableTransactions({ id }) {
                                     <MobileDatePicker
                                         label="Selecionar Mês"
                                         openTo="month"
-                                        disableFuture
                                         closeOnSelect
                                         views={['year', 'month']}
                                         value={selectedDate}
