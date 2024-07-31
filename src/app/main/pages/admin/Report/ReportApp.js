@@ -50,11 +50,9 @@ function ReportApp() {
                 </Card>
 
                 <Box>
-                    <Paper>
                         {selectedReport === 'dataGrid' && <DataGridInfos />}
                         {selectedReport === 'synthReport' && <SynthReport />}
                         {selectedReport === 'consolidado' && <ConsolidatedReport />}
-                    </Paper>
                 </Box>
             </div>
         </>
