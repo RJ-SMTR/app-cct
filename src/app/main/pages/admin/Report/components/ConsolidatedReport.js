@@ -373,7 +373,7 @@ export default function BasicEditingGrid() {
                         </h3>
                     </header>
 
-                    <div style={{ height: '65vh', width: '100%' }} className="overflow-scroll">
+                    <div style={{ height: '50vh', width: '100%' }} className="overflow-scroll">
                         <Table>
                             <TableHead className="items-center mb-4">
 
@@ -403,13 +403,13 @@ export default function BasicEditingGrid() {
                                 )}
                             </TableBody>
 
-                            <TableFooter>
-                                <Box>
-                                    <p>Valor Efetivado: {formatter.format(reportList.valorRealEfetivado ?? 0)}</p>
-                                </Box>
-                            </TableFooter>
+                                
                         </Table>
+                        
                     </div>
+                    <Box className="flex justify-end w-full">
+                        <p className='font-bold'>Valor Efetivado: {formatter.format(reportList.valorRealEfetivado ?? 0)}</p>
+                    </Box>
                 </Box>
             </Paper>
         </>
