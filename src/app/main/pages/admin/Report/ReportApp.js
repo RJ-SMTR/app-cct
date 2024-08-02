@@ -43,7 +43,7 @@ function ReportApp() {
                             onChange={handleSelectChange}
                         >
                             <MenuItem value="dataGrid">Relatório Analítico</MenuItem>
-                            <MenuItem value="synthReport">Relatório Sintético</MenuItem>
+                            {/* <MenuItem value="synthReport">Relatório Sintético</MenuItem> */}
                             <MenuItem value="consolidado">Relatório Consolidado</MenuItem>
                         </Select>
                     </FormControl>
@@ -51,7 +51,7 @@ function ReportApp() {
 
                 <Box>
                         {selectedReport === 'dataGrid' && <DataGridInfos />}
-                        {selectedReport === 'synthReport' && <SynthReport />}
+                        {/* {selectedReport === 'synthReport' && <SynthReport />} */}
                         {selectedReport === 'consolidado' && <ConsolidatedReport />}
                 </Box>
             </div>

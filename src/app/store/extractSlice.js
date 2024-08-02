@@ -261,7 +261,6 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             dispatch(setSumInfoWeek(response.data))
             if(userId){
                 if(!searchingDay ){
-                    console.log(requestData.endDate)
                     dispatch(getFirstTypes(userId, requestData.endDate, searchingWeek, searchingDay));
                 } else {
                     dispatch(getFirstTypes(userId, dateRange, searchingWeek, searchingDay));

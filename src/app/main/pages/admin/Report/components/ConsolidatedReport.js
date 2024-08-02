@@ -2,10 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
     Box,
     MenuItem,
-    IconButton,
-    FormGroup,
-    Menu,
-    FormControlLabel,
+  ListItemText,
     Checkbox,
     Table,
     TableHead,
@@ -19,9 +16,10 @@ import {
     Select,
     InputLabel,
     FormControl,
-    CircularProgress
+    CircularProgress,
+    InputAdornment,
+    TableFooter
 } from '@mui/material';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import { ptBR as pt } from '@mui/x-data-grid';
 import { format } from 'date-fns';
 import { useDispatch, useSelector } from 'react-redux';
@@ -29,77 +27,59 @@ import { DateRangePicker } from 'rsuite';
 import { useForm, Controller } from 'react-hook-form';
 import { handleReportInfo } from 'app/store/reportSlice';
 import { getUser } from 'app/store/adminSlice';
+import { makeStyles } from '@mui/styles';
+import { NumericFormat } from 'react-number-format';
 
 const locale = pt;
 
-const predefinedFiltersStatus = [
+const consorciosStatus = [
     { label: 'Todos' },
+    { label: 'A pagar' },
     { label: 'Pago' },
     { label: 'Erro' },
 ];
-const predefinedFilters = [
-    { label: 'Todos' },
-    { label: 'STPL' },
-    { label: 'STPC' },
-    { label: 'MobiRio' },
-    { label: 'Internorte' },
-    { label: 'Intersul' },
-    { label: 'Transcarioca' },
-    { label: 'Santa Cruz' },
-    { label: 'VLT' },
+const consorcios = [
+    { label: 'Todos', value: "Todos" },
+    { label: 'STPL', value: "STPL" },
+    { label: 'STPC', value: "STPC" },
+    { label: 'MobiRio', value: "MobiRio" },
+    { label: 'Internorte', value: "Internorte" },
+    { label: 'Intersul', value: "Intersul" },
+    { label: 'Transcarioca', value: "Transcarioca" },
+    { label: 'Santa Cruz', value: "Santa Cruz" },
+    { label: 'VLT', value: "VLT" },
 ];
 
 export default function BasicEditingGrid() {
     const reportType = useSelector(state => state.report.reportType);
     const reportList = useSelector(state => state.report.reportList)
     const userList = useSelector(state => state.admin.userList) || []
-    const [favorecidoSearch, setFavorecidoSearch] = useState('')
-    const [isLoading, setIsLoading] = useState(true)
+    const [isLoading, setIsLoading] = useState(false)
     const [loadingUsers, setLoadingUsers] = useState(false)
     const [userOptions, setUserOptions] = useState([])
-    const [checkedFilters, setCheckedFilters] = useState(new Array(predefinedFilters.length).fill(false));
-    const [checkedFiltersStatus, setCheckedFiltersStatus] = useState(new Array(predefinedFiltersStatus.length).fill(false));
-    const [consorcioAnchorEl, setConsorcioAnchorEl] = useState(null);
-    const [statusAnchorEl, setStatusAnchorEl] = useState(null);
-    const openConsorcioMenu = Boolean(consorcioAnchorEl);
-    const openStatusMenu = Boolean(statusAnchorEl);
+    const [selectedStatus, setSelectedStatus] = useState([]);
 
+   
+    
+   
     const dispatch = useDispatch()
 
-    const handleCheckboxChange = (index) => {
-        const newCheckedFilters = [...checkedFilters];
-        newCheckedFilters[index] = !newCheckedFilters[index];
-        setCheckedFilters(newCheckedFilters);
-    };
+  
 
-    const handleCheckboxChangeStatus = (index) => {
-        const newCheckedFiltersStatus = [...checkedFiltersStatus];
-        newCheckedFiltersStatus[index] = !newCheckedFiltersStatus[index];
-        setCheckedFiltersStatus(newCheckedFiltersStatus);
-    };
-
-    const handleConsorcioClick = (event) => {
-        setConsorcioAnchorEl(event.currentTarget);
-    };
-
-    const handleStatusClick = (event) => {
-        setStatusAnchorEl(event.currentTarget);
-    };
-
-    const handleCloseConsorcioMenu = () => {
-        setConsorcioAnchorEl(null);
-    };
-
-    const handleCloseStatusMenu = () => {
-        setStatusAnchorEl(null);
-    };
-
-    const { control, handleSubmit, register } = useForm({
+    const { register, handleSubmit, setValue, control, getValues,watch } = useForm({
         defaultValues: {
-            nome: null,
-            dateRange: []
+            name: [],
+            dateRange: [],
+            valorMax: null,
+            valorMin: null,
+            valorEfetivadoMax: null,
+            valorEfetivadoMin: null,
+            consorcioName: [],
+            favorecidoSearch: '',
+            status: []
         }
     });
+    const watchedFavorecidoSearch = watch('favorecidoSearch');
 
     const onSubmit = (data) => {
         dispatch(handleReportInfo(data, reportType))
@@ -110,155 +90,159 @@ export default function BasicEditingGrid() {
         dispatch(getUser());
         setLoadingUsers(false);
     };
+
     useEffect(() => {
         fetchUsers()
-    },[])
+    }, []);
+
     useEffect(() => {
         if (reportList.length > 0) {
             setIsLoading(false)
         }
-    }, [reportList])
+    }, [reportList]);
 
     useEffect(() => {
         if (userList && userList.length > 0) {
             const options = userList.map((user) => ({
-                label: favorecidoSearch === 'cpf/cnpj' ? `${user.cpfCnpj} - ${user.fullName}` : `${user.fullName}`,
-                value: user
+                label: getValues('favorecidoSearch') === 'cpf/cnpj' ? `${user.cpfCnpj} - ${user.fullName}` : `${user.fullName}`,
+                value: {
+                    cpfCnpj: user.cpfCnpj,
+                    fullName: user.fullName
+                }
             }));
             setUserOptions(options);
         } else {
             setUserOptions([]);
         }
-    }, [favorecidoSearch, userList]);
+    }, [watchedFavorecidoSearch, userList]);
 
 
-    const handleSelectfavorecido = (event) => {
-        setFavorecidoSearch(event.target.value);
+    const handleAutocompleteChange = (field, newValue) => {
+        setValue(field, newValue ? newValue.map(item => item.value) : []);
     };
-    useEffect(() => {
-        console.log(userOptions)
-    }, [userOptions])
+    const handleStatus = (event) => {
+        setSelectedStatus(event.target.value);
+    };
+    const valueProps = {
+        startAdornment: <InputAdornment position='start'>R$</InputAdornment>
+    }
 
+    const formatter = new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+    });
+   
     return (
         <>
             <Paper>
                 <Box className="w-full md:mx-9 p-24 relative mt-32">
-                    <header>
-                        Filtros de Pesquisa
-                    </header>
+                    <header>Filtros de Pesquisa</header>
 
                     <Box className="flex items-center py-10 gap-10">
                         <form onSubmit={handleSubmit(onSubmit)}>
-                            <FormControl style={{ minWidth: '22rem' }}>
-                                <InputLabel id="favorecido-select-label">Pesquisar favorecido por:</InputLabel>
-                                <Select
-                                    value={favorecidoSearch}
-                                    labelId="favorecido-select-label"
-                                    id='favorecido-select'
-                                    label="Pesquisar favorecido por:"
-                                    onChange={handleSelectfavorecido}
-                                >
-                                    <MenuItem value="cpf/cnpj">CPF/CNPJ</MenuItem>
-                                    <MenuItem value="nome">Nome</MenuItem>
-                                </Select>
-                            </FormControl>
-                            
-                                    <Autocomplete
-                                    {...register('name')}
-                                        id="favorecidos"
-                                        multiple
-                                        className="min-w-[25rem] p-1"
-                                            getOptionLabel={(option) => option.label}
-                                         filterSelectedOptions
-                                        options={userOptions}
-                                        loading={loadingUsers}
-                                        renderInput={(params) => (
-                                            <TextField
-                                                {...params}
-                                                label="Selecionar Favorecido"
-                                                variant="outlined"
-                                                InputProps={{
-                                                    ...params.InputProps,
-                                                    endAdornment: (
-                                                        <>
-                                                            {loadingUsers ? <CircularProgress color="inherit" size={20} /> : null}
-                                                            {params.InputProps.endAdornment}
-                                                        </>
-                                                    ),
+                            <Box className="flex gap-10 flex-wrap mb-20">
+                                <Controller
+                                    name="favorecidoSearch"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <FormControl style={{ minWidth: '22rem' }}>
+                                            <InputLabel id="favorecido-select-label">Pesquisar favorecido por:</InputLabel>
+                                            <Select
+                                                {...field}
+                                                labelId="favorecido-select-label"
+                                                id="favorecido-select"
+                                                label="Pesquisar favorecido por:"
+                                            >
+                                                <MenuItem value="cpf/cnpj">CPF/CNPJ</MenuItem>
+                                                <MenuItem value="nome">Nome</MenuItem>
+                                            </Select>
+                                        </FormControl>
+                                    )}
+                                />
+
+                                <Autocomplete
+                                    id="favorecidos"
+                                    multiple
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
+                                    getOptionLabel={(option) => option.label}
+                                    filterSelectedOptions
+                                    options={userOptions}
+                                    loading={loadingUsers}
+                                    onChange={(_, newValue) => handleAutocompleteChange('name', newValue)}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="Selecionar Favorecido"
+                                            variant="outlined"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                endAdornment: (
+                                                    <>
+                                                        {loadingUsers ? <CircularProgress color="inherit" size={20} /> : null}
+                                                        {params.InputProps.endAdornment}
+                                                    </>
+                                                ),
+                                            }}
+                                        />
+                                    )}
+                                />
+
+                                <Autocomplete
+                                    id="consorcio"
+                                    multiple
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
+                                    getOptionLabel={(option) => option.label}
+                                    filterSelectedOptions
+                                    options={consorcios}
+                                    onChange={(_, newValue) => handleAutocompleteChange('consorcioName', newValue)}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="Selecionar Consórcios"
+                                            variant="outlined"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                endAdornment: (
+                                                    <>
+                                                        {params.InputProps.endAdornment}
+                                                    </>
+                                                ),
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </Box>
+
+                            <Box className="flex items-center gap-10 flex-wrap">
+                                <Controller
+                                    name="status"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <FormControl style={{ minWidth: '22rem' }}>
+                                            <InputLabel id="status-label">Status:</InputLabel>
+                                            <Select
+                                                {...field}
+                                                labelId="status-label"
+                                                id="status-select"
+                                                multiple
+                                                label="Status:"
+                                                value={selectedStatus}
+                                                onChange={(event) => {
+                                                    handleStatus(event);
+                                                    field.onChange(event.target.value);
                                                 }}
-                                            />
-                                        )}
-                                    />
-                              
-                            <Box className="flex items-center">
-                                <p>Filtrar por consórcio</p>
-                                <IconButton
-                                    id="consorcio-filter-button"
-                                    aria-controls={openConsorcioMenu ? 'consorcio-menu' : undefined}
-                                    aria-haspopup="true"
-                                    aria-expanded={openConsorcioMenu ? 'true' : undefined}
-                                    onClick={handleConsorcioClick}
-                                >
-                                    <FilterListIcon />
-                                </IconButton>
-                                <Menu
-                                    id="consorcio-menu"
-                                    anchorEl={consorcioAnchorEl}
-                                    open={openConsorcioMenu}
-                                    onClose={handleCloseConsorcioMenu}
-                                >
-                                    <FormGroup>
-                                        {predefinedFilters.map((filter, index) => (
-                                            <MenuItem key={filter.label}>
-                                                <FormControlLabel
-                                                    control={
-                                                        <Checkbox
-                                                            checked={checkedFilters[index]}
-                                                            onChange={() => handleCheckboxChange(index)}
-                                                        />
-                                                    }
-                                                    label={filter.label}
-                                                />
-                                            </MenuItem>
-                                        ))}
-                                    </FormGroup>
-                                </Menu>
-                            </Box>
-                            <Box className="flex items-center">
-                                <p>Filtrar por status</p>
-                                <IconButton
-                                    id="status-filter-button"
-                                    aria-controls={openStatusMenu ? 'status-menu' : undefined}
-                                    aria-haspopup="true"
-                                    aria-expanded={openStatusMenu ? 'true' : undefined}
-                                    onClick={handleStatusClick}
-                                >
-                                    <FilterListIcon />
-                                </IconButton>
-                                <Menu
-                                    id="status-menu"
-                                    anchorEl={statusAnchorEl}
-                                    open={openStatusMenu}
-                                    onClose={handleCloseStatusMenu}
-                                >
-                                    <FormGroup>
-                                        {predefinedFiltersStatus.map((filter, index) => (
-                                            <MenuItem key={filter.label}>
-                                                <FormControlLabel
-                                                    control={
-                                                        <Checkbox
-                                                            checked={checkedFiltersStatus[index]}
-                                                            onChange={() => handleCheckboxChangeStatus(index)}
-                                                        />
-                                                    }
-                                                    label={filter.label}
-                                                />
-                                            </MenuItem>
-                                        ))}
-                                    </FormGroup>
-                                </Menu>
-                            </Box>
-                            <Box className="flex items-center">
+                                                renderValue={(selected) => selected.join(', ')}
+                                            >
+                                                {consorciosStatus.map((status) => (
+                                                    <MenuItem key={status.label} value={status.label}>
+                                                        <Checkbox checked={selectedStatus.includes(status.label)} />
+                                                        <ListItemText primary={status.label} />
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    )}
+                                />
                                 <Controller
                                     name="dateRange"
                                     control={control}
@@ -272,9 +256,95 @@ export default function BasicEditingGrid() {
                                             placeholder="Selecionar Data"
                                             format="dd/MM/yy"
                                             character=" - "
-                                        />
-                                    )}
+                                            className="custom-date-range-picker"
+                                        />)}
                                 />
+                            </Box>
+                            <Box className="flex items-center my-20 gap-10 flex-wrap">
+                                 <Controller
+                                    name="valorMin"
+                                    control={control}
+                                    render={({ field }) =>
+                                        <NumericFormat
+                                            {...field}
+                                            thousandSeparator={'.'}
+                                            label="Valor Mínimo"
+                                            value={field.value}
+                                            decimalSeparator={','}
+                                            fixedDecimalScale
+                                            decimalScale={2}
+                                            customInput={TextField}
+                                            InputProps={{
+                                                ...valueProps,
+                                            }}
+
+                                        />
+                                    }
+                                />
+                                 <Controller
+                                    name="valorMax"
+                                    control={control}
+                                    render={({ field }) =>
+                                        <NumericFormat
+                                            {...field}
+                                            thousandSeparator={'.'}
+                                            label="Valor Máximo"
+                                            value={field.value}
+                                            decimalSeparator={','}
+                                            fixedDecimalScale
+                                            decimalScale={2}
+                                            customInput={TextField}
+                                            InputProps={{
+                                                ...valueProps,
+                                            }}
+
+                                        />
+                                    }
+                                />
+                                 
+                                 <Controller
+                                    name="valorEfetivadoMin"
+                                    control={control}
+                                    render={({ field }) =>
+                                        <NumericFormat
+                                            {...field}
+                                            thousandSeparator={'.'}
+                                            label="Valor Efetivado Mínimo"
+                                            value={field.value}
+                                            decimalSeparator={','}
+                                            fixedDecimalScale
+                                            decimalScale={2}
+                                            customInput={TextField}
+                                            InputProps={{
+                                                ...valueProps,
+                                            }}
+
+                                        />
+                                    }
+                                />
+                                <Controller
+                                    name="valorEfetivadoMax"
+                                    control={control}
+                                    render={({ field }) =>
+                                        <NumericFormat
+                                            {...field}
+                                            thousandSeparator={'.'}
+                                            label="Valor Efetivado Máximo"
+                                            value={field.value}
+                                            decimalSeparator={','}
+                                            fixedDecimalScale
+                                            decimalScale={2}
+                                            customInput={TextField}
+                                            InputProps={{
+                                                ...valueProps,
+                                            }}
+
+                                        />
+                                    }
+                                />
+                            </Box>
+                            <Box>
+                              
                             </Box>
                             <Box>
                                 <Button
@@ -294,6 +364,7 @@ export default function BasicEditingGrid() {
                 </Box>
             </Paper>
 
+
             <Paper>
                 <Box className="w-full md:mx-9 p-24 relative mt-32">
                     <header className="flex justify-between items-center">
@@ -309,18 +380,34 @@ export default function BasicEditingGrid() {
                                 <TableRow>
                                     <TableCell>Nome</TableCell>
                                     <TableCell>Valor</TableCell>
-                                    <TableCell>Count</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {!isLoading ? reportList.map((report, index) => (
-                                    <TableRow key={index}>
-                                        <TableCell>{report.nomeFavorecido}</TableCell>
-                                        <TableCell>{report.valorRealEfetivado}</TableCell>
-                                        <TableCell>{report.count}</TableCell>
+                                {!isLoading ? (
+                                    reportList.count > 0 ? (
+                                        reportList.data.map((report, index) => (
+                                            <TableRow key={index}>
+                                                <TableCell>{report.nome}</TableCell>
+                                                <TableCell>{formatter.format(report.valorRealEfetivado ?? report.valor)}</TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={2}>Não há dados para ser exibidos</TableCell>
+                                        </TableRow>
+                                    )
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={2}>Carregando...</TableCell>
                                     </TableRow>
-                                )) : <></>}
+                                )}
                             </TableBody>
+
+                            <TableFooter>
+                                <Box>
+                                    <p>Valor Efetivado: {formatter.format(reportList.valorRealEfetivado ?? 0)}</p>
+                                </Box>
+                            </TableFooter>
                         </Table>
                     </div>
                 </Box>

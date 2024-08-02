@@ -243,3 +243,59 @@ display: none !important;
         font-size: 1.2rem;
     color:#fff;
 }
+
+.custom-date-range-picker .rs-picker-toggle, 
+.rs-picker-default .rs-picker-toggle.rs-btn,
+.custom-date-range-picker .rs-picker-toggle .rs-btn .rs-btn-default{
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    border: 1px solid rgba(0, 0, 0, 0.23);
+    border-radius: 4px;
+    font-size: 1.475rem;
+    height: 53px;
+    background-color: white;
+}
+
+.custom-date-range-picker .rs-picker-toggle:hover {
+    border-color: rgba(0, 0, 0, 0.87);
+}
+
+.custom-date-range-picker .rs-picker-toggle:focus {
+    border-color: #3f51b5;
+    box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.2);
+}
+
+.custom-date-range-picker .rs-picker-toggle .rs-picker-toggle-placeholder {
+color: #6C7482;
+}
+
+.custom-date-range-picker .rs-picker-toggle .rs-picker-toggle-value {
+    color: #6C7482;
+}
+
+.custom-date-range-picker .rs-picker-toggle .rs-picker-toggle-caret {
+    margin-left: auto;
+}
+
+.custom-date-range-picker .rs-picker-menu {
+    z-index: 1300;
+}
+
+.custom-date-range-picker .rs-picker-menu .rs-calendar {
+    font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+}
+
+.custom-date-range-picker .rs-picker-menu .rs-calendar-header {
+    background-color: #3f51b5;
+    color: #6C7482;
+}
+.custom-date-range-picker .rs-picker-toggle-textbox{
+    height: 53px;
+}
+ .rs-picker-date .rs-picker-toggle.rs-btn .rs-picker-toggle-caret,
+ .rs-picker-date .rs-picker-toggle.rs-btn .rs-picker-toggle-clean,
+ .rs-picker-daterange .rs-picker-toggle.rs-btn .rs-picker-toggle-caret,
+ .rs-picker-daterange .rs-picker-toggle.rs-btn .rs-picker-toggle-clean{
+    top: 30% !important;
+ }

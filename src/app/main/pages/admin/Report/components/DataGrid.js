@@ -15,7 +15,7 @@ import accounting from 'accounting';
 import {
     Box,
     MenuItem,
-    Stack,
+    Paper,
     IconButton,
     FormGroup,
     Menu,
@@ -258,121 +258,123 @@ export default function BasicEditingGrid() {
     };
 
     return (
-        <Box className="w-full md:mx-9 p-24 relative mt-32">
-            <header className="flex justify-between items-center">
-                <h3 className="font-semibold mb-24">
-                    Data Vigente: {format(new Date(), 'dd/MM/yyyy')}
-                </h3>
-                <DateRangePicker
-                    id="custom-date-input"
-                    showOneCalendar
-                    showHeader={false}
-                    placement='auto'
-                    placeholder="Selecionar Data"
-                    format='dd/MM/yy'
-                    character=' - '
-                    onChange={(newValue) => handleDateChange(newValue)}
-                />
-            </header>
-            <div className="flex items-center mb-4">
-                <Box className="flex items-center">
-                    <p>Filtrar por consórcio</p>
-                    <IconButton
-                        id="consorcio-filter-button"
-                        aria-controls={openConsorcioMenu ? 'consorcio-menu' : undefined}
-                        aria-haspopup="true"
-                        aria-expanded={openConsorcioMenu ? 'true' : undefined}
-                        onClick={handleConsorcioClick}
-                    >
-                        <FilterListIcon />
-                    </IconButton>
-                    <Menu
-                        id="consorcio-menu"
-                        anchorEl={consorcioAnchorEl}
-                        open={openConsorcioMenu}
-                        onClose={handleCloseConsorcioMenu}
-                    >
-                        <FormGroup>
-                            {predefinedFilters.map((filter, index) => (
-                                <MenuItem key={filter.label}>
-                                    <FormControlLabel
-                                        control={
-                                            <Checkbox
-                                                checked={checkedFilters[index]}
-                                                onChange={() => handleCheckboxChange(index)}
-                                            />
-                                        }
-                                        label={filter.label}
-                                    />
-                                </MenuItem>
-                            ))}
-                        </FormGroup>
-                    </Menu>
-                </Box>
-                <Box className="flex items-center">
-                    <p>Filtrar por status</p>
-                    <IconButton
-                        id="status-filter-button"
-                        aria-controls={openStatusMenu ? 'status-menu' : undefined}
-                        aria-haspopup="true"
-                        aria-expanded={openStatusMenu ? 'true' : undefined}
-                        onClick={handleStatusClick}
-                    >
-                        <FilterListIcon />
-                    </IconButton>
-                    <Menu
-                        id="status-menu"
-                        anchorEl={statusAnchorEl}
-                        open={openStatusMenu}
-                        onClose={handleCloseStatusMenu}
-                    >
-                        <FormGroup>
-                            {predefinedFiltersStatus.map((filter, index) => (
-                                <MenuItem key={filter.label}>
-                                    <FormControlLabel
-                                        control={
-                                            <Checkbox
-                                                checked={checkedFiltersStatus[index]}
-                                                onChange={() => handleCheckboxChangeStatus(index)}
-                                            />
-                                        }
-                                        label={filter.label}
-                                    />
-                                </MenuItem>
-                            ))}
-                        </FormGroup>
-                    </Menu>
-                </Box>
-            </div>
-            <div style={{ height: '65vh', width: '100%' }}>
-                <DataGrid
-                    id='data-table'
-                    localeText={locale.components.MuiDataGrid.defaultProps.localeText}
-                    rows={filteredRows}
-                    disableColumnMenu
-                    disableColumnSelector
-                    disableDensitySelector
-                    disableMultipleColumnsFiltering
-                    apiRef={apiRef}
-                    columns={columns}
-                    slots={{ toolbar: ToolBarCustom, footer: CustomFooter }}
-                    loading={loading}
-                    rowHeight={85}
-                    slotProps={{
-                        toolbar: {
-                            showQuickFilter: true,
-                        },
-                    }}
-                    rowModesModel={rowModesModel}
-                    onRowEditStop={(params, event) => {
-                        event.defaultMuiPrevented = true;
-                    }}
-                    componentsProps={{
-                        toolbar: { setRows, setRowModesModel },
-                    }}
-                />
-            </div>
+            <Paper>
+            <Box className="w-full md:mx-9 p-24 relative mt-32">
+                <header className="flex justify-between items-center">
+                    <h3 className="font-semibold mb-24">
+                        Data Vigente: {format(new Date(), 'dd/MM/yyyy')}
+                    </h3>
+                    <DateRangePicker
+                        id="custom-date-input"
+                        showOneCalendar
+                        showHeader={false}
+                        placement='auto'
+                        placeholder="Selecionar Data"
+                        format='dd/MM/yy'
+                        character=' - '
+                        onChange={(newValue) => handleDateChange(newValue)}
+                    />
+                </header>
+                <div className="flex items-center mb-4">
+                    <Box className="flex items-center">
+                        <p>Filtrar por consórcio</p>
+                        <IconButton
+                            id="consorcio-filter-button"
+                            aria-controls={openConsorcioMenu ? 'consorcio-menu' : undefined}
+                            aria-haspopup="true"
+                            aria-expanded={openConsorcioMenu ? 'true' : undefined}
+                            onClick={handleConsorcioClick}
+                        >
+                            <FilterListIcon />
+                        </IconButton>
+                        <Menu
+                            id="consorcio-menu"
+                            anchorEl={consorcioAnchorEl}
+                            open={openConsorcioMenu}
+                            onClose={handleCloseConsorcioMenu}
+                        >
+                            <FormGroup>
+                                {predefinedFilters.map((filter, index) => (
+                                    <MenuItem key={filter.label}>
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    checked={checkedFilters[index]}
+                                                    onChange={() => handleCheckboxChange(index)}
+                                                />
+                                            }
+                                            label={filter.label}
+                                        />
+                                    </MenuItem>
+                                ))}
+                            </FormGroup>
+                        </Menu>
+                    </Box>
+                    <Box className="flex items-center">
+                        <p>Filtrar por status</p>
+                        <IconButton
+                            id="status-filter-button"
+                            aria-controls={openStatusMenu ? 'status-menu' : undefined}
+                            aria-haspopup="true"
+                            aria-expanded={openStatusMenu ? 'true' : undefined}
+                            onClick={handleStatusClick}
+                        >
+                            <FilterListIcon />
+                        </IconButton>
+                        <Menu
+                            id="status-menu"
+                            anchorEl={statusAnchorEl}
+                            open={openStatusMenu}
+                            onClose={handleCloseStatusMenu}
+                        >
+                            <FormGroup>
+                                {predefinedFiltersStatus.map((filter, index) => (
+                                    <MenuItem key={filter.label}>
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    checked={checkedFiltersStatus[index]}
+                                                    onChange={() => handleCheckboxChangeStatus(index)}
+                                                />
+                                            }
+                                            label={filter.label}
+                                        />
+                                    </MenuItem>
+                                ))}
+                            </FormGroup>
+                        </Menu>
+                    </Box>
+                </div>
+                <div style={{ height: '65vh', width: '100%' }}>
+                    <DataGrid
+                        id='data-table'
+                        localeText={locale.components.MuiDataGrid.defaultProps.localeText}
+                        rows={filteredRows}
+                        disableColumnMenu
+                        disableColumnSelector
+                        disableDensitySelector
+                        disableMultipleColumnsFiltering
+                        apiRef={apiRef}
+                        columns={columns}
+                        slots={{ toolbar: ToolBarCustom, footer: CustomFooter }}
+                        loading={loading}
+                        rowHeight={85}
+                        slotProps={{
+                            toolbar: {
+                                showQuickFilter: true,
+                            },
+                        }}
+                        rowModesModel={rowModesModel}
+                        onRowEditStop={(params, event) => {
+                            event.defaultMuiPrevented = true;
+                        }}
+                        componentsProps={{
+                            toolbar: { setRows, setRowModesModel },
+                        }}
+                    />
+                </div>
 
-        </Box>
+            </Box>
+            </Paper>
     );
 }

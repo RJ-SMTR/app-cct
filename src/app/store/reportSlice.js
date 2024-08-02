@@ -1,6 +1,8 @@
 import { createSlice } from '@reduxjs/toolkit';
 import jwtServiceConfig from '../auth/services/jwtService/jwtServiceConfig';
 import { api } from 'app/configs/api/api';
+import dayjs from 'dayjs';
+
 
 const initialState = {
     synthData: [],
@@ -35,11 +37,66 @@ export const {
 
 export default reportSlice.reducer;
 
-export const handleReportInfo = (data, reportType) => async (dispatch) => {
-    console.log(data, reportType)
-    const token = window.localStorage.getItem('jwt_access_token');
 
-    const reportTypeUrl = reportType
+function handleData(data) {
+    let requestData = {};
+
+    
+    if (data.consorcioName && data.consorcioName.length > 0) {
+        if(data.consorcioName == 'Todos') {
+            requestData.consorcioNome = null
+        } else {
+            requestData.consorcioNome = data.consorcioName.join(',');
+        }
+    }
+
+    if (data.dateRange && data.dateRange.length === 2) {
+        requestData.dataInicio = dayjs(data.dateRange[0]).format('YYYY-MM-DD');
+        requestData.dataFim = dayjs(data.dateRange[1]).format('YYYY-MM-DD');
+    }
+
+    
+    if (data.name.length > 0 ) {
+        if(data.favorecidoSearch == 'nome' || data.favorecidoSearch.length == 0){
+            requestData.favorecidoNome = data.name.map(i => i.fullName).toString()
+        } else {
+            requestData.favorecidoCpfCnpj = data.name.map(i => i.cpfCnpj).toString()
+        }
+    }
+
+    if (data.status && data.status.length > 0) {
+        data.status.forEach(status => {
+            if (status === 'A pagar') {
+                requestData.aPagar = true;
+            } else if (status === "Todos") {
+                requestData.status = null
+            }else {
+                requestData[status.toLowerCase()] = true;
+            }
+        });
+    }
+    const addIfValid = (key, value) => {
+        if (value !== null && value !== '') {
+            requestData[key] = parseFloat(value).toFixed(2);
+        }
+    };
+
+    addIfValid('valorRealEfetivadoMax', data.valorEfetivadoMax);
+    addIfValid('valorRealEfetivadoMin', data.valorEfetivadoMin);
+    addIfValid('valorMax', data.valorMax);
+    addIfValid('valorMin', data.valorMin);
+
+    return requestData;
+}
+
+
+
+
+export const handleReportInfo = (data, reportType) => async (dispatch) => {
+    const requestData = handleData(data);
+
+    const token = window.localStorage.getItem('jwt_access_token');
+    const reportTypeUrl = reportType;
 
     let config = {
         method: 'get',
@@ -48,19 +105,16 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
         headers: {
             "Authorization": `Bearer ${token}`
         },
-        params: {
-           data
-        }
+        params: requestData
     };
 
     try {
         const response = await api.request(config);
-        
-        dispatch(setReportList(response.data.data));
+        dispatch(setReportList(response.data));
     } catch (error) {
         console.error(error);
-    } 
-}
+    }
+};
 export const handleSynthData = (reportData) => async (dispatch) => {
     const groupedData = reportData.reduce((acc, item) => {
         const key = item.consorcio;
