@@ -37,7 +37,6 @@ function TablePending() {
         const now = new Date(); 
         const isoString = now.toISOString();
         setSelectedDate(format(parseISO(isoString), 'dd/MM/yyyy'));
-      console.log(pendingList)
     }, [pendingList]);
 
 

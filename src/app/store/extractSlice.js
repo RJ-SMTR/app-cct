@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { api } from 'app/configs/api/api';
 import { format, parseISO } from 'date-fns';
+import accounting from 'accounting';
 import jwtServiceConfig from '../auth/services/jwtService/jwtServiceConfig';
 
 const initialState = {
@@ -92,6 +93,7 @@ const extractSlice = createSlice({
         setLoadingPrevious: (state, action) => {
             state.isLoadingPrevious = action.payload;
         },
+       
     },
 });
 
@@ -130,7 +132,8 @@ export const {
     pendingValue,
     setLoading,
     setLoadingWeek,
-    setLoadingPrevious
+    setLoadingPrevious,
+
 } = extractSlice.actions;
 
 export default extractSlice.reducer;
@@ -258,7 +261,6 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             dispatch(setSumInfoWeek(response.data))
             if(userId){
                 if(!searchingDay ){
-                    console.log(requestData.endDate)
                     dispatch(getFirstTypes(userId, requestData.endDate, searchingWeek, searchingDay));
                 } else {
                     dispatch(getFirstTypes(userId, dateRange, searchingWeek, searchingDay));

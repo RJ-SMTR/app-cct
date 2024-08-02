@@ -23,7 +23,8 @@ const jwtServiceConfig = {
   finanGetInfo: 'lancamento',
   setRelease: 'lancamento/create',
   finanGetByStatus: 'lancamento/getbystatus',
-  report: 'cnab/arquivoPublicacao'
+  report: 'cnab/relatorio'
+
 };
 
 export default jwtServiceConfig;
