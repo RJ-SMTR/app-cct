@@ -40,12 +40,14 @@ export default reportSlice.reducer;
 
 function handleData(data) {
     let requestData = {};
-    console.log(data)
+
 
     
     if (data.consorcioName && data.consorcioName.length > 0) {
         if(data.consorcioName == 'Todos') {
+
             requestData.exibirConsorcios = true
+
         } else {
             requestData.consorcioNome = data.consorcioName.join(',');
         }
@@ -63,8 +65,10 @@ function handleData(data) {
         } else {
             requestData.favorecidoCpfCnpj = data.name.map(i => i.cpfCnpj).toString()
         }
+
     } else {
         requestData.exibirFavorecidos = false
+
     }
 
     if (data.status && data.status.length > 0) {
