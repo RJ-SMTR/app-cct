@@ -40,14 +40,14 @@ const consorciosStatus = [
 ];
 const consorcios = [
     { label: 'Todos', value: "Todos" },
-    { label: 'STPL', value: "STPL" },
-    { label: 'STPC', value: "STPC" },
-    { label: 'MobiRio', value: "MobiRio" },
     { label: 'Internorte', value: "Internorte" },
     { label: 'Intersul', value: "Intersul" },
-    { label: 'Transcarioca', value: "Transcarioca" },
+    { label: 'MobiRio', value: "MobiRio" },
     { label: 'Santa Cruz', value: "Santa Cruz" },
-    { label: 'VLT', value: "VLT" },
+    { label: 'STPC', value: "STPC" },
+    { label: 'STPL', value: "STPL" },
+    { label: 'Transcarioca', value: "Transcarioca" },
+    { label: 'VLT', value: "VLT" }
 ];
 
 export default function BasicEditingGrid() {
@@ -373,8 +373,8 @@ export default function BasicEditingGrid() {
                         </h3>
                     </header>
 
-                    <div style={{ height: '65vh', width: '100%' }} className="overflow-scroll">
-                        <Table>
+                    <div style={{ height: '50vh', width: '100%' }} className="overflow-scroll">
+                        <Table size='small'>
                             <TableHead className="items-center mb-4">
 
                                 <TableRow>
@@ -386,10 +386,14 @@ export default function BasicEditingGrid() {
                                 {!isLoading ? (
                                     reportList.count > 0 ? (
                                         reportList.data.map((report, index) => (
-                                            <TableRow key={index}>
-                                                <TableCell>{report.nome}</TableCell>
-                                                <TableCell>{formatter.format(report.valorRealEfetivado ?? report.valor)}</TableCell>
-                                            </TableRow>
+                                            <>
+                                                <TableRow key={index}>
+                                                    <TableCell>{report.nome}</TableCell>
+                                                    <TableCell>{formatter.format(report.valorRealEfetivado ?? report.valor)}</TableCell>
+                                                </TableRow>
+                                               
+                                            </>
+                                           
                                         ))
                                     ) : (
                                         <TableRow>
@@ -401,15 +405,17 @@ export default function BasicEditingGrid() {
                                         <TableCell colSpan={2}>Carregando...</TableCell>
                                     </TableRow>
                                 )}
+                                <TableRow key={Math.random()}>
+                                    <TableCell className='font-bold'>Valor Real Efetivado: </TableCell>
+                                    <TableCell className='font-bold'> {formatter.format(reportList.valorRealEfetivado ?? 0)}</TableCell>
+                                </TableRow>
                             </TableBody>
 
-                            <TableFooter>
-                                <Box>
-                                    <p>Valor Efetivado: {formatter.format(reportList.valorRealEfetivado ?? 0)}</p>
-                                </Box>
-                            </TableFooter>
+                         
                         </Table>
-                    </div>
+                        
+                    </div>                  
+
                 </Box>
             </Paper>
         </>
