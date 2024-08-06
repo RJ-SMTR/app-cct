@@ -40,15 +40,16 @@ const consorciosStatus = [
 ];
 const consorcios = [
     { label: 'Todos', value: "Todos" },
-    { label: 'STPL', value: "STPL" },
-    { label: 'STPC', value: "STPC" },
-    { label: 'MobiRio', value: "MobiRio" },
     { label: 'Internorte', value: "Internorte" },
     { label: 'Intersul', value: "Intersul" },
-    { label: 'Transcarioca', value: "Transcarioca" },
+    { label: 'MobiRio', value: "MobiRio" },
     { label: 'Santa Cruz', value: "Santa Cruz" },
-    { label: 'VLT', value: "VLT" },
-];
+    { label: 'STPC', value: "STPC" },
+    { label: 'STPL', value: "STPL" },
+    { label: 'Transcarioca', value: "Transcarioca" },
+    { label: 'VLT', value: "VLT" }
+]
+;
 
 export default function BasicEditingGrid() {
     const reportType = useSelector(state => state.report.reportType);
