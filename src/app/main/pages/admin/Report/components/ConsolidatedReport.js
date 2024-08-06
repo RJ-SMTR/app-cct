@@ -373,10 +373,8 @@ export default function BasicEditingGrid() {
                         </h3>
                     </header>
 
-
                     <div style={{ height: '50vh', width: '100%' }} className="overflow-scroll">
-
-                        <Table>
+                        <Table size='small'>
                             <TableHead className="items-center mb-4">
 
                                 <TableRow>
@@ -388,10 +386,14 @@ export default function BasicEditingGrid() {
                                 {!isLoading ? (
                                     reportList.count > 0 ? (
                                         reportList.data.map((report, index) => (
-                                            <TableRow key={index}>
-                                                <TableCell>{report.nome}</TableCell>
-                                                <TableCell>{formatter.format(report.valorRealEfetivado ?? report.valor)}</TableCell>
-                                            </TableRow>
+                                            <>
+                                                <TableRow key={index}>
+                                                    <TableCell>{report.nome}</TableCell>
+                                                    <TableCell>{formatter.format(report.valorRealEfetivado ?? report.valor)}</TableCell>
+                                                </TableRow>
+                                               
+                                            </>
+                                           
                                         ))
                                     ) : (
                                         <TableRow>
@@ -403,16 +405,16 @@ export default function BasicEditingGrid() {
                                         <TableCell colSpan={2}>Carregando...</TableCell>
                                     </TableRow>
                                 )}
+                                <TableRow key={Math.random()}>
+                                    <TableCell className='font-bold'>Valor Real Efetivado: </TableCell>
+                                    <TableCell className='font-bold'> {formatter.format(reportList.valorRealEfetivado ?? 0)}</TableCell>
+                                </TableRow>
                             </TableBody>
 
-
-                                
+                         
                         </Table>
                         
-                    </div>
-                    <Box className="flex justify-end w-full">
-                        <p className='font-bold'>Valor Efetivado: {formatter.format(reportList.valorRealEfetivado ?? 0)}</p>
-                    </Box>
+                    </div>                  
 
                 </Box>
             </Paper>
