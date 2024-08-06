@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getUser, getInfo } from 'app/store/adminSlice';
 
 import { setSearchingWeek, setSearchingDay, setStatements, setDateRange } from 'app/store/extractSlice';
+import { setReportList } from 'app/store/reportSlice';
 
 
 
@@ -15,10 +16,10 @@ function AdminApp() {
         dispatch(setSearchingWeek(false))
         dispatch(setSearchingDay(false)) 
         dispatch(setDateRange([]))
-
         dispatch(setStatements([]))
         dispatch(getUser())
         dispatch(getInfo())
+        dispatch(setReportList([]))
         
     }, [])
     return (

@@ -4,7 +4,7 @@ import DataGridInfos from './components/DataGrid';
 import SynthReport from './components/SynthReport';
 import ConsolidatedReport from './components/ConsolidatedReport';
 import { useDispatch } from "react-redux";
-import { setReportType } from "app/store/reportSlice";
+import { setReportList, setReportType } from "app/store/reportSlice";
 
 
 function ReportApp() {
@@ -18,6 +18,7 @@ function ReportApp() {
 
 
     const handleSelectChange = (event) => {
+        dispatch(setReportList([]))
         setSelectedReport(event.target.value);
     };
     useEffect(() => {
