@@ -127,7 +127,7 @@ export default function BasicEditingGrid() {
 
 
     const handleAutocompleteChange = (field, newValue) => {
-        setValue(field, newValue ? newValue.map(item => item.value) : []);
+        setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
     };
     const handleStatus = (event) => {
         setSelectedStatus(event.target.value);
