@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
     Box,
     MenuItem,
-  ListItemText,
+    ListItemText,
     Checkbox,
     Table,
     TableHead,
@@ -27,8 +27,10 @@ import { DateRangePicker } from 'rsuite';
 import { useForm, Controller } from 'react-hook-form';
 import { handleReportInfo } from 'app/store/reportSlice';
 import { getUser } from 'app/store/adminSlice';
-import { makeStyles } from '@mui/styles';
 import { NumericFormat } from 'react-number-format';
+import { CSVLink } from 'react-csv';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const locale = pt;
 
@@ -59,14 +61,9 @@ export default function BasicEditingGrid() {
     const [userOptions, setUserOptions] = useState([])
     const [selectedStatus, setSelectedStatus] = useState([]);
 
-   
-    
-   
     const dispatch = useDispatch()
 
-  
-
-    const { register, handleSubmit, setValue, control, getValues,watch } = useForm({
+    const { register, handleSubmit, setValue, control, getValues, watch } = useForm({
         defaultValues: {
             name: [],
             dateRange: [],
@@ -124,22 +121,46 @@ export default function BasicEditingGrid() {
         }
     }, [watchedFavorecidoSearch, userList]);
 
-
     const handleAutocompleteChange = (field, newValue) => {
         setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
     };
+
     const handleStatus = (event) => {
         setSelectedStatus(event.target.value);
     };
+
     const valueProps = {
         startAdornment: <InputAdornment position='start'>R$</InputAdornment>
-    }
+    };
 
     const formatter = new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL',
     });
-   
+
+    const csvData = reportList.data ? reportList.data.map(report => ({
+        Nome: report.nome,
+        Valor: formatter.format(report.valorRealEfetivado ?? report.valor)
+    })) : [];
+
+    const exportPDF = () => {
+        const doc = new jsPDF();
+        const tableColumn = ["Nome", "Valor"];
+        const tableRows = [];
+
+        reportList.data.forEach(report => {
+            const reportData = [
+                report.nome,
+                formatter.format(report.valorRealEfetivado ?? report.valor)
+            ];
+            tableRows.push(reportData);
+        });
+
+        doc.autoTable(tableColumn, tableRows, { startY: 20 });
+        doc.text(`Relatório ${format(new Date(), 'dd/MM/yyyy')}`, 14, 15);
+        doc.save('report.pdf');
+    };
+
     return (
         <>
             <Paper>
@@ -264,7 +285,7 @@ export default function BasicEditingGrid() {
                                 />
                             </Box>
                             <Box className="flex items-center my-20 gap-10 flex-wrap">
-                                 <Controller
+                                <Controller
                                     name="valorMin"
                                     control={control}
                                     render={({ field }) =>
@@ -284,7 +305,7 @@ export default function BasicEditingGrid() {
                                         />
                                     }
                                 />
-                                 <Controller
+                                <Controller
                                     name="valorMax"
                                     control={control}
                                     render={({ field }) =>
@@ -304,8 +325,8 @@ export default function BasicEditingGrid() {
                                         />
                                     }
                                 />
-                                 
-                                 <Controller
+
+                                <Controller
                                     name="valorEfetivadoMin"
                                     control={control}
                                     render={({ field }) =>
@@ -347,7 +368,7 @@ export default function BasicEditingGrid() {
                                 />
                             </Box>
                             <Box>
-                              
+
                             </Box>
                             <Box>
                                 <Button
@@ -367,19 +388,27 @@ export default function BasicEditingGrid() {
                 </Box>
             </Paper>
 
-
             <Paper>
                 <Box className="w-full md:mx-9 p-24 relative mt-32">
                     <header className="flex justify-between items-center">
                         <h3 className="font-semibold mb-24">
                             Data Vigente: {format(new Date(), 'dd/MM/yyyy')}
                         </h3>
+                        <div>
+                            <Button variant="contained" color="primary" className="mr-2">
+                                <CSVLink data={csvData} filename={"report.csv"} style={{ textDecoration: 'none', color: 'white' }}>
+                                   CSV teste
+                                </CSVLink>
+                            </Button>
+                            <Button variant="contained" color="primary" onClick={exportPDF}>
+                              PDF teste
+                            </Button>
+                        </div>
                     </header>
 
                     <div style={{ height: '50vh', width: '100%' }} className="overflow-scroll">
                         <Table size='small'>
                             <TableHead className="items-center mb-4">
-
                                 <TableRow>
                                     <TableCell>Nome</TableCell>
                                     <TableCell>Valor</TableCell>
@@ -389,14 +418,10 @@ export default function BasicEditingGrid() {
                                 {!isLoading ? (
                                     reportList.count > 0 ? (
                                         reportList.data.map((report, index) => (
-                                            <>
-                                                <TableRow key={index}>
-                                                    <TableCell>{report.nome}</TableCell>
-                                                    <TableCell>{formatter.format(report.valorRealEfetivado ?? report.valor)}</TableCell>
-                                                </TableRow>
-                                               
-                                            </>
-                                           
+                                            <TableRow key={index}>
+                                                <TableCell>{report.nome}</TableCell>
+                                                <TableCell>{formatter.format(report.valorRealEfetivado ?? report.valor)}</TableCell>
+                                            </TableRow>
                                         ))
                                     ) : (
                                         <TableRow>
@@ -413,12 +438,8 @@ export default function BasicEditingGrid() {
                                     <TableCell className='font-bold'> {formatter.format(reportList.valorRealEfetivado ?? 0)}</TableCell>
                                 </TableRow>
                             </TableBody>
-
-                         
                         </Table>
-                        
-                    </div>                  
-
+                    </div>
                 </Box>
             </Paper>
         </>
