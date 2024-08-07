@@ -110,7 +110,15 @@ export default function BasicEditingGrid() {
                     fullName: user.fullName
                 }
             }));
-            setUserOptions(options);
+            const sortedOptions = options.sort((a, b) => {
+                if (getValues('favorecidoSearch') === 'cpf/cnpj') {
+                    return a.value.fullName.localeCompare(b.value.fullName);
+                } else {
+                    return a.label.localeCompare(b.label);
+                }
+            });
+
+            setUserOptions(sortedOptions);
         } else {
             setUserOptions([]);
         }
@@ -214,33 +222,28 @@ export default function BasicEditingGrid() {
                             </Box>
 
                             <Box className="flex items-center gap-10 flex-wrap">
-                                <Controller
-                                    name="status"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <FormControl style={{ minWidth: '22rem' }}>
-                                            <InputLabel id="status-label">Status:</InputLabel>
-                                            <Select
-                                                {...field}
-                                                labelId="status-label"
-                                                id="status-select"
-                                                multiple
-                                                label="Status:"
-                                                value={selectedStatus}
-                                                onChange={(event) => {
-                                                    handleStatus(event);
-                                                    field.onChange(event.target.value);
-                                                }}
-                                                renderValue={(selected) => selected.join(', ')}
-                                            >
-                                                {consorciosStatus.map((status) => (
-                                                    <MenuItem key={status.label} value={status.label}>
-                                                        <Checkbox checked={selectedStatus.includes(status.label)} />
-                                                        <ListItemText primary={status.label} />
-                                                    </MenuItem>
-                                                ))}
-                                            </Select>
-                                        </FormControl>
+                                <Autocomplete
+                                    id="status"
+                                    multiple
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
+                                    getOptionLabel={(option) => option.label}
+                                    filterSelectedOptions
+                                    options={consorciosStatus}
+                                    onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="Selecionar Status"
+                                            variant="outlined"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                endAdornment: (
+                                                    <>
+                                                        {params.InputProps.endAdornment}
+                                                    </>
+                                                ),
+                                            }}
+                                        />
                                     )}
                                 />
                                 <Controller
