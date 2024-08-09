@@ -198,7 +198,7 @@ export function BankInfo({ user }) {
   
     useEffect(() => {
         fetchBankOptions();
-        if (user.bankCode === 184 || user.bankCode === 29) {
+        if (user.bankCode === 184 || user.bankCode === 29 || user.bankCode === 479) {
             setError('bankCode', { message: `Erro: Código do banco ${user.bankCode} não é permitido. Por favor, contacte o suporte!` });
 
         }
@@ -211,7 +211,7 @@ export function BankInfo({ user }) {
             const response = await api.get('/banks');
             response.data = response.data.sort((a, b) => a.name.localeCompare(b.name));
             setUserBank(response.data.find((bank) => bank.code === selectedBankCode) || null)
-            const filteredData = response.data.filter(({ code }) => code !== 184 && code !== 29 )
+            const filteredData = response.data.filter(({ code }) => code !== 184 && code !== 29 && code !== 479 )
 
             setBankOptions(filteredData);
         } catch (error) {
@@ -227,7 +227,7 @@ export function BankInfo({ user }) {
 
 
     function onSubmit(info) {
-        if (info.bankCode === 184 || info.bankCode === 29) {
+        if (info.bankCode === 184 || info.bankCode === 29 || info.bankCode === 479) {
 
             setError('bankCode', {
                 message: 'Você deve alterar seu banco antes de salvar'
