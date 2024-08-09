@@ -18,7 +18,8 @@ import {
     FormControl,
     CircularProgress,
     InputAdornment,
-    TableFooter
+    TableFooter,
+    Menu
 } from '@mui/material';
 import { ptBR as pt } from '@mui/x-data-grid';
 import { format } from 'date-fns';
@@ -60,6 +61,7 @@ export default function BasicEditingGrid() {
     const [loadingUsers, setLoadingUsers] = useState(false)
     const [userOptions, setUserOptions] = useState([])
     const [selectedStatus, setSelectedStatus] = useState([]);
+    const [anchorEl, setAnchorEl] = useState(null);
 
     const dispatch = useDispatch()
 
@@ -69,8 +71,6 @@ export default function BasicEditingGrid() {
             dateRange: [],
             valorMax: null,
             valorMin: null,
-            valorEfetivadoMax: null,
-            valorEfetivadoMin: null,
             consorcioName: [],
             favorecidoSearch: '',
             status: []
@@ -101,12 +101,14 @@ export default function BasicEditingGrid() {
     useEffect(() => {
         if (userList && userList.length > 0) {
             const options = userList.map((user) => ({
-                label: getValues('favorecidoSearch') === 'cpf/cnpj' ? `${user.cpfCnpj} - ${user.fullName}` : `${user.fullName}`,
+                label: getValues('favorecidoSearch') === 'cpf/cnpj' ? `${user.cpfCnpj} - ${user.fullName}` : `${user.permitCode} - ${user.fullName}`,
                 value: {
                     cpfCnpj: user.cpfCnpj,
+                    permitCode: user.permitCode,
                     fullName: user.fullName
                 }
             }));
+            console.log(options)
             const sortedOptions = options.sort((a, b) => {
                 if (getValues('favorecidoSearch') === 'cpf/cnpj') {
                     return a.value.fullName.localeCompare(b.value.fullName);
@@ -158,7 +160,19 @@ export default function BasicEditingGrid() {
 
         doc.autoTable(tableColumn, tableRows, { startY: 20 });
         doc.text(`Relatório ${format(new Date(), 'dd/MM/yyyy')}`, 14, 15);
-        doc.save('report.pdf');
+        doc.save(`relatorio_${format(new Date(), 'dd/MM/yyyy')}.pdf`);
+    };
+    const handleMenuClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleMenuClose = (option) => {
+        setAnchorEl(null);
+        if (option === 'csv') {
+            document.getElementById('csv-export-link').click();
+        } else if (option === 'pdf') {
+            exportPDF();
+        }
     };
 
     return (
@@ -182,8 +196,8 @@ export default function BasicEditingGrid() {
                                                 id="favorecido-select"
                                                 label="Pesquisar favorecido por:"
                                             >
-                                                <MenuItem value="cpf/cnpj">CPF/CNPJ</MenuItem>
-                                                <MenuItem value="nome">Nome</MenuItem>
+                                                <MenuItem value="cpf/cnpj">CPF</MenuItem>
+                                                <MenuItem value="permitCode">Código Permissionário</MenuItem>
                                             </Select>
                                         </FormControl>
                                     )}
@@ -326,46 +340,7 @@ export default function BasicEditingGrid() {
                                     }
                                 />
 
-                                <Controller
-                                    name="valorEfetivadoMin"
-                                    control={control}
-                                    render={({ field }) =>
-                                        <NumericFormat
-                                            {...field}
-                                            thousandSeparator={'.'}
-                                            label="Valor Efetivado Mínimo"
-                                            value={field.value}
-                                            decimalSeparator={','}
-                                            fixedDecimalScale
-                                            decimalScale={2}
-                                            customInput={TextField}
-                                            InputProps={{
-                                                ...valueProps,
-                                            }}
-
-                                        />
-                                    }
-                                />
-                                <Controller
-                                    name="valorEfetivadoMax"
-                                    control={control}
-                                    render={({ field }) =>
-                                        <NumericFormat
-                                            {...field}
-                                            thousandSeparator={'.'}
-                                            label="Valor Efetivado Máximo"
-                                            value={field.value}
-                                            decimalSeparator={','}
-                                            fixedDecimalScale
-                                            decimalScale={2}
-                                            customInput={TextField}
-                                            InputProps={{
-                                                ...valueProps,
-                                            }}
-
-                                        />
-                                    }
-                                />
+                            
                             </Box>
                             <Box>
 
@@ -394,16 +369,34 @@ export default function BasicEditingGrid() {
                         <h3 className="font-semibold mb-24">
                             Data Vigente: {format(new Date(), 'dd/MM/yyyy')}
                         </h3>
-                        <div>
-                            <Button variant="contained" color="primary" className="mr-2">
-                                <CSVLink data={csvData} filename={"report.csv"} style={{ textDecoration: 'none', color: 'white' }}>
-                                   CSV teste
-                                </CSVLink>
-                            </Button>
-                            <Button variant="contained" color="primary" onClick={exportPDF}>
-                              PDF teste
-                            </Button>
-                        </div>
+
+
+                        <Button
+                            aria-controls="simple-menu"
+                            aria-haspopup="true"
+                            onClick={handleMenuClick}
+                            style={{ marginTop: '20px' }}
+                        >
+                            <svg class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium muiltr-hgpioi-MuiSvgIcon-root h-[2rem]" focusable="false" aria-hidden="true" viewBox="0 0 24 24" data-testid="SaveAltIcon"><path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"></path></svg> Exportar
+                        </Button>
+                        <Menu
+                            id="simple-menu"
+                            anchorEl={anchorEl}
+                            keepMounted
+                            open={Boolean(anchorEl)}
+                            onClose={() => setAnchorEl(null)}
+                        >
+                            <MenuItem onClick={() => handleMenuClose('csv')}>CSV</MenuItem>
+                            <MenuItem onClick={() => handleMenuClose('pdf')}>PDF</MenuItem>
+                        </Menu>
+
+                        <CSVLink
+                            id="csv-export-link"
+                            data={csvData}
+                            filename={`relatorio_${format(new Date(), 'dd/MM/yyyy')}.csv`}
+                            className="hidden"
+                        
+                        />
                     </header>
 
                     <div style={{ height: '50vh', width: '100%' }} className="overflow-scroll">
