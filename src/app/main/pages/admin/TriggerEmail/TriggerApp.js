@@ -51,6 +51,9 @@ function TriggerApp() {
                     resolve(response.data)
                 })
                 .catch((error) => {
+                    if (error.response.data.status === 401) {
+                        dispatch(showMessage({ message: 'Erro de autenticação. Faça login novamente' }))
+                    }
                     setError(error)
                     console.error(error)
                     reject(error)
