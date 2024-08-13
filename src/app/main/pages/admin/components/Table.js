@@ -18,6 +18,7 @@ import Modal from '@mui/material/Modal';
 import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
+import { showMessage } from 'app/store/fuse/messageSlice';
 
 const style = {
     position: 'absolute',
@@ -57,6 +58,12 @@ export function TableUsers() {
                     setFiltered(true)
                     setPage(0)
                     reset();
+                }).catch((error) => {
+                    if (error.response.data.status === 401) {
+                        dispatch(showMessage({ message: 'Erro de autenticação. Faça login novamente' }))
+                    } else {
+                        dispatch(showMessage({ message: 'Houve um erro desconhecido, tente novamente mais tarde.' }));
+                    }
                 })
     }
 
