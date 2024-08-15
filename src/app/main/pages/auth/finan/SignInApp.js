@@ -52,17 +52,19 @@ function FinanSignIn() {
     return (
         <div className="flex flex-col sm:flex-row items-center justify-center md:items-start sm:justify-center md:justify-start flex-1 min-w-0">
             <Paper className="h-full sm:h-auto flex items-center md:flex md:items-center md:justify-end w-full sm:w-auto md:h-full md:w-1/2 py-8 px-16 sm:p-48 md:p-64 sm:rounded-2xl md:rounded-none sm:shadow md:shadow-none ltr:border-r-1 rtl:border-l-1 relative">
+             
                 <div className="w-full max-w-320 h-5/6 md:h-1/2  sm:w-320 mx-auto sm:mx-0">
                     <Typography className="mt-48 text-4xl font-extrabold tracking-tight leading-tight">
                         <img src="assets/icons/logoPrefeitura.png" width="155" className='mb-10' alt='logo CCT' />
                        Login de Administrador Financeiro
                     </Typography>
-
-                   
+                    <Box className="bg-red-700 text-white p-10 rounded-8 w-[40%]">
+                        HOMOLOGAÇÃO
+                    </Box>
                         <form
                             name="loginForm"
                             noValidate
-                            className="flex flex-col justify-center w-full mt-32"
+                            className="flex flex-col justify-center w-full mt-10"
                             onSubmit={handleSubmit(onSubmit)}
                         >
                             <Controller
