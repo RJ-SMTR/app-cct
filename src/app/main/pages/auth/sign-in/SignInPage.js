@@ -64,9 +64,7 @@ function SignInPage() {
             </Link>
           </div>
 
-          <Box className="bg-red-700 text-white p-10 rounded-8 w-[40%]">
-            HOMOLOGAÇÃO
-          </Box>
+         
           <form
             name="loginForm"
             noValidate
