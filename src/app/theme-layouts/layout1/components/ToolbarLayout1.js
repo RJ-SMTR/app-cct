@@ -67,8 +67,9 @@ function ToolbarLayout1(props) {
 
           <div className="flex items-center px-8 h-full overflow-x-auto absolute right-16">
 
-            <NotificationPanelToggleButton />
-
+              <Box className="bg-red-700 text-white p-10 rounded-8">
+                 HOMOLOGAÇÃO
+              </Box>
             <UserMenu />
           </div>
 

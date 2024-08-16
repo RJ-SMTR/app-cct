@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
     Box,
     MenuItem,
-  ListItemText,
+    ListItemText,
     Checkbox,
     Table,
     TableHead,
@@ -18,7 +18,8 @@ import {
     FormControl,
     CircularProgress,
     InputAdornment,
-    TableFooter
+    TableFooter,
+    Menu
 } from '@mui/material';
 import { ptBR as pt } from '@mui/x-data-grid';
 import { format } from 'date-fns';
@@ -27,8 +28,10 @@ import { DateRangePicker } from 'rsuite';
 import { useForm, Controller } from 'react-hook-form';
 import { handleReportInfo } from 'app/store/reportSlice';
 import { getUser } from 'app/store/adminSlice';
-import { makeStyles } from '@mui/styles';
 import { NumericFormat } from 'react-number-format';
+import { CSVLink } from 'react-csv';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const locale = pt;
 
@@ -58,23 +61,16 @@ export default function BasicEditingGrid() {
     const [isLoading, setIsLoading] = useState(false)
     const [loadingUsers, setLoadingUsers] = useState(false)
     const [userOptions, setUserOptions] = useState([])
-    const [selectedStatus, setSelectedStatus] = useState([]);
+    const [anchorEl, setAnchorEl] = useState(null);
 
-   
-    
-   
     const dispatch = useDispatch()
 
-  
-
-    const { register, handleSubmit, setValue, control, getValues,watch } = useForm({
+    const { reset, handleSubmit, setValue, control, getValues, watch } = useForm({
         defaultValues: {
             name: [],
             dateRange: [],
             valorMax: null,
             valorMin: null,
-            valorEfetivadoMax: null,
-            valorEfetivadoMin: null,
             consorcioName: [],
             favorecidoSearch: '',
             status: []
@@ -85,6 +81,18 @@ export default function BasicEditingGrid() {
     const onSubmit = (data) => {
         dispatch(handleReportInfo(data, reportType))
     };
+    const handleClear = () => {
+        // reset()
+        setValue('name', [])
+        setValue('dateRange', [])
+        setValue('valorMax', '')
+        setValue('valorMin', '')
+        setValue('consorcioName', [])
+        setValue('favorecidoSearch', '')
+        setValue('status', [])
+        document.querySelectorAll('.MuiAutocomplete-clearIndicator').forEach(button => button.click());
+    }
+
 
     const fetchUsers = async () => {
         setLoadingUsers(true);
@@ -105,9 +113,10 @@ export default function BasicEditingGrid() {
     useEffect(() => {
         if (userList && userList.length > 0) {
             const options = userList.map((user) => ({
-                label: getValues('favorecidoSearch') === 'cpf/cnpj' ? `${user.cpfCnpj} - ${user.fullName}` : `${user.fullName}`,
+                label: getValues('favorecidoSearch') === 'cpf/cnpj' ? `${user.cpfCnpj} - ${user.fullName}` : `${user.permitCode} - ${user.fullName}`,
                 value: {
                     cpfCnpj: user.cpfCnpj,
+                    permitCode: user.permitCode,
                     fullName: user.fullName
                 }
             }));
@@ -125,22 +134,55 @@ export default function BasicEditingGrid() {
         }
     }, [watchedFavorecidoSearch, userList]);
 
-
     const handleAutocompleteChange = (field, newValue) => {
         setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
     };
-    const handleStatus = (event) => {
-        setSelectedStatus(event.target.value);
-    };
+
+   
     const valueProps = {
         startAdornment: <InputAdornment position='start'>R$</InputAdornment>
-    }
+    };
 
     const formatter = new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL',
     });
-   
+
+    const csvData = reportList.data ? reportList.data.map(report => ({
+        Nome: report.nome,
+        Valor: formatter.format(report.valor)
+    })) : [];
+
+    const exportPDF = () => {
+        const doc = new jsPDF();
+        const tableColumn = ["Nome", "Valor"];
+        const tableRows = [];
+
+        reportList.data.forEach(report => {
+            const reportData = [
+                report.nome,
+                formatter.format(report.valor)
+            ];
+            tableRows.push(reportData);
+        });
+
+        doc.autoTable(tableColumn, tableRows, { startY: 20 });
+        doc.text(`Relatório ${format(new Date(), 'dd/MM/yyyy')}`, 14, 15);
+        doc.save(`relatorio_${format(new Date(), 'dd/MM/yyyy')}.pdf`);
+    };
+    const handleMenuClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleMenuClose = (option) => {
+        setAnchorEl(null);
+        if (option === 'csv') {
+            document.getElementById('csv-export-link').click();
+        } else if (option === 'pdf') {
+            exportPDF();
+        }
+    };
+
     return (
         <>
             <Paper>
@@ -162,8 +204,8 @@ export default function BasicEditingGrid() {
                                                 id="favorecido-select"
                                                 label="Pesquisar favorecido por:"
                                             >
-                                                <MenuItem value="cpf/cnpj">CPF/CNPJ</MenuItem>
-                                                <MenuItem value="nome">Nome</MenuItem>
+                                                <MenuItem value="cpf/cnpj">CPF</MenuItem>
+                                                <MenuItem value="permitCode">Código Permissionário</MenuItem>
                                             </Select>
                                         </FormControl>
                                     )}
@@ -265,7 +307,7 @@ export default function BasicEditingGrid() {
                                 />
                             </Box>
                             <Box className="flex items-center my-20 gap-10 flex-wrap">
-                                 <Controller
+                                <Controller
                                     name="valorMin"
                                     control={control}
                                     render={({ field }) =>
@@ -285,7 +327,7 @@ export default function BasicEditingGrid() {
                                         />
                                     }
                                 />
-                                 <Controller
+                                <Controller
                                     name="valorMax"
                                     control={control}
                                     render={({ field }) =>
@@ -305,61 +347,32 @@ export default function BasicEditingGrid() {
                                         />
                                     }
                                 />
-                                 
-                                 <Controller
-                                    name="valorEfetivadoMin"
-                                    control={control}
-                                    render={({ field }) =>
-                                        <NumericFormat
-                                            {...field}
-                                            thousandSeparator={'.'}
-                                            label="Valor Efetivado Mínimo"
-                                            value={field.value}
-                                            decimalSeparator={','}
-                                            fixedDecimalScale
-                                            decimalScale={2}
-                                            customInput={TextField}
-                                            InputProps={{
-                                                ...valueProps,
-                                            }}
 
-                                        />
-                                    }
-                                />
-                                <Controller
-                                    name="valorEfetivadoMax"
-                                    control={control}
-                                    render={({ field }) =>
-                                        <NumericFormat
-                                            {...field}
-                                            thousandSeparator={'.'}
-                                            label="Valor Efetivado Máximo"
-                                            value={field.value}
-                                            decimalSeparator={','}
-                                            fixedDecimalScale
-                                            decimalScale={2}
-                                            customInput={TextField}
-                                            InputProps={{
-                                                ...valueProps,
-                                            }}
-
-                                        />
-                                    }
-                                />
+                            
                             </Box>
                             <Box>
-                              
+
                             </Box>
                             <Box>
                                 <Button
                                     variant="contained"
                                     color="secondary"
-                                    className=" w-full mt-16 z-10"
+                                    className=" w-35% mt-16 z-10"
                                     aria-label="Pesquisar"
                                     type="submit"
                                     size="medium"
                                 >
                                     Pesquisar
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    className=" w-35% mt-16 mx-10 z-10"
+                                    aria-label="Limpar Filtros"
+                                    type="submit"
+                                    size="medium"
+                                    onClick={() => handleClear()}
+                                >
+                                    Limpar Filtros
                                 </Button>
                             </Box>
                         </form>
@@ -368,19 +381,45 @@ export default function BasicEditingGrid() {
                 </Box>
             </Paper>
 
-
             <Paper>
                 <Box className="w-full md:mx-9 p-24 relative mt-32">
                     <header className="flex justify-between items-center">
                         <h3 className="font-semibold mb-24">
                             Data Vigente: {format(new Date(), 'dd/MM/yyyy')}
                         </h3>
+
+
+                        <Button
+                            aria-controls="simple-menu"
+                            aria-haspopup="true"
+                            onClick={handleMenuClick}
+                            style={{ marginTop: '20px' }}
+                        >
+                            <svg class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium muiltr-hgpioi-MuiSvgIcon-root h-[2rem]" focusable="false" aria-hidden="true" viewBox="0 0 24 24" data-testid="SaveAltIcon"><path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"></path></svg> Exportar
+                        </Button>
+                        <Menu
+                            id="simple-menu"
+                            anchorEl={anchorEl}
+                            keepMounted
+                            open={Boolean(anchorEl)}
+                            onClose={() => setAnchorEl(null)}
+                        >
+                            <MenuItem onClick={() => handleMenuClose('csv')}>CSV</MenuItem>
+                            <MenuItem onClick={() => handleMenuClose('pdf')}>PDF</MenuItem>
+                        </Menu>
+
+                        <CSVLink
+                            id="csv-export-link"
+                            data={csvData}
+                            filename={`relatorio_${format(new Date(), 'dd/MM/yyyy')}.csv`}
+                            className="hidden"
+                        
+                        />
                     </header>
 
                     <div style={{ height: '50vh', width: '100%' }} className="overflow-scroll">
                         <Table size='small'>
                             <TableHead className="items-center mb-4">
-
                                 <TableRow>
                                     <TableCell>Nome</TableCell>
                                     <TableCell>Valor</TableCell>
@@ -390,18 +429,14 @@ export default function BasicEditingGrid() {
                                 {!isLoading ? (
                                     reportList.count > 0 ? (
                                         reportList.data.map((report, index) => (
-                                            <>
-                                                <TableRow key={index}>
-                                                    <TableCell>{report.nome}</TableCell>
-                                                    <TableCell>{formatter.format(report.valorRealEfetivado ?? report.valor)}</TableCell>
-                                                </TableRow>
-                                               
-                                            </>
-                                           
+                                            <TableRow key={index}>
+                                                <TableCell>{report.nome}</TableCell>
+                                                <TableCell>{formatter.format(report.valor)}</TableCell>
+                                            </TableRow>
                                         ))
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={2}>Não há dados para ser exibidos</TableCell>
+                                            <TableCell colSpan={2}>Não há dados para serem exibidos</TableCell>
                                         </TableRow>
                                     )
                                 ) : (
@@ -410,16 +445,12 @@ export default function BasicEditingGrid() {
                                     </TableRow>
                                 )}
                                 <TableRow key={Math.random()}>
-                                    <TableCell className='font-bold'>Valor Real Efetivado: </TableCell>
-                                    <TableCell className='font-bold'> {formatter.format(reportList.valorRealEfetivado ?? 0)}</TableCell>
+                                    <TableCell className='font-bold'>Valor Total: </TableCell>
+                                    <TableCell className='font-bold'> {formatter.format(reportList.valor ?? 0)}</TableCell>
                                 </TableRow>
                             </TableBody>
-
-                         
                         </Table>
-                        
-                    </div>                  
-
+                    </div>
                 </Box>
             </Paper>
         </>
