@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import jwtServiceConfig from '../auth/services/jwtService/jwtServiceConfig';
 import { api } from 'app/configs/api/api';
+import accounting from 'accounting';
 import dayjs from 'dayjs';
 
 
@@ -84,7 +85,8 @@ function handleData(data) {
     }
     const addIfValid = (key, value) => {
         if (value !== null && value !== '') {
-            requestData[key] = parseFloat(value).toFixed(2);
+            const unformattedValue = accounting.unformat(value.replace(/\./g, '').replace(',', '.'));
+            requestData[key] = parseFloat(unformattedValue).toFixed(2);
         }
     };
 
