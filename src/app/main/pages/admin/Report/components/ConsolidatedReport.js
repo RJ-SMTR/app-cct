@@ -143,7 +143,7 @@ export default function BasicEditingGrid() {
 
     const csvData = reportList.data ? reportList.data.map(report => ({
         Nome: report.nome,
-        Valor: formatter.format(report.valorRealEfetivado ?? report.valor)
+        Valor: formatter.format(report.valor)
     })) : [];
 
     const exportPDF = () => {
@@ -154,7 +154,7 @@ export default function BasicEditingGrid() {
         reportList.data.forEach(report => {
             const reportData = [
                 report.nome,
-                formatter.format(report.valorRealEfetivado ?? report.valor)
+                formatter.format(report.valor)
             ];
             tableRows.push(reportData);
         });
@@ -414,7 +414,7 @@ export default function BasicEditingGrid() {
                                         reportList.data.map((report, index) => (
                                             <TableRow key={index}>
                                                 <TableCell>{report.nome}</TableCell>
-                                                <TableCell>{formatter.format(report.valorRealEfetivado ?? report.valor)}</TableCell>
+                                                <TableCell>{formatter.format(report.valor)}</TableCell>
                                             </TableRow>
                                         ))
                                     ) : (
@@ -428,8 +428,8 @@ export default function BasicEditingGrid() {
                                     </TableRow>
                                 )}
                                 <TableRow key={Math.random()}>
-                                    <TableCell className='font-bold'>Valor Real Efetivado: </TableCell>
-                                    <TableCell className='font-bold'> {formatter.format(reportList.valorRealEfetivado ?? 0)}</TableCell>
+                                    <TableCell className='font-bold'>Valor Total: </TableCell>
+                                    <TableCell className='font-bold'> {formatter.format(reportList.valor ?? 0)}</TableCell>
                                 </TableRow>
                             </TableBody>
                         </Table>
