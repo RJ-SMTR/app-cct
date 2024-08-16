@@ -56,6 +56,7 @@ function SignInPage() {
             <img src="assets/icons/logoPrefeitura.png" width="155" className='mb-10' alt='logo CCT' />
             Login
           </Typography>
+
           <div className="flex items-baseline mt-2 font-medium">
             <Typography>Não foi registrado?</Typography>
             <Link className="ml-4" to="https://secretariamunicipaldetransportes.movidesk.com/form/6594/">
@@ -63,6 +64,9 @@ function SignInPage() {
             </Link>
           </div>
 
+          <Box className="bg-red-700 text-white p-10 rounded-8 w-[40%]">
+            HOMOLOGAÇÃO
+          </Box>
           <form
             name="loginForm"
             noValidate

@@ -90,7 +90,6 @@ function handleData(data) {
         }
     };
 
-
     addIfValid('valorMax', data.valorMax);
     addIfValid('valorMin', data.valorMin);
 
