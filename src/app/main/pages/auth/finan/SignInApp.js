@@ -58,9 +58,7 @@ function FinanSignIn() {
                         <img src="assets/icons/logoPrefeitura.png" width="155" className='mb-10' alt='logo CCT' />
                        Login de Administrador Financeiro
                     </Typography>
-                    <Box className="bg-red-700 text-white p-10 rounded-8 w-[40%]">
-                        HOMOLOGAÇÃO
-                    </Box>
+                  
                         <form
                             name="loginForm"
                             noValidate
