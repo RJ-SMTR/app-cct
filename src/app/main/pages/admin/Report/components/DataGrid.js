@@ -108,7 +108,7 @@ export default function BasicEditingGrid() {
                 const config = {
                     method: 'get',
                     maxBodyLength: Infinity,
-                    url: `${jwtServiceConfig.report}?dt_inicio=${date[0]}&dt_fim=${date[1]}`,
+                    url: `/cnab/arquivoPublicacao?dt_inicio=${date[0]}&dt_fim=${date[1]}`,
                     headers: { "Authorization": `Bearer ${token}` },
                 };
                 try {

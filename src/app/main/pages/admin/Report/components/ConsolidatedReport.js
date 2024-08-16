@@ -61,12 +61,11 @@ export default function BasicEditingGrid() {
     const [isLoading, setIsLoading] = useState(false)
     const [loadingUsers, setLoadingUsers] = useState(false)
     const [userOptions, setUserOptions] = useState([])
-    const [selectedStatus, setSelectedStatus] = useState([]);
     const [anchorEl, setAnchorEl] = useState(null);
 
     const dispatch = useDispatch()
 
-    const { register, handleSubmit, setValue, control, getValues, watch } = useForm({
+    const { reset, handleSubmit, setValue, control, getValues, watch } = useForm({
         defaultValues: {
             name: [],
             dateRange: [],
@@ -82,6 +81,18 @@ export default function BasicEditingGrid() {
     const onSubmit = (data) => {
         dispatch(handleReportInfo(data, reportType))
     };
+    const handleClear = () => {
+        // reset()
+        setValue('name', [])
+        setValue('dateRange', [])
+        setValue('valorMax', '')
+        setValue('valorMin', '')
+        setValue('consorcioName', [])
+        setValue('favorecidoSearch', '')
+        setValue('status', [])
+        document.querySelectorAll('.MuiAutocomplete-clearIndicator').forEach(button => button.click());
+    }
+
 
     const fetchUsers = async () => {
         setLoadingUsers(true);
@@ -109,7 +120,6 @@ export default function BasicEditingGrid() {
                     fullName: user.fullName
                 }
             }));
-            console.log(options)
             const sortedOptions = options.sort((a, b) => {
                 if (getValues('favorecidoSearch') === 'cpf/cnpj') {
                     return a.value.fullName.localeCompare(b.value.fullName);
@@ -128,10 +138,7 @@ export default function BasicEditingGrid() {
         setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
     };
 
-    const handleStatus = (event) => {
-        setSelectedStatus(event.target.value);
-    };
-
+   
     const valueProps = {
         startAdornment: <InputAdornment position='start'>R$</InputAdornment>
     };
@@ -350,12 +357,22 @@ export default function BasicEditingGrid() {
                                 <Button
                                     variant="contained"
                                     color="secondary"
-                                    className=" w-full mt-16 z-10"
+                                    className=" w-35% mt-16 z-10"
                                     aria-label="Pesquisar"
                                     type="submit"
                                     size="medium"
                                 >
                                     Pesquisar
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    className=" w-35% mt-16 mx-10 z-10"
+                                    aria-label="Limpar Filtros"
+                                    type="submit"
+                                    size="medium"
+                                    onClick={() => handleClear()}
+                                >
+                                    Limpar Filtros
                                 </Button>
                             </Box>
                         </form>
@@ -419,7 +436,7 @@ export default function BasicEditingGrid() {
                                         ))
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={2}>Não há dados para ser exibidos</TableCell>
+                                            <TableCell colSpan={2}>Não há dados para serem exibidos</TableCell>
                                         </TableRow>
                                     )
                                 ) : (
