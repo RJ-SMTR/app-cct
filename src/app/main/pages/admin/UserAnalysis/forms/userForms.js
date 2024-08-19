@@ -209,7 +209,7 @@ export function BankInfo({user}) {
         } else {
             setBankCode(user.bankCode)
         }
-        if (user.bankCode === 184 || user.bankCode === 29 || user.bankCode === 479) {
+        if (user.bankCode === 184 || user.bankCode === 29 || user.bankCode === 479 || user.bankCode === 386) {
 
             setBankRm(true)
 
