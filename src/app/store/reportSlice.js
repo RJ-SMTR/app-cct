@@ -45,13 +45,7 @@ function handleData(data) {
 
     
     if (data.consorcioName && data.consorcioName.length > 0) {
-        if(data.consorcioName == 'Todos') {
-
-            requestData.exibirConsorcios = true
-
-        } else {
             requestData.consorcioNome = data.consorcioName.join(',');
-        }
     }
 
     if (data.dateRange && data.dateRange.length === 2) {
@@ -67,19 +61,18 @@ function handleData(data) {
             requestData.favorecidoCpfCnpj = data.name.map(i => i.cpfCnpj).toString()
         }
 
-    } else {
-        requestData.exibirFavorecidos = false
-
-    }
+    } 
 
     if (data.status && data.status.length > 0) {
         data.status.forEach(status => {
-            if (status === 'A pagar') {
-                requestData.aPagar = true;
-            } else if (status === "Todos") {
-                requestData.status = null
-            }else {
-                requestData[status.toLowerCase()] = true;
+            if(status !== "Todos"){
+                if (status === 'Pago') {
+                    requestData.pago = true;
+                } else if (status === 'Erro') {
+                    requestData.pago = false
+                } else {
+                    requestData["a pagar"] = true
+                }
             }
         });
     }
@@ -117,7 +110,9 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
 
     try {
         const response = await api.request(config);
-        dispatch(setReportList(response.data));
+        const conditionalResponse = response.data.length > 0 ? response.data[0] : response
+        console.log(conditionalResponse)
+        dispatch(setReportList(conditionalResponse));
     } catch (error) {
         console.error(error);
     }

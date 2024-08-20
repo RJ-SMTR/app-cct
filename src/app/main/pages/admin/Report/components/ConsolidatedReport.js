@@ -428,9 +428,9 @@ export default function BasicEditingGrid() {
                             <TableBody>
                                 {!isLoading ? (
                                     reportList.count > 0 ? (
-                                        reportList.data.map((report, index) => (
+                                        reportList.data?.map((report, index) => (
                                             <TableRow key={index}>
-                                                <TableCell>{report.nome}</TableCell>
+                                                <TableCell>{report.nomefavorecido}</TableCell>
                                                 <TableCell>{formatter.format(report.valor)}</TableCell>
                                             </TableRow>
                                         ))
