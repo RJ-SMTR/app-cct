@@ -93,30 +93,35 @@ function handleData(data) {
 
 
 export const handleReportInfo = (data, reportType) => async (dispatch) => {
-    const requestData = handleData(data);
+    return new Promise(async (resolve, reject) => {
+        const requestData = handleData(data);
 
-    const token = window.localStorage.getItem('jwt_access_token');
-    const reportTypeUrl = reportType;
+        const token = window.localStorage.getItem('jwt_access_token');
+        const reportTypeUrl = reportType;
 
-    let config = {
-        method: 'get',
-        maxBodyLength: Infinity,
-        url: jwtServiceConfig.report + `/${reportTypeUrl}`,
-        headers: {
-            "Authorization": `Bearer ${token}`
-        },
-        params: requestData
-    };
+        let config = {
+            method: 'get',
+            maxBodyLength: Infinity,
+            url: jwtServiceConfig.report + `/${reportTypeUrl}`,
+            headers: {
+                "Authorization": `Bearer ${token}`
+            },
+            params: requestData
+        };
 
-    try {
-        const response = await api.request(config);
-        const conditionalResponse = response.data.length > 0 ? response.data[0] : response
-        console.log(conditionalResponse)
-        dispatch(setReportList(conditionalResponse));
-    } catch (error) {
-        console.error(error);
-    }
+        try {
+            const response = await api.request(config);
+            const conditionalResponse = response.data.length > 0 ? response.data[0] : response;
+            console.log(conditionalResponse);
+            dispatch(setReportList(conditionalResponse));
+            resolve(conditionalResponse)
+        } catch (error) {
+            console.error(error);
+            reject(error)
+        }
+    });
 };
+
 export const handleSynthData = (reportData) => async (dispatch) => {
     const groupedData = reportData.reduce((acc, item) => {
         const key = item.consorcio;

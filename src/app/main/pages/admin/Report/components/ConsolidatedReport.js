@@ -32,6 +32,7 @@ import { NumericFormat } from 'react-number-format';
 import { CSVLink } from 'react-csv';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { showMessage } from 'app/store/fuse/messageSlice';
 
 const locale = pt;
 
@@ -80,7 +81,13 @@ export default function BasicEditingGrid() {
 
     const onSubmit = (data) => {
         dispatch(handleReportInfo(data, reportType))
+            .then((response) => {
+            })
+            .catch((error) => {
+               dispatch(showMessage({message: 'Erro na busca, verifique os campos e tente novamente.'}))
+            });
     };
+
     const handleClear = () => {
         // reset()
         setValue('name', [])
@@ -289,22 +296,26 @@ export default function BasicEditingGrid() {
                                         />
                                     )}
                                 />
-                                <Controller
-                                    name="dateRange"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <DateRangePicker
-                                            {...field}
-                                            id="custom-date-input"
-                                            showOneCalendar
-                                            showHeader={false}
-                                            placement="auto"
-                                            placeholder="Selecionar Data"
-                                            format="dd/MM/yy"
-                                            character=" - "
-                                            className="custom-date-range-picker"
-                                        />)}
-                                />
+                            <Box>
+                                    <Controller
+                                        name="dateRange"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <DateRangePicker
+                                                {...field}
+                                                id="custom-date-input"
+                                                showOneCalendar
+                                                showHeader={false}
+                                                placement="auto"
+                                                placeholder="Selecionar Data"
+                                                format="dd/MM/yy"
+                                                character=" - "
+                                                className="custom-date-range-picker"
+                                            />)}
+                                    />
+                                    <br/>
+                                    <span className='absolute text-xs text-red-600'>Campo data obrigatório*</span>
+                            </Box>
                             </Box>
                             <Box className="flex items-center my-20 gap-10 flex-wrap">
                                 <Controller
