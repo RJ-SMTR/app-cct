@@ -5,6 +5,7 @@ import { useHistory } from 'react-router-dom';
 import dayjs from 'dayjs';
 import axios from 'axios';
 import { cnab } from 'app/configs/api/cnab';
+import JwtService from '../auth/services/jwtService';
 
 
 const initialState = {
@@ -73,42 +74,47 @@ export const getFavorecidos = () => (dispatch) => {
 
 
 export const setRelease = (data)  => (dispatch) => {
-    return new Promise((resolve, reject) => {
-        const month = data.mes
-        const period = parseFloat(data.periodo)
-        let dayOfMonth = 1
+    const token = window.localStorage.getItem('jwt_access_token');
 
-        if (period === 2) {
-            dayOfMonth = 16
-        }
+    if(JwtService.isAuthTokenValid(token)){
+        return new Promise((resolve, reject) => {
+            const month = data.mes
+            const period = parseFloat(data.periodo)
+            let dayOfMonth = 1
+
+            if (period === 2) {
+                dayOfMonth = 16
+            }
 
 
-        const parseDate = dayjs(data.data_ordem, 'DD/MM/YYYY')
-        const releaseDate = dayjs().set('month', month - 1).set('date', dayOfMonth)
-        const isoDateString = parseDate.toISOString()
-        const releaseIsoDate = releaseDate.toISOString()
-        const cleanedData = {
-            ...data,
-            data_ordem: isoDateString,
-            data_lancamento: releaseIsoDate
+            const parseDate = dayjs(data.data_ordem, 'DD/MM/YYYY')
+            const releaseDate = dayjs().set('month', month - 1).set('date', dayOfMonth)
+            const isoDateString = parseDate.toISOString()
+            const releaseIsoDate = releaseDate.toISOString()
+            const cleanedData = {
+                ...data,
+                data_ordem: isoDateString,
+                data_lancamento: releaseIsoDate
 
-        };
+            };
 
-        const token = window.localStorage.getItem('jwt_access_token');
-        api.post(jwtServiceConfig.setRelease,
-            cleanedData,
-            { headers: { "Authorization": `Bearer ${token}` } })
-            .then((response) => {
-                if (response.status === 201) {
-                    resolve(); 
-                } else {
-                    reject(new Error('Erro')); 
-                }
-            })
-            .catch((error) => {
-                reject(error); 
-            });
-    });
+            api.post(jwtServiceConfig.setRelease,
+                cleanedData,
+                { headers: { "Authorization": `Bearer ${token}` } })
+                .then((response) => {
+                    if (response.status === 201) {
+                        resolve();
+                    } else {
+                        reject(new Error('Erro'));
+                    }
+                })
+                .catch((error) => {
+                    reject(error);
+                });
+        });
+    } 
+
+
 };
 
 export const editRelease = (data,id) => (dispatch) => {
