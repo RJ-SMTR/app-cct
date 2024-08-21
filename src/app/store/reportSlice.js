@@ -3,6 +3,7 @@ import jwtServiceConfig from '../auth/services/jwtService/jwtServiceConfig';
 import { api } from 'app/configs/api/api';
 import accounting from 'accounting';
 import dayjs from 'dayjs';
+import JwtService from '../auth/services/jwtService';
 
 
 const initialState = {
@@ -58,7 +59,7 @@ function handleData(data) {
         if(data.favorecidoSearch == 'permitCode' || data.favorecidoSearch.length == 0){
             requestData.favorecidoNome = data.name.map(i => i.fullName).toString()
         } else {
-            requestData.favorecidoCpfCnpj = data.name.map(i => i.cpfCnpj).toString()
+            requestData.favorecidoCpfCnpj = data.name.map(i => i.fullName).toString()
         }
 
     } 
@@ -93,33 +94,36 @@ function handleData(data) {
 
 
 export const handleReportInfo = (data, reportType) => async (dispatch) => {
-    return new Promise(async (resolve, reject) => {
-        const requestData = handleData(data);
+    const token = window.localStorage.getItem('jwt_access_token');
 
-        const token = window.localStorage.getItem('jwt_access_token');
-        const reportTypeUrl = reportType;
+        if(JwtService.isAuthTokenValid(token)){
+            return new Promise(async (resolve, reject) => {
+                const requestData = handleData(data);
 
-        let config = {
-            method: 'get',
-            maxBodyLength: Infinity,
-            url: jwtServiceConfig.report + `/${reportTypeUrl}`,
-            headers: {
-                "Authorization": `Bearer ${token}`
-            },
-            params: requestData
-        };
+              
+                const reportTypeUrl = reportType;
 
-        try {
-            const response = await api.request(config);
-            const conditionalResponse = response.data.length > 0 ? response.data[0] : response;
-            console.log(conditionalResponse);
-            dispatch(setReportList(conditionalResponse));
-            resolve(conditionalResponse)
-        } catch (error) {
-            console.error(error);
-            reject(error)
+                let config = {
+                    method: 'get',
+                    maxBodyLength: Infinity,
+                    url: jwtServiceConfig.report + `/${reportTypeUrl}`,
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    },
+                    params: requestData
+                };
+
+                try {
+                    const response = await api.request(config);
+                    const conditionalResponse = response.data.length > 0 ? response.data[0] : response;
+                    dispatch(setReportList(conditionalResponse));
+                    resolve(conditionalResponse)
+                } catch (error) {
+                    console.error(error);
+                    reject(error)
+                }
+            });
         }
-    });
 };
 
 export const handleSynthData = (reportData) => async (dispatch) => {

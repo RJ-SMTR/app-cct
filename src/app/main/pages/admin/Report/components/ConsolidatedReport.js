@@ -19,20 +19,22 @@ import {
     CircularProgress,
     InputAdornment,
     TableFooter,
-    Menu
+    Menu,
+    IconButton
 } from '@mui/material';
 import { ptBR as pt } from '@mui/x-data-grid';
 import { format } from 'date-fns';
 import { useDispatch, useSelector } from 'react-redux';
 import { DateRangePicker } from 'rsuite';
 import { useForm, Controller } from 'react-hook-form';
-import { handleReportInfo } from 'app/store/reportSlice';
+import { handleReportInfo, setReportList } from 'app/store/reportSlice';
 import { getUser } from 'app/store/adminSlice';
 import { NumericFormat } from 'react-number-format';
 import { CSVLink } from 'react-csv';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { showMessage } from 'app/store/fuse/messageSlice';
+import { ClearIcon } from '@mui/x-date-pickers';
 
 const locale = pt;
 
@@ -63,6 +65,9 @@ export default function BasicEditingGrid() {
     const [loadingUsers, setLoadingUsers] = useState(false)
     const [userOptions, setUserOptions] = useState([])
     const [anchorEl, setAnchorEl] = useState(null);
+    const [showClearMin, setShowClearMin] = useState(false)
+    const [showClearMax, setShowClearMax] = useState(false)
+    const [showButton, setShowButton] = useState(false)
 
     const dispatch = useDispatch()
 
@@ -80,8 +85,10 @@ export default function BasicEditingGrid() {
     const watchedFavorecidoSearch = watch('favorecidoSearch');
 
     const onSubmit = (data) => {
+            setIsLoading(true)
         dispatch(handleReportInfo(data, reportType))
             .then((response) => {
+                setIsLoading(false)
             })
             .catch((error) => {
                dispatch(showMessage({message: 'Erro na busca, verifique os campos e tente novamente.'}))
@@ -90,6 +97,7 @@ export default function BasicEditingGrid() {
 
     const handleClear = () => {
         // reset()
+        dispatch(setReportList([]))
         setValue('name', [])
         setValue('dateRange', [])
         setValue('valorMax', '')
@@ -112,9 +120,7 @@ export default function BasicEditingGrid() {
     }, []);
 
     useEffect(() => {
-        if (reportList.length > 0) {
             setIsLoading(false)
-        }
     }, [reportList]);
 
     useEffect(() => {
@@ -130,6 +136,8 @@ export default function BasicEditingGrid() {
             const sortedOptions = options.sort((a, b) => {
                 if (getValues('favorecidoSearch') === 'cpf/cnpj') {
                     return a.value.fullName.localeCompare(b.value.fullName);
+                } else if(getValues('favorecidoSearch') === 'permitCode'){
+                    return a.label.localeCompare(b.label);
                 } else {
                     return a.label.localeCompare(b.label);
                 }
@@ -189,6 +197,10 @@ export default function BasicEditingGrid() {
             exportPDF();
         }
     };
+    const clearSelect = (button) => {
+        setValue(button, ''); 
+        setShowButton(false)
+    };
 
     return (
         <>
@@ -203,13 +215,32 @@ export default function BasicEditingGrid() {
                                     name="favorecidoSearch"
                                     control={control}
                                     render={({ field }) => (
-                                        <FormControl style={{ minWidth: '22rem' }}>
+                                        <FormControl style={{ minWidth: '25rem' }}>
                                             <InputLabel id="favorecido-select-label">Pesquisar favorecido por:</InputLabel>
                                             <Select
                                                 {...field}
                                                 labelId="favorecido-select-label"
                                                 id="favorecido-select"
                                                 label="Pesquisar favorecido por:"
+                                                onMouseEnter={() => {
+                                                    if (field.value) {
+                                                        setShowButton(true);
+                                                    }
+                                                }}
+                                                onMouseLeave={() => setShowButton(false)}
+                                                endAdornment={
+                                                        showButton && (
+                                                        <InputAdornment sx={{ position: "absolute", right: '2.5rem' }} position="end">
+                                                            <IconButton
+                                                                onClick={() => {
+                                                                    clearSelect('favorecidoSearch');
+                                                                }}
+                                                            >
+                                                                <ClearIcon></ClearIcon>
+                                                            </IconButton>
+                                                        </InputAdornment>
+                                                        )
+                                                }
                                             >
                                                 <MenuItem value="cpf/cnpj">CPF</MenuItem>
                                                 <MenuItem value="permitCode">Código Permissionário</MenuItem>
@@ -321,45 +352,64 @@ export default function BasicEditingGrid() {
                                 <Controller
                                     name="valorMin"
                                     control={control}
-                                    render={({ field }) =>
+                                    render={({ field }) => (
                                         <NumericFormat
                                             {...field}
-                                            thousandSeparator={'.'}
-                                            label="Valor Mínimo"
-                                            value={field.value}
-                                            decimalSeparator={','}
+                                            thousandSeparator="."
+                                            decimalSeparator=","
                                             fixedDecimalScale
                                             decimalScale={2}
                                             customInput={TextField}
+                                            label="Valor Mínimo"
+                                            value={field.value}
+                                            onMouseEnter={() => {
+                                                if (field.value) setShowClearMin(true);
+                                            }}
+                                            onMouseLeave={() => setShowClearMin(false)}
                                             InputProps={{
+                                                endAdornment: showClearMin && field.value && (
+                                                    <InputAdornment  sx={{ position: "absolute", right: '0rem' }} position="end">
+                                                        <IconButton onClick={() => clearSelect('valorMin')}>
+                                                            <ClearIcon />
+                                                        </IconButton>
+                                                    </InputAdornment>
+                                                ),
                                                 ...valueProps,
                                             }}
-
                                         />
-                                    }
+                                    )}
                                 />
                                 <Controller
                                     name="valorMax"
                                     control={control}
-                                    render={({ field }) =>
+                                    render={({ field }) => (
                                         <NumericFormat
                                             {...field}
-                                            thousandSeparator={'.'}
-                                            label="Valor Máximo"
-                                            value={field.value}
-                                            decimalSeparator={','}
+                                            thousandSeparator="."
+                                            decimalSeparator=","
                                             fixedDecimalScale
                                             decimalScale={2}
                                             customInput={TextField}
+                                            label="Valor Máximo"
+                                            value={field.value}
+                                            onMouseEnter={() => {
+                                                if (field.value) setShowClearMax(true);
+                                            }}
+                                            onMouseLeave={() => setShowClearMax(false)}
                                             InputProps={{
+                                                endAdornment: showClearMax && field.value && (
+                                                    <InputAdornment  sx={{ position: "absolute", right: '0rem' }} position="end">
+                                                        <IconButton onClick={() => clearSelect('valorMax')}>
+                                                            <ClearIcon />
+                                                        </IconButton>
+                                                    </InputAdornment>
+                                                ),
+                                             
                                                 ...valueProps,
                                             }}
-
                                         />
-                                    }
+                                    )}
                                 />
-
-                            
                             </Box>
                             <Box>
 
@@ -379,7 +429,7 @@ export default function BasicEditingGrid() {
                                     variant="contained"
                                     className=" w-35% mt-16 mx-10 z-10"
                                     aria-label="Limpar Filtros"
-                                    type="submit"
+                                    type="button"
                                     size="medium"
                                     onClick={() => handleClear()}
                                 >
@@ -451,9 +501,13 @@ export default function BasicEditingGrid() {
                                         </TableRow>
                                     )
                                 ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={2}>Carregando...</TableCell>
-                                    </TableRow>
+                                        <TableRow>
+                                            <TableCell colSpan={5}>
+                                                <Box className="flex justify-center items-center m-10">
+                                                    <CircularProgress />
+                                                </Box>
+                                            </TableCell>
+                                        </TableRow>
                                 )}
                                 <TableRow key={Math.random()}>
                                     <TableCell className='font-bold'>Valor Total: </TableCell>

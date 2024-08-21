@@ -3,6 +3,7 @@ import { api } from 'app/configs/api/api';
 import { format, parseISO } from 'date-fns';
 import accounting from 'accounting';
 import jwtServiceConfig from '../auth/services/jwtService/jwtServiceConfig';
+import JwtService from '../auth/services/jwtService';
 
 const initialState = {
     searchingWeek: false,
@@ -167,22 +168,24 @@ function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek)
 export const  getPreviousDays = (dateRange, interval='lastWeek', userId) => async (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
    
-    let config ={
-        method: 'get',
-        maxBodyLength: Infinity,
-        url : userId ? jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=${interval}&userId=${userId}` : jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=${interval}`,
-        headers: { "Authorization": `Bearer ${token}` },
+    if(JwtService.isAuthTokenValid(token)){
+        let config = {
+            method: 'get',
+            maxBodyLength: Infinity,
+            url: userId ? jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=${interval}&userId=${userId}` : jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=${interval}`,
+            headers: { "Authorization": `Bearer ${token}` },
+        }
+        try {
+            dispatch(setLoadingPrevious(true))
+            const response = await api.request(config)
+            dispatch(setPendingValue(response.data.statusCounts))
+            dispatch(setPendingList(response.data))
+        } catch (error) {
+            console.error(error);
+        } finally {
+            dispatch(setLoadingPrevious(false))
+        }
     }
-   try{
-    dispatch(setLoadingPrevious(true))
-    const response = await api.request(config)
-       dispatch(setPendingValue(response.data.statusCounts))
-       dispatch(setPendingList(response.data))
-    }   catch (error) {
-        console.error(error);
-    } finally {
-    dispatch(setLoadingPrevious(false))
-}
 
 }
 
@@ -239,48 +242,50 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
     const token = window.localStorage.getItem('jwt_access_token');
 
 
-    const config = {
-        method: method,
-        maxBodyLength: Infinity,
-        url: apiRoute,
-        headers: {
-            "Authorization": `Bearer ${token}`
-        },
-        params: {
-            ...requestData,
-        }
-    };
+    if(JwtService.isAuthTokenValid(token)){
+        const config = {
+            method: method,
+            maxBodyLength: Infinity,
+            url: apiRoute,
+            headers: {
+                "Authorization": `Bearer ${token}`
+            },
+            params: {
+                ...requestData,
+            }
+        };
 
-    try {
-        dispatch(setLoading(true))
-        const response = await api(config);
+        try {
+            dispatch(setLoading(true))
+            const response = await api(config);
 
-        if (searchingWeek || searchingDay) {
-            const interval = searchingDay ? 'lastDay' : 'lastWeek';
-            dispatch(setStatements(response.data.data));
-            dispatch(setSumInfoWeek(response.data))
-            if(userId){
-                if(!searchingDay ){
-                    dispatch(getFirstTypes(userId, requestData.endDate, searchingWeek, searchingDay));
+            if (searchingWeek || searchingDay) {
+                const interval = searchingDay ? 'lastDay' : 'lastWeek';
+                dispatch(setStatements(response.data.data));
+                dispatch(setSumInfoWeek(response.data))
+                if (userId) {
+                    if (!searchingDay) {
+                        dispatch(getFirstTypes(userId, requestData.endDate, searchingWeek, searchingDay));
+                    } else {
+                        dispatch(getFirstTypes(userId, dateRange, searchingWeek, searchingDay));
+                    }
+                    dispatch(getPreviousDays(requestData.endDate, interval, userId))
                 } else {
-                    dispatch(getFirstTypes(userId, dateRange, searchingWeek, searchingDay));
+                    dispatch(getFirstTypes(null, dateRange, searchingWeek, searchingDay));
+                    dispatch(getPreviousDays(requestData.endDate, interval))
                 }
-                dispatch(getPreviousDays(requestData.endDate, interval, userId))
+
             } else {
-                dispatch(getFirstTypes(null, dateRange, searchingWeek, searchingDay));
-                dispatch(getPreviousDays(requestData.endDate, interval))
+                dispatch(setSumInfo(response.data))
+                dispatch(setStatements(response.data.data));
             }
 
-        } else {
-            dispatch(setSumInfo(response.data))
-            dispatch(setStatements(response.data.data));
+            return response.data;
+        } catch (error) {
+            throw error;
+        } finally {
+            dispatch(setLoading(false))
         }
-
-        return response.data;
-    } catch (error) {
-        throw error;
-    } finally {
-        dispatch(setLoading(false))
     }
 };
 

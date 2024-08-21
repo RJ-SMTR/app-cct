@@ -9,6 +9,7 @@ import { AuthContext } from "src/app/auth/AuthContext";
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { api } from "app/configs/api/api";
+import JwtService from "src/app/auth/services/jwtService";
 
 
 
@@ -44,28 +45,32 @@ export function PersonalInfo({ user }) {
 
     function onSubmit(formData) {
         const token = window.localStorage.getItem('jwt_access_token');
-        return new Promise((resolve, reject) => {
-            api.patch(`users/${user.id}`,
-                formData, {
-                headers: { "Authorization": `Bearer ${token}` },
-            }
-            )
-                .then((response) => {
-                    resolve(response.data)
-                    setIsEditable(false)
-                })
-                .catch((error) => {
-                    reject(error.response.data.errors)
-                    const errorMessage =
-                        error.response.data.errors.email === "email must be an email"
-                            ? "E-mail incorreto, verifique e tente novamente."
-                            : "E-mail já está sendo usado.";
-                    setError('email', {
-                        message: errorMessage,
-                    });
-                })
+        if(JwtService.isAuthTokenValid(token)){
+            return new Promise((resolve, reject) => {
+                api.patch(`users/${user.id}`,
+                    formData, {
+                    headers: { "Authorization": `Bearer ${token}` },
+                }
+                )
+                    .then((response) => {
+                        resolve(response.data)
+                        setIsEditable(false)
+                    })
+                    .catch((error) => {
+                        reject(error.response.data.errors)
+                        const errorMessage =
+                            error.response.data.errors.email === "email must be an email"
+                                ? "E-mail incorreto, verifique e tente novamente."
+                                : "E-mail já está sendo usado.";
+                        setError('email', {
+                            message: errorMessage,
+                        });
+                    })
 
-        })
+            })
+        } else {
+            JwtService.logout
+        }
 
     }
     function clear() {
