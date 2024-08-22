@@ -69,7 +69,7 @@ function handleData(data) {
                 } else if (status === 'Erro') {
                     requestData.pago = false
                 } else {
-                    requestData["a pagar"] = true
+                    requestData.aPagar = true
                 }
             }
         });
