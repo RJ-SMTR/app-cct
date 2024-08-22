@@ -230,13 +230,14 @@ export default function BasicEditingGrid() {
                                                 onMouseLeave={() => setShowButton(false)}
                                                 endAdornment={
                                                         showButton && (
-                                                        <InputAdornment sx={{ position: "absolute", right: '2.5rem' }} position="end">
+                                                        <InputAdornment sx={{ position: "absolute", right: '3.5rem' }} position="end">
                                                             <IconButton
                                                                 onClick={() => {
                                                                     clearSelect('favorecidoSearch');
                                                                 }}
+                                                                sx={{ height: '2rem', width: '2rem' }}
                                                             >
-                                                                <ClearIcon></ClearIcon>
+                                                                <ClearIcon sx={{ height: '2rem', width: '2rem' }}></ClearIcon>
                                                             </IconButton>
                                                         </InputAdornment>
                                                         )
@@ -348,7 +349,7 @@ export default function BasicEditingGrid() {
                                     <span className='absolute text-xs text-red-600'>Campo data obrigatório*</span>
                             </Box>
                             </Box>
-                            <Box className="flex items-center my-20 gap-10 flex-wrap">
+                            <Box className="flex items-center my-[3.5rem] gap-10 flex-wrap">
                                 <Controller
                                     name="valorMin"
                                     control={control}
@@ -368,9 +369,9 @@ export default function BasicEditingGrid() {
                                             onMouseLeave={() => setShowClearMin(false)}
                                             InputProps={{
                                                 endAdornment: showClearMin && field.value && (
-                                                    <InputAdornment  sx={{ position: "absolute", right: '0rem' }} position="end">
-                                                        <IconButton onClick={() => clearSelect('valorMin')}>
-                                                            <ClearIcon />
+                                                    <InputAdornment  sx={{ position: "absolute", right: '1rem' }} position="end">
+                                                        <IconButton onClick={() => clearSelect('valorMin')} sx={{ height: '2rem', width: '2rem' }}>
+                                                            <ClearIcon sx={{ height: '2rem' }} />
                                                         </IconButton>
                                                     </InputAdornment>
                                                 ),
@@ -398,9 +399,9 @@ export default function BasicEditingGrid() {
                                             onMouseLeave={() => setShowClearMax(false)}
                                             InputProps={{
                                                 endAdornment: showClearMax && field.value && (
-                                                    <InputAdornment  sx={{ position: "absolute", right: '0rem' }} position="end">
-                                                        <IconButton onClick={() => clearSelect('valorMax')}>
-                                                            <ClearIcon />
+                                                    <InputAdornment  sx={{ position: "absolute", right: '1rem' }} position="end">
+                                                        <IconButton onClick={() => clearSelect('valorMax')} sx={{ height: '2rem', width: '2rem' }}>
+                                                            <ClearIcon sx={{ height: '2rem' }} />
                                                         </IconButton>
                                                     </InputAdornment>
                                                 ),
