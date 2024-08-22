@@ -20,6 +20,7 @@ import { setFullReport } from 'app/store/extractSlice';
 import TableTypes from '../../extract/widgets/TableTypes';
 import Entries from '../../extract/widgets/Entries';
 import TablePending from '../../extract/widgets/TablePending';
+import JwtService from 'src/app/auth/services/jwtService';
 const Root = styled(FusePageSimple)(({ theme }) => ({
   '& .FusePageSimple-header': {
     backgroundColor: theme.palette.background.paper,
@@ -51,31 +52,33 @@ function UserApp() {
         id: id,
       };
 
-      return new Promise((resolve, reject) => {
-        api
-          .post('/auth/email/resend', data, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          })
-          .then((response) => {
-            dispatch(showMessage({ message: 'E-mail enviado.' }))
-            resolve(response.data)
-          })
-          .catch((error) => {  
-            reject(error)
-            if(error.response.data.error.includes('mailStatus')){
-              dispatch(showMessage({ message: 'Usuário não esta na fila de envio, não foi possível fazer o reenvio.' }))
+      if(JwtService.isAuthTokenValid(token)){
+        return new Promise((resolve, reject) => {
+          api
+            .post('/auth/email/resend', data, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            })
+            .then((response) => {
+              dispatch(showMessage({ message: 'E-mail enviado.' }))
+              resolve(response.data)
+            })
+            .catch((error) => {
+              reject(error)
+              if (error.response.data.error.includes('mailStatus')) {
+                dispatch(showMessage({ message: 'Usuário não esta na fila de envio, não foi possível fazer o reenvio.' }))
 
-            } else if (error.response.data.error.includes('quota')){
-              dispatch(showMessage({ message: 'Número máximo de envios diário atingido, não foi possível fazer o reenvio.' }))
-            } else {
-              dispatch(showMessage({ message: 'Erro desconhecido, não foi possível fazer o reenvio.' }))
-            }
-            console.log(error.response.data.error)
+              } else if (error.response.data.error.includes('quota')) {
+                dispatch(showMessage({ message: 'Número máximo de envios diário atingido, não foi possível fazer o reenvio.' }))
+              } else {
+                dispatch(showMessage({ message: 'Erro desconhecido, não foi possível fazer o reenvio.' }))
+              }
+              console.log(error.response.data.error)
 
-          });
-      });
+            });
+        });
+      }
   };
   useEffect(() => {
     const token = window.localStorage.getItem('jwt_access_token');

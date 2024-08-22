@@ -3,6 +3,7 @@ import jwtServiceConfig from '../auth/services/jwtService/jwtServiceConfig';
 import { api } from 'app/configs/api/api';
 import accounting from 'accounting';
 import dayjs from 'dayjs';
+import JwtService from '../auth/services/jwtService';
 
 
 const initialState = {
@@ -45,13 +46,7 @@ function handleData(data) {
 
     
     if (data.consorcioName && data.consorcioName.length > 0) {
-        if(data.consorcioName == 'Todos') {
-
-            requestData.exibirConsorcios = true
-
-        } else {
             requestData.consorcioNome = data.consorcioName.join(',');
-        }
     }
 
     if (data.dateRange && data.dateRange.length === 2) {
@@ -61,25 +56,21 @@ function handleData(data) {
 
     
     if (data.name.length > 0 ) {
-        if(data.favorecidoSearch == 'permitCode' || data.favorecidoSearch.length == 0){
+     
             requestData.favorecidoNome = data.name.map(i => i.fullName).toString()
-        } else {
-            requestData.favorecidoCpfCnpj = data.name.map(i => i.cpfCnpj).toString()
-        }
 
-    } else {
-        requestData.exibirFavorecidos = false
-
-    }
+    } 
 
     if (data.status && data.status.length > 0) {
         data.status.forEach(status => {
-            if (status === 'A pagar') {
-                requestData.aPagar = true;
-            } else if (status === "Todos") {
-                requestData.status = null
-            }else {
-                requestData[status.toLowerCase()] = true;
+            if(status !== "Todos"){
+                if (status === 'Pago') {
+                    requestData.pago = true;
+                } else if (status === 'Erro') {
+                    requestData.pago = false
+                } else {
+                    requestData["a pagar"] = true
+                }
             }
         });
     }
@@ -100,28 +91,38 @@ function handleData(data) {
 
 
 export const handleReportInfo = (data, reportType) => async (dispatch) => {
-    const requestData = handleData(data);
-
     const token = window.localStorage.getItem('jwt_access_token');
-    const reportTypeUrl = reportType;
 
-    let config = {
-        method: 'get',
-        maxBodyLength: Infinity,
-        url: jwtServiceConfig.report + `/${reportTypeUrl}`,
-        headers: {
-            "Authorization": `Bearer ${token}`
-        },
-        params: requestData
-    };
+        if(JwtService.isAuthTokenValid(token)){
+            return new Promise(async (resolve, reject) => {
+                const requestData = handleData(data);
 
-    try {
-        const response = await api.request(config);
-        dispatch(setReportList(response.data));
-    } catch (error) {
-        console.error(error);
-    }
+              
+                const reportTypeUrl = reportType;
+
+                let config = {
+                    method: 'get',
+                    maxBodyLength: Infinity,
+                    url: jwtServiceConfig.report + `/${reportTypeUrl}`,
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    },
+                    params: requestData
+                };
+
+                try {
+                    const response = await api.request(config);
+                    const conditionalResponse = response.data.length > 0 ? response.data[0] : response;
+                    dispatch(setReportList(conditionalResponse));
+                    resolve(conditionalResponse)
+                } catch (error) {
+                    console.error(error);
+                    reject(error)
+                }
+            });
+        }
 };
+
 export const handleSynthData = (reportData) => async (dispatch) => {
     const groupedData = reportData.reduce((acc, item) => {
         const key = item.consorcio;

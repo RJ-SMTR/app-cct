@@ -162,13 +162,13 @@ class JwtService extends FuseUtils.EventEmitter {
 
   isAuthTokenValid = (access_token) => {
     if (!access_token) {
-      this.emit('Seu token já expirou, faça login novamente');
+      this.emit('onAutoLogout', 'Seu token já expirou, faça login novamente');
       return false;
     }
     const decoded = jwtDecode(access_token);
     const currentTime = Date.now() / 1000;
     if (decoded.exp < currentTime) {
-      this.emit('Seu token já expirou, faça login novamente');
+      this.emit('onAutoLogout', 'Seu token já expirou, faça login novamente');
       return false;
     }
 

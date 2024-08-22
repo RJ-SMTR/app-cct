@@ -5,6 +5,7 @@ import * as yup from 'yup';
 import { api } from 'app/configs/api/api';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import { useDispatch } from 'react-redux';
+import JwtService from 'src/app/auth/services/jwtService';
 
 function UploadApp() {
   const { handleSubmit, register, setError, formState: { errors }, reset } = useForm()
@@ -36,68 +37,70 @@ function UploadApp() {
       const data = new FormData()
       data.append('file', selectedFile)
 
-      return new Promise((resolve, reject) => {
-        api
-          .post('users/upload', data, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          })
-          .then((response) => {
-            dispatch(showMessage({ message: 'Arquivo enviado' }))
-            resolve(response.data)
-            reset()
-            clearErrors('file')
-          })
-          .catch((error) => {
-            if(error.response.data.status === 401){
-              dispatch(showMessage({ message: 'Erro de autenticação. Faça login novamente' }))
-            } else {
-              const { error: apiError } = error.response.data
-              const errorMessages = []
-
-              if (apiError.file.invalidRows) {
-                apiError.file.invalidRows.forEach((invalidRow) => {
-                  let errorMessage;
-                  if (invalidRow.errors.email) {
-                    errorMessage = `Linha ${invalidRow.row}: E-mail:  ${invalidRow.errors.email}!`;
-                  } else {
-                    errorMessage = `Linha ${invalidRow.row}: `;
-                  }
-
-                  if (invalidRow.errors.codigo_permissionario) {
-                    errorMessage += ` Código de Permissionário: ${invalidRow.errors.codigo_permissionario})`;
-                  }
-                  if (invalidRow.errors.cpf) {
-                    errorMessage += ` CPF: ${invalidRow.errors.cpf}!`;
-                  }
-                  if (invalidRow.errors.telefone) {
-                    errorMessage += ` telefone: ${invalidRow.errors.telefone}`;
-                  }
-
-                  if (!errorMessages[invalidRow.row]) {
-                    errorMessages[invalidRow.row] = errorMessage;
-                  } else {
-                    errorMessages[invalidRow.row] += `\n${errorMessage}`;
-                  }
-                })
-                Object.keys(errorMessages).forEach((email) => {
-                  setError(`file[${email}]`, {
-                    type: 'server',
-                    message: errorMessages[email],
-                  });
-                });
+      if(JwtService.isAuthTokenValid(token)){
+        return new Promise((resolve, reject) => {
+          api
+            .post('users/upload', data, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            })
+            .then((response) => {
+              dispatch(showMessage({ message: 'Arquivo enviado' }))
+              resolve(response.data)
+              reset()
+              clearErrors('file')
+            })
+            .catch((error) => {
+              if (error.response.data.status === 401) {
+                dispatch(showMessage({ message: 'Erro de autenticação. Faça login novamente' }))
               } else {
-                setError('file', {
-                  type: 'server',
-                  message: 'Cabeçalhos inválidos. Verifique se está nessa ordem: código de permissionário, email, telefone, nome e CPF '
-                })
+                const { error: apiError } = error.response.data
+                const errorMessages = []
+
+                if (apiError.file.invalidRows) {
+                  apiError.file.invalidRows.forEach((invalidRow) => {
+                    let errorMessage;
+                    if (invalidRow.errors.email) {
+                      errorMessage = `Linha ${invalidRow.row}: E-mail:  ${invalidRow.errors.email}!`;
+                    } else {
+                      errorMessage = `Linha ${invalidRow.row}: `;
+                    }
+
+                    if (invalidRow.errors.codigo_permissionario) {
+                      errorMessage += ` Código de Permissionário: ${invalidRow.errors.codigo_permissionario})`;
+                    }
+                    if (invalidRow.errors.cpf) {
+                      errorMessage += ` CPF: ${invalidRow.errors.cpf}!`;
+                    }
+                    if (invalidRow.errors.telefone) {
+                      errorMessage += ` telefone: ${invalidRow.errors.telefone}`;
+                    }
+
+                    if (!errorMessages[invalidRow.row]) {
+                      errorMessages[invalidRow.row] = errorMessage;
+                    } else {
+                      errorMessages[invalidRow.row] += `\n${errorMessage}`;
+                    }
+                  })
+                  Object.keys(errorMessages).forEach((email) => {
+                    setError(`file[${email}]`, {
+                      type: 'server',
+                      message: errorMessages[email],
+                    });
+                  });
+                } else {
+                  setError('file', {
+                    type: 'server',
+                    message: 'Cabeçalhos inválidos. Verifique se está nessa ordem: código de permissionário, email, telefone, nome e CPF '
+                  })
+                }
               }
-            }
-           
-            reject(errors)
-          });
-      });
+
+              reject(errors)
+            });
+        });
+      }
     }
   };
 

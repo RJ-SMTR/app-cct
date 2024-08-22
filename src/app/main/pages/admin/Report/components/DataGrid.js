@@ -31,6 +31,7 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import { parseISO, format } from 'date-fns';
 import { useDispatch } from 'react-redux';
 import { handleSynthData, setSynthData } from 'app/store/reportSlice';
+import JwtService from 'src/app/auth/services/jwtService';
 
 const locale = pt;
 
@@ -105,41 +106,43 @@ export default function BasicEditingGrid() {
             const fetchData = async () => {
                 const token = window.localStorage.getItem('jwt_access_token');
   
-                const config = {
-                    method: 'get',
-                    maxBodyLength: Infinity,
-                    url: `/cnab/arquivoPublicacao?dt_inicio=${date[0]}&dt_fim=${date[1]}`,
-                    headers: { "Authorization": `Bearer ${token}` },
-                };
-                try {
-                    setLoading(true);
-                    const formatDate = (data) => {
-                        const parsed = parseISO(data);
-                        const correctedParse = new Date(parsed.valueOf() + parsed.getTimezoneOffset() * 60 * 1000);
-                        const formatted = format(new Date(correctedParse), 'dd/MM/yyyy');
-                        return formatted;
+                if(JwtService.isAuthTokenValid(token)){
+                    const config = {
+                        method: 'get',
+                        maxBodyLength: Infinity,
+                        url: `/cnab/arquivoPublicacao?dt_inicio=${date[0]}&dt_fim=${date[1]}`,
+                        headers: { "Authorization": `Bearer ${token}` },
                     };
-                    const response = await api.request(config);
-                    const formattedRows = response.data.map((item) => ({
-                        id: item.id,
-                        date: item.dataEfetivacao === null ? '--/--/--' : format(new Date(item.dataEfetivacao), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }),
-                        dateExpire: formatDate(item.dataVencimento),
-                        favorecido: item.favorecido,
-                        consorcio: item.nomeConsorcio,
-                        value: formatToBRL(item.valor),
-                        status: item.isPago ? 'Pago' : 'Erro',
-                        ocorrencia: item.isPago ? '' : item.ocorrencias.join(', '),
-                    }));
+                    try {
+                        setLoading(true);
+                        const formatDate = (data) => {
+                            const parsed = parseISO(data);
+                            const correctedParse = new Date(parsed.valueOf() + parsed.getTimezoneOffset() * 60 * 1000);
+                            const formatted = format(new Date(correctedParse), 'dd/MM/yyyy');
+                            return formatted;
+                        };
+                        const response = await api.request(config);
+                        const formattedRows = response.data.map((item) => ({
+                            id: item.id,
+                            date: item.dataEfetivacao === null ? '--/--/--' : format(new Date(item.dataEfetivacao), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }),
+                            dateExpire: formatDate(item.dataVencimento),
+                            favorecido: item.favorecido,
+                            consorcio: item.nomeConsorcio,
+                            value: formatToBRL(item.valor),
+                            status: item.isPago ? 'Pago' : 'Erro',
+                            ocorrencia: item.isPago ? '' : item.ocorrencias.join(', '),
+                        }));
 
-                
-                    setRows(formattedRows);
-                    dispatch(handleSynthData(formattedRows))
 
-                } catch (error) {
-                    console.error(error);
-                } finally {
-                    setLoading(false);
-                }
+                        setRows(formattedRows);
+                        dispatch(handleSynthData(formattedRows))
+
+                    } catch (error) {
+                        console.error(error);
+                    } finally {
+                        setLoading(false);
+                    }
+                } 
             };
             fetchData();
         }

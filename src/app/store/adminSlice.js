@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { api } from 'app/configs/api/api';
 import { setStatements } from './extractSlice';
+import JwtService from '../auth/services/jwtService';
 
 const initialState = {
     userList: [],
@@ -25,21 +26,23 @@ export default stepSlice.reducer;
 
 export const getUser = () => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
-    return new Promise((resolve, reject) => {
-        api.get('/users', {
-            headers: { 'Authorization': `Bearer ${token}`}
+    if(JwtService.isAuthTokenValid(token)){
+        return new Promise((resolve, reject) => {
+            api.get('/users', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+                .then((response) => {
+                    const filteredUsers = response.data.data.filter(user =>
+                        user.permitCode != null && user.role?.name != 'Admin'
+                    )
+                    dispatch(setUsersList(filteredUsers))
+                    resolve(response.data)
+                })
+                .catch((error) => {
+                    reject(error)
+                })
         })
-            .then((response) => {
-                const filteredUsers = response.data.data.filter(user =>
-                    user.permitCode != null && user.role?.name != 'Admin' 
-                )
-                dispatch(setUsersList(filteredUsers))
-                resolve(response.data)
-            })
-            .catch((error) => {
-                reject(error)
-            })
-    })
+    }
 }
 export const getInfo = () => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
@@ -65,67 +68,71 @@ export const getInfo = () => (dispatch) => {
 }
 export const getUserByInfo = (selectedQuery, query, inviteStatus) => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
-    const queryKey = selectedQuery === "fullName" ? 'name' : selectedQuery
-    return new Promise((resolve, reject) => {
-        const requestData = {
-            [queryKey]: query,
-            inviteStatus: inviteStatus
-        };
-        
-        api.get('/users', {
-            params: requestData,
-            headers: { 'Authorization': `Bearer ${token}` },
+    if(JwtService.isAuthTokenValid(token)){
+        const queryKey = selectedQuery === "fullName" ? 'name' : selectedQuery
+        return new Promise((resolve, reject) => {
+            const requestData = {
+                [queryKey]: query,
+                inviteStatus: inviteStatus
+            };
+
+            api.get('/users', {
+                params: requestData,
+                headers: { 'Authorization': `Bearer ${token}` },
+            })
+                .then((response) => {
+                    const filteredUsers = response.data.data.filter(user =>
+                        user.permitCode != null && user.role?.name != 'Admin'
+                    )
+                    dispatch(setUsersList(filteredUsers))
+                    resolve(response)
+                })
+                .catch((error) => {
+                    reject(error)
+                })
         })
-            .then((response) => {
-                const filteredUsers = response.data.data.filter(user =>
-                    user.permitCode != null && user.role?.name != 'Admin'
-                )
-                dispatch(setUsersList(filteredUsers))
-                resolve(response)
-            })
-            .catch((error) => {
-                reject(error)
-            })
-    })
+    }
 
 }
-function handleUserData(previousDays, dateRange, searchingDay, searchingWeek) {
-    if (dateRange?.length > 0 && !searchingDay) {
-        const separateDate = dateRange.map((i) => {
-            const inputDateString = i;
-            const dateObj = new Date(inputDateString);
-            const year = dateObj.getFullYear();
-            const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-            const day = String(dateObj.getDate()).padStart(2, "0");
-            const formattedDate = `${year}-${month}-${day}`;
-            return formattedDate;
-        });
-        return {
-            startDate: separateDate[0],
-            endDate: separateDate[1]
-        };
-    } else if (searchingDay && searchingWeek) {
-        return {
-            startDate: dateRange[0],
-            endDate: dateRange[1]
-        };
-    } else {
-        return previousDays > 0 ? { previousDays: previousDays } : {}
-    }
-}
+// function handleUserData(previousDays, dateRange, searchingDay, searchingWeek) {
+//     if (dateRange?.length > 0 && !searchingDay) {
+//         const separateDate = dateRange.map((i) => {
+//             const inputDateString = i;
+//             const dateObj = new Date(inputDateString);
+//             const year = dateObj.getFullYear();
+//             const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+//             const day = String(dateObj.getDate()).padStart(2, "0");
+//             const formattedDate = `${year}-${month}-${day}`;
+//             return formattedDate;
+//         });
+//         return {
+//             startDate: separateDate[0],
+//             endDate: separateDate[1]
+//         };
+//     } else if (searchingDay && searchingWeek) {
+//         return {
+//             startDate: dateRange[0],
+//             endDate: dateRange[1]
+//         };
+//     } else {
+//         return previousDays > 0 ? { previousDays: previousDays } : {}
+//     }
+// }
 export const getUserStatements = (userId) => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
-    return new Promise((resolve, reject) => {
-        const apiRoute = `bank-statements/me?userId=${userId}&timeInterval=lastMonth`
-        api.get(apiRoute, {
-            headers: { "Authorization": `Bearer ${token}` },
-        })
-            .then((response) => {
-                    dispatch(setStatements(response.data.data));
-                resolve(response.data);
+    if(JwtService.isAuthTokenValid(token)){
+        return new Promise((resolve, reject) => {
+            const apiRoute = `bank-statements/me?userId=${userId}&timeInterval=lastMonth`
+            api.get(apiRoute, {
+                headers: { "Authorization": `Bearer ${token}` },
             })
-            .catch((error) => {
-                reject(error);
-            });
-    });
+                .then((response) => {
+                    dispatch(setStatements(response.data.data));
+                    resolve(response.data);
+                })
+                .catch((error) => {
+                    reject(error);
+                });
+        });
+    } 
 }
