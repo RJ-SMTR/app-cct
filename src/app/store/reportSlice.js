@@ -93,35 +93,52 @@ function handleData(data) {
 export const handleReportInfo = (data, reportType) => async (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
 
-        if(JwtService.isAuthTokenValid(token)){
-            return new Promise(async (resolve, reject) => {
-                const requestData = handleData(data);
+    if (JwtService.isAuthTokenValid(token)) {
+        return new Promise(async (resolve, reject) => {
+            const requestData = handleData(data);
+            const reportTypeUrl = reportType;
 
-              
-                const reportTypeUrl = reportType;
+            let config = {
+                method: 'get',
+                maxBodyLength: Infinity,
+                url: jwtServiceConfig.report + `/${reportTypeUrl}`,
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                },
+                params: requestData
+            };
 
-                let config = {
-                    method: 'get',
-                    maxBodyLength: Infinity,
-                    url: jwtServiceConfig.report + `/${reportTypeUrl}`,
-                    headers: {
-                        "Authorization": `Bearer ${token}`
-                    },
-                    params: requestData
-                };
+            try {
+                const response = await api.request(config);
+                const responseData = response.data;
 
-                try {
-                    const response = await api.request(config);
-                    const conditionalResponse = response.data.length > 0 ? response.data[0] : response;
+                if (!requestData.favorecidoName && !requestData.consorcioName) {
+                    const mergedData = responseData.reduce((acc, curr) => {
+                        return acc.concat(curr.data);
+                    }, []);
+
+                    const combinedResponse = {
+                        count: mergedData.length,
+                        data: mergedData,
+                        valor: responseData.reduce((sum, curr) => sum + curr.valor, 0),
+                        status: 'Todos'
+                    };
+
+                    dispatch(setReportList(combinedResponse));
+                    resolve(combinedResponse);
+                } else {
+                    const conditionalResponse = responseData.length > 0 ? responseData : response;
                     dispatch(setReportList(conditionalResponse));
-                    resolve(conditionalResponse)
-                } catch (error) {
-                    console.error(error);
-                    reject(error)
+                    resolve(conditionalResponse);
                 }
-            });
-        }
+            } catch (error) {
+                console.error(error);
+                reject(error);
+            }
+        });
+    }
 };
+
 
 export const handleSynthData = (reportData) => async (dispatch) => {
     const groupedData = reportData.reduce((acc, item) => {
