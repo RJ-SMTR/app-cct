@@ -159,8 +159,9 @@ export default function BasicEditingGrid() {
     });
     const status = getValues('status')
     const whichStatus = status?.join(',')
-    const reportListData = reportList.data
-        ? reportList.data.map(report => ({
+
+    const reportListData = reportList.length > 0
+        ? reportList.data?.map(report => ({
             Nome: report.nomefavorecido,
             Valor: formatter.format(report.valor),
             Status: "",  
