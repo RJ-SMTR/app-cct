@@ -56,11 +56,8 @@ function handleData(data) {
 
     
     if (data.name.length > 0 ) {
-        if(data.favorecidoSearch == 'permitCode' || data.favorecidoSearch.length == 0){
+     
             requestData.favorecidoNome = data.name.map(i => i.fullName).toString()
-        } else {
-            requestData.favorecidoCpfCnpj = data.name.map(i => i.fullName).toString()
-        }
 
     } 
 
