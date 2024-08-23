@@ -36,7 +36,7 @@ export function TableUsers() {
     const userList = useSelector((state) => state.admin.userList)
     const dispatch = useDispatch()
     const [page, setPage] = useState(0)
-    const [rowsPerPage, setRowsPerPage] = useState(10)
+    const [rowsPerPage, setRowsPerPage] = useState(50)
     const [open, setOpen] = useState(false)
     const [filtered, setFiltered] = useState(false)
 
@@ -101,8 +101,19 @@ export function TableUsers() {
                    </div>
                      
                     </div>
-                    <div className="table-responsive mt-24">
-                        <Table className="simple w-full min-w-full">
+                    <TablePagination
+                        component="div"
+                        count={userList.length}
+                        rowsPerPage={rowsPerPage}
+                        page={page}
+                        onPageChange={handleChangePage}
+                        onRowsPerPageChange={handleChangeRowsPerPage}
+                        labelRowsPerPage="Linhas por página"
+                        labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+                        rowsPerPageOptions={[10, 50, 100, 250, 500, 1000]}
+                    />
+                    <div style={{ height: '65vh', overflow: 'auto', marginTop: '24px' }}>
+                        <Table className="simple w-full min-w-full" stickyHeader >
                             <TableHead>
                               <TableRow>
                                   <TableCell>
@@ -212,7 +223,7 @@ export function TableUsers() {
                         onRowsPerPageChange={handleChangeRowsPerPage}
                         labelRowsPerPage="Linhas por página"
                         labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-                        rowsPerPageOptions={[10, 25, 50, 100]}
+                        rowsPerPageOptions={[ 50, 100, 250, 500, 1000]}
                     />
                 </Paper>
             </div>
