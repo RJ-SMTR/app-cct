@@ -199,40 +199,72 @@ export default function BasicEditingGrid() {
             tableRows.push(reportData);
         });
 
-        const selectedDate = getValues('dateRange')
-        const dateInicio = selectedDate[0]
-        const dateFim = selectedDate[1]
+        const selectedDate = getValues('dateRange');
+        const dateInicio = selectedDate[0];
+        const dateFim = selectedDate[1];
 
+        const status = getValues('status');
+        const selectedStatus = status.join(',');
 
-        const status = getValues('status')
-        const selectedStatus = status.join(',')
+        const logoImg = 'assets/icons/logoPrefeitura.png';
+        const logoH = 15;
+        const logoW = 30;
+       
+        // const footer = function (data) {
+        //     const pageCount = doc.internal.getNumberOfPages();
+        //     doc.setFontSize(10);
+        //     doc.text(`Página ${data.pageNumber} de ${pageCount}`, data.settings.margin.left, doc.internal.pageSize.height - 10);
+        // };
 
-
-        doc.text(`Relatório dos dias ${format(dateInicio, 'dd/MM/yyyy')} a ${format(dateFim, 'dd/MM/yyyy')}`, 14, 15);
-        doc.setFontSize(10)
-        doc.text(`Status obervado: ${selectedStatus || 'Todos'}`, 14, 25);
-
-        const footer = function (data) {
-            const pageCount = doc.internal.getNumberOfPages();
-            doc.setFontSize(10);
-            doc.text(`Página ${data.pageNumber} de ${pageCount}`, data.settings.margin.left, doc.internal.pageSize.height - 10);
-        };
-
+       
         doc.autoTable({
             head: [tableColumn],
             body: tableRows,
-            startY: 30, 
-            didDrawPage: footer,  
+            margin: {left: 14 , right: 14, top: 60},
+            startY: 60,
+            didDrawPage: (data) => {
+               
+                doc.addImage(logoImg, 'PNG', 14, 10, logoW, logoH);
+
+               
+                const hrYPosition = 30;
+                doc.setLineWidth(0.3);
+                doc.line(14, hrYPosition, 196, hrYPosition);
+
+               
+                doc.setFontSize(10);
+                doc.text(`Relatório dos dias: ${format(dateInicio, 'dd/MM/yyyy')} a ${format(dateFim, 'dd/MM/yyyy')}`, 14, 45);
+                doc.text(`Status observado: ${selectedStatus || 'Todos'}`, 14, 50);
+
+
+
+               
+                
+            },
         });
 
-        const finalY = doc.lastAutoTable.finalY;
+        const pageCount = doc.internal.getNumberOfPages();
+
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i); 
+            doc.setFontSize(10);
+
+            const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
+            const text = `Página ${currentPage} de ${pageCount}`;
+            const xPos = 14; 
+            const yPos = doc.internal.pageSize.height - 5;
+
+            doc.text(text, xPos, yPos);
+        }
 
         const totalValue = `Valor total: ${formatter.format(reportList.valor ?? 0)}`;
-        doc.setFontSize(10)
-        doc.text(totalValue, 14, finalY + 10);
+        doc.setFontSize(10);
+        doc.text(totalValue, 14, doc.internal.pageSize.height - 10);
 
+       
         doc.save(`relatorio_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.pdf`);
     };
+
 
 
 
