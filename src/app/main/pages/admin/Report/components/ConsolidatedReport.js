@@ -160,7 +160,7 @@ export default function BasicEditingGrid() {
     const status = getValues('status')
     const whichStatus = status?.join(',')
 
-    const reportListData = reportList.length > 0
+    const reportListData = reportList.count > 0
         ? reportList.data?.map(report => ({
             Nome: report.nomefavorecido,
             Valor: formatter.format(report.valor),
@@ -168,15 +168,22 @@ export default function BasicEditingGrid() {
         }))
         : [];
 
+    const valorTotal = {
+                Nome: "Valor Total",
+                Valor: "",
+                Status: formatter.format(reportList?.valor),
+            }
+    
     const statusRow = {
-        Nome: "", 
+        Nome: "Status selecionado", 
         Valor: "",
         Status: whichStatus || "Todos",  
     };
 
     const csvData =[ 
-        ...reportListData,
-        statusRow
+            statusRow,
+            ...reportListData,
+            valorTotal
     ]
 
     const exportPDF = () => {
