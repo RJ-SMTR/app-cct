@@ -4,7 +4,6 @@ import { api } from 'app/configs/api/api';
 import { useHistory } from 'react-router-dom';
 import dayjs from 'dayjs';
 import axios from 'axios';
-import { cnab } from 'app/configs/api/cnab';
 import JwtService from '../auth/services/jwtService';
 
 
@@ -62,12 +61,12 @@ export const getData = (data) => (dispatch) => {
 export const getFavorecidos = () => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
     
-    cnab.get('/cnab/clientes-favorecidos', {
+    api.get('/cnab/clientes-favorecidos', {
         headers: { "Authorization": `Bearer ${token}` },
     })
         .then((response) => {
-           
-         
+            console.log(response)
+            // dispacth(setClientesFavorecidos(response.data))
         })
 
 }
