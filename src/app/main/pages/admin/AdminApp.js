@@ -5,7 +5,7 @@ import  { TableUsers } from './components/Table';
 import { useDispatch, useSelector } from 'react-redux';
 import { getUser, getInfo } from 'app/store/adminSlice';
 
-import { setSearchingWeek, setSearchingDay, setStatements, setDateRange } from 'app/store/extractSlice';
+import { setSearchingWeek, setSearchingDay, setStatements, setDateRange, setValorAcumuladoLabel, setValorPagoLabel } from 'app/store/extractSlice';
 import { setReportList } from 'app/store/reportSlice';
 
 
@@ -20,6 +20,8 @@ function AdminApp() {
         dispatch(getUser())
         dispatch(getInfo())
         dispatch(setReportList([]))
+        dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Mensal'))
+        dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'))
         
     }, [])
     return (
