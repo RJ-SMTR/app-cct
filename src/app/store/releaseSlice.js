@@ -66,7 +66,9 @@ export const getFavorecidos = () => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
     
     api.get(`/cnab/clientes-favorecidos/`, {
-        headers: { "Authorization": `Bearer ${token}` },
+        headers: { "Authorization": `Bearer ${token}` },params: {
+            consorcio: 'Empresa'
+        }
     })
         .then((response) => {
             dispatch(setClientesFavorecidos(response.data))
