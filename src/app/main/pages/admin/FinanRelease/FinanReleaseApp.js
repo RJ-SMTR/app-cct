@@ -19,6 +19,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { makeStyles } from '@mui/styles';
 import { styling } from './customStyles';
 import accounting from 'accounting';
+import { showMessage } from 'app/store/fuse/messageSlice';
 
 
 const schema = yup.object().shape({
@@ -112,8 +113,8 @@ function FinanRelease() {
 
 
             })
-            .catch((_errors) => {
-                console.log(_errors)
+            .catch((error) => {
+                dispatch(showMessage({ message: `Erro ao salvar, tente novamente mais tarde. Erro: ${error.response.status}` }))
             });
 
     }
