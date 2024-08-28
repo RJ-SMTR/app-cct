@@ -22,10 +22,7 @@ import accounting from 'accounting';
 
 
 const schema = yup.object().shape({
-    descricao: yup.string().oneOf([
-        'Auto-viação Norte',
-        'Transoeste International'
-    ]).required('Selecione um favorecido'),
+    descricao: yup.string().required('Selecione um favorecido'),
     mes: yup.string().required('Selecione um mês'),
     periodo: yup.string().required('Selecione uma quinzena'),
     data_ordem: yup.date().required('Insira a data ordem de pagamento'),
