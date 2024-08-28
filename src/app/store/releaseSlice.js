@@ -16,7 +16,8 @@ const initialState = {
     },
     authValue: '',
     selectedStatus: null,
-    selectedYear: null
+    selectedYear: null,
+    clientesFavorecidos: []
 };
 
 const stepSlice = createSlice({
@@ -41,10 +42,13 @@ const stepSlice = createSlice({
         setSelectedYear: (state, action) => {
             state.selectedYear = action.payload;
         },
+        setClientesFavorecidos: (state, action) => {
+            state.clientesFavorecidos = action.payload;
+        },
     },
 });
 
-export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTransactions, selectDate, setSelectedDate, authValue, setAuthValue, setSelectedStatus, selectedStatus, setSelectedYear , selectedYear} = stepSlice.actions;
+export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTransactions, selectDate, setSelectedDate, authValue, setAuthValue, setSelectedStatus, selectedStatus, setSelectedYear , selectedYear, clientesFavorecidos, setClientesFavorecidos} = stepSlice.actions;
 export default stepSlice.reducer;
 
 export const getData = (data) => (dispatch) => {
@@ -61,12 +65,11 @@ export const getData = (data) => (dispatch) => {
 export const getFavorecidos = () => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
     
-    api.get('/cnab/clientes-favorecidos', {
+    api.get(`/cnab/clientes-favorecidos/`, {
         headers: { "Authorization": `Bearer ${token}` },
     })
         .then((response) => {
-            console.log(response)
-            // dispacth(setClientesFavorecidos(response.data))
+            dispatch(setClientesFavorecidos(response.data))
         })
 
 }

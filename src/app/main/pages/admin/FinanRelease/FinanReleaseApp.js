@@ -10,7 +10,7 @@ import ptBR from 'date-fns/locale/pt-BR';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { NumericFormat } from 'react-number-format';
 import { getFavorecidos, setRelease, setSelectedYear } from 'app/store/releaseSlice';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { AuthContext } from 'src/app/auth/AuthContext';
 import dayjs from 'dayjs';
 import * as yup from 'yup';
@@ -53,12 +53,14 @@ function FinanRelease() {
         anexo: 0,
     });
     const [selectedMes, setSelectedMes] = useState()
+    const clientesFavorecidos = useSelector(state => state.release.clientesFavorecidos)
 
 
 
     useEffect(() => {
         dispatch(getFavorecidos())
     }, [])
+   
 
     const { handleSubmit, register, control, reset, setValue, formState, clearErrors } = useForm({
         defaultValues: {
@@ -178,10 +180,8 @@ function FinanRelease() {
                                 <FormControl fullWidth>
                                     <Autocomplete
                                         id='favorecidos'
-                                        options={[
-                                            'Auto-viação Norte',
-                                            'Transoeste International'
-                                        ]}
+                                        getOptionLabel={(option) => option.nome}
+                                        options={clientesFavorecidos}
                                         renderInput={(params) => (
                                             <TextField
                                                 {...params}
