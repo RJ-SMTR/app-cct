@@ -23,7 +23,7 @@ import { showMessage } from 'app/store/fuse/messageSlice';
 
 
 const schema = yup.object().shape({
-    descricao: yup.string().required('Selecione um favorecido'),
+    favorecido: yup.string().required('Selecione um favorecido'),
     mes: yup.string().required('Selecione um mês'),
     periodo: yup.string().required('Selecione uma quinzena'),
     data_ordem: yup.date().required('Insira a data ordem de pagamento'),
@@ -62,7 +62,6 @@ function FinanRelease() {
 
     const { handleSubmit, register, control, reset, setValue, formState, clearErrors } = useForm({
         defaultValues: {
-            descricao: null,
             favorecido: null,
             mes: '',
             periodo: '',
@@ -114,7 +113,10 @@ function FinanRelease() {
 
             })
             .catch((error) => {
-                dispatch(showMessage({ message: `Erro ao salvar, tente novamente mais tarde. Erro: ${error.response.status}` }))
+                console.log(error)
+                if(error){
+                    dispatch(showMessage({ message: `Erro ao salvar, tente novamente mais tarde. Erro: ${error.response.status}` }))
+                }
             });
 
     }
@@ -183,14 +185,14 @@ function FinanRelease() {
                                         renderInput={(params) => (
                                             <TextField
                                                 {...params}
-                                                {...register('descricao')}
+                                                {...register('favorecido')}
                                                 label='Selecionar Favorecido'
                                                 id="bank-autocomplete"
                                                 variant='outlined'
-                                                name='descricao'
-                                                error={!!errors.descricao}
-                                                onChange={() => clearErrors('descricao')}
-                                                helperText={errors.descricao?.message}
+                                                name='favorecido'
+                                                error={!!errors.favorecido}
+                                                onChange={() => clearErrors('favorecido')}
+                                                helperText={errors.favorecido?.message}
 
                                             />
                                         )}

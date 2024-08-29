@@ -5,6 +5,7 @@ import { useHistory } from 'react-router-dom';
 import dayjs from 'dayjs';
 import axios from 'axios';
 import JwtService from '../auth/services/jwtService';
+import accounting from 'accounting';
 
 
 const initialState = {
@@ -78,6 +79,7 @@ export const getFavorecidos = () => (dispatch) => {
 
 
 export const setRelease = (data)  => (dispatch) => {
+    console.log(data)
     const token = window.localStorage.getItem('jwt_access_token');
 
     if(JwtService.isAuthTokenValid(token)){
@@ -89,18 +91,36 @@ export const setRelease = (data)  => (dispatch) => {
             if (period === 2) {
                 dayOfMonth = 16
             }
-
+            const unformatOptions = {
+                decimal: ',', 
+                thousand: '.', 
+            }
 
             const parseDate = dayjs(data.data_ordem, 'DD/MM/YYYY')
             const releaseDate = dayjs().set('month', month - 1).set('date', dayOfMonth)
+            
             const isoDateString = parseDate.toISOString()
             const releaseIsoDate = releaseDate.toISOString()
             const cleanedData = {
                 ...data,
+
+                algoritmo: accounting.unformat(data.algoritmo.replace(/\./g, '').replace(',', '.')).toFixed(2),
+                valor_a_pagar: accounting.unformat(data.valor_a_pagar.replace(/\./g, '').replace(',', '.')).toFixed(2),
+                recurso: accounting.unformat(data.recurso.replace(/\./g, '').replace(',', '.')).toFixed(2),
+                glosa: accounting.unformat(data.glosa.replace(/\./g, '').replace(',', '.')).toFixed(2),  
+                valor: accounting.unformat(data.valor.replace(/\./g, '').replace(',', '.')).toFixed(2),  
+                anexo: accounting.unformat(data.anexo.replace(/\./g, '').replace(',', '.')).toFixed(2),
                 data_ordem: isoDateString,
                 data_lancamento: releaseIsoDate
 
             };
+
+            cleanedData.algoritmo = parseFloat(cleanedData.algoritmo);
+            cleanedData.valor_a_pagar = parseFloat(cleanedData.valor_a_pagar);
+            cleanedData.valor = parseFloat(cleanedData.valor);
+            cleanedData.recurso = parseFloat(cleanedData.recurso);
+            cleanedData.glosa = parseFloat(cleanedData.glosa);
+            cleanedData.anexo = parseFloat(cleanedData.anexo3);
 
             api.post(jwtServiceConfig.setRelease,
                 cleanedData,
