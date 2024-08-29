@@ -1,11 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
     Box,
     MenuItem,
-    ListItemText,
-    Checkbox,
     Table,
-    TableHead,
     TableBody,
     Autocomplete,
     TextField,
@@ -13,12 +10,8 @@ import {
     TableRow,
     TableCell,
     Paper,
-    Select,
-    InputLabel,
-    FormControl,
     CircularProgress,
     InputAdornment,
-    TableFooter,
     Menu
 } from '@mui/material';
 import { ptBR as pt } from '@mui/x-data-grid';
@@ -33,7 +26,6 @@ import { CSVLink } from 'react-csv';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-const locale = pt;
 
 const consorciosStatus = [
     { label: 'Todos' },
@@ -68,6 +60,8 @@ export default function BasicEditingGrid() {
     const [isLoading, setIsLoading] = useState(false)
     const [loadingUsers, setLoadingUsers] = useState(false)
     const [userOptions, setUserOptions] = useState([])
+    const [showClearMin, setShowClearMin] = useState(false)
+    const [showClearMax, setShowClearMax] = useState(false)
     const [rows, setRows] = useState([])
     const [anchorEl, setAnchorEl] = useState(null);
 
@@ -80,7 +74,7 @@ export default function BasicEditingGrid() {
 
     const dispatch = useDispatch()
 
-    const { reset, handleSubmit, setValue, control, getValues, watch } = useForm({
+    const { reset, handleSubmit, setValue, control, getValues } = useForm({
         defaultValues: {
             name: [],
             dateRange: [],
@@ -91,10 +85,9 @@ export default function BasicEditingGrid() {
             status: []
         }
     });
-    const watchedFavorecidoSearch = watch('favorecidoSearch');
 
     const onSubmit = (data) => {
-        // dispatch(handleReportInfo(data, reportType))
+        dispatch(handleReportInfo(data, reportType))
     };
     const handleClear = () => {
         setValue('name', [])
@@ -127,7 +120,7 @@ export default function BasicEditingGrid() {
     useEffect(() => {
         if (userList && userList.length > 0) {
             const options = userList.map((user) => ({
-                label: getValues('favorecidoSearch') === 'cpf/cnpj' ? `${user.cpfCnpj} - ${user.fullName}` : `${user.permitCode} - ${user.fullName}`,
+                label: user.label,
                 value: {
                     cpfCnpj: user.cpfCnpj,
                     permitCode: user.permitCode,
@@ -135,18 +128,17 @@ export default function BasicEditingGrid() {
                 }
             }));
             const sortedOptions = options.sort((a, b) => {
-                if (getValues('favorecidoSearch') === 'cpf/cnpj') {
-                    return a.value.fullName.localeCompare(b.value.fullName);
-                } else {
-                    return a.label.localeCompare(b.label);
-                }
+
+                return a.value.fullName.localeCompare(b.value.fullName);
+
+
             });
 
-            setUserOptions(sortedOptions);
+            setUserOptions([{ label: "Todos", value: { fullName: 'Todos' } }, ...sortedOptions]);
         } else {
             setUserOptions([]);
         }
-    }, [watchedFavorecidoSearch, userList]);
+    }, [userList]);
 
     const handleAutocompleteChange = (field, newValue) => {
         setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
@@ -161,11 +153,46 @@ export default function BasicEditingGrid() {
         currency: 'BRL',
     });
 
-    const csvData = reportList.data ? reportList.data.map(report => ({
-        Nome: report.nome,
-        Valor: formatter.format(report.valor)
-    })) : [];
+    const status = getValues('status')
+    const whichStatus = status?.join(',')
 
+    const reportListData = reportList.count > 0
+        ? reportList.data?.map(report => ({
+            Nome: report.nomefavorecido,
+            Valor: formatter.format(report.valor),
+            Status: "",
+        }))
+        : [];
+
+    const valorTotal = {
+        Nome: "Valor Total",
+        Valor: "",
+        Status: formatter.format(reportList?.valor),
+    }
+
+    const statusRow = {
+        Nome: "Status selecionado",
+        Valor: "",
+        Status: whichStatus || "Todos",
+    };
+
+    const csvData = [
+        statusRow,
+        ...reportListData,
+        valorTotal
+    ]
+    const selectedDate = getValues('dateRange');
+    const dateInicio = selectedDate[0];
+    const dateFim = selectedDate[1];
+
+    const csvFilename = useMemo(() => {
+        if (dateInicio && dateFim) {
+            return `relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.csv`;
+        }
+        return `relatorio_${format(new Date(), 'dd-MM-yyyy')}.csv`;
+    }, [dateInicio, dateFim])
+
+    // Export PDF
     const exportPDF = () => {
         const doc = new jsPDF();
         const tableColumn = ["Nome", "Valor"];
@@ -173,19 +200,103 @@ export default function BasicEditingGrid() {
 
         reportList.data.forEach(report => {
             const reportData = [
-                report.nome,
+                report.nomefavorecido,
                 formatter.format(report.valor)
             ];
             tableRows.push(reportData);
         });
 
-        doc.autoTable(tableColumn, tableRows, { startY: 20 });
-        doc.text(`Relatório ${format(new Date(), 'dd/MM/yyyy')}`, 14, 15);
-        doc.save(`relatorio_${format(new Date(), 'dd/MM/yyyy')}.pdf`);
+        const selectedDate = getValues('dateRange');
+        const dateInicio = selectedDate[0];
+        const dateFim = selectedDate[1];
+
+        const status = getValues('status');
+        const selectedStatus = status.join(',');
+
+        const logoImg = 'assets/icons/logoPrefeitura.png';
+        const logoH = 15;
+        const logoW = 30;
+
+
+
+
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            margin: { left: 14, right: 14, top: 60 },
+            startY: 60,
+            didDrawPage: (data) => {
+
+                doc.addImage(logoImg, 'PNG', 14, 10, logoW, logoH);
+
+
+                const hrYPosition = 30;
+                doc.setLineWidth(0.3);
+                doc.line(14, hrYPosition, 196, hrYPosition);
+
+
+                doc.setFontSize(10);
+                doc.text(`Relatório dos dias: ${format(dateInicio, 'dd/MM/yyyy')} a ${format(dateFim, 'dd/MM/yyyy')}`, 14, 45);
+                doc.text(`Status observado: ${selectedStatus || 'Todos'}`, 14, 50);
+
+
+
+
+
+            },
+        });
+
+        const pageCount = doc.internal.getNumberOfPages();
+
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(10);
+
+            const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
+            const text = `Página ${currentPage} de ${pageCount}`;
+            const xPos = 14;
+            const yPos = doc.internal.pageSize.height - 5;
+
+            doc.text(text, xPos, yPos);
+        }
+
+        const totalValue = `Valor total: ${formatter.format(reportList.valor ?? 0)}`;
+        doc.setFontSize(10);
+        doc.text(totalValue, 14, doc.internal.pageSize.height - 10);
+
+
+        doc.save(`relatorio_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.pdf`);
     };
+
+    // Export XLSX
+    const exportXLSX = () => {
+        const selectedDate = getValues('dateRange');
+        const dateInicio = selectedDate[0];
+        const dateFim = selectedDate[1];
+        const data = [
+            ["Status selecionado", "", whichStatus || "Todos"],
+            ["Nome", "Valor"],
+            ...reportList.data.map(report => [
+                report.nomefavorecido,
+                formatter.format(report.valor),
+            ]),
+            ["Valor Total", "", formatter.format(reportList.valor ?? 0)],
+
+        ];
+
+        const wb = utils.book_new();
+        utils.book_append_sheet(wb, utils.json_to_sheet(data));
+        writeFileXLSX(wb, `relatorio_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.xlsx`);
+    };
+
+
+
+
+
     const handleMenuClick = (event) => {
         setAnchorEl(event.currentTarget);
     };
+
 
     const handleMenuClose = (option) => {
         setAnchorEl(null);
@@ -193,6 +304,8 @@ export default function BasicEditingGrid() {
             document.getElementById('csv-export-link').click();
         } else if (option === 'pdf') {
             exportPDF();
+        } else if (option === 'xlsx') {
+            exportXLSX();
         }
     };
     
@@ -201,36 +314,26 @@ export default function BasicEditingGrid() {
             <Paper>
                 <Box className="w-full md:mx-9 p-24 relative mt-32">
                     <header>Filtros de Pesquisa</header>
-
                     <Box className="flex items-center py-10 gap-10">
                         <form onSubmit={handleSubmit(onSubmit)}>
                             <Box className="flex gap-10 flex-wrap mb-20">
-                                <Controller
-                                    name="favorecidoSearch"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <FormControl style={{ minWidth: '22rem' }}>
-                                            <InputLabel id="favorecido-select-label">Pesquisar favorecido por:</InputLabel>
-                                            <Select
-                                                {...field}
-                                                labelId="favorecido-select-label"
-                                                id="favorecido-select"
-                                                label="Pesquisar favorecido por:"
-                                            >
-                                                <MenuItem value="cpf/cnpj">CPF</MenuItem>
-                                                <MenuItem value="permitCode">Código Permissionário</MenuItem>
-                                            </Select>
-                                        </FormControl>
-                                    )}
-                                />
+
 
                                 <Autocomplete
                                     id="favorecidos"
                                     multiple
                                     className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
-                                    getOptionLabel={(option) => option.label}
+                                    getOptionLabel={(option) => option.value.fullName}
                                     filterSelectedOptions
                                     options={userOptions}
+                                    filterOptions={(options, state) => {
+
+                                        return options.filter(option =>
+                                            option.value?.cpfCnpj?.includes(state.inputValue) ||
+                                            option.value?.permitCode?.includes(state.inputValue) ||
+                                            option.value?.fullName?.toLowerCase().includes(state.inputValue.toLowerCase())
+                                        );
+                                    }}
                                     loading={loadingUsers}
                                     onChange={(_, newValue) => handleAutocompleteChange('name', newValue)}
                                     renderInput={(params) => (
@@ -302,66 +405,89 @@ export default function BasicEditingGrid() {
                                         />
                                     )}
                                 />
-                                <Controller
-                                    name="dateRange"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <DateRangePicker
-                                            {...field}
-                                            id="custom-date-input"
-                                            showOneCalendar
-                                            showHeader={false}
-                                            placement="auto"
-                                            placeholder="Selecionar Data"
-                                            format="dd/MM/yy"
-                                            character=" - "
-                                            className="custom-date-range-picker"
-                                        />)}
-                                />
+                                <Box>
+                                    <Controller
+                                        name="dateRange"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <DateRangePicker
+                                                {...field}
+                                                id="custom-date-input"
+                                                showOneCalendar
+                                                showHeader={false}
+                                                placement="auto"
+                                                placeholder="Selecionar Data"
+                                                format="dd/MM/yy"
+                                                character=" - "
+                                                className="custom-date-range-picker"
+                                            />)}
+                                    />
+                                    <br />
+                                    <span className='absolute text-xs text-red-600'>Campo data obrigatório*</span>
+                                </Box>
                             </Box>
-                            <Box className="flex items-center my-20 gap-10 flex-wrap">
+                            <Box className="flex items-center my-[3.5rem] gap-10 flex-wrap">
                                 <Controller
                                     name="valorMin"
                                     control={control}
-                                    render={({ field }) =>
+                                    render={({ field }) => (
                                         <NumericFormat
                                             {...field}
-                                            thousandSeparator={'.'}
-                                            label="Valor Mínimo"
-                                            value={field.value}
-                                            decimalSeparator={','}
+                                            thousandSeparator="."
+                                            decimalSeparator=","
                                             fixedDecimalScale
                                             decimalScale={2}
                                             customInput={TextField}
+                                            label="Valor Mínimo"
+                                            value={field.value}
+                                            onMouseEnter={() => {
+                                                if (field.value) setShowClearMin(true);
+                                            }}
+                                            onMouseLeave={() => setShowClearMin(false)}
                                             InputProps={{
+                                                endAdornment: showClearMin && field.value && (
+                                                    <InputAdornment sx={{ position: "absolute", right: '1rem' }} position="end">
+                                                        <IconButton onClick={() => clearSelect('valorMin')} sx={{ height: '2rem', width: '2rem' }}>
+                                                            <ClearIcon sx={{ height: '2rem' }} />
+                                                        </IconButton>
+                                                    </InputAdornment>
+                                                ),
                                                 ...valueProps,
                                             }}
-
                                         />
-                                    }
+                                    )}
                                 />
                                 <Controller
                                     name="valorMax"
                                     control={control}
-                                    render={({ field }) =>
+                                    render={({ field }) => (
                                         <NumericFormat
                                             {...field}
-                                            thousandSeparator={'.'}
-                                            label="Valor Máximo"
-                                            value={field.value}
-                                            decimalSeparator={','}
+                                            thousandSeparator="."
+                                            decimalSeparator=","
                                             fixedDecimalScale
                                             decimalScale={2}
                                             customInput={TextField}
+                                            label="Valor Máximo"
+                                            value={field.value}
+                                            onMouseEnter={() => {
+                                                if (field.value) setShowClearMax(true);
+                                            }}
+                                            onMouseLeave={() => setShowClearMax(false)}
                                             InputProps={{
+                                                endAdornment: showClearMax && field.value && (
+                                                    <InputAdornment sx={{ position: "absolute", right: '1rem' }} position="end">
+                                                        <IconButton onClick={() => clearSelect('valorMax')} sx={{ height: '2rem', width: '2rem' }}>
+                                                            <ClearIcon sx={{ height: '2rem' }} />
+                                                        </IconButton>
+                                                    </InputAdornment>
+                                                ),
+
                                                 ...valueProps,
                                             }}
-
                                         />
-                                    }
+                                    )}
                                 />
-
-
                             </Box>
                             <Box>
 
@@ -381,7 +507,7 @@ export default function BasicEditingGrid() {
                                     variant="contained"
                                     className=" w-35% mt-16 mx-10 z-10"
                                     aria-label="Limpar Filtros"
-                                    type="submit"
+                                    type="button"
                                     size="medium"
                                     onClick={() => handleClear()}
                                 >
@@ -418,6 +544,7 @@ export default function BasicEditingGrid() {
                         >
                             <MenuItem onClick={() => handleMenuClose('csv')}>CSV</MenuItem>
                             <MenuItem onClick={() => handleMenuClose('pdf')}>PDF</MenuItem>
+                            <MenuItem onClick={() => handleMenuClose('xlsx')}>XLSX</MenuItem>
                         </Menu>
 
                         <CSVLink
@@ -433,70 +560,84 @@ export default function BasicEditingGrid() {
 
                          
                             <TableBody>
-                                  {!isLoading ? (
+                                {!isLoading ? (
                                     Object.entries(rows).length > 0 ? (
-                                            Object.entries(rows).map(([consorcio, group]) => (
-                                                <React.Fragment key={consorcio}>
-                                                    <TableRow className='bg-slate-100'>
-                                                        <TableCell component="th" colSpan={8} style={{ backgroundColor: '#EAEAEA' }}>
-                                                            <Box className="flex justify-between">
-                                                                <p style={{ fontSize: '1.8rem', fontWeight: 'bold', }}> {consorcio}</p>
-                                                                <Box className="flex items-center gap-8">
-                                                                    <p> Total: {group.total}</p>
-                                                                    {Object.entries(group.totalsByStatus).map(([status, total]) => (
-                                                                        <Box key={`${consorcio}-${status}`}>
-                                                                            <p >Total {status}: {total}</p>
-                                                                        </Box>
-                                                                    ))}
-                                                                </Box>
+                                        Object.entries(rows).map(([consorcio, group]) => (
+                                            <React.Fragment key={consorcio}>
+                                                <TableRow className='bg-slate-100'>
+                                                    <TableCell component="th" colSpan={8} style={{ backgroundColor: '#EAEAEA' }}>
+                                                        <Box className="flex justify-between">
+                                                            <p style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{consorcio}</p>
+                                                            <Box className="flex items-center gap-8">
+                                                                <p>Total: {group.total}</p>
+                                                                {Object.entries(group.totalsByStatus).map(([status, total]) => (
+                                                                    <Box key={`${consorcio}-${status}`}>
+                                                                        <p>Total {status}: {total}</p>
+                                                                    </Box>
+                                                                ))}
                                                             </Box>
+                                                        </Box>
+                                                    </TableCell>
+                                                </TableRow>
 
-                                                        </TableCell>
-                                                    </TableRow>
-                                                    <TableRow>
-                                            <TableCell style={{ fontWeight: 'bold' }}>Data Efetivação</TableCell>
-                                            <TableCell style={{ fontWeight: 'bold' }}>Data Vencimento</TableCell>
-                                            <TableCell style={{ fontWeight: 'bold' }}>Favorecido</TableCell>
-                                            <TableCell style={{ fontWeight: 'bold' }}>Consórcio</TableCell>
-                                            <TableCell style={{ fontWeight: 'bold' }}>Valor transação</TableCell>
-                                            <TableCell style={{ fontWeight: 'bold' }}>Status</TableCell>
-                                            <TableCell style={{ fontWeight: 'bold' }}>Ocorrência</TableCell>
-                                        </TableRow>
-                                        {group.items.map(item => (
-                                            <TableRow key={item.id}>
-                                                <TableCell>{item.date}</TableCell>
-                                                <TableCell>{item.dateExpire}</TableCell>
-                                                <TableCell>{item.favorecido}</TableCell>
-                                                <TableCell>{item.consorcio}</TableCell>
-                                                <TableCell>{item.value}</TableCell>
-                                                <TableCell>{item.status}</TableCell>
-                                                <TableCell>{item.ocorrencia}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                        <TableRow>
+                                                {/* Render headers */}
+                                                <TableRow>
+                                                    {consorcio === 'VLT' ? <TableCell style={{ fontWeight: 'bold' }}>Data Transação</TableCell> : null}
+                                                    <TableCell style={{ fontWeight: 'bold' }}>Data Efetivação</TableCell>
+                                                    <TableCell style={{ fontWeight: 'bold' }}>Data Vencimento</TableCell>
+                                                    <TableCell style={{ fontWeight: 'bold' }}>Favorecido</TableCell>
+                                                    <TableCell style={{ fontWeight: 'bold' }}>Consórcio</TableCell>
+                                                    <TableCell style={{ fontWeight: 'bold' }}>Valor transação</TableCell>
+                                                    <TableCell style={{ fontWeight: 'bold' }}>Status</TableCell>
+                                                    <TableCell style={{ fontWeight: 'bold' }}>Ocorrência</TableCell>
+                                                </TableRow>
 
-                                        </TableRow>
-                                        {Object.entries(group.totalsByStatus).map(([status, total]) => (
-                                            <TableRow key={`${consorcio}-${status}`}>
-                                                <TableCell colSpan={4} align="right">Total {status}:</TableCell>
-                                                <TableCell colSpan={2}>{total}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                                </React.Fragment>
-                                            ))
-                                        
+                                                {Object.entries(group.items.reduce((acc, item) => {
+                                                    if (!acc[item.status]) acc[item.status] = [];
+                                                    acc[item.status].push(item);
+                                                    return acc;
+                                                }, {})).map(([status, items]) => (
+                                                    <React.Fragment key={`${consorcio}-${status}`}>
+                                                        {items.map(item => (
+                                                            <TableRow key={item.id}>
+                                                                {item.consorcio === 'VLT' ? <TableCell style={{ fontWeight: 'bold' }}>{item.date}</TableCell> : null}
+                                                                <TableCell>{item.datatransacao}</TableCell>
+                                                                <TableCell>{item.datapagamento}</TableCell>
+                                                                <TableCell>{item.consorcio}</TableCell>
+                                                                <TableCell>{item.favorecido}</TableCell>
+                                                                <TableCell>{item.value}</TableCell>
+                                                                <TableCell>{item.status}</TableCell>
+                                                                {status === 'erro' ? <TableCell>{item.ocorrencia}</TableCell> : <></>}
+                                                            </TableRow>
+                                                        ))}
+                                                        <TableRow>
+                                                            <TableCell colSpan={5} align="right" style={{ fontWeight: 'bold' }}>Total {status}:</TableCell>
+                                                            <TableCell style={{ fontWeight: 'bold' }}>
+                                                                {formatter.format(items.reduce((sum, item) => sum + item.value, 0))}
+                                                            </TableCell>
+                                                            <TableCell colSpan={2}></TableCell>
+                                                        </TableRow>
+                                                    </React.Fragment>
+                                                ))}
+                                            </React.Fragment>
+                                        ))
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={2}>Não há dados para serem exibidos</TableCell>
+                                            <TableCell colSpan={8}>Não há dados para serem exibidos</TableCell>
                                         </TableRow>
                                     )
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={2}>Carregando...</TableCell>
+                                        <TableCell colSpan={8}>Carregando...</TableCell>
                                     </TableRow>
                                 )}
-                            
+
+                                <TableRow>
+                                    <TableCell className='font-bold'>Valor Total: </TableCell>
+                                    <TableCell className='font-bold'>{formatter.format(reportList.valor ?? 0)}</TableCell>
+                                </TableRow>
                             </TableBody>
+
                         </Table>
                     </div>
 

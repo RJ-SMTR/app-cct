@@ -92,6 +92,7 @@ function handleData(data) {
 
 export const handleReportInfo = (data, reportType) => async (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
+    console.log(data, reportType)
 
     if (JwtService.isAuthTokenValid(token)) {
         return new Promise(async (resolve, reject) => {
@@ -111,8 +112,7 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
             try {
                 const response = await api.request(config);
                 const responseData = response.data;
-
-                if (!requestData.favorecidoName && !requestData.consorcioName) {
+                
                     const mergedData = responseData.reduce((acc, curr) => {
                         return acc.concat(curr.data);
                     }, []);
@@ -126,11 +126,7 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
 
                     dispatch(setReportList(combinedResponse));
                     resolve(combinedResponse);
-                } else {
-                    const conditionalResponse = responseData.length > 0 ? responseData : response;
-                    dispatch(setReportList(conditionalResponse));
-                    resolve(conditionalResponse);
-                }
+             
             } catch (error) {
                 console.error(error);
                 reject(error);
