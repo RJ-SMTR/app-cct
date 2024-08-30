@@ -1,24 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
     Box,
     MenuItem,
-    ListItemText,
-    Checkbox,
     Table,
-    TableHead,
     TableBody,
     Autocomplete,
     TextField,
     Button,
     TableRow,
+    TableHead,
     TableCell,
     Paper,
-    Select,
-    InputLabel,
-    FormControl,
     CircularProgress,
     InputAdornment,
-    TableFooter,
     Menu
 } from '@mui/material';
 import { ptBR as pt } from '@mui/x-data-grid';
@@ -33,7 +27,6 @@ import { CSVLink } from 'react-csv';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-const locale = pt;
 
 const consorciosStatus = [
     { label: 'Todos' },
@@ -62,12 +55,15 @@ const consorcios = [
 
 export default function BasicEditingGrid() {
     const synthData = useSelector(state => state.report.synthData)
+    const totalSynth = useSelector(state => state.report.totalSynth)
     const reportType = useSelector(state => state.report.reportType);
     const reportList = useSelector(state => state.report.reportList)
     const userList = useSelector(state => state.admin.userList) || []
     const [isLoading, setIsLoading] = useState(false)
     const [loadingUsers, setLoadingUsers] = useState(false)
     const [userOptions, setUserOptions] = useState([])
+    const [showClearMin, setShowClearMin] = useState(false)
+    const [showClearMax, setShowClearMax] = useState(false)
     const [rows, setRows] = useState([])
     const [anchorEl, setAnchorEl] = useState(null);
 
@@ -80,7 +76,7 @@ export default function BasicEditingGrid() {
 
     const dispatch = useDispatch()
 
-    const { reset, handleSubmit, setValue, control, getValues, watch } = useForm({
+    const { reset, handleSubmit, setValue, control, getValues } = useForm({
         defaultValues: {
             name: [],
             dateRange: [],
@@ -91,10 +87,16 @@ export default function BasicEditingGrid() {
             status: []
         }
     });
-    const watchedFavorecidoSearch = watch('favorecidoSearch');
 
     const onSubmit = (data) => {
-        // dispatch(handleReportInfo(data, reportType))
+        setIsLoading(true)
+        dispatch(handleReportInfo(data, reportType))
+            .then((response) => {
+                setIsLoading(false)
+            })
+            .catch((error) => {
+                dispatch(showMessage({ message: 'Erro na busca, verifique os campos e tente novamente.' }))
+            });
     };
     const handleClear = () => {
         setValue('name', [])
@@ -119,15 +121,13 @@ export default function BasicEditingGrid() {
     }, []);
 
     useEffect(() => {
-        if (reportList.length > 0) {
             setIsLoading(false)
-        }
-    }, [reportList]);
+    }, [rows]);
 
     useEffect(() => {
         if (userList && userList.length > 0) {
             const options = userList.map((user) => ({
-                label: getValues('favorecidoSearch') === 'cpf/cnpj' ? `${user.cpfCnpj} - ${user.fullName}` : `${user.permitCode} - ${user.fullName}`,
+                label: user.label,
                 value: {
                     cpfCnpj: user.cpfCnpj,
                     permitCode: user.permitCode,
@@ -135,18 +135,17 @@ export default function BasicEditingGrid() {
                 }
             }));
             const sortedOptions = options.sort((a, b) => {
-                if (getValues('favorecidoSearch') === 'cpf/cnpj') {
-                    return a.value.fullName.localeCompare(b.value.fullName);
-                } else {
-                    return a.label.localeCompare(b.label);
-                }
+
+                return a.value.fullName.localeCompare(b.value.fullName);
+
+
             });
 
-            setUserOptions(sortedOptions);
+            setUserOptions([{ label: "Todos", value: { fullName: 'Todos' } }, ...sortedOptions]);
         } else {
             setUserOptions([]);
         }
-    }, [watchedFavorecidoSearch, userList]);
+    }, [userList]);
 
     const handleAutocompleteChange = (field, newValue) => {
         setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
@@ -161,76 +160,245 @@ export default function BasicEditingGrid() {
         currency: 'BRL',
     });
 
-    const csvData = reportList.data ? reportList.data.map(report => ({
-        Nome: report.nome,
-        Valor: formatter.format(report.valor)
-    })) : [];
 
-    const exportPDF = () => {
+  
+    const prepareCSVData = (rows) => {
+        const csvData = [];
+
+        Object.entries(rows).forEach(([consorcio, group]) => {
+            group.items.forEach(item => {
+                const row = {
+                    'Data Transação': item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
+                    'Data Vencimento': item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
+                    'Consórcio': item.consorcio,
+                    'Favorecido': item.favorecido,
+                    'Valor transação': formatter.format(item.valor),
+                    'Status': showStatus(item.status),
+                    'Ocorrência': item.status === 'naopago' ? item.mensagem_status : '',
+                };
+                csvData.push(row);
+            });
+        });
+
+        return csvData;
+    };
+
+
+    const exportToCSV = (rows) => {
+        const status = getValues('status');
+        const whichStatus = status?.join(',');
+
+        const csvData = [
+            ['Status selecionado', '', whichStatus || 'Todos'],
+            [],
+            ['Data Transação', 'Data Vencimento', 'Consórcio', 'Favorecido', 'Valor transação', 'Status', 'Ocorrência'],
+        ];
+
+        Object.entries(rows).forEach(([consorcio, group]) => {
+            csvData.push([`Consórcio: ${consorcio}`]);
+
+            group.items.forEach(item => {
+                const row = [
+                    item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
+                    item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
+                    item.consorcio,
+                    item.favorecido,
+                    formatter.format(item.valor),
+                    showStatus(item.status),
+                    item.status === 'naopago' ? item.mensagem_status : '',
+                ];
+                csvData.push(row);
+            });
+
+            csvData.push([
+                `Subtotal ${consorcio}`,
+                '',
+                '',
+                '',
+                formatter.format(group.items.reduce((sum, item) => sum + item.valor, 0)),
+                '',
+                ''
+            ]);
+        });
+
+        csvData.push(['Valor Total', '', '', '', formatter.format(reportList?.valor)]);
+
+        return csvData;
+    };
+
+    const CSVExportButton = ({ rows }) => {
+        const csvData = exportToCSV(rows);
+
+        const selectedDate = getValues('dateRange');
+        const dateInicio = selectedDate[0];
+        const dateFim = selectedDate[1];
+
+        const csvFilename = useMemo(() => {
+            if (dateInicio && dateFim) {
+                return `relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.csv`;
+            }
+            return `relatorio_${format(new Date(), 'dd-MM-yyyy')}.csv`;
+        }, [dateInicio, dateFim]);
+
+        return (
+            <CSVLink data={csvData} filename={csvFilename}>
+                Export to CSV
+            </CSVLink>
+        );
+    };
+
+   
+
+    // Export PDF
+    const exportToPDF = (rows) => {
         const doc = new jsPDF();
         const tableColumn = ["Nome", "Valor"];
         const tableRows = [];
 
-        reportList.data.forEach(report => {
-            const reportData = [
-                report.nome,
-                formatter.format(report.valor)
-            ];
-            tableRows.push(reportData);
+
+        const selectedDate = getValues('dateRange');
+        const dateInicio = selectedDate[0];
+        const dateFim = selectedDate[1];
+
+        const status = getValues('status');
+        const selectedStatus = status.join(',');
+
+        const logoImg = 'assets/icons/logoPrefeitura.png';
+        const logoH = 15;
+        const logoW = 30;
+
+
+
+    
+        const csvData = prepareCSVData(rows); 
+
+        const tableData = csvData.map(item => [
+            item['Data Transação'],
+            item['Data Vencimento'],
+            item['Consórcio'],
+            item['Favorecido'],
+            item['Valor transação'],
+            item['Status'],
+            item['Ocorrência'],
+        ]);
+
+    
+        doc.autoTable({
+            head: [['Data Transação', 'Data Vencimento', 'Consórcio', 'Favorecido', 'Valor transação', 'Status', 'Ocorrência']],
+            body: tableData,
+            margin: { left: 14, right: 14, top: 60 },
+            startY: 60,
+            didDrawPage: (data) => {
+
+                doc.addImage(logoImg, 'PNG', 14, 10, logoW, logoH);
+
+
+                const hrYPosition = 30;
+                doc.setLineWidth(0.3);
+                doc.line(14, hrYPosition, 196, hrYPosition);
+
+
+                doc.setFontSize(10);
+                doc.text(`Relatório dos dias: ${format(dateInicio, 'dd/MM/yyyy')} a ${format(dateFim, 'dd/MM/yyyy')}`, 14, 45);
+                doc.text(`Status observado: ${selectedStatus || 'Todos'}`, 14, 50);
+
+
+
+
+
+            },
         });
 
-        doc.autoTable(tableColumn, tableRows, { startY: 20 });
-        doc.text(`Relatório ${format(new Date(), 'dd/MM/yyyy')}`, 14, 15);
-        doc.save(`relatorio_${format(new Date(), 'dd/MM/yyyy')}.pdf`);
+        const pageCount = doc.internal.getNumberOfPages();
+
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(10);
+
+            const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
+            const text = `Página ${currentPage} de ${pageCount}`;
+            const xPos = 14;
+            const yPos = doc.internal.pageSize.height - 5;
+
+            doc.text(text, xPos, yPos);
+        }
+
+        const totalValue = `Valor total: ${formatter.format(totalSynth)}`;
+        doc.setFontSize(10);
+        doc.text(totalValue, 14, doc.internal.pageSize.height - 10);
+
+
+        doc.save(`relatorio_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.pdf`);
     };
+
+    // Export XLSX
+    const exportToXLSX = (rows) => {
+        const selectedDate = getValues('dateRange');
+        const dateInicio = selectedDate[0];
+        const dateFim = selectedDate[1];
+        const data = [
+            ["Status selecionado", "", whichStatus || "Todos"],
+            ["Nome", "Valor"],
+            ...reportList.data.map(report => [
+                report.favorecido,
+                formatter.format(report.valor),
+            ]),
+            ["Valor Total", "", formatter.format(totalSynth)],
+
+        ];
+
+        const wb = utils.book_new();
+        utils.book_append_sheet(wb, utils.json_to_sheet(data));
+        writeFileXLSX(wb, `relatorio_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.xlsx`);
+    };
+
+
+
+
+
     const handleMenuClick = (event) => {
         setAnchorEl(event.currentTarget);
     };
 
-    const handleMenuClose = (option) => {
-        setAnchorEl(null);
-        if (option === 'csv') {
-            document.getElementById('csv-export-link').click();
-        } else if (option === 'pdf') {
-            exportPDF();
+
+    const showStatus = (status) => {
+        switch (status) {
+            case 'pago':
+                return 'Pago';
+            case 'a pagar':
+                return 'A pagar';
+            case 'naopago':
+                return 'Erro';
+            default:
+                return '';
         }
     };
-    
+  
     return (
         <>
             <Paper>
                 <Box className="w-full md:mx-9 p-24 relative mt-32">
                     <header>Filtros de Pesquisa</header>
-
                     <Box className="flex items-center py-10 gap-10">
                         <form onSubmit={handleSubmit(onSubmit)}>
                             <Box className="flex gap-10 flex-wrap mb-20">
-                                <Controller
-                                    name="favorecidoSearch"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <FormControl style={{ minWidth: '22rem' }}>
-                                            <InputLabel id="favorecido-select-label">Pesquisar favorecido por:</InputLabel>
-                                            <Select
-                                                {...field}
-                                                labelId="favorecido-select-label"
-                                                id="favorecido-select"
-                                                label="Pesquisar favorecido por:"
-                                            >
-                                                <MenuItem value="cpf/cnpj">CPF</MenuItem>
-                                                <MenuItem value="permitCode">Código Permissionário</MenuItem>
-                                            </Select>
-                                        </FormControl>
-                                    )}
-                                />
+
 
                                 <Autocomplete
                                     id="favorecidos"
                                     multiple
                                     className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
-                                    getOptionLabel={(option) => option.label}
+                                    getOptionLabel={(option) => option.value.fullName}
                                     filterSelectedOptions
                                     options={userOptions}
+                                    filterOptions={(options, state) => {
+
+                                        return options.filter(option =>
+                                            option.value?.cpfCnpj?.includes(state.inputValue) ||
+                                            option.value?.permitCode?.includes(state.inputValue) ||
+                                            option.value?.fullName?.toLowerCase().includes(state.inputValue.toLowerCase())
+                                        );
+                                    }}
                                     loading={loadingUsers}
                                     onChange={(_, newValue) => handleAutocompleteChange('name', newValue)}
                                     renderInput={(params) => (
@@ -302,66 +470,89 @@ export default function BasicEditingGrid() {
                                         />
                                     )}
                                 />
-                                <Controller
-                                    name="dateRange"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <DateRangePicker
-                                            {...field}
-                                            id="custom-date-input"
-                                            showOneCalendar
-                                            showHeader={false}
-                                            placement="auto"
-                                            placeholder="Selecionar Data"
-                                            format="dd/MM/yy"
-                                            character=" - "
-                                            className="custom-date-range-picker"
-                                        />)}
-                                />
+                                <Box>
+                                    <Controller
+                                        name="dateRange"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <DateRangePicker
+                                                {...field}
+                                                id="custom-date-input"
+                                                showOneCalendar
+                                                showHeader={false}
+                                                placement="auto"
+                                                placeholder="Selecionar Data"
+                                                format="dd/MM/yy"
+                                                character=" - "
+                                                className="custom-date-range-picker"
+                                            />)}
+                                    />
+                                    <br />
+                                    <span className='absolute text-xs text-red-600'>Campo data obrigatório*</span>
+                                </Box>
                             </Box>
-                            <Box className="flex items-center my-20 gap-10 flex-wrap">
+                            <Box className="flex items-center my-[3.5rem] gap-10 flex-wrap">
                                 <Controller
                                     name="valorMin"
                                     control={control}
-                                    render={({ field }) =>
+                                    render={({ field }) => (
                                         <NumericFormat
                                             {...field}
-                                            thousandSeparator={'.'}
-                                            label="Valor Mínimo"
-                                            value={field.value}
-                                            decimalSeparator={','}
+                                            thousandSeparator="."
+                                            decimalSeparator=","
                                             fixedDecimalScale
                                             decimalScale={2}
                                             customInput={TextField}
+                                            label="Valor Mínimo"
+                                            value={field.value}
+                                            onMouseEnter={() => {
+                                                if (field.value) setShowClearMin(true);
+                                            }}
+                                            onMouseLeave={() => setShowClearMin(false)}
                                             InputProps={{
+                                                endAdornment: showClearMin && field.value && (
+                                                    <InputAdornment sx={{ position: "absolute", right: '1rem' }} position="end">
+                                                        <IconButton onClick={() => clearSelect('valorMin')} sx={{ height: '2rem', width: '2rem' }}>
+                                                            <ClearIcon sx={{ height: '2rem' }} />
+                                                        </IconButton>
+                                                    </InputAdornment>
+                                                ),
                                                 ...valueProps,
                                             }}
-
                                         />
-                                    }
+                                    )}
                                 />
                                 <Controller
                                     name="valorMax"
                                     control={control}
-                                    render={({ field }) =>
+                                    render={({ field }) => (
                                         <NumericFormat
                                             {...field}
-                                            thousandSeparator={'.'}
-                                            label="Valor Máximo"
-                                            value={field.value}
-                                            decimalSeparator={','}
+                                            thousandSeparator="."
+                                            decimalSeparator=","
                                             fixedDecimalScale
                                             decimalScale={2}
                                             customInput={TextField}
+                                            label="Valor Máximo"
+                                            value={field.value}
+                                            onMouseEnter={() => {
+                                                if (field.value) setShowClearMax(true);
+                                            }}
+                                            onMouseLeave={() => setShowClearMax(false)}
                                             InputProps={{
+                                                endAdornment: showClearMax && field.value && (
+                                                    <InputAdornment sx={{ position: "absolute", right: '1rem' }} position="end">
+                                                        <IconButton onClick={() => clearSelect('valorMax')} sx={{ height: '2rem', width: '2rem' }}>
+                                                            <ClearIcon sx={{ height: '2rem' }} />
+                                                        </IconButton>
+                                                    </InputAdornment>
+                                                ),
+
                                                 ...valueProps,
                                             }}
-
                                         />
-                                    }
+                                    )}
                                 />
-
-
                             </Box>
                             <Box>
 
@@ -381,7 +572,7 @@ export default function BasicEditingGrid() {
                                     variant="contained"
                                     className=" w-35% mt-16 mx-10 z-10"
                                     aria-label="Limpar Filtros"
-                                    type="submit"
+                                    type="button"
                                     size="medium"
                                     onClick={() => handleClear()}
                                 >
@@ -416,87 +607,109 @@ export default function BasicEditingGrid() {
                             open={Boolean(anchorEl)}
                             onClose={() => setAnchorEl(null)}
                         >
-                            <MenuItem onClick={() => handleMenuClose('csv')}>CSV</MenuItem>
-                            <MenuItem onClick={() => handleMenuClose('pdf')}>PDF</MenuItem>
-                        </Menu>
+                            <MenuItem>
+                                <CSVExportButton rows={rows} />
+                                </MenuItem>
+                            <MenuItem onClick={() => exportToXLSX(rows)}>XLSX</MenuItem>
+                            <MenuItem onClick={() => exportToPDF(rows)}>PDF</MenuItem>
 
+                        </Menu>
+{/* 
                         <CSVLink
                             id="csv-export-link"
-                            data={csvData}
+                            
+                            data={prepareCSVData(rows)}
                             filename={`relatorio_${format(new Date(), 'dd/MM/yyyy')}.csv`}
                             className="hidden"
 
-                        />
+                        /> */}
                     </header>
                     <div style={{ height: '65vh', width: '100%' }} className='overflow-scroll'>
-                        <Table>
+                        <Table dense table stickyHeader sx={{ tableLayout: 'fixed', width: '100%' }}>
 
                          
                             <TableBody>
-                                  {!isLoading ? (
+                                {!isLoading ? (
                                     Object.entries(rows).length > 0 ? (
-                                            Object.entries(rows).map(([consorcio, group]) => (
-                                                <React.Fragment key={consorcio}>
-                                                    <TableRow className='bg-slate-100'>
-                                                        <TableCell component="th" colSpan={8} style={{ backgroundColor: '#EAEAEA' }}>
-                                                            <Box className="flex justify-between">
-                                                                <p style={{ fontSize: '1.8rem', fontWeight: 'bold', }}> {consorcio}</p>
-                                                                <Box className="flex items-center gap-8">
-                                                                    <p> Total: {group.total}</p>
-                                                                    {Object.entries(group.totalsByStatus).map(([status, total]) => (
-                                                                        <Box key={`${consorcio}-${status}`}>
-                                                                            <p >Total {status}: {total}</p>
-                                                                        </Box>
-                                                                    ))}
-                                                                </Box>
+                                        Object.entries(rows).map(([consorcio, group]) => (
+                                            <React.Fragment key={consorcio}>
+                                                <TableRow>
+                                                    <TableCell colSpan={11} component="th" style={{ backgroundColor: '#EAEAEA', }}>
+                                                        <Box className="flex justify-between w-full">
+                                                            <p style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{consorcio}</p>
+                                                            <Box className="flex items-center gap-8">
+                                                                <p>Total: {group.total}</p>
+                                                                {Object.entries(group.totalsByStatus).map(([status, total]) => (
+                                                                    <Box key={`${consorcio}-${status}`}>
+                                                                        <p>Total {showStatus(status)}: {total}</p>
+                                                                    </Box>
+                                                                ))}
                                                             </Box>
+                                                        </Box>
+                                                    </TableCell>
+                                                </TableRow>
 
-                                                        </TableCell>
-                                                    </TableRow>
-                                                    <TableRow>
-                                            <TableCell style={{ fontWeight: 'bold' }}>Data Efetivação</TableCell>
-                                            <TableCell style={{ fontWeight: 'bold' }}>Data Vencimento</TableCell>
-                                            <TableCell style={{ fontWeight: 'bold' }}>Favorecido</TableCell>
-                                            <TableCell style={{ fontWeight: 'bold' }}>Consórcio</TableCell>
-                                            <TableCell style={{ fontWeight: 'bold' }}>Valor transação</TableCell>
-                                            <TableCell style={{ fontWeight: 'bold' }}>Status</TableCell>
-                                            <TableCell style={{ fontWeight: 'bold' }}>Ocorrência</TableCell>
-                                        </TableRow>
-                                        {group.items.map(item => (
-                                            <TableRow key={item.id}>
-                                                <TableCell>{item.date}</TableCell>
-                                                <TableCell>{item.dateExpire}</TableCell>
-                                                <TableCell>{item.favorecido}</TableCell>
-                                                <TableCell>{item.consorcio}</TableCell>
-                                                <TableCell>{item.value}</TableCell>
-                                                <TableCell>{item.status}</TableCell>
-                                                <TableCell>{item.ocorrencia}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                        <TableRow>
+                                                <TableRow>
+                                                    {consorcio === 'VLT' ? <TableCell style={{ fontWeight: 'bold' }}>Data Transação</TableCell> : null}
+                                                    <TableCell  style={{ fontWeight: 'bold' }}>Data Vencimento</TableCell>
+                                                    <TableCell  style={{ fontWeight: 'bold' }}>Consórcio</TableCell>
+                                                    <TableCell colSpan={3.5} style={{ fontWeight: 'bold' }}>Favorecido</TableCell>
+                                                    <TableCell  style={{ fontWeight: 'bold' }}>Valor transação</TableCell>
+                                                    <TableCell  style={{ fontWeight: 'bold' }}>Status</TableCell>
+                                                    <TableCell colSpan={3} style={{ fontWeight: 'bold' }}>Ocorrência</TableCell>
+                                                </TableRow>
 
-                                        </TableRow>
-                                        {Object.entries(group.totalsByStatus).map(([status, total]) => (
-                                            <TableRow key={`${consorcio}-${status}`}>
-                                                <TableCell colSpan={4} align="right">Total {status}:</TableCell>
-                                                <TableCell colSpan={2}>{total}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                                </React.Fragment>
-                                            ))
-                                        
+                                                {Object.entries(group.items.reduce((acc, item) => {
+                                                    if (!acc[item.status]) acc[item.status] = [];
+                                                    acc[item.status].push(item);
+                                                    return acc;
+                                                }, {})).map(([status, items]) => (
+                                                    <React.Fragment key={`${consorcio}-${status}`}>
+                                                        {items.map(item => (
+                                                            <TableRow sx={{width: '100%'}} className='w-full' key={item.id}>
+                                                                {item.consorcio === 'VLT' ? (
+                                                                    <TableCell>
+                                                                        { item.datatransacao ?format(new Date(item.datatransacao), 'dd/MM/yyyy') : null}
+                                                                    </TableCell>
+                                                                ) : null}
+                                                                <TableCell >{ item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy'): null}</TableCell>
+                                                                <TableCell>{item.consorcio}</TableCell>
+                                                                <TableCell colSpan={3.5} sx={{ minWidth: 300, maxWidth: 350, overflow: 'hidden', textOverflow: 'ellipsis', }}>
+                                                                    {item.favorecido}
+                                                                </TableCell>
+
+                                                                <TableCell>{formatter.format(item.valor) }</TableCell>
+                                                                <TableCell>{showStatus(item.status)}</TableCell>
+                                                                {status === 'naopago' ? <TableCell colSpan={3} sx={{ minWidth: '100px' }}>{item.mensagem_status}</TableCell> : <></>}
+                                                            </TableRow>
+                                                        ))}
+                                                        <TableRow>
+                                                            <TableCell colSpan={2} style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Subtotal {showStatus(status)}:</TableCell>
+                                                            <TableCell style={{ fontWeight: 'bold' }}>
+                                                                {formatter.format(items.reduce((sum, item) => sum + item.valor, 0))}
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    </React.Fragment>
+                                                ))}
+                                            </React.Fragment>
+                                        ))
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={2}>Não há dados para serem exibidos</TableCell>
+                                            <TableCell colSpan={8}>Não há dados para serem exibidos</TableCell>
                                         </TableRow>
                                     )
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={2}>Carregando...</TableCell>
+                                        <TableCell colSpan={8}>Carregando...</TableCell>
                                     </TableRow>
                                 )}
-                            
+
+                                <TableRow>
+                                    <TableCell className='font-bold'>Valor Total: </TableCell>
+                                    <TableCell className='font-bold'>{totalSynth}</TableCell>
+                                </TableRow>
                             </TableBody>
+
                         </Table>
                     </div>
 
