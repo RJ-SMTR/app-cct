@@ -98,7 +98,6 @@ function handleData(data) {
 
 export const handleReportInfo = (data, reportType) => async (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
-    console.log(data, reportType)
 
     if (JwtService.isAuthTokenValid(token)) {
         return new Promise(async (resolve, reject) => {
@@ -156,7 +155,6 @@ export const handleSynthData = (reportData) => async (dispatch) => {
     })
     dispatch(setTotalSynth(total))
     const groupedData = reportData.data.reduce((acc, item) => {
-        console.log(item)
         const key = item.consorcio;
         if (!acc[key]) {
             acc[key] = { items: [], total: 0, totalsByStatus: {} };
