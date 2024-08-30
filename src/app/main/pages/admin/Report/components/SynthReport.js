@@ -8,6 +8,7 @@ import {
     TextField,
     Button,
     TableRow,
+    TableHead,
     TableCell,
     Paper,
     CircularProgress,
@@ -54,6 +55,7 @@ const consorcios = [
 
 export default function BasicEditingGrid() {
     const synthData = useSelector(state => state.report.synthData)
+    const totalSynth = useSelector(state => state.report.totalSynth)
     const reportType = useSelector(state => state.report.reportType);
     const reportList = useSelector(state => state.report.reportList)
     const userList = useSelector(state => state.admin.userList) || []
@@ -87,7 +89,14 @@ export default function BasicEditingGrid() {
     });
 
     const onSubmit = (data) => {
+        setIsLoading(true)
         dispatch(handleReportInfo(data, reportType))
+            .then((response) => {
+                setIsLoading(false)
+            })
+            .catch((error) => {
+                dispatch(showMessage({ message: 'Erro na busca, verifique os campos e tente novamente.' }))
+            });
     };
     const handleClear = () => {
         setValue('name', [])
@@ -112,10 +121,8 @@ export default function BasicEditingGrid() {
     }, []);
 
     useEffect(() => {
-        if (reportList.length > 0) {
             setIsLoading(false)
-        }
-    }, [reportList]);
+    }, [rows]);
 
     useEffect(() => {
         if (userList && userList.length > 0) {
@@ -153,58 +160,101 @@ export default function BasicEditingGrid() {
         currency: 'BRL',
     });
 
-    const status = getValues('status')
-    const whichStatus = status?.join(',')
 
-    const reportListData = reportList.count > 0
-        ? reportList.data?.map(report => ({
-            Nome: report.nomefavorecido,
-            Valor: formatter.format(report.valor),
-            Status: "",
-        }))
-        : [];
+  
+    const prepareCSVData = (rows) => {
+        const csvData = [];
 
-    const valorTotal = {
-        Nome: "Valor Total",
-        Valor: "",
-        Status: formatter.format(reportList?.valor),
-    }
+        Object.entries(rows).forEach(([consorcio, group]) => {
+            group.items.forEach(item => {
+                const row = {
+                    'Data Transação': item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
+                    'Data Vencimento': item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
+                    'Consórcio': item.consorcio,
+                    'Favorecido': item.favorecido,
+                    'Valor transação': formatter.format(item.valor),
+                    'Status': showStatus(item.status),
+                    'Ocorrência': item.status === 'naopago' ? item.mensagem_status : '',
+                };
+                csvData.push(row);
+            });
+        });
 
-    const statusRow = {
-        Nome: "Status selecionado",
-        Valor: "",
-        Status: whichStatus || "Todos",
+        return csvData;
     };
 
-    const csvData = [
-        statusRow,
-        ...reportListData,
-        valorTotal
-    ]
-    const selectedDate = getValues('dateRange');
-    const dateInicio = selectedDate[0];
-    const dateFim = selectedDate[1];
 
-    const csvFilename = useMemo(() => {
-        if (dateInicio && dateFim) {
-            return `relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.csv`;
-        }
-        return `relatorio_${format(new Date(), 'dd-MM-yyyy')}.csv`;
-    }, [dateInicio, dateFim])
+    const exportToCSV = (rows) => {
+        const status = getValues('status');
+        const whichStatus = status?.join(',');
+
+        const csvData = [
+            ['Status selecionado', '', whichStatus || 'Todos'],
+            [],
+            ['Data Transação', 'Data Vencimento', 'Consórcio', 'Favorecido', 'Valor transação', 'Status', 'Ocorrência'],
+        ];
+
+        Object.entries(rows).forEach(([consorcio, group]) => {
+            csvData.push([`Consórcio: ${consorcio}`]);
+
+            group.items.forEach(item => {
+                const row = [
+                    item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
+                    item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
+                    item.consorcio,
+                    item.favorecido,
+                    formatter.format(item.valor),
+                    showStatus(item.status),
+                    item.status === 'naopago' ? item.mensagem_status : '',
+                ];
+                csvData.push(row);
+            });
+
+            csvData.push([
+                `Subtotal ${consorcio}`,
+                '',
+                '',
+                '',
+                formatter.format(group.items.reduce((sum, item) => sum + item.valor, 0)),
+                '',
+                ''
+            ]);
+        });
+
+        csvData.push(['Valor Total', '', '', '', formatter.format(reportList?.valor)]);
+
+        return csvData;
+    };
+
+    const CSVExportButton = ({ rows }) => {
+        const csvData = exportToCSV(rows);
+
+        const selectedDate = getValues('dateRange');
+        const dateInicio = selectedDate[0];
+        const dateFim = selectedDate[1];
+
+        const csvFilename = useMemo(() => {
+            if (dateInicio && dateFim) {
+                return `relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.csv`;
+            }
+            return `relatorio_${format(new Date(), 'dd-MM-yyyy')}.csv`;
+        }, [dateInicio, dateFim]);
+
+        return (
+            <CSVLink data={csvData} filename={csvFilename}>
+                Export to CSV
+            </CSVLink>
+        );
+    };
+
+   
 
     // Export PDF
-    const exportPDF = () => {
+    const exportToPDF = (rows) => {
         const doc = new jsPDF();
         const tableColumn = ["Nome", "Valor"];
         const tableRows = [];
 
-        reportList.data.forEach(report => {
-            const reportData = [
-                report.nomefavorecido,
-                formatter.format(report.valor)
-            ];
-            tableRows.push(reportData);
-        });
 
         const selectedDate = getValues('dateRange');
         const dateInicio = selectedDate[0];
@@ -219,10 +269,23 @@ export default function BasicEditingGrid() {
 
 
 
+    
+        const csvData = prepareCSVData(rows); 
 
+        const tableData = csvData.map(item => [
+            item['Data Transação'],
+            item['Data Vencimento'],
+            item['Consórcio'],
+            item['Favorecido'],
+            item['Valor transação'],
+            item['Status'],
+            item['Ocorrência'],
+        ]);
+
+    
         doc.autoTable({
-            head: [tableColumn],
-            body: tableRows,
+            head: [['Data Transação', 'Data Vencimento', 'Consórcio', 'Favorecido', 'Valor transação', 'Status', 'Ocorrência']],
+            body: tableData,
             margin: { left: 14, right: 14, top: 60 },
             startY: 60,
             didDrawPage: (data) => {
@@ -260,7 +323,7 @@ export default function BasicEditingGrid() {
             doc.text(text, xPos, yPos);
         }
 
-        const totalValue = `Valor total: ${formatter.format(reportList.valor ?? 0)}`;
+        const totalValue = `Valor total: ${formatter.format(totalSynth)}`;
         doc.setFontSize(10);
         doc.text(totalValue, 14, doc.internal.pageSize.height - 10);
 
@@ -269,7 +332,7 @@ export default function BasicEditingGrid() {
     };
 
     // Export XLSX
-    const exportXLSX = () => {
+    const exportToXLSX = (rows) => {
         const selectedDate = getValues('dateRange');
         const dateInicio = selectedDate[0];
         const dateFim = selectedDate[1];
@@ -277,10 +340,10 @@ export default function BasicEditingGrid() {
             ["Status selecionado", "", whichStatus || "Todos"],
             ["Nome", "Valor"],
             ...reportList.data.map(report => [
-                report.nomefavorecido,
+                report.favorecido,
                 formatter.format(report.valor),
             ]),
-            ["Valor Total", "", formatter.format(reportList.valor ?? 0)],
+            ["Valor Total", "", formatter.format(totalSynth)],
 
         ];
 
@@ -298,17 +361,19 @@ export default function BasicEditingGrid() {
     };
 
 
-    const handleMenuClose = (option) => {
-        setAnchorEl(null);
-        if (option === 'csv') {
-            document.getElementById('csv-export-link').click();
-        } else if (option === 'pdf') {
-            exportPDF();
-        } else if (option === 'xlsx') {
-            exportXLSX();
+    const showStatus = (status) => {
+        switch (status) {
+            case 'pago':
+                return 'Pago';
+            case 'a pagar':
+                return 'A pagar';
+            case 'naopago':
+                return 'Erro';
+            default:
+                return '';
         }
     };
-    
+  
     return (
         <>
             <Paper>
@@ -542,21 +607,25 @@ export default function BasicEditingGrid() {
                             open={Boolean(anchorEl)}
                             onClose={() => setAnchorEl(null)}
                         >
-                            <MenuItem onClick={() => handleMenuClose('csv')}>CSV</MenuItem>
-                            <MenuItem onClick={() => handleMenuClose('pdf')}>PDF</MenuItem>
-                            <MenuItem onClick={() => handleMenuClose('xlsx')}>XLSX</MenuItem>
-                        </Menu>
+                            <MenuItem>
+                                <CSVExportButton rows={rows} />
+                                </MenuItem>
+                            <MenuItem onClick={() => exportToXLSX(rows)}>XLSX</MenuItem>
+                            <MenuItem onClick={() => exportToPDF(rows)}>PDF</MenuItem>
 
+                        </Menu>
+{/* 
                         <CSVLink
                             id="csv-export-link"
-                            data={csvData}
+                            
+                            data={prepareCSVData(rows)}
                             filename={`relatorio_${format(new Date(), 'dd/MM/yyyy')}.csv`}
                             className="hidden"
 
-                        />
+                        /> */}
                     </header>
                     <div style={{ height: '65vh', width: '100%' }} className='overflow-scroll'>
-                        <Table>
+                        <Table dense table stickyHeader sx={{ tableLayout: 'fixed', width: '100%' }}>
 
                          
                             <TableBody>
@@ -564,15 +633,15 @@ export default function BasicEditingGrid() {
                                     Object.entries(rows).length > 0 ? (
                                         Object.entries(rows).map(([consorcio, group]) => (
                                             <React.Fragment key={consorcio}>
-                                                <TableRow className='bg-slate-100'>
-                                                    <TableCell component="th" colSpan={8} style={{ backgroundColor: '#EAEAEA' }}>
-                                                        <Box className="flex justify-between">
+                                                <TableRow>
+                                                    <TableCell colSpan={11} component="th" style={{ backgroundColor: '#EAEAEA', }}>
+                                                        <Box className="flex justify-between w-full">
                                                             <p style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{consorcio}</p>
                                                             <Box className="flex items-center gap-8">
                                                                 <p>Total: {group.total}</p>
                                                                 {Object.entries(group.totalsByStatus).map(([status, total]) => (
                                                                     <Box key={`${consorcio}-${status}`}>
-                                                                        <p>Total {status}: {total}</p>
+                                                                        <p>Total {showStatus(status)}: {total}</p>
                                                                     </Box>
                                                                 ))}
                                                             </Box>
@@ -580,16 +649,14 @@ export default function BasicEditingGrid() {
                                                     </TableCell>
                                                 </TableRow>
 
-                                                {/* Render headers */}
                                                 <TableRow>
                                                     {consorcio === 'VLT' ? <TableCell style={{ fontWeight: 'bold' }}>Data Transação</TableCell> : null}
-                                                    <TableCell style={{ fontWeight: 'bold' }}>Data Efetivação</TableCell>
-                                                    <TableCell style={{ fontWeight: 'bold' }}>Data Vencimento</TableCell>
-                                                    <TableCell style={{ fontWeight: 'bold' }}>Favorecido</TableCell>
-                                                    <TableCell style={{ fontWeight: 'bold' }}>Consórcio</TableCell>
-                                                    <TableCell style={{ fontWeight: 'bold' }}>Valor transação</TableCell>
-                                                    <TableCell style={{ fontWeight: 'bold' }}>Status</TableCell>
-                                                    <TableCell style={{ fontWeight: 'bold' }}>Ocorrência</TableCell>
+                                                    <TableCell  style={{ fontWeight: 'bold' }}>Data Vencimento</TableCell>
+                                                    <TableCell  style={{ fontWeight: 'bold' }}>Consórcio</TableCell>
+                                                    <TableCell colSpan={3.5} style={{ fontWeight: 'bold' }}>Favorecido</TableCell>
+                                                    <TableCell  style={{ fontWeight: 'bold' }}>Valor transação</TableCell>
+                                                    <TableCell  style={{ fontWeight: 'bold' }}>Status</TableCell>
+                                                    <TableCell colSpan={3} style={{ fontWeight: 'bold' }}>Ocorrência</TableCell>
                                                 </TableRow>
 
                                                 {Object.entries(group.items.reduce((acc, item) => {
@@ -599,23 +666,28 @@ export default function BasicEditingGrid() {
                                                 }, {})).map(([status, items]) => (
                                                     <React.Fragment key={`${consorcio}-${status}`}>
                                                         {items.map(item => (
-                                                            <TableRow key={item.id}>
-                                                                {item.consorcio === 'VLT' ? <TableCell style={{ fontWeight: 'bold' }}>{item.date}</TableCell> : null}
-                                                                <TableCell>{item.datatransacao}</TableCell>
-                                                                <TableCell>{item.datapagamento}</TableCell>
+                                                            <TableRow sx={{width: '100%'}} className='w-full' key={item.id}>
+                                                                {item.consorcio === 'VLT' ? (
+                                                                    <TableCell>
+                                                                        { item.datatransacao ?format(new Date(item.datatransacao), 'dd/MM/yyyy') : null}
+                                                                    </TableCell>
+                                                                ) : null}
+                                                                <TableCell >{ item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy'): null}</TableCell>
                                                                 <TableCell>{item.consorcio}</TableCell>
-                                                                <TableCell>{item.favorecido}</TableCell>
-                                                                <TableCell>{item.value}</TableCell>
-                                                                <TableCell>{item.status}</TableCell>
-                                                                {status === 'erro' ? <TableCell>{item.ocorrencia}</TableCell> : <></>}
+                                                                <TableCell colSpan={3.5} sx={{ minWidth: 300, maxWidth: 350, overflow: 'hidden', textOverflow: 'ellipsis', }}>
+                                                                    {item.favorecido}
+                                                                </TableCell>
+
+                                                                <TableCell>{formatter.format(item.valor) }</TableCell>
+                                                                <TableCell>{showStatus(item.status)}</TableCell>
+                                                                {status === 'naopago' ? <TableCell colSpan={3} sx={{ minWidth: '100px' }}>{item.mensagem_status}</TableCell> : <></>}
                                                             </TableRow>
                                                         ))}
                                                         <TableRow>
-                                                            <TableCell colSpan={5} align="right" style={{ fontWeight: 'bold' }}>Total {status}:</TableCell>
+                                                            <TableCell colSpan={2} style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Subtotal {showStatus(status)}:</TableCell>
                                                             <TableCell style={{ fontWeight: 'bold' }}>
-                                                                {formatter.format(items.reduce((sum, item) => sum + item.value, 0))}
+                                                                {formatter.format(items.reduce((sum, item) => sum + item.valor, 0))}
                                                             </TableCell>
-                                                            <TableCell colSpan={2}></TableCell>
                                                         </TableRow>
                                                     </React.Fragment>
                                                 ))}
@@ -634,7 +706,7 @@ export default function BasicEditingGrid() {
 
                                 <TableRow>
                                     <TableCell className='font-bold'>Valor Total: </TableCell>
-                                    <TableCell className='font-bold'>{formatter.format(reportList.valor ?? 0)}</TableCell>
+                                    <TableCell className='font-bold'>{totalSynth}</TableCell>
                                 </TableRow>
                             </TableBody>
 
