@@ -347,7 +347,7 @@ export default function BasicEditingGrid() {
                                         );
                                     }}
                                     loading={loadingUsers}
-                                   
+                                    onChange={(_, newValue) => handleAutocompleteChange('name', newValue)}
                                     renderInput={(params) => (
                                         <TextField
                                             {...params}
