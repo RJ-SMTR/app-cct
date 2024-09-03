@@ -175,7 +175,7 @@ export default function BasicEditingGrid() {
                     'Dt. Efetiva Pgto.': item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
                     'Consórcio': item.consorcio,
                     'Favorecido': item.favorecido,
-                    'Valor transação': formatter.format(item.valor),
+                    'Valor p/ Pagamento': formatter.format(item.valor),
                     'Status': showStatus(item.status),
                     'Ocorrência': item.status === 'naopago' ? item.mensagem_status : '',
                 };
@@ -194,7 +194,7 @@ export default function BasicEditingGrid() {
         const csvData = [
             ['Status selecionado', '', whichStatus || 'Todos'],
             [],
-            ['Data Transação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor transação', 'Status', 'Ocorrência'],
+            ['Data Transação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência'],
         ];
 
         Object.entries(rows).forEach(([consorcio, group]) => {
@@ -280,14 +280,14 @@ export default function BasicEditingGrid() {
             item['Dt. Efetiva Pgto.'],
             item['Consórcio'],
             item['Favorecido'],
-            item['Valor transação'],
+            item['Valor p/ Pagamento'],
             item['Status'],
             item['Ocorrência'],
         ]);
 
     
         doc.autoTable({
-            head: [['Data Transação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor transação', 'Status', 'Ocorrência']],
+            head: [['Data Transação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência']],
             body: tableData,
             margin: { left: 14, right: 14, top: 60 },
             startY: 60,
@@ -652,7 +652,7 @@ export default function BasicEditingGrid() {
                                                         <TableCell className="font-bold text-small">Dt. Efetiva Pgto.</TableCell>
                                                         <TableCell className="font-bold text-small">Consórcio</TableCell>
                                                         <TableCell colSpan={4.5} className="font-bold text-small">Favorecido</TableCell>
-                                                        <TableCell className="font-bold text-small">Valor transação</TableCell>
+                                                        <TableCell className="font-bold text-small">Valor p/ Pagamento</TableCell>
                                                         <TableCell className="font-bold text-small">Status</TableCell>
                                                         <TableCell className="font-bold text-small">Ocorrência</TableCell>
                                                     </TableRow>
