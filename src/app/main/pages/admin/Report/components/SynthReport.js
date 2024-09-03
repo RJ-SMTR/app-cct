@@ -172,7 +172,7 @@ export default function BasicEditingGrid() {
             group.items.forEach(item => {
                 const row = {
                     'Data Transação': item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
-                    'Data Pgto.': item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
+                    'Dt. Efetiva Pgto.': item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
                     'Consórcio': item.consorcio,
                     'Favorecido': item.favorecido,
                     'Valor transação': formatter.format(item.valor),
@@ -194,7 +194,7 @@ export default function BasicEditingGrid() {
         const csvData = [
             ['Status selecionado', '', whichStatus || 'Todos'],
             [],
-            ['Data Transação', 'Data Pgto.', 'Consórcio', 'Favorecido', 'Valor transação', 'Status', 'Ocorrência'],
+            ['Data Transação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor transação', 'Status', 'Ocorrência'],
         ];
 
         Object.entries(rows).forEach(([consorcio, group]) => {
@@ -277,7 +277,7 @@ export default function BasicEditingGrid() {
 
         const tableData = csvData.map(item => [
             item['Data Transação'],
-            item['Data Pgto.'],
+            item['Dt. Efetiva Pgto.'],
             item['Consórcio'],
             item['Favorecido'],
             item['Valor transação'],
@@ -287,7 +287,7 @@ export default function BasicEditingGrid() {
 
     
         doc.autoTable({
-            head: [['Data Transação', 'Data Pgto.', 'Consórcio', 'Favorecido', 'Valor transação', 'Status', 'Ocorrência']],
+            head: [['Data Transação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor transação', 'Status', 'Ocorrência']],
             body: tableData,
             margin: { left: 14, right: 14, top: 60 },
             startY: 60,
@@ -649,7 +649,7 @@ export default function BasicEditingGrid() {
 
                                                     <TableRow>
                                                         {consorcio === 'VLT' ? <TableCell className="font-bold text-small">Data Transação</TableCell> : null}
-                                                        <TableCell className="font-bold text-small">Data Pgto.</TableCell>
+                                                        <TableCell className="font-bold text-small">Dt. Efetiva Pgto.</TableCell>
                                                         <TableCell className="font-bold text-small">Consórcio</TableCell>
                                                         <TableCell colSpan={4.5} className="font-bold text-small">Favorecido</TableCell>
                                                         <TableCell className="font-bold text-small">Valor transação</TableCell>
