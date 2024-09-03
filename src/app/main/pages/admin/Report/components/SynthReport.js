@@ -172,7 +172,7 @@ export default function BasicEditingGrid() {
             group.items.forEach(item => {
                 const row = {
                     'Data Transação': item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
-                    'Data Vencimento': item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
+                    'Data Pgto.': item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
                     'Consórcio': item.consorcio,
                     'Favorecido': item.favorecido,
                     'Valor transação': formatter.format(item.valor),
@@ -194,7 +194,7 @@ export default function BasicEditingGrid() {
         const csvData = [
             ['Status selecionado', '', whichStatus || 'Todos'],
             [],
-            ['Data Transação', 'Data Vencimento', 'Consórcio', 'Favorecido', 'Valor transação', 'Status', 'Ocorrência'],
+            ['Data Transação', 'Data Pgto.', 'Consórcio', 'Favorecido', 'Valor transação', 'Status', 'Ocorrência'],
         ];
 
         Object.entries(rows).forEach(([consorcio, group]) => {
@@ -277,7 +277,7 @@ export default function BasicEditingGrid() {
 
         const tableData = csvData.map(item => [
             item['Data Transação'],
-            item['Data Vencimento'],
+            item['Data Pgto.'],
             item['Consórcio'],
             item['Favorecido'],
             item['Valor transação'],
@@ -287,7 +287,7 @@ export default function BasicEditingGrid() {
 
     
         doc.autoTable({
-            head: [['Data Transação', 'Data Vencimento', 'Consórcio', 'Favorecido', 'Valor transação', 'Status', 'Ocorrência']],
+            head: [['Data Transação', 'Data Pgto.', 'Consórcio', 'Favorecido', 'Valor transação', 'Status', 'Ocorrência']],
             body: tableData,
             margin: { left: 14, right: 14, top: 60 },
             startY: 60,
@@ -649,7 +649,7 @@ export default function BasicEditingGrid() {
 
                                                     <TableRow>
                                                         {consorcio === 'VLT' ? <TableCell className="font-bold text-small">Data Transação</TableCell> : null}
-                                                        <TableCell className="font-bold text-small">Dt. Vencimento</TableCell>
+                                                        <TableCell className="font-bold text-small">Data Pgto.</TableCell>
                                                         <TableCell className="font-bold text-small">Consórcio</TableCell>
                                                         <TableCell colSpan={4.5} className="font-bold text-small">Favorecido</TableCell>
                                                         <TableCell className="font-bold text-small">Valor transação</TableCell>
@@ -748,7 +748,7 @@ export default function BasicEditingGrid() {
                                                     )}
 
                                                     {consorcio === "STPL" && (
-                                                         <Box className="flex pb-[20px] gap-10">
+                                                      <Box className="flex pb-[20px] gap-10">
                                                             <p colSpan={7} style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
                                                                 Total STPL:
                                                             </p>
@@ -774,10 +774,10 @@ export default function BasicEditingGrid() {
 
 
 
-                                <TableRow>
-                                    <TableCell className='font-bold'>Valor Total: </TableCell>
-                                    <TableCell className='font-bold'>{totalSynth}</TableCell>
-                                </TableRow>
+                                <Box className="flex pb-[20px] gap-10 whitespace-nowrap">
+                                    <p className='font-bold'>Total geral: </p>
+                                    <p className='font-bold'>{totalSynth}</p>
+                                </Box>
                             </TableBody>
 
                         </Table>
