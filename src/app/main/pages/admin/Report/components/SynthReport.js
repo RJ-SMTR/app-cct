@@ -625,112 +625,142 @@ export default function BasicEditingGrid() {
                             <TableBody>
                                 {!isLoading ? (
                                     Object.entries(rows).length > 0 ? (
-                                        Object.entries(rows).map(([consorcio, group]) => (
-                                            <React.Fragment key={consorcio} >
-                                                <TableRow >
-                                                    <TableCell component="th" colSpan={11} sx={{ backgroundColor: '#EAEAEA', }} >
-                                                        <Box className="flex justify-between w-full">
-                                                            <p style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{consorcio}</p>
-                                                            
-                                                        </Box>
-                                                    </TableCell>
-                                                </TableRow>
+                                        Object.entries(rows).map(([consorcio, group]) => {
+                                            let totalSTPC = 0;
+                                            let totalSTPL = 0;
 
-                                                <TableRow>
-                                                    {consorcio === 'VLT' ? <TableCell className="font-bold text-small">Data Transação</TableCell> : null}
-                                                    <TableCell  className="font-bold text-small">Dt. Vencimento</TableCell>
-                                                    <TableCell  className="font-bold text-small">Consórcio</TableCell>
-                                                    <TableCell colSpan={4.5} className="font-bold text-small">Favorecido</TableCell>
-                                                    <TableCell  className="font-bold text-small">Valor transação</TableCell>
-                                                    <TableCell  className="font-bold text-small">Status</TableCell>
-                                                    <TableCell  className="font-bold text-small">Ocorrência</TableCell>
-                                                </TableRow>
+                                            group.items.forEach(item => {
+                                                if (item.consorcio === "STPC") {
+                                                    totalSTPC += item.valor;
+                                                } else if (item.consorcio === "STPL") {
+                                                    totalSTPL += item.valor;
+                                                }
+                                            });
 
-                                                {Object.entries(
-                                                    group.items.reduce((acc, item) => {
-                                                        let key;
+                                            return (
+                                                <React.Fragment key={consorcio}>
+                                                    <TableRow>
+                                                        <TableCell component="th" colSpan={11} sx={{ backgroundColor: '#EAEAEA', }}>
+                                                            <Box className="flex justify-between w-full">
+                                                                <p style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{consorcio}</p>
+                                                            </Box>
+                                                        </TableCell>
+                                                    </TableRow>
 
-                                                        if (item.consorcio === "STPC" || item.consorcio === "STPL") {
-                                                            key = `${item.datapagamento}-${item.status}-${item.favorecido}`;
-                                                        } else {
-                                                            key = `${item.datapagamento}-${item.status}`;
-                                                        }
+                                                    <TableRow>
+                                                        {consorcio === 'VLT' ? <TableCell className="font-bold text-small">Data Transação</TableCell> : null}
+                                                        <TableCell className="font-bold text-small">Dt. Vencimento</TableCell>
+                                                        <TableCell className="font-bold text-small">Consórcio</TableCell>
+                                                        <TableCell colSpan={4.5} className="font-bold text-small">Favorecido</TableCell>
+                                                        <TableCell className="font-bold text-small">Valor transação</TableCell>
+                                                        <TableCell className="font-bold text-small">Status</TableCell>
+                                                        <TableCell className="font-bold text-small">Ocorrência</TableCell>
+                                                    </TableRow>
 
-                                                        if (!acc[key]) acc[key] = [];
-                                                        acc[key].push(item);
-                                                        return acc;
-                                                    }, {})
-                                                ).map(([key, items]) => {
-                                                    const [datapagamento, status, favorecido] = key.split("-");
+                                                    {Object.entries(
+                                                        group.items.reduce((acc, item) => {
+                                                            let key;
 
-                                                    const isGroupedByFavorecido = items.some(item => item.consorcio === "STPC" || item.consorcio === "STPL");
+                                                            if (item.consorcio === "STPC" || item.consorcio === "STPL") {
+                                                                key = `${item.datapagamento}-${item.status}-${item.favorecido}`;
+                                                            } else {
+                                                                key = `${item.datapagamento}-${item.status}`;
+                                                            }
 
-                                                    return (
-                                                        <React.Fragment key={`${consorcio}-${datapagamento}-${status}-${favorecido || ''}`}>
-                                                            {items.map((item) => (
-                                                                <TableRow sx={{ width: "100%" }} className="w-full " key={item.id}>
-                                                                    {item.consorcio === "VLT" ? (
+                                                            if (!acc[key]) acc[key] = [];
+                                                            acc[key].push(item);
+                                                            return acc;
+                                                        }, {})
+                                                    ).map(([key, items]) => {
+                                                        const [datapagamento, status, favorecido] = key.split("-");
+
+                                                        const isGroupedByFavorecido = items.some(item => item.consorcio === "STPC" || item.consorcio === "STPL");
+
+                                                        return (
+                                                            <React.Fragment key={`${consorcio}-${datapagamento}-${status}-${favorecido || ''}`}>
+                                                                {items.map((item) => (
+                                                                    <TableRow sx={{ width: "100%" }} className="w-full" key={item.id}>
+                                                                        {item.consorcio === "VLT" ? (
+                                                                            <TableCell className='p-0 text-[1.2rem]'>
+                                                                                {item.datatransacao ? format(new Date(item.datatransacao), "dd/MM/yyyy") : null}
+                                                                            </TableCell>
+                                                                        ) : null}
                                                                         <TableCell className='p-0 text-[1.2rem]'>
-                                                                            {item.datatransacao
-                                                                                ? format(new Date(item.datatransacao), "dd/MM/yyyy")
-                                                                                : null}
+                                                                            {item.datapagamento ? format(new Date(item.datapagamento), "dd/MM/yyyy") : null}
                                                                         </TableCell>
-                                                                    ) : null}
-                                                                    <TableCell className='p-0 text-[1.2rem]'>
-                                                                        {item.datapagamento
-                                                                            ? format(new Date(item.datapagamento), "dd/MM/yyyy")
-                                                                            : null}
-                                                                    </TableCell >
-                                                                    <TableCell className='p-0 text-[1.2rem]'>{item.consorcio}</TableCell>
-                                                                    <TableCell
-                                                                        colSpan={4.5}
-                                                                        className='text-[1.2rem]'
-                                                                        sx={{
-                                                                            minWidth: 300,
-                                                                            maxWidth: 350,
-                                                                            overflow: "hidden",
-                                                                            textOverflow: "ellipsis",
-                                                                            padding: 0
-                                                                        }}
-                                                                    >
-                                                                        {item.favorecido}
-                                                                    </TableCell>
-                                                                    <TableCell className='p-0 text-[1.2rem]'>{formatter.format(item.valor)}</TableCell>
-                                                                    <TableCell className='p-0 text-[1.2rem]'>{showStatus(item.status)}</TableCell>
-                                                                    {item.status === "naopago" ? (
-                                                                        <TableCell className='p-0 text-[1.2rem]' colSpan={3} sx={{ minWidth: "100px" }}>
-                                                                            {item.mensagem_status}
+                                                                        <TableCell className='p-0 text-[1.2rem]'>{item.consorcio}</TableCell>
+                                                                        <TableCell
+                                                                            colSpan={4.5}
+                                                                            className='text-[1.2rem]'
+                                                                            sx={{
+                                                                                minWidth: 300,
+                                                                                maxWidth: 350,
+                                                                                overflow: "hidden",
+                                                                                textOverflow: "ellipsis",
+                                                                                padding: 0
+                                                                            }}
+                                                                        >
+                                                                            {item.favorecido}
                                                                         </TableCell>
-                                                                    ) : null}
-                                                                </TableRow>
-                                                            ))}
-                                                            <TableRow>
-                                                                {isGroupedByFavorecido ? (
-                                                                    <Box className="flex pb-[20px] gap-10">
-                                                                        <p style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
-                                                                            Subtotal:
-                                                                        </p>
-                                                                        <p className="font-bold">
-                                                                            {formatter.format(items.reduce((sum, item) => sum + item.valor, 0))}
-                                                                        </p>
-                                                                    </Box>
-                                                                ) : (
+                                                                        <TableCell className='p-0 text-[1.2rem]'>{formatter.format(item.valor)}</TableCell>
+                                                                        <TableCell className='p-0 text-[1.2rem]'>{showStatus(item.status)}</TableCell>
+                                                                        {item.status === "naopago" ? (
+                                                                            <TableCell className='p-0 text-[1.2rem]' colSpan={3} sx={{ minWidth: "100px" }}>
+                                                                                {item.mensagem_status}
+                                                                            </TableCell>
+                                                                        ) : null}
+                                                                    </TableRow>
+                                                                ))}
+                                                                <TableRow>
+                                                                    {isGroupedByFavorecido ? (
                                                                         <Box className="flex pb-[20px] gap-10">
-                                                                        <p  style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
-                                                                            Subtotal do dia:
-                                                                        </p>
-                                                                        <p className="font-bold">
-                                                                            {formatter.format(items.reduce((sum, item) => sum + item.valor, 0))}
-                                                                        </p>
-                                                                    </Box>
-                                                                )}
-                                                            </TableRow>
-                                                        </React.Fragment>
-                                                    );
-                                                })}
+                                                                            <p style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
+                                                                                Subtotal:
+                                                                            </p>
+                                                                            <p className="font-bold">
+                                                                                {formatter.format(items.reduce((sum, item) => sum + item.valor, 0))}
+                                                                            </p>
+                                                                        </Box>
+                                                                    ) : (
+                                                                        <Box className="flex pb-[20px] gap-10">
+                                                                            <p style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
+                                                                                Subtotal do dia:
+                                                                            </p>
+                                                                            <p className="font-bold">
+                                                                                {formatter.format(items.reduce((sum, item) => sum + item.valor, 0))}
+                                                                            </p>
+                                                                        </Box>
+                                                                    )}
+                                                                </TableRow>
+                                                            </React.Fragment>
+                                                        );
+                                                    })}
 
-                                            </React.Fragment>
-                                        ))
+                                                    {consorcio === "STPC" && (
+                                                         <Box className="flex pb-[20px] gap-10">
+                                                            <p colSpan={7} style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
+                                                                Total STPC:
+                                                            </p>
+                                                            <p className="font-bold">
+                                                                {formatter.format(totalSTPC)}
+                                                            </p>
+                                                        </Box>
+                                                    )}
+
+                                                    {consorcio === "STPL" && (
+                                                         <Box className="flex pb-[20px] gap-10">
+                                                            <p colSpan={7} style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
+                                                                Total STPL:
+                                                            </p>
+                                                            <p className="font-bold">
+                                                                {formatter.format(totalSTPL)}
+                                                            </p>
+                                                        </Box>
+                                                    )}
+
+                                                </React.Fragment>
+                                            );
+                                        })
                                     ) : (
                                         <TableRow>
                                             <TableCell colSpan={8}>Não há dados para serem exibidos</TableCell>
@@ -741,6 +771,8 @@ export default function BasicEditingGrid() {
                                         <TableCell colSpan={8}>Carregando...</TableCell>
                                     </TableRow>
                                 )}
+
+
 
                                 <TableRow>
                                     <TableCell className='font-bold'>Valor Total: </TableCell>
