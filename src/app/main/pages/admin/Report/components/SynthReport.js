@@ -242,7 +242,7 @@ export default function BasicEditingGrid() {
 
         return (
             <CSVLink data={csvData} filename={csvFilename}>
-                Export to CSV
+            CSV
             </CSVLink>
         );
     };
@@ -614,15 +614,6 @@ export default function BasicEditingGrid() {
                             <MenuItem onClick={() => exportToPDF(rows)}>PDF</MenuItem>
 
                         </Menu>
-{/* 
-                        <CSVLink
-                            id="csv-export-link"
-                            
-                            data={prepareCSVData(rows)}
-                            filename={`relatorio_${format(new Date(), 'dd/MM/yyyy')}.csv`}
-                            className="hidden"
-
-                        /> */}
                     </header>
                     <div style={{ height: '65vh', width: '100%' }} className='overflow-scroll'>
                         <Table dense table stickyHeader sx={{ tableLayout: 'fixed', width: '100%' }}>
@@ -632,65 +623,109 @@ export default function BasicEditingGrid() {
                                 {!isLoading ? (
                                     Object.entries(rows).length > 0 ? (
                                         Object.entries(rows).map(([consorcio, group]) => (
-                                            <React.Fragment key={consorcio}>
-                                                <TableRow>
-                                                    <TableCell colSpan={11} component="th" style={{ backgroundColor: '#EAEAEA', }}>
+                                            <React.Fragment key={consorcio} >
+                                                <TableRow >
+                                                    <TableCell component="th" colSpan={11} sx={{ backgroundColor: '#EAEAEA', }} >
                                                         <Box className="flex justify-between w-full">
                                                             <p style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{consorcio}</p>
-                                                            <Box className="flex items-center gap-8">
-                                                                <p>Total: {group.total}</p>
-                                                                {Object.entries(group.totalsByStatus).map(([status, total]) => (
-                                                                    <Box key={`${consorcio}-${status}`}>
-                                                                        <p>Total {showStatus(status)}: {total}</p>
-                                                                    </Box>
-                                                                ))}
-                                                            </Box>
+                                                            
                                                         </Box>
                                                     </TableCell>
                                                 </TableRow>
 
                                                 <TableRow>
-                                                    {consorcio === 'VLT' ? <TableCell style={{ fontWeight: 'bold' }}>Data Transação</TableCell> : null}
-                                                    <TableCell  style={{ fontWeight: 'bold' }}>Data Vencimento</TableCell>
-                                                    <TableCell  style={{ fontWeight: 'bold' }}>Consórcio</TableCell>
-                                                    <TableCell colSpan={3.5} style={{ fontWeight: 'bold' }}>Favorecido</TableCell>
-                                                    <TableCell  style={{ fontWeight: 'bold' }}>Valor transação</TableCell>
-                                                    <TableCell  style={{ fontWeight: 'bold' }}>Status</TableCell>
-                                                    <TableCell colSpan={3} style={{ fontWeight: 'bold' }}>Ocorrência</TableCell>
+                                                    {consorcio === 'VLT' ? <TableCell className="font-bold text-small">Data Transação</TableCell> : null}
+                                                    <TableCell  className="font-bold text-small">Dt. Vencimento</TableCell>
+                                                    <TableCell  className="font-bold text-small">Consórcio</TableCell>
+                                                    <TableCell colSpan={4.5} className="font-bold text-small">Favorecido</TableCell>
+                                                    <TableCell  className="font-bold text-small">Valor transação</TableCell>
+                                                    <TableCell  className="font-bold text-small">Status</TableCell>
+                                                    <TableCell  className="font-bold text-small">Ocorrência</TableCell>
                                                 </TableRow>
 
-                                                {Object.entries(group.items.reduce((acc, item) => {
-                                                    if (!acc[item.status]) acc[item.status] = [];
-                                                    acc[item.status].push(item);
-                                                    return acc;
-                                                }, {})).map(([status, items]) => (
-                                                    <React.Fragment key={`${consorcio}-${status}`}>
-                                                        {items.map(item => (
-                                                            <TableRow sx={{width: '100%'}} className='w-full' key={item.id}>
-                                                                {item.consorcio === 'VLT' ? (
-                                                                    <TableCell>
-                                                                        { item.datatransacao ?format(new Date(item.datatransacao), 'dd/MM/yyyy') : null}
-                                                                    </TableCell>
-                                                                ) : null}
-                                                                <TableCell >{ item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy'): null}</TableCell>
-                                                                <TableCell>{item.consorcio}</TableCell>
-                                                                <TableCell colSpan={3.5} sx={{ minWidth: 300, maxWidth: 350, overflow: 'hidden', textOverflow: 'ellipsis', }}>
-                                                                    {item.favorecido}
-                                                                </TableCell>
+                                                {Object.entries(
+                                                    group.items.reduce((acc, item) => {
+                                                        let key;
 
-                                                                <TableCell>{formatter.format(item.valor) }</TableCell>
-                                                                <TableCell>{showStatus(item.status)}</TableCell>
-                                                                {status === 'naopago' ? <TableCell colSpan={3} sx={{ minWidth: '100px' }}>{item.mensagem_status}</TableCell> : <></>}
+                                                        if (item.consorcio === "STPC" || item.consorcio === "STPL") {
+                                                            key = `${item.datapagamento}-${item.status}-${item.favorecido}`;
+                                                        } else {
+                                                            key = `${item.datapagamento}-${item.status}`;
+                                                        }
+
+                                                        if (!acc[key]) acc[key] = [];
+                                                        acc[key].push(item);
+                                                        return acc;
+                                                    }, {})
+                                                ).map(([key, items]) => {
+                                                    const [datapagamento, status, favorecido] = key.split("-");
+
+                                                    const isGroupedByFavorecido = items.some(item => item.consorcio === "STPC" || item.consorcio === "STPL");
+
+                                                    return (
+                                                        <React.Fragment key={`${consorcio}-${datapagamento}-${status}-${favorecido || ''}`}>
+                                                            {items.map((item) => (
+                                                                <TableRow sx={{ width: "100%" }} className="w-full " key={item.id}>
+                                                                    {item.consorcio === "VLT" ? (
+                                                                        <TableCell className='p-0 text-[1.2rem]'>
+                                                                            {item.datatransacao
+                                                                                ? format(new Date(item.datatransacao), "dd/MM/yyyy")
+                                                                                : null}
+                                                                        </TableCell>
+                                                                    ) : null}
+                                                                    <TableCell className='p-0 text-[1.2rem]'>
+                                                                        {item.datapagamento
+                                                                            ? format(new Date(item.datapagamento), "dd/MM/yyyy")
+                                                                            : null}
+                                                                    </TableCell >
+                                                                    <TableCell className='p-0 text-[1.2rem]'>{item.consorcio}</TableCell>
+                                                                    <TableCell
+                                                                        colSpan={4.5}
+                                                                        className='text-[1.2rem]'
+                                                                        sx={{
+                                                                            minWidth: 300,
+                                                                            maxWidth: 350,
+                                                                            overflow: "hidden",
+                                                                            textOverflow: "ellipsis",
+                                                                            padding: 0
+                                                                        }}
+                                                                    >
+                                                                        {item.favorecido}
+                                                                    </TableCell>
+                                                                    <TableCell className='p-0 text-[1.2rem]'>{formatter.format(item.valor)}</TableCell>
+                                                                    <TableCell className='p-0 text-[1.2rem]'>{showStatus(item.status)}</TableCell>
+                                                                    {status === "naopago" ? (
+                                                                        <TableCell className='p-0 text-[1.2rem]' colSpan={3} sx={{ minWidth: "100px" }}>
+                                                                            {item.mensagem_status}
+                                                                        </TableCell>
+                                                                    ) : null}
+                                                                </TableRow>
+                                                            ))}
+                                                            <TableRow>
+                                                                {isGroupedByFavorecido ? (
+                                                                    <Box className="flex pb-[20px] gap-10">
+                                                                        <p style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
+                                                                            Subtotal:
+                                                                        </p>
+                                                                        <p className="font-bold">
+                                                                            {formatter.format(items.reduce((sum, item) => sum + item.valor, 0))}
+                                                                        </p>
+                                                                    </Box>
+                                                                ) : (
+                                                                        <Box className="flex pb-[20px] gap-10">
+                                                                        <p  style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
+                                                                            Subtotal do dia:
+                                                                        </p>
+                                                                        <p className="font-bold">
+                                                                            {formatter.format(items.reduce((sum, item) => sum + item.valor, 0))}
+                                                                        </p>
+                                                                    </Box>
+                                                                )}
                                                             </TableRow>
-                                                        ))}
-                                                        <TableRow>
-                                                            <TableCell colSpan={2} style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Subtotal {showStatus(status)}:</TableCell>
-                                                            <TableCell style={{ fontWeight: 'bold' }}>
-                                                                {formatter.format(items.reduce((sum, item) => sum + item.valor, 0))}
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    </React.Fragment>
-                                                ))}
+                                                        </React.Fragment>
+                                                    );
+                                                })}
+
                                             </React.Fragment>
                                         ))
                                     ) : (
