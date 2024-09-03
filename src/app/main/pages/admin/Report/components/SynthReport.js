@@ -13,7 +13,8 @@ import {
     Paper,
     CircularProgress,
     InputAdornment,
-    Menu
+    Menu,
+    IconButton
 } from '@mui/material';
 import { ptBR as pt } from '@mui/x-data-grid';
 import { format } from 'date-fns';
@@ -24,6 +25,7 @@ import { handleReportInfo } from 'app/store/reportSlice';
 import { getUser } from 'app/store/adminSlice';
 import { NumericFormat } from 'react-number-format';
 import { CSVLink } from 'react-csv';
+import { ClearIcon } from '@mui/x-date-pickers';
 import jsPDF from 'jspdf';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import 'jspdf-autotable';
@@ -695,7 +697,7 @@ export default function BasicEditingGrid() {
                                                                     </TableCell>
                                                                     <TableCell className='p-0 text-[1.2rem]'>{formatter.format(item.valor)}</TableCell>
                                                                     <TableCell className='p-0 text-[1.2rem]'>{showStatus(item.status)}</TableCell>
-                                                                    {status === "naopago" ? (
+                                                                    {item.status === "naopago" ? (
                                                                         <TableCell className='p-0 text-[1.2rem]' colSpan={3} sx={{ minWidth: "100px" }}>
                                                                             {item.mensagem_status}
                                                                         </TableCell>
