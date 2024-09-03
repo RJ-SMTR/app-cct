@@ -172,10 +172,10 @@ export default function BasicEditingGrid() {
             group.items.forEach(item => {
                 const row = {
                     'Data Transação': item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
-                    'Data Vencimento': item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
+                    'Dt. Efetiva Pgto.': item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
                     'Consórcio': item.consorcio,
                     'Favorecido': item.favorecido,
-                    'Valor transação': formatter.format(item.valor),
+                    'Valor p/ Pagamento': formatter.format(item.valor),
                     'Status': showStatus(item.status),
                     'Ocorrência': item.status === 'naopago' ? item.mensagem_status : '',
                 };
@@ -194,7 +194,7 @@ export default function BasicEditingGrid() {
         const csvData = [
             ['Status selecionado', '', whichStatus || 'Todos'],
             [],
-            ['Data Transação', 'Data Vencimento', 'Consórcio', 'Favorecido', 'Valor transação', 'Status', 'Ocorrência'],
+            ['Data Transação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência'],
         ];
 
         Object.entries(rows).forEach(([consorcio, group]) => {
@@ -277,17 +277,17 @@ export default function BasicEditingGrid() {
 
         const tableData = csvData.map(item => [
             item['Data Transação'],
-            item['Data Vencimento'],
+            item['Dt. Efetiva Pgto.'],
             item['Consórcio'],
             item['Favorecido'],
-            item['Valor transação'],
+            item['Valor p/ Pagamento'],
             item['Status'],
             item['Ocorrência'],
         ]);
 
     
         doc.autoTable({
-            head: [['Data Transação', 'Data Vencimento', 'Consórcio', 'Favorecido', 'Valor transação', 'Status', 'Ocorrência']],
+            head: [['Data Transação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência']],
             body: tableData,
             margin: { left: 14, right: 14, top: 60 },
             startY: 60,
@@ -649,10 +649,10 @@ export default function BasicEditingGrid() {
 
                                                     <TableRow>
                                                         {consorcio === 'VLT' ? <TableCell className="font-bold text-small">Data Transação</TableCell> : null}
-                                                        <TableCell className="font-bold text-small">Dt. Vencimento</TableCell>
+                                                        <TableCell className="font-bold text-small">Dt. Efetiva Pgto.</TableCell>
                                                         <TableCell className="font-bold text-small">Consórcio</TableCell>
                                                         <TableCell colSpan={4.5} className="font-bold text-small">Favorecido</TableCell>
-                                                        <TableCell className="font-bold text-small">Valor transação</TableCell>
+                                                        <TableCell className="font-bold text-small">Valor p/ Pagamento</TableCell>
                                                         <TableCell className="font-bold text-small">Status</TableCell>
                                                         <TableCell className="font-bold text-small">Ocorrência</TableCell>
                                                     </TableRow>
@@ -748,7 +748,7 @@ export default function BasicEditingGrid() {
                                                     )}
 
                                                     {consorcio === "STPL" && (
-                                                         <Box className="flex pb-[20px] gap-10">
+                                                      <Box className="flex pb-[20px] gap-10">
                                                             <p colSpan={7} style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
                                                                 Total STPL:
                                                             </p>
@@ -774,10 +774,10 @@ export default function BasicEditingGrid() {
 
 
 
-                                <TableRow>
-                                    <TableCell className='font-bold'>Valor Total: </TableCell>
-                                    <TableCell className='font-bold'>{totalSynth}</TableCell>
-                                </TableRow>
+                                <Box className="flex pb-[20px] gap-10 whitespace-nowrap">
+                                    <p className='font-bold'>Total geral: </p>
+                                    <p className='font-bold'>{totalSynth}</p>
+                                </Box>
                             </TableBody>
 
                         </Table>
