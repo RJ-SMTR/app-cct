@@ -16,10 +16,9 @@ import {
     Menu,
     IconButton
 } from '@mui/material';
-import { ptBR as pt } from '@mui/x-data-grid';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { useDispatch, useSelector } from 'react-redux';
-import { DateRangePicker } from 'rsuite';
+import { CustomProvider, DateRangePicker } from 'rsuite';
 import { useForm, Controller } from 'react-hook-form';
 import { handleReportInfo } from 'app/store/reportSlice';
 import { getUser } from 'app/store/adminSlice';
@@ -29,7 +28,7 @@ import { ClearIcon } from '@mui/x-date-pickers';
 import jsPDF from 'jspdf';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import 'jspdf-autotable';
-
+import ptBR from 'rsuite/locales/pt_BR';
 
 const consorciosStatus = [
     { label: 'Todos' },
@@ -79,12 +78,12 @@ export default function BasicEditingGrid() {
 
     const dispatch = useDispatch()
 
-    const { reset, handleSubmit, setValue, control, getValues } = useForm({
+    const { reset, handleSubmit, setValue, control, getValues, trigger, clearErrors } = useForm({
         defaultValues: {
             name: [],
             dateRange: [],
-            valorMax: null,
-            valorMin: null,
+            valorMax: '',
+            valorMin: '',
             consorcioName: [],
             favorecidoSearch: '',
             status: []
@@ -376,6 +375,10 @@ export default function BasicEditingGrid() {
                 return '';
         }
     };
+
+    const clearSelect = (button) => {
+        setValue(button, '');
+    };
   
     return (
         <>
@@ -474,22 +477,24 @@ export default function BasicEditingGrid() {
                                     )}
                                 />
                                 <Box>
-                                    <Controller
-                                        name="dateRange"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <DateRangePicker
-                                                {...field}
-                                                id="custom-date-input"
-                                                showOneCalendar
-                                                showHeader={false}
-                                                placement="auto"
-                                                placeholder="Selecionar Data"
-                                                format="dd/MM/yy"
-                                                character=" - "
-                                                className="custom-date-range-picker"
-                                            />)}
-                                    />
+                                    <CustomProvider locale={ptBR}>
+                                        <Controller
+                                            name="dateRange"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <DateRangePicker
+                                                    {...field}
+                                                    id="custom-date-input"
+                                                    showOneCalendar
+                                                    showHeader={false}
+                                                    placement="auto"
+                                                    placeholder="Selecionar Data"
+                                                    format="dd/MM/yy"
+                                                    character=" - "
+                                                    className="custom-date-range-picker"
+                                                />)}
+                                        />
+                                    </CustomProvider>
                                     <br />
                                     <span className='absolute text-xs text-red-600'>Campo data obrigatório*</span>
                                 </Box>
@@ -498,7 +503,16 @@ export default function BasicEditingGrid() {
                                 <Controller
                                     name="valorMin"
                                     control={control}
-                                    render={({ field }) => (
+                                    rules={{
+                                        validate: (value) => {
+                                            if (!value) return true; 
+                                            const valorMin = parseFloat(value.replace(',', '.'));
+                                            const valorMax = parseFloat(getValues("valorMax").replace(',', '.'));
+                                            return valorMin <= valorMax || "Valor Mínimo não pode ser maior que o Valor Máximo";
+                                        }
+                                    }}
+
+                                    render={({ field, fieldState: { error } }) => (
                                         <NumericFormat
                                             {...field}
                                             thousandSeparator="."
@@ -508,10 +522,28 @@ export default function BasicEditingGrid() {
                                             customInput={TextField}
                                             label="Valor Mínimo"
                                             value={field.value}
+                                            onChange={(e) => {
+                                                field.onChange(e);
+                                                const valorMin = parseFloat(e.target.value.replace(',', '.'));
+                                                const valorMax = parseFloat(getValues("valorMax").replace(',', '.'));
+
+                                                if (valorMin <= valorMax) {
+                                                    clearErrors("valorMin");
+                                                    clearErrors("valorMax");
+                                                } else {
+                                                    trigger("valorMax");
+                                                }
+                                            }}
+                                            error={!!error}
+                                            helperText={error ? error.message : null}
                                             onMouseEnter={() => {
                                                 if (field.value) setShowClearMin(true);
+                                                
                                             }}
                                             onMouseLeave={() => setShowClearMin(false)}
+                                            FormHelperTextProps={{
+                                                sx: { color: 'red', fontSize: '1rem', position: 'absolute', bottom: '-3.5rem' }  
+                                            }}
                                             InputProps={{
                                                 endAdornment: showClearMin && field.value && (
                                                     <InputAdornment sx={{ position: "absolute", right: '1rem' }} position="end">
@@ -528,7 +560,15 @@ export default function BasicEditingGrid() {
                                 <Controller
                                     name="valorMax"
                                     control={control}
-                                    render={({ field }) => (
+                                    rules={{
+                                        validate: (value) => {
+                                            if (!value) return true; 
+                                            const valorMax = parseFloat(value.replace(',', '.'));
+                                            const valorMin = parseFloat(getValues("valorMin").replace(',', '.'));
+                                            return valorMax >= valorMin || "Valor Máximo não pode ser menor que o Valor Mínimo";
+                                        }
+                                    }}
+                                    render={({ field, fieldState: { error } }) => (
                                         <NumericFormat
                                             {...field}
                                             thousandSeparator="."
@@ -538,10 +578,27 @@ export default function BasicEditingGrid() {
                                             customInput={TextField}
                                             label="Valor Máximo"
                                             value={field.value}
+                                            onChange={(e) => {
+                                                field.onChange(e);
+                                                const valorMax = parseFloat(e.target.value.replace(',', '.'));
+                                                const valorMin = parseFloat(getValues("valorMin").replace(',', '.'));
+
+                                                if (valorMax >= valorMin) {
+                                                    clearErrors("valorMax");
+                                                    clearErrors("valorMin");
+                                                } else {
+                                                    trigger("valorMin");  // Trigger validation for valorMin
+                                                }
+                                            }}
                                             onMouseEnter={() => {
                                                 if (field.value) setShowClearMax(true);
                                             }}
                                             onMouseLeave={() => setShowClearMax(false)}
+                                            error={!!error}
+                                            helperText={error ? error.message : null}
+                                            FormHelperTextProps={{
+                                                sx: { color: 'red', fontSize: '1rem', position: 'absolute', bottom: '-3.5rem' }  
+                                            }}
                                             InputProps={{
                                                 endAdornment: showClearMax && field.value && (
                                                     <InputAdornment sx={{ position: "absolute", right: '1rem' }} position="end">
@@ -640,7 +697,7 @@ export default function BasicEditingGrid() {
                                             return (
                                                 <React.Fragment key={consorcio}>
                                                     <TableRow>
-                                                        <TableCell component="th" colSpan={11} sx={{ backgroundColor: '#EAEAEA', }}>
+                                                        <TableCell component="th" colSpan={12} sx={{ backgroundColor: '#EAEAEA', }}>
                                                             <Box className="flex justify-between w-full">
                                                                 <p style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{consorcio}</p>
                                                             </Box>
@@ -648,13 +705,13 @@ export default function BasicEditingGrid() {
                                                     </TableRow>
 
                                                     <TableRow>
-                                                        {consorcio === 'VLT' ? <TableCell className="font-bold text-small">Data Transação</TableCell> : null}
-                                                        <TableCell className="font-bold text-small">Dt. Efetiva Pgto.</TableCell>
-                                                        <TableCell className="font-bold text-small">Consórcio</TableCell>
-                                                        <TableCell colSpan={4.5} className="font-bold text-small">Favorecido</TableCell>
-                                                        <TableCell className="font-bold text-small">Valor p/ Pagamento</TableCell>
-                                                        <TableCell className="font-bold text-small">Status</TableCell>
-                                                        <TableCell className="font-bold text-small">Ocorrência</TableCell>
+                                                        <TableCell className="font-bold text-small p-0" sx={{paddingLeft: '0px'}}>Data Transação</TableCell>
+                                                        <TableCell className="font-bold text-small p-0" sx={{paddingLeft: '0px'}}>Dt. Efetiva Pgto.</TableCell>
+                                                        <TableCell className="font-bold text-small p-0" sx={{paddingLeft: '0px'}}>Consórcio</TableCell>
+                                                        <TableCell colSpan={4.5} className="font-bold text-small p-0" sx={{paddingLeft: '0px'}}>Favorecido</TableCell>
+                                                        <TableCell className="font-bold text-small p-0" sx={{paddingLeft: '0px'}}>Valor p/ Pagamento</TableCell>
+                                                        <TableCell className="font-bold text-small p-0" sx={{paddingLeft: '0px'}}>Status</TableCell>
+                                                        <TableCell className="font-bold text-small p-0" sx={{paddingLeft: '0px'}}>Ocorrência</TableCell>
                                                     </TableRow>
 
                                                     {Object.entries(
@@ -680,15 +737,14 @@ export default function BasicEditingGrid() {
                                                             <React.Fragment key={`${consorcio}-${datapagamento}-${status}-${favorecido || ''}`}>
                                                                 {items.map((item) => (
                                                                     <TableRow sx={{ width: "100%" }} className="w-full" key={item.id}>
-                                                                        {item.consorcio === "VLT" ? (
-                                                                            <TableCell className='p-0 text-[1.2rem]'>
-                                                                                {item.datatransacao ? format(new Date(item.datatransacao), "dd/MM/yyyy") : null}
+                                                                            <TableCell className='p-0 text-[1.2rem]' sx={{paddingLeft: '0px'}}>
+                                                                                {item.datatransacao ? format(parseISO(item.datatransacao), "dd/MM/yyyy") : null}
                                                                             </TableCell>
-                                                                        ) : null}
-                                                                        <TableCell className='p-0 text-[1.2rem]'>
-                                                                            {item.datapagamento ? format(new Date(item.datapagamento), "dd/MM/yyyy") : null}
+                                                                        
+                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{paddingLeft: '0px'}}>
+                                                                            {item.datapagamento ? format(parseISO(item.datapagamento), "dd/MM/yyyy") : null}
                                                                         </TableCell>
-                                                                        <TableCell className='p-0 text-[1.2rem]'>{item.consorcio}</TableCell>
+                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{paddingLeft: '0px'}}>{item.consorcio}</TableCell>
                                                                         <TableCell
                                                                             colSpan={4.5}
                                                                             className='text-[1.2rem]'
@@ -702,10 +758,10 @@ export default function BasicEditingGrid() {
                                                                         >
                                                                             {item.favorecido}
                                                                         </TableCell>
-                                                                        <TableCell className='p-0 text-[1.2rem]'>{formatter.format(item.valor)}</TableCell>
-                                                                        <TableCell className='p-0 text-[1.2rem]'>{showStatus(item.status)}</TableCell>
+                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{paddingLeft: '0px'}}>{formatter.format(item.valor)}</TableCell>
+                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{paddingLeft: '0px'}}>{showStatus(item.status)}</TableCell>
                                                                         {item.status === "naopago" ? (
-                                                                            <TableCell className='p-0 text-[1.2rem]' colSpan={3} sx={{ minWidth: "100px" }}>
+                                                                            <TableCell className='p-0 text-[1.2rem]' sx={{paddingLeft: '0px'}} colSpan={3} >
                                                                                 {item.mensagem_status}
                                                                             </TableCell>
                                                                         ) : null}
