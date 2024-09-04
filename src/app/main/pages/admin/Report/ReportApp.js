@@ -4,7 +4,7 @@ import DataGridInfos from './components/DataGrid';
 import SynthReport from './components/SynthReport';
 import ConsolidatedReport from './components/ConsolidatedReport';
 import { useDispatch } from "react-redux";
-import { setReportList, setReportType } from "app/store/reportSlice";
+import { setReportList, setReportType, setSynthData, setTotalSynth } from "app/store/reportSlice";
 
 
 function ReportApp() {
@@ -18,6 +18,8 @@ function ReportApp() {
 
 
     const handleSelectChange = (event) => {
+        dispatch(setSynthData([]))
+        dispatch(setTotalSynth(''))
         dispatch(setReportList([]))
         setSelectedReport(event.target.value);
     };
@@ -44,7 +46,8 @@ function ReportApp() {
                             onChange={handleSelectChange}
                         >
                             <MenuItem value="dataGrid">Relatório Analítico</MenuItem>
-                            <MenuItem value="sintético">Relatório Sintético</MenuItem>
+                            <MenuItem value="sintetico">Relatório Sintético</MenuItem>
+
                             <MenuItem value="consolidado">Relatório Consolidado</MenuItem>
                         </Select>
                     </FormControl>
@@ -52,7 +55,8 @@ function ReportApp() {
 
                 <Box>
                         {selectedReport === 'dataGrid' && <DataGridInfos />}
-                        {selectedReport === 'sintético' && <SynthReport />}
+                        {selectedReport === 'sintetico' && <SynthReport />}
+
                         {selectedReport === 'consolidado' && <ConsolidatedReport />}
                 </Box>
             </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
     Box,
     MenuItem,
@@ -35,6 +35,8 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import { ClearIcon } from '@mui/x-date-pickers';
+import { utils, writeFile as writeFileXLSX } from 'xlsx';
+
 
 const locale = pt;
 
@@ -120,6 +122,7 @@ export default function BasicEditingGrid() {
             setIsLoading(false)
     }, [reportList]);
 
+    // Handle AutoComplete
     useEffect(() => {
         if (userList && userList.length > 0) {
             const options = userList.map((user) => ({
@@ -148,7 +151,6 @@ export default function BasicEditingGrid() {
         setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
     };
 
-
     const valueProps = {
         startAdornment: <InputAdornment position='start'>R$</InputAdornment>
     };
@@ -157,6 +159,9 @@ export default function BasicEditingGrid() {
         style: 'currency',
         currency: 'BRL',
     });
+
+    // Export CSV
+
     const status = getValues('status')
     const whichStatus = status?.join(',')
 
@@ -185,6 +190,18 @@ export default function BasicEditingGrid() {
             ...reportListData,
             valorTotal
     ]
+    const selectedDate = getValues('dateRange');
+    const dateInicio = selectedDate[0];
+    const dateFim = selectedDate[1];
+
+    const csvFilename = useMemo(() => {
+        if (dateInicio && dateFim) {
+            return `relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.csv`;
+        }
+        return `relatorio_${format(new Date(), 'dd-MM-yyyy')}.csv`; 
+    }, [dateInicio, dateFim])
+
+    // Export PDF
 
     const exportPDF = () => {
         const doc = new jsPDF();
@@ -199,40 +216,90 @@ export default function BasicEditingGrid() {
             tableRows.push(reportData);
         });
 
-        const selectedDate = getValues('dateRange')
-        const dateInicio = selectedDate[0]
-        const dateFim = selectedDate[1]
+        const selectedDate = getValues('dateRange');
+        const dateInicio = selectedDate[0];
+        const dateFim = selectedDate[1];
 
+        const status = getValues('status');
+        const selectedStatus = status.join(',');
 
-        const status = getValues('status')
-        const selectedStatus = status.join(',')
+        const logoImg = 'assets/icons/logoPrefeitura.png';
+        const logoH = 15;
+        const logoW = 30;
+       
+     
 
-
-        doc.text(`Relatório dos dias ${format(dateInicio, 'dd/MM/yyyy')} a ${format(dateFim, 'dd/MM/yyyy')}`, 14, 15);
-        doc.setFontSize(10)
-        doc.text(`Status obervado: ${selectedStatus || 'Todos'}`, 14, 25);
-
-        const footer = function (data) {
-            const pageCount = doc.internal.getNumberOfPages();
-            doc.setFontSize(10);
-            doc.text(`Página ${data.pageNumber} de ${pageCount}`, data.settings.margin.left, doc.internal.pageSize.height - 10);
-        };
-
+       
         doc.autoTable({
             head: [tableColumn],
             body: tableRows,
-            startY: 30, 
-            didDrawPage: footer,  
+            margin: {left: 14 , right: 14, top: 60},
+            startY: 60,
+            didDrawPage: (data) => {
+               
+                doc.addImage(logoImg, 'PNG', 14, 10, logoW, logoH);
+
+               
+                const hrYPosition = 30;
+                doc.setLineWidth(0.3);
+                doc.line(14, hrYPosition, 196, hrYPosition);
+
+               
+                doc.setFontSize(10);
+                doc.text(`Relatório dos dias: ${format(dateInicio, 'dd/MM/yyyy')} a ${format(dateFim, 'dd/MM/yyyy')}`, 14, 45);
+                doc.text(`Status observado: ${selectedStatus || 'Todos'}`, 14, 50);
+
+
+
+               
+                
+            },
         });
 
-        const finalY = doc.lastAutoTable.finalY;
+        const pageCount = doc.internal.getNumberOfPages();
+
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i); 
+            doc.setFontSize(10);
+
+            const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
+            const text = `Página ${currentPage} de ${pageCount}`;
+            const xPos = 14; 
+            const yPos = doc.internal.pageSize.height - 5;
+
+            doc.text(text, xPos, yPos);
+        }
 
         const totalValue = `Valor total: ${formatter.format(reportList.valor ?? 0)}`;
-        doc.setFontSize(10)
-        doc.text(totalValue, 14, finalY + 10);
+        doc.setFontSize(10);
+        doc.text(totalValue, 14, doc.internal.pageSize.height - 10);
 
+       
         doc.save(`relatorio_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.pdf`);
     };
+
+    // Export XLSX
+    const exportXLSX = () => {
+        const selectedDate = getValues('dateRange');
+        const dateInicio = selectedDate[0];
+        const dateFim = selectedDate[1];
+        const data = [
+            [ "Status selecionado","", whichStatus || "Todos"],
+            ["Nome", "Valor"], 
+            ...reportList.data.map(report => [
+                report.nomefavorecido,
+                formatter.format(report.valor),
+            ]),
+            ["Valor Total", "",  formatter.format(reportList.valor ?? 0)],
+       
+        ];
+
+        const wb = utils.book_new();
+        utils.book_append_sheet(wb, utils.json_to_sheet(data));
+        writeFileXLSX(wb, `relatorio_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.xlsx`);
+    };
+
+
 
 
 
@@ -246,8 +313,12 @@ export default function BasicEditingGrid() {
             document.getElementById('csv-export-link').click();
         } else if (option === 'pdf') {
             exportPDF();
+        } else if (option === 'xlsx') {
+            exportXLSX();
         }
     };
+
+
     const clearSelect = (button) => {
         setValue(button, ''); 
         setShowButton(false)
@@ -371,6 +442,7 @@ export default function BasicEditingGrid() {
                                     <span className='absolute text-xs text-red-600'>Campo data obrigatório*</span>
                             </Box>
                             </Box>
+
                             <Box className="flex items-center my-[3.5rem] gap-10 flex-wrap">
                                 <Controller
                                     name="valorMin"
@@ -490,12 +562,15 @@ export default function BasicEditingGrid() {
                         >
                             <MenuItem onClick={() => handleMenuClose('csv')}>CSV</MenuItem>
                             <MenuItem onClick={() => handleMenuClose('pdf')}>PDF</MenuItem>
+                            <MenuItem onClick={() => handleMenuClose('xlsx')}>XLSX</MenuItem>
+
                         </Menu>
 
                         <CSVLink
                             id="csv-export-link"
                             data={csvData}
-                            filename={`relatorio_${format(new Date(), 'dd/MM/yyyy')}.csv`}
+                            filename={csvFilename}
+
                             className="hidden"
                         
                         />

@@ -9,7 +9,8 @@ import JwtService from '../auth/services/jwtService';
 const initialState = {
     synthData: [],
     reportType: '',
-    reportList: []
+    reportList: [],
+    totalSynth: ''
 };
 
 const reportSlice = createSlice({
@@ -25,6 +26,9 @@ const reportSlice = createSlice({
         setReportList: (state, action) => {
             state.reportList = action.payload;
         },
+        setTotalSynth: (state, action) => {
+            state.totalSynth = action.payload;
+        },
     },
 });
 
@@ -34,7 +38,9 @@ export const {
     setSynthData, 
     setReportType,
     reportList,
-    setReportList
+    setReportList,
+    totalSynth,
+    setTotalSynth
  } = reportSlice.actions;
 
 export default reportSlice.reducer;
@@ -95,6 +101,7 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
 
     if (JwtService.isAuthTokenValid(token)) {
         return new Promise(async (resolve, reject) => {
+
             const requestData = handleData(data);
             const reportTypeUrl = reportType;
 
@@ -112,7 +119,6 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
                 const response = await api.request(config);
                 const responseData = response.data;
 
-                if (!requestData.favorecidoName && !requestData.consorcioName) {
                     const mergedData = responseData.reduce((acc, curr) => {
                         return acc.concat(curr.data);
                     }, []);
@@ -123,14 +129,15 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
                         valor: responseData.reduce((sum, curr) => sum + curr.valor, 0),
                         status: 'Todos'
                     };
+                    if(reportType == 'sintetico'){
+                        dispatch(handleSynthData(combinedResponse))
+                    } else {
 
-                    dispatch(setReportList(combinedResponse));
+                        dispatch(setReportList(combinedResponse));
+                    }
                     resolve(combinedResponse);
-                } else {
-                    const conditionalResponse = responseData.length > 0 ? responseData : response;
-                    dispatch(setReportList(conditionalResponse));
-                    resolve(conditionalResponse);
-                }
+             
+
             } catch (error) {
                 console.error(error);
                 reject(error);
@@ -141,22 +148,28 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
 
 
 export const handleSynthData = (reportData) => async (dispatch) => {
-    const groupedData = reportData.reduce((acc, item) => {
+    const total = accounting.formatMoney(reportData.valor, {
+        symbol: 'R$',
+        decimal: ',',
+        thousand: '.',
+        precision: 2
+    })
+    dispatch(setTotalSynth(total))
+    const groupedData = reportData.data.reduce((acc, item) => {
         const key = item.consorcio;
         if (!acc[key]) {
             acc[key] = { items: [], total: 0, totalsByStatus: {} };
         }
 
-        const unformattedValue = accounting.unformat(item.value.replace(/\./g, '').replace(',', '.'));
 
         acc[key].items.push(item);
-        acc[key].total += unformattedValue;
+        acc[key].total += item.valor;
 
         const status = item.status;
         if (!acc[key].totalsByStatus[status]) {
             acc[key].totalsByStatus[status] = 0;
         }
-        acc[key].totalsByStatus[status] += unformattedValue;
+        acc[key].totalsByStatus[status] += item.valor;
 
         return acc;
     }, {});
