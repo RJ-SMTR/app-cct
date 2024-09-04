@@ -3,6 +3,7 @@ import {
     Box,
     MenuItem,
     Table,
+
     TableBody,
     Autocomplete,
     TextField,
@@ -15,6 +16,7 @@ import {
     InputAdornment,
     Menu,
     IconButton
+
 } from '@mui/material';
 import { ptBR as pt } from '@mui/x-data-grid';
 import { format } from 'date-fns';
@@ -29,6 +31,7 @@ import { ClearIcon } from '@mui/x-date-pickers';
 import jsPDF from 'jspdf';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import 'jspdf-autotable';
+
 
 
 const consorciosStatus = [
@@ -59,6 +62,7 @@ const consorcios = [
 export default function BasicEditingGrid() {
     const synthData = useSelector(state => state.report.synthData)
     const totalSynth = useSelector(state => state.report.totalSynth)
+
     const reportType = useSelector(state => state.report.reportType);
     const reportList = useSelector(state => state.report.reportList)
     const userList = useSelector(state => state.admin.userList) || []
@@ -67,6 +71,7 @@ export default function BasicEditingGrid() {
     const [userOptions, setUserOptions] = useState([])
     const [showClearMin, setShowClearMin] = useState(false)
     const [showClearMax, setShowClearMax] = useState(false)
+
     const [rows, setRows] = useState([])
     const [anchorEl, setAnchorEl] = useState(null);
 
@@ -152,7 +157,20 @@ export default function BasicEditingGrid() {
 
     const handleAutocompleteChange = (field, newValue) => {
         setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
+
+
     };
+    const handleClear = () => {
+        setValue('name', [])
+        setValue('dateRange', [])
+        setValue('valorMax', '')
+        setValue('valorMin', '')
+        setValue('consorcioName', [])
+        setValue('favorecidoSearch', '')
+        setValue('status', [])
+        document.querySelectorAll('.MuiAutocomplete-clearIndicator').forEach(button => button.click());
+    }
+
 
     const valueProps = {
         startAdornment: <InputAdornment position='start'>R$</InputAdornment>
@@ -254,6 +272,7 @@ export default function BasicEditingGrid() {
 
     // Export PDF
     const exportToPDF = (rows) => {
+
         const doc = new jsPDF();
         const tableColumn = ["Nome", "Valor"];
         const tableRows = [];
@@ -285,6 +304,23 @@ export default function BasicEditingGrid() {
             item['Ocorrência'],
         ]);
 
+
+        doc.autoTable(tableColumn, tableRows, { startY: 20 });
+        doc.text(`Relatório ${format(new Date(), 'dd/MM/yyyy')}`, 14, 15);
+        doc.save(`relatorio_${format(new Date(), 'dd/MM/yyyy')}.pdf`);
+    };
+    const handleMenuClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleMenuClose = (option) => {
+        setAnchorEl(null);
+        if (option === 'csv') {
+            document.getElementById('csv-export-link').click();
+        } else if (option === 'pdf') {
+            exportPDF();
+        }
+    };
     
         doc.autoTable({
             head: [['Data Transação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência']],
@@ -387,6 +423,8 @@ export default function BasicEditingGrid() {
                             <Box className="flex gap-10 flex-wrap mb-20">
 
 
+
+
                                 <Autocomplete
                                     id="favorecidos"
                                     multiple
@@ -402,6 +440,7 @@ export default function BasicEditingGrid() {
                                             option.value?.fullName?.toLowerCase().includes(state.inputValue.toLowerCase())
                                         );
                                     }}
+
                                     loading={loadingUsers}
                                     onChange={(_, newValue) => handleAutocompleteChange('name', newValue)}
                                     renderInput={(params) => (
@@ -473,6 +512,7 @@ export default function BasicEditingGrid() {
                                         />
                                     )}
                                 />
+
                                 <Box>
                                     <Controller
                                         name="dateRange"
@@ -524,6 +564,7 @@ export default function BasicEditingGrid() {
                                             }}
                                         />
                                     )}
+
                                 />
                                 <Controller
                                     name="valorMax"
@@ -561,6 +602,7 @@ export default function BasicEditingGrid() {
 
                             </Box>
                             <Box>
+
                                 <Button
                                     variant="contained"
                                     color="secondary"
@@ -576,6 +618,7 @@ export default function BasicEditingGrid() {
                                     className=" w-35% mt-16 mx-10 z-10"
                                     aria-label="Limpar Filtros"
                                     type="button"
+
                                     size="medium"
                                     onClick={() => handleClear()}
                                 >
@@ -764,6 +807,7 @@ export default function BasicEditingGrid() {
                                     ) : (
                                         <TableRow>
                                             <TableCell colSpan={8}>Não há dados para serem exibidos</TableCell>
+
                                         </TableRow>
                                     )
                                 ) : (
@@ -779,6 +823,7 @@ export default function BasicEditingGrid() {
                                     <p className='font-bold'>{totalSynth}</p>
                                 </Box>
                             </TableBody>
+
 
                         </Table>
                     </div>

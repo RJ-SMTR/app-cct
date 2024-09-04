@@ -37,6 +37,7 @@ import { showMessage } from 'app/store/fuse/messageSlice';
 import { ClearIcon } from '@mui/x-date-pickers';
 import { utils, writeFile as writeFileXLSX } from 'xlsx';
 
+
 const locale = pt;
 
 const consorciosStatus = [
@@ -149,7 +150,7 @@ export default function BasicEditingGrid() {
         
         setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
     };
- 
+
     const valueProps = {
         startAdornment: <InputAdornment position='start'>R$</InputAdornment>
     };
@@ -160,6 +161,7 @@ export default function BasicEditingGrid() {
     });
 
     // Export CSV
+
     const status = getValues('status')
     const whichStatus = status?.join(',')
 
@@ -200,6 +202,7 @@ export default function BasicEditingGrid() {
     }, [dateInicio, dateFim])
 
     // Export PDF
+
     const exportPDF = () => {
         const doc = new jsPDF();
         const tableColumn = ["Nome", "Valor"];
@@ -314,6 +317,7 @@ export default function BasicEditingGrid() {
             exportXLSX();
         }
     };
+
 
     const clearSelect = (button) => {
         setValue(button, ''); 
@@ -438,6 +442,7 @@ export default function BasicEditingGrid() {
                                     <span className='absolute text-xs text-red-600'>Campo data obrigatório*</span>
                             </Box>
                             </Box>
+
                             <Box className="flex items-center my-[3.5rem] gap-10 flex-wrap">
                                 <Controller
                                     name="valorMin"
@@ -558,12 +563,14 @@ export default function BasicEditingGrid() {
                             <MenuItem onClick={() => handleMenuClose('csv')}>CSV</MenuItem>
                             <MenuItem onClick={() => handleMenuClose('pdf')}>PDF</MenuItem>
                             <MenuItem onClick={() => handleMenuClose('xlsx')}>XLSX</MenuItem>
+
                         </Menu>
 
                         <CSVLink
                             id="csv-export-link"
                             data={csvData}
                             filename={csvFilename}
+
                             className="hidden"
                         
                         />
