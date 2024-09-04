@@ -148,7 +148,7 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
 
 export const handleSynthData = (reportData) => async (dispatch) => {
     const total = accounting.formatMoney(reportData.valor, {
-        symbol: 'R$',
+        symbol: 'R$ ',
         decimal: ',',
         thousand: '.',
         precision: 2
