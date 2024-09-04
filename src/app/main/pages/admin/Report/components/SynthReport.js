@@ -20,7 +20,7 @@ import { format, parseISO } from 'date-fns';
 import { useDispatch, useSelector } from 'react-redux';
 import { CustomProvider, DateRangePicker } from 'rsuite';
 import { useForm, Controller } from 'react-hook-form';
-import { handleReportInfo } from 'app/store/reportSlice';
+import { handleReportInfo, setTotalSynth } from 'app/store/reportSlice';
 import { getUser } from 'app/store/adminSlice';
 import { NumericFormat } from 'react-number-format';
 import { CSVLink } from 'react-csv';
@@ -92,6 +92,7 @@ export default function BasicEditingGrid() {
 
     const onSubmit = (data) => {
         setIsLoading(true)
+        dispatch(setTotalSynth(''))
         dispatch(handleReportInfo(data, reportType))
             .then((response) => {
                 setIsLoading(false)
@@ -683,15 +684,10 @@ export default function BasicEditingGrid() {
                                 {!isLoading ? (
                                     Object.entries(rows).length > 0 ? (
                                         Object.entries(rows).map(([consorcio, group]) => {
-                                            let totalSTPC = 0;
-                                            let totalSTPL = 0;
+                                            let totalConsorcio = 0;
 
                                             group.items.forEach(item => {
-                                                if (item.consorcio === "STPC") {
-                                                    totalSTPC += item.valor;
-                                                } else if (item.consorcio === "STPL") {
-                                                    totalSTPL += item.valor;
-                                                }
+                                                totalConsorcio += item.valor;
                                             });
 
                                             return (
@@ -705,13 +701,13 @@ export default function BasicEditingGrid() {
                                                     </TableRow>
 
                                                     <TableRow>
-                                                        <TableCell className="font-bold text-small p-0" sx={{paddingLeft: '0px'}}>Data Transação</TableCell>
-                                                        <TableCell className="font-bold text-small p-0" sx={{paddingLeft: '0px'}}>Dt. Efetiva Pgto.</TableCell>
-                                                        <TableCell className="font-bold text-small p-0" sx={{paddingLeft: '0px'}}>Consórcio</TableCell>
-                                                        <TableCell colSpan={4.5} className="font-bold text-small p-0" sx={{paddingLeft: '0px'}}>Favorecido</TableCell>
-                                                        <TableCell className="font-bold text-small p-0" sx={{paddingLeft: '0px'}}>Valor p/ Pagamento</TableCell>
-                                                        <TableCell className="font-bold text-small p-0" sx={{paddingLeft: '0px'}}>Status</TableCell>
-                                                        <TableCell className="font-bold text-small p-0" sx={{paddingLeft: '0px'}}>Ocorrência</TableCell>
+                                                        <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Data Transação</TableCell>
+                                                        <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Dt. Efetiva Pgto.</TableCell>
+                                                        <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Consórcio</TableCell>
+                                                        <TableCell colSpan={4.5} className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Favorecido</TableCell>
+                                                        <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Valor p/ Pagamento</TableCell>
+                                                        <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Status</TableCell>
+                                                        <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Ocorrência</TableCell>
                                                     </TableRow>
 
                                                     {Object.entries(
@@ -737,14 +733,13 @@ export default function BasicEditingGrid() {
                                                             <React.Fragment key={`${consorcio}-${datapagamento}-${status}-${favorecido || ''}`}>
                                                                 {items.map((item) => (
                                                                     <TableRow sx={{ width: "100%" }} className="w-full" key={item.id}>
-                                                                            <TableCell className='p-0 text-[1.2rem]' sx={{paddingLeft: '0px'}}>
-                                                                                {item.datatransacao ? format(parseISO(item.datatransacao), "dd/MM/yyyy") : null}
-                                                                            </TableCell>
-                                                                        
-                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{paddingLeft: '0px'}}>
+                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>
+                                                                            {item.datatransacao ? format(parseISO(item.datatransacao), "dd/MM/yyyy") : null}
+                                                                        </TableCell>
+                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>
                                                                             {item.datapagamento ? format(parseISO(item.datapagamento), "dd/MM/yyyy") : null}
                                                                         </TableCell>
-                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{paddingLeft: '0px'}}>{item.consorcio}</TableCell>
+                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{item.consorcio}</TableCell>
                                                                         <TableCell
                                                                             colSpan={4.5}
                                                                             className='text-[1.2rem]'
@@ -758,10 +753,10 @@ export default function BasicEditingGrid() {
                                                                         >
                                                                             {item.favorecido}
                                                                         </TableCell>
-                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{paddingLeft: '0px'}}>{formatter.format(item.valor)}</TableCell>
-                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{paddingLeft: '0px'}}>{showStatus(item.status)}</TableCell>
+                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{formatter.format(item.valor)}</TableCell>
+                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{showStatus(item.status)}</TableCell>
                                                                         {item.status === "naopago" ? (
-                                                                            <TableCell className='p-0 text-[1.2rem]' sx={{paddingLeft: '0px'}} colSpan={3} >
+                                                                            <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }} colSpan={3} >
                                                                                 {item.mensagem_status}
                                                                             </TableCell>
                                                                         ) : null}
@@ -792,28 +787,14 @@ export default function BasicEditingGrid() {
                                                         );
                                                     })}
 
-                                                    {consorcio === "STPC" && (
-                                                         <Box className="flex pb-[20px] gap-10">
-                                                            <p colSpan={7} style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
-                                                                Total STPC:
-                                                            </p>
-                                                            <p className="font-bold">
-                                                                {formatter.format(totalSTPC)}
-                                                            </p>
-                                                        </Box>
-                                                    )}
-
-                                                    {consorcio === "STPL" && (
-                                                      <Box className="flex pb-[20px] gap-10">
-                                                            <p colSpan={7} style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
-                                                                Total STPL:
-                                                            </p>
-                                                            <p className="font-bold">
-                                                                {formatter.format(totalSTPL)}
-                                                            </p>
-                                                        </Box>
-                                                    )}
-
+                                                    <Box className="flex pb-[20px] gap-10">
+                                                                <p style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
+                                                                    Total {consorcio}:
+                                                                </p>
+                                                                <p className="font-bold">
+                                                                    {formatter.format(totalConsorcio)}
+                                                                </p>
+                                                            </Box>
                                                 </React.Fragment>
                                             );
                                         })
@@ -827,6 +808,7 @@ export default function BasicEditingGrid() {
                                         <TableCell colSpan={8}>Carregando...</TableCell>
                                     </TableRow>
                                 )}
+
 
 
 
