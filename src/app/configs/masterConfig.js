@@ -35,29 +35,56 @@ const masterConfig = [
     },
 
     {
-        id: 'trigger-component',
-        title: 'trigger',
-        translate: 'Lançamentos Financeiros',
-        type: 'item',
-        icon: 'heroicons-outline:plus-circle',
-        url: 'lancamentos',
+        id: 'Financeiro',
+        title: 'Financeiro',
+        subtitle: '',
+        type: 'group',
+        icon: '',
+        children: [
+            {
+                id: 'trigger-component',
+                title: 'trigger',
+                translate: 'Lançamentos Financeiros',
+                type: 'item',
+                icon: 'heroicons-outline:plus-circle',
+                url: 'lancamentos',
+            },
+            {
+                id: 'trigger-component',
+                title: 'trigger',
+                translate: 'Alçada de Aprovação',
+                type: 'item',
+                icon: 'heroicons-outline:currency-dollar',
+                url: 'aprovação',
+            },
+        ]
     },
     {
-        id: 'trigger-component',
-        title: 'trigger',
-        translate: 'Alçada de Aprovação',
-        type: 'item',
-        icon: 'heroicons-outline:currency-dollar',
-        url: 'aprovação',
+        id: 'Relatórios',
+        title: 'Relatórios',
+        subtitle: '',
+        type: 'group',
+        icon: '',
+        children: [
+            {
+                id: 'trigger-component',
+                title: 'report',
+                translate: 'Relatório ',
+                type: 'item',
+                icon: 'heroicons-outline:document-report',
+                url: 'relatorio',
+            },
+            {
+                id: 'trigger-component',
+                title: 'report',
+                translate: 'Relatório Lançamentos',
+                type: 'item',
+                icon: 'heroicons-outline:document-report',
+                url: 'relatorio-lançamento',
+            },
+        ]
     },
-    {
-        id: 'trigger-component',
-        title: 'report',
-        translate: 'Relatório',
-        type: 'item',
-        icon: 'heroicons-outline:document-report',
-        url: 'relatorio',
-    },
+  
 
 ];
 
