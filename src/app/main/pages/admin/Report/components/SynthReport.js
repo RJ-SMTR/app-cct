@@ -283,7 +283,6 @@ export default function BasicEditingGrid() {
                 data.push(row);
             });
 
-            // Add subtotal for each consorcio
             data.push([
                 `Subtotal ${consorcio}`,
                 '',
