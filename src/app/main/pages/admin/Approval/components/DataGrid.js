@@ -55,7 +55,7 @@ export default function BasicEditingGrid(props) {
     const [openDelete, setOpenDelete] = useState(false)
     const [initialRows, setInitialRows] = useState(false)
     const [selectedId, setSelectedId] = useState()
-    const [dataAuth, setDataAuth] = useState()
+    const [dataAuth, setDataAuth] = useState([])
     const [sumOfItems, setSumOfItems] = useState(0);
     const [dateOrder, setDateOrder] = useState({
         month: null,
@@ -68,6 +68,7 @@ export default function BasicEditingGrid(props) {
     const [openPasswordModal, setOpenPasswordModal] = useState(false)
 
     useEffect(() => {
+        console.log(dataAuth)
         if (dataAuth) {
             const sum = dataAuth.algoritmo - dataAuth.glosa + dataAuth.recurso
             setSumOfItems(sum);
@@ -115,6 +116,7 @@ export default function BasicEditingGrid(props) {
         const response = await api.get(jwtServiceConfig.finanGetInfo + `/${id}`, {
             headers: { "Authorization": `Bearer ${token}` },
         });
+        console.log(response)
         if (response.data.auth_usersIds) {
             const auth_usersIdsArray = response.data.auth_usersIds.split(",");
             response.data.auth_usersIds = auth_usersIdsArray;
@@ -295,6 +297,16 @@ export default function BasicEditingGrid(props) {
             },
         },
     ];
+    const formatMoney = (value) => {
+        const formattedValue = accounting.formatMoney(value, {
+            symbol: "",
+            decimal: ",",
+            thousand: ".",
+            precision: 2
+        })
+
+        return formattedValue
+    }
 
     return (
         <>
@@ -366,7 +378,7 @@ export default function BasicEditingGrid(props) {
                             <h4 className="font-semibold mb-5">
                                 Valor Algoritmo
                             </h4>
-                            <TextField prefix='R$' value={dataAuth?.algoritmo?.replace(/R\$/g, '')} disabled InputProps={{
+                            <TextField prefix='R$' value={formatMoney(dataAuth?.algoritmo)} disabled InputProps={{
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
                         </Box>
@@ -374,7 +386,7 @@ export default function BasicEditingGrid(props) {
                             <h4 className="font-semibold mb-5">
                                 Valor Glosa
                             </h4>
-                            <TextField className='glosa' prefix='R$' value={dataAuth?.glosa === '' ? '0,00' : dataAuth?.glosa?.replace(/R\$/g, '')} disabled InputProps={{
+                            <TextField className='glosa' prefix='R$' value={formatMoney(dataAuth?.glosa)} disabled InputProps={{
 
                                 startAdornment: <InputAdornment position='start'>R$ </InputAdornment>,
                             }} />
@@ -383,7 +395,7 @@ export default function BasicEditingGrid(props) {
                             <h4 className="font-semibold mb-5">
                                 Valor Recurso
                             </h4>
-                            <TextField prefix='R$' className={dataAuth?.recurso.includes('-') ? "glosa" : ""} value={dataAuth?.recurso === '' ? '0,00' : dataAuth?.recurso?.replace(/R\$/g, '')} disabled InputProps={{
+                            <TextField prefix='R$' className={dataAuth?.recurso ? "glosa" : ""} value={formatMoney(dataAuth?.recurso)} disabled InputProps={{
 
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
@@ -392,7 +404,7 @@ export default function BasicEditingGrid(props) {
                             <h4 className="font-semibold mb-5">
                                Anexo III
                             </h4>
-                            <TextField prefix='R$' className={dataAuth?.anexo?.includes('-') ? "glosa" : ""} value={dataAuth?.anexo === null ? '0,00' : dataAuth?.anexo?.replace(/R\$/g, '')} disabled InputProps={{
+                            <TextField prefix='R$' className={dataAuth?.anexo ? "glosa" : ""} value={formatMoney(dataAuth?.recurso)} disabled InputProps={{
                                 
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
@@ -401,7 +413,7 @@ export default function BasicEditingGrid(props) {
                             <h4 className="font-semibold mb-5">
                                 Valor a Pagar
                             </h4>
-                            <TextField prefix='R$' value={dataAuth?.valor?.replace(/R\$/g, '')} disabled InputProps={{
+                            <TextField prefix='R$' value={formatMoney(dataAuth?.valor)} disabled InputProps={{
 
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />

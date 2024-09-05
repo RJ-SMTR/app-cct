@@ -29,10 +29,10 @@ function FinanEdit() {
     const [selectedMes, setSelectedMes] = useState()
     const [releaseData, setReleaseData] = useState([])
     const [valuesState, setValuesState] = useState({
-        algoritmo: null,
-        glosa: null,
-        recurso: null,
-        anexo: null,
+        algoritmo: 0,
+        glosa: 0,
+        recurso: 0,
+        anexo: 0,
     });
     const [valueToPay, setValueToPay] = useState();
     const [dateOrder, setDateOrder] = useState({
@@ -63,11 +63,12 @@ function FinanEdit() {
                 period: period
             });
             setSelectedMes(month)
-            setValueToPay(response.data.valor_a_pagar)
+            setValueToPay(response.data.valor)
             setValuesState({
                 algoritmo: response.data.algoritmo,
                 glosa: response.data.glosa ,
-                recurso: response.data.recurso
+                recurso: response.data.recurso,
+                anexo: response.data.anexo
             })
         };
         fetchData()
@@ -76,10 +77,7 @@ function FinanEdit() {
 
 
     const { handleSubmit, register, setError, reset, control, setValue } = useForm({
-        defaultValues: {
-            descricao: releaseData.descricao,
 
-        }
 
     })
 
@@ -99,29 +97,41 @@ function FinanEdit() {
         }));
     };
 
-    useEffect(() => {
-        const sanitizedValuesState = Object.fromEntries(
-            Object.entries(valuesState).map(([key, value]) => [key, value === '' ? '' : value])
-        );
+useEffect(() => {
+    const sanitizedValuesState = Object.fromEntries(
+        Object.entries(valuesState).map(([key, value]) => [key, value === 0 ? 0 : value])
+    );
 
-        if (sanitizedValuesState.algoritmo) {
-            const algoritmoAmount = accounting.unformat(sanitizedValuesState.algoritmo.replace(/\./g, '').replace('.', ','), ',');
-            const glosaAmount = accounting.unformat(sanitizedValuesState.glosa.replace(/\./g, '').replace('.', ','), ',');
-            const recursoAmount = accounting.unformat(sanitizedValuesState.recurso.replace(/\./g, '').replace('.', ','), ',');
-            const anexoAmount = accounting.unformat(sanitizedValuesState.recurso.replace(/\./g, '').replace('.', ','), ',');
+    if (sanitizedValuesState.algoritmo) {
+        const algoritmoAmount = typeof sanitizedValuesState.algoritmo === 'string'
+            ? accounting.unformat(sanitizedValuesState.algoritmo.replace(/\./g, '').replace('.', ','), ',')
+            : sanitizedValuesState.algoritmo;
 
-            const valueToPayAuto = algoritmoAmount + glosaAmount + recursoAmount + anexoAmount;
+        const glosaAmount = typeof sanitizedValuesState.glosa === 'string'
+            ? accounting.unformat(sanitizedValuesState.glosa.replace(/\./g, '').replace('.', ','), ',')
+            : sanitizedValuesState.glosa;
 
-            const formattedValue = accounting.formatMoney(valueToPayAuto, {
-                symbol: "",
-                decimal: ",",
-                thousand: ".",
-                precision: 2
-            });
+        const recursoAmount = typeof sanitizedValuesState.recurso === 'string'
+            ? accounting.unformat(sanitizedValuesState.recurso.replace(/\./g, '').replace('.', ','), ',')
+            : sanitizedValuesState.recurso;
 
-            setValueToPay(formattedValue);
-        }
-    }, [valuesState]);
+        const anexoAmount = typeof sanitizedValuesState.anexo === 'string'
+            ? accounting.unformat(sanitizedValuesState.anexo.replace(/\./g, '').replace('.', ','), ',')
+            : sanitizedValuesState.anexo;
+
+        const valueToPayAuto = algoritmoAmount + glosaAmount + recursoAmount + anexoAmount;
+        
+        const formattedValue = accounting.formatMoney(valueToPayAuto, {
+            symbol: "",
+            decimal: ",",
+            thousand: ".",
+            precision: 2
+        });
+
+        setValueToPay(formattedValue);
+    }
+}, [valuesState]);
+
 
 
 
@@ -129,16 +139,19 @@ function FinanEdit() {
 
 
     const onSubmit = (info) => {
-        info.algoritmo = valuesState.algoritmo.toString();
-        info.recurso = valuesState.recurso.toString();
-        info.glosa = valuesState.glosa.toString();
-        info.anexo = valuesState.anexo.toString();
-        info.valor_a_pagar = valueToPay
+        info.id_cliente_favorecido = releaseData.clienteFavorecido.id
+        info.algoritmo = valuesState.algoritmo
+        info.recurso = valuesState.recurso
+        info.glosa = valuesState.glosa
+        info.anexo = valuesState.anexo
         info.valor = valueToPay
         dispatch(editRelease(info, id))
             .then((response) => {
                 success(response, "Os dados foram atualizados!")
                 reset(info)
+            })
+            .catch((error) => {
+                success(response, "Houve um erro ao tentar atualizar. Tente novamente mais tarde!")
             })
     }
 
@@ -164,7 +177,7 @@ function FinanEdit() {
                     <Card className="w-full md:mx-9 p-24 relative mt-32">
                         <header className="flex justify-between items-center">
                             <h1 className="font-semibold">
-                                Novo Registro
+                                Editar Registro
                             </h1>
                         </header>
                         <form
@@ -175,13 +188,13 @@ function FinanEdit() {
                         >
                             <Box className="grid gap-10  md:grid-cols-3">
                             <TextField
-                                    {...register('descricao')}
+                                    {...register('favorecido')}
                                     label='Selecionar Favorecido'
                                     id="bank-autocomplete"
                                     variant='outlined'
-                                    name='descricao'
+                                    name='favorecido'
                                     disabled
-                                    value={releaseData.descricao}
+                                    value={releaseData.clienteFavorecido.nome}
 
                                 />
                                 <FormControl fullWidth>
@@ -388,8 +401,8 @@ function FinanEdit() {
                                     />
 
                                     <Controller
-                                        {...register('valor_a_pagar')}
-                                        name="valor_a_pagar"
+                                        {...register('valor')}
+                                        name="valor"
                                         control={control}
                                         render={({ field }) =>
                                             <NumericFormat

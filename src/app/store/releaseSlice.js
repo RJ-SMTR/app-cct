@@ -116,7 +116,6 @@ export const setRelease = (data)  => (dispatch) => {
                 ...data,
                 id_cliente_favorecido: parsedIdFavorecido,
                 algoritmo: accounting.unformat(data.algoritmo.replace(/\./g, '').replace(',', '.')).toFixed(2),
-                valor_a_pagar: accounting.unformat(data.valor_a_pagar.replace(/\./g, '').replace(',', '.')).toFixed(2),
                 recurso: accounting.unformat(data.recurso.replace(/\./g, '').replace(',', '.')).toFixed(2),
                 glosa: accounting.unformat(data.glosa.replace(/\./g, '').replace(',', '.')).toFixed(2),  
                 valor: accounting.unformat(data.valor.replace(/\./g, '').replace(',', '.')).toFixed(2),  
@@ -127,7 +126,6 @@ export const setRelease = (data)  => (dispatch) => {
             };
 
             cleanedData.algoritmo = parseFloat(cleanedData.algoritmo);
-            cleanedData.valor_a_pagar = parseFloat(cleanedData.valor_a_pagar);
             cleanedData.valor = parseFloat(cleanedData.valor);
             cleanedData.recurso = parseFloat(cleanedData.recurso);
             cleanedData.glosa = parseFloat(cleanedData.glosa);
@@ -153,29 +151,49 @@ export const setRelease = (data)  => (dispatch) => {
 };
 
 export const editRelease = (data,id) => (dispatch) => {
-
+    const token = window.localStorage.getItem('jwt_access_token');
+    if (JwtService.isAuthTokenValid(token)) {
     return new Promise((resolve, reject) => {
-        const month = data.mes
-        const period = parseFloat(data.periodo)
-        let dayOfMonth = 1
+        const month = data.mes;
+        const period = parseFloat(data.periodo);
+        let dayOfMonth = 1;
 
         if (period === 2) {
-            dayOfMonth = 16
+            dayOfMonth = 16;
         }
 
+        const parseDate = dayjs(data.data_ordem, 'DD/MM/YYYY');
+        const releaseDate = dayjs().set('month', month - 1).set('date', dayOfMonth);
+        const isoDateString = parseDate.toISOString();
+        const releaseIsoDate = releaseDate.toISOString();
 
-        const parseDate = dayjs(data.data_ordem, 'DD/MM/YYYY')
-        const releaseDate = dayjs().set('month', month - 1).set('date', dayOfMonth)
-        const isoDateString = parseDate.toISOString()
-        const releaseIsoDate = releaseDate.toISOString()
         const cleanedData = {
             ...data,
             data_ordem: isoDateString,
-            data_lancamento: releaseIsoDate
-
+            data_lancamento: releaseIsoDate,
+            algoritmo: typeof data.algoritmo === 'string'
+                ? accounting.unformat(data.algoritmo.replace(/\./g, '').replace(',', '.')).toFixed(2)
+                : data.algoritmo.toFixed(2),
+            recurso: typeof data.recurso === 'string'
+                ? accounting.unformat(data.recurso.replace(/\./g, '').replace(',', '.')).toFixed(2)
+                : data.recurso.toFixed(2),
+            glosa: typeof data.glosa === 'string'
+                ? accounting.unformat(data.glosa.replace(/\./g, '').replace(',', '.')).toFixed(2)
+                : data.glosa.toFixed(2),
+            valor: typeof data.valor === 'string'
+                ? accounting.unformat(data.valor.replace(/\./g, '').replace(',', '.')).toFixed(2)
+                : data.valor.toFixed(2),
+            anexo: typeof data.anexo === 'string'
+                ? accounting.unformat(data.anexo.replace(/\./g, '').replace(',', '.')).toFixed(2)
+                : data.anexo.toFixed(2),
         };
 
-        const token = window.localStorage.getItem('jwt_access_token');
+        cleanedData.algoritmo = parseFloat(cleanedData.algoritmo);
+        cleanedData.valor = parseFloat(cleanedData.valor);
+        cleanedData.recurso = parseFloat(cleanedData.recurso);
+        cleanedData.glosa = parseFloat(cleanedData.glosa);
+        cleanedData.anexo = parseFloat(cleanedData.anexo);
+
         api.put(jwtServiceConfig.finanGetInfo + `?lancamentoId=${id}`,
             cleanedData,
             { headers: { "Authorization": `Bearer ${token}` } })
@@ -190,12 +208,13 @@ export const editRelease = (data,id) => (dispatch) => {
                 reject(error);
             });
     });
+    }
 };
 export const deleteRelease = (id) => (dispatch) => {
-
+    const token = window.localStorage.getItem('jwt_access_token');
+    if (JwtService.isAuthTokenValid(token)) {
     return new Promise((resolve, reject) => {
    
-        const token = window.localStorage.getItem('jwt_access_token');
         api.delete(jwtServiceConfig.finanGetInfo + `/${id}`,
             { headers: { "Authorization": `Bearer ${token}` } })
             .then((response) => {
@@ -206,6 +225,7 @@ export const deleteRelease = (id) => (dispatch) => {
                 reject(error);
             });
     });
+    }
 };
 export const handleAuthValue = (data, id) => (dispatch) => {
     // const selectedDate = {
@@ -240,8 +260,9 @@ export const handleAuthRelease = (data, id, password) => (dispatch) => {
         mes: data.mes,
         periodo: data.periodo
     }
+    const token = window.localStorage.getItem('jwt_access_token');
+    if (JwtService.isAuthTokenValid(token)) {
     return new Promise((resolve, reject) => {
-        const token = window.localStorage.getItem('jwt_access_token');
         api.put(jwtServiceConfig.finanGetInfo + `/authorize?lancamentoId=${id}`,
         { id: id,
          password: password},
@@ -260,4 +281,5 @@ export const handleAuthRelease = (data, id, password) => (dispatch) => {
         })
 
     })
+    }
 }
