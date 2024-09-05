@@ -29,6 +29,7 @@ import jsPDF from 'jspdf';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import 'jspdf-autotable';
 import ptBR from 'rsuite/locales/pt_BR';
+import { utils, writeFileXLSX } from 'xlsx';
 
 const consorciosStatus = [
     { label: 'Todos' },
@@ -59,7 +60,6 @@ export default function BasicEditingGrid() {
     const synthData = useSelector(state => state.report.synthData)
     const totalSynth = useSelector(state => state.report.totalSynth)
     const reportType = useSelector(state => state.report.reportType);
-    const reportList = useSelector(state => state.report.reportList)
     const userList = useSelector(state => state.admin.userList) || []
     const [isLoading, setIsLoading] = useState(false)
     const [loadingUsers, setLoadingUsers] = useState(false)
@@ -224,7 +224,7 @@ export default function BasicEditingGrid() {
             ]);
         });
 
-        csvData.push(['Valor Total', '', '', '', formatter.format(reportList?.valor)]);
+        csvData.push(['Valor Total', '', '', '', `${totalSynth}`]);
 
         return csvData;
     };
@@ -252,7 +252,60 @@ export default function BasicEditingGrid() {
 
    
 
-    // Export PDF
+
+    // Export XLSX
+    const exportToXLSX = (rows) => {
+        const status = getValues('status');
+        const whichStatus = status?.join(',');
+        const selectedDate = getValues('dateRange');
+        const dateInicio = selectedDate[0];
+        const dateFim = selectedDate[1];
+
+        const data = [
+            ["Status selecionado", "", whichStatus || "Todos"],
+            [],
+            ["Data Transação", "Dt. Efetiva Pgto.", "Consórcio", "Favorecido", "Valor p/ Pagamento", "Status", "Ocorrência"],
+        ];
+
+        Object.entries(rows).forEach(([consorcio, group]) => {
+            data.push([`Consórcio: ${consorcio}`]);
+
+            group.items.forEach(item => {
+                const row = [
+                    item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
+                    item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
+                    item.consorcio,
+                    item.favorecido,
+                    formatter.format(item.valor),
+                    showStatus(item.status),
+                    item.status === 'naopago' ? item.mensagem_status : '',
+                ];
+                data.push(row);
+            });
+
+            data.push([
+                `Subtotal ${consorcio}`,
+                '',
+                '',
+                '',
+                formatter.format(group.items.reduce((sum, item) => sum + item.valor, 0)),
+                '',
+                ''
+            ]);
+        });
+
+        data.push(['Valor Total', '', '', '', `${totalSynth}`]);
+
+        const wb = utils.book_new();
+        const ws = utils.aoa_to_sheet(data);
+        utils.book_append_sheet(wb, ws, 'Relatório');
+
+        const filename = `relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.xlsx`;
+
+        writeFileXLSX(wb, filename);
+    };
+
+
     const exportToPDF = (rows) => {
         const doc = new jsPDF();
         const tableColumn = ["Nome", "Valor"];
@@ -260,8 +313,10 @@ export default function BasicEditingGrid() {
 
 
         const selectedDate = getValues('dateRange');
+        console.log(selectedDate)
         const dateInicio = selectedDate[0];
         const dateFim = selectedDate[1];
+        console.log(dateFim, dateInicio)
 
         const status = getValues('status');
         const selectedStatus = status.join(',');
@@ -272,8 +327,8 @@ export default function BasicEditingGrid() {
 
 
 
-    
-        const csvData = prepareCSVData(rows); 
+
+        const csvData = prepareCSVData(rows);
 
         const tableData = csvData.map(item => [
             item['Data Transação'],
@@ -285,7 +340,7 @@ export default function BasicEditingGrid() {
             item['Ocorrência'],
         ]);
 
-    
+
         doc.autoTable({
             head: [['Data Transação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência']],
             body: tableData,
@@ -300,7 +355,7 @@ export default function BasicEditingGrid() {
                 doc.setLineWidth(0.3);
                 doc.line(14, hrYPosition, 196, hrYPosition);
 
-
+                
                 doc.setFontSize(10);
                 doc.text(`Relatório dos dias: ${format(dateInicio, 'dd/MM/yyyy')} a ${format(dateFim, 'dd/MM/yyyy')}`, 14, 45);
                 doc.text(`Status observado: ${selectedStatus || 'Todos'}`, 14, 50);
@@ -326,35 +381,13 @@ export default function BasicEditingGrid() {
             doc.text(text, xPos, yPos);
         }
 
-        const totalValue = `Valor total: ${formatter.format(totalSynth)}`;
+        const totalValue = `Valor total: ${totalSynth}`;
         doc.setFontSize(10);
         doc.text(totalValue, 14, doc.internal.pageSize.height - 10);
 
 
         doc.save(`relatorio_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.pdf`);
     };
-
-    // Export XLSX
-    const exportToXLSX = (rows) => {
-        const selectedDate = getValues('dateRange');
-        const dateInicio = selectedDate[0];
-        const dateFim = selectedDate[1];
-        const data = [
-            ["Status selecionado", "", whichStatus || "Todos"],
-            ["Nome", "Valor"],
-            ...reportList.data.map(report => [
-                report.favorecido,
-                formatter.format(report.valor),
-            ]),
-            ["Valor Total", "", formatter.format(totalSynth)],
-
-        ];
-
-        const wb = utils.book_new();
-        utils.book_append_sheet(wb, utils.json_to_sheet(data));
-        writeFileXLSX(wb, `relatorio_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.xlsx`);
-    };
-
 
 
 

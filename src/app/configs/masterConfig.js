@@ -9,29 +9,47 @@ i18next.addResourceBundle('ar', 'navigation', ar);
 
 const masterConfig = [
     {
-        id: 'Home-component',
-        title: 'Home',
-        translate: 'Home',
-        type: 'item',
-        icon: 'heroicons-outline:home',
-        url: 'admin',
+        id: 'Administrativo',
+        title: 'Administrativo',
+        subtitle: '',
+        type: 'group',
+        icon: '',
+        children: [
+            {
+                id: 'Home-component',
+                title: 'Home',
+                translate: 'Home',
+                type: 'item',
+                icon: 'heroicons-outline:home',
+                url: 'admin',
 
-    },
-    {
-        id: 'upload-component',
-        title: 'Upload',
-        translate: 'Upload',
-        type: 'item',
-        icon: 'heroicons-outline:upload',
-        url: 'upload',
-    },
-    {
-        id: 'trigger-component',
-        title: 'trigger',
-        translate: 'Disparo',
-        type: 'item',
-        icon: 'heroicons-solid:mail',
-        url: 'disparo',
+            },
+            {
+                id: 'upload-component',
+                title: 'Upload',
+                translate: 'Upload',
+                type: 'item',
+                icon: 'heroicons-outline:upload',
+                url: 'upload',
+            },
+            {
+                id: 'trigger-component',
+                title: 'trigger',
+                translate: 'Disparo',
+                type: 'item',
+                icon: 'heroicons-solid:mail',
+                url: 'disparo',
+            },
+            {
+                id: 'trigger-component',
+                title: 'report',
+                translate: 'Relatório ',
+                type: 'item',
+                icon: 'heroicons-outline:document-report',
+                url: 'relatorio',
+            },
+        ]
+
     },
 
     {
@@ -57,23 +75,6 @@ const masterConfig = [
                 icon: 'heroicons-outline:currency-dollar',
                 url: 'aprovação',
             },
-        ]
-    },
-    {
-        id: 'Relatórios',
-        title: 'Relatórios',
-        subtitle: '',
-        type: 'group',
-        icon: '',
-        children: [
-            {
-                id: 'trigger-component',
-                title: 'report',
-                translate: 'Relatório ',
-                type: 'item',
-                icon: 'heroicons-outline:document-report',
-                url: 'relatorio',
-            },
             {
                 id: 'trigger-component',
                 title: 'report',
@@ -84,6 +85,7 @@ const masterConfig = [
             },
         ]
     },
+    
   
 
 ];
