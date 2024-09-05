@@ -9,8 +9,8 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import ptBR from 'date-fns/locale/pt-BR';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { NumericFormat } from 'react-number-format';
-import { getFavorecidos, setRelease, setSelectedYear } from 'app/store/releaseSlice';
-import { useDispatch } from 'react-redux';
+import { getFavorecidos, setListTransactions, setRelease, setSelectedDate, setSelectedPeriod, setSelectedYear } from 'app/store/releaseSlice';
+import { useDispatch, useSelector } from 'react-redux';
 import { AuthContext } from 'src/app/auth/AuthContext';
 import dayjs from 'dayjs';
 import * as yup from 'yup';
@@ -19,13 +19,11 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { makeStyles } from '@mui/styles';
 import { styling } from './customStyles';
 import accounting from 'accounting';
+import { showMessage } from 'app/store/fuse/messageSlice';
 
 
 const schema = yup.object().shape({
-    descricao: yup.string().oneOf([
-        'Auto-viação Norte',
-        'Transoeste International'
-    ]).required('Selecione um favorecido'),
+    favorecido: yup.string().required('Selecione um favorecido'),
     mes: yup.string().required('Selecione um mês'),
     periodo: yup.string().required('Selecione uma quinzena'),
     data_ordem: yup.date().required('Insira a data ordem de pagamento'),
@@ -45,6 +43,7 @@ const schema = yup.object().shape({
 });
 function FinanRelease() {
     const { success } = useContext(AuthContext)
+    const [selectedFavorecido, setselectedFavorecido] = useState('');
     const dispatch = useDispatch()
     const [valuesState, setValuesState] = useState({
         algoritmo: 0,
@@ -53,16 +52,23 @@ function FinanRelease() {
         anexo: 0,
     });
     const [selectedMes, setSelectedMes] = useState()
+    const clientesFavorecidos = useSelector(state => state.release.clientesFavorecidos)
 
 
 
     useEffect(() => {
+        dispatch(setListTransactions([]))
+        dispatch(setSelectedPeriod(false))
+        dispatch(setSelectedDate({
+            mes: null,
+            periodo: null
+        }))
         dispatch(getFavorecidos())
     }, [])
+   
 
     const { handleSubmit, register, control, reset, setValue, formState, clearErrors } = useForm({
         defaultValues: {
-            descricao: null,
             favorecido: null,
             mes: '',
             periodo: '',
@@ -96,7 +102,6 @@ function FinanRelease() {
     const c = useStyles()
 
     const onSubmit = (info) => {
-
         info.valor = info.valor_a_pagar
         dispatch(setRelease(info))
             .then((response) => {
@@ -113,8 +118,11 @@ function FinanRelease() {
 
 
             })
-            .catch((_errors) => {
-                console.log(_errors)
+            .catch((error) => {
+                console.log(error)
+                if(error){
+                    dispatch(showMessage({ message: `Erro ao salvar, tente novamente mais tarde. Erro: ${error.response.status}` }))
+                }
             });
 
     }
@@ -157,6 +165,16 @@ function FinanRelease() {
     const valuePropsGlosa = {
         startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
     }
+    const handleAutocompleteChange = (newValue) => {
+        if (newValue) {
+            setselectedFavorecido(newValue.id); 
+            setValue('favorecido', newValue.id); 
+        } else {
+            setselectedFavorecido(null);
+            setValue('favorecido', ''); 
+        }
+        clearErrors('favorecido');
+    };
     return (
         <>
             <div className="p-24 pt-10">
@@ -178,26 +196,24 @@ function FinanRelease() {
                                 <FormControl fullWidth>
                                     <Autocomplete
                                         id='favorecidos'
-                                        options={[
-                                            'Auto-viação Norte',
-                                            'Transoeste International'
-                                        ]}
+                                        options={clientesFavorecidos}
+                                        getOptionLabel={(option) => option.nome}
+                                        onChange={(_, newValue) => handleAutocompleteChange(newValue)}
                                         renderInput={(params) => (
                                             <TextField
                                                 {...params}
-                                                {...register('descricao')}
                                                 label='Selecionar Favorecido'
                                                 id="bank-autocomplete"
                                                 variant='outlined'
-                                                name='descricao'
-                                                error={!!errors.descricao}
-                                                onChange={() => clearErrors('descricao')}
-                                                helperText={errors.descricao?.message}
-
+                                                name='favorecido'
+                                                error={!!errors.favorecido}
+                                                helperText={errors.favorecido?.message}
                                             />
                                         )}
                                     />
+                                    <input type="hidden" {...register('favorecido')} />
                                 </FormControl>
+
                                 <FormControl fullWidth>
                                     <InputLabel id="select-mes">Selecionar Mês</InputLabel >
                                     <Controller

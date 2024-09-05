@@ -101,7 +101,7 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
 
     if (JwtService.isAuthTokenValid(token)) {
         return new Promise(async (resolve, reject) => {
-
+            
             const requestData = handleData(data);
             const reportTypeUrl = reportType;
 
@@ -118,7 +118,7 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
             try {
                 const response = await api.request(config);
                 const responseData = response.data;
-
+                
                     const mergedData = responseData.reduce((acc, curr) => {
                         return acc.concat(curr.data);
                     }, []);
@@ -137,7 +137,6 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
                     }
                     resolve(combinedResponse);
              
-
             } catch (error) {
                 console.error(error);
                 reject(error);

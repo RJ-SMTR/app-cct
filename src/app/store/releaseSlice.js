@@ -4,8 +4,8 @@ import { api } from 'app/configs/api/api';
 import { useHistory } from 'react-router-dom';
 import dayjs from 'dayjs';
 import axios from 'axios';
-
 import JwtService from '../auth/services/jwtService';
+import accounting from 'accounting';
 
 
 const initialState = {
@@ -17,7 +17,8 @@ const initialState = {
     },
     authValue: '',
     selectedStatus: null,
-    selectedYear: null
+    selectedYear: null,
+    clientesFavorecidos: []
 };
 
 const stepSlice = createSlice({
@@ -42,16 +43,29 @@ const stepSlice = createSlice({
         setSelectedYear: (state, action) => {
             state.selectedYear = action.payload;
         },
+        setClientesFavorecidos: (state, action) => {
+            state.clientesFavorecidos = action.payload;
+        },
     },
 });
 
-export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTransactions, selectDate, setSelectedDate, authValue, setAuthValue, setSelectedStatus, selectedStatus, setSelectedYear , selectedYear} = stepSlice.actions;
+export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTransactions, selectDate, setSelectedDate, authValue, setAuthValue, setSelectedStatus, selectedStatus, setSelectedYear , selectedYear, clientesFavorecidos, setClientesFavorecidos} = stepSlice.actions;
 export default stepSlice.reducer;
 
 export const getData = (data) => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
 
-    api.get(jwtServiceConfig.finanGetInfo + `?mes=${data.selectedDate.mes}&periodo=${data.selectedDate.periodo}&ano=${data.selectedYearFormat}&autorizado=${data.selectedStatus?.status ?? null}`, {
+    let url = `${jwtServiceConfig.finanGetInfo}?mes=${data.selectedDate.mes}&periodo=${data.selectedDate.periodo}`;
+
+    if (data.selectedYearFormat && data.selectedYearFormat !==null ) {
+        url += `&ano=${data.selectedYearFormat}`;
+    }
+
+    if (data.selectedStatus && data.selectedStatus.status !== null) {
+        url += `&autorizado=${data.selectedStatus.status}`;
+    }
+
+    api.get(url, {
         headers: { "Authorization": `Bearer ${token}` },
     })
         .then((response) => {
@@ -59,15 +73,17 @@ export const getData = (data) => (dispatch) => {
             dispatch(setSelectedPeriod(true));
         });
 };
+
 export const getFavorecidos = () => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
     
-    api.get('/cnab/clientes-favorecidos', {
-        headers: { "Authorization": `Bearer ${token}` },
+    api.get(`/cnab/clientes-favorecidos/`, {
+        headers: { "Authorization": `Bearer ${token}` },params: {
+            consorcio: 'Empresa'
+        }
     })
         .then((response) => {
-            console.log(response)
-            // dispacth(setClientesFavorecidos(response.data))
+            dispatch(setClientesFavorecidos(response.data))
         })
 
 }
@@ -76,7 +92,6 @@ export const getFavorecidos = () => (dispatch) => {
 export const setRelease = (data)  => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
 
-    if(JwtService.isAuthTokenValid(token)){
         return new Promise((resolve, reject) => {
             const month = data.mes
             const period = parseFloat(data.periodo)
@@ -85,18 +100,35 @@ export const setRelease = (data)  => (dispatch) => {
             if (period === 2) {
                 dayOfMonth = 16
             }
-
+            const unformatOptions = {
+                decimal: ',', 
+                thousand: '.', 
+            }
 
             const parseDate = dayjs(data.data_ordem, 'DD/MM/YYYY')
             const releaseDate = dayjs().set('month', month - 1).set('date', dayOfMonth)
+            
             const isoDateString = parseDate.toISOString()
             const releaseIsoDate = releaseDate.toISOString()
+            const parsedIdFavorecido = parseFloat(data.favorecido)
             const cleanedData = {
                 ...data,
+                id_cliente_favorecido: parsedIdFavorecido,
+                algoritmo: accounting.unformat(data.algoritmo.replace(/\./g, '').replace(',', '.')).toFixed(2),
+                recurso: accounting.unformat(data.recurso.replace(/\./g, '').replace(',', '.')).toFixed(2),
+                glosa: accounting.unformat(data.glosa.replace(/\./g, '').replace(',', '.')).toFixed(2),  
+                valor: accounting.unformat(data.valor.replace(/\./g, '').replace(',', '.')).toFixed(2),  
+                anexo: accounting.unformat(data.anexo.replace(/\./g, '').replace(',', '.')).toFixed(2),
                 data_ordem: isoDateString,
                 data_lancamento: releaseIsoDate
 
             };
+
+            cleanedData.algoritmo = parseFloat(cleanedData.algoritmo);
+            cleanedData.valor = parseFloat(cleanedData.valor);
+            cleanedData.recurso = parseFloat(cleanedData.recurso);
+            cleanedData.glosa = parseFloat(cleanedData.glosa);
+            cleanedData.anexo = parseFloat(cleanedData.anexo);
 
             api.post(jwtServiceConfig.setRelease,
                 cleanedData,
@@ -112,35 +144,54 @@ export const setRelease = (data)  => (dispatch) => {
                     reject(error);
                 });
         });
-    } 
 
 
 };
 
 export const editRelease = (data,id) => (dispatch) => {
-
+    const token = window.localStorage.getItem('jwt_access_token');
+    if (JwtService.isAuthTokenValid(token)) {
     return new Promise((resolve, reject) => {
-        const month = data.mes
-        const period = parseFloat(data.periodo)
-        let dayOfMonth = 1
+        const month = data.mes;
+        const period = parseFloat(data.periodo);
+        let dayOfMonth = 1;
 
         if (period === 2) {
-            dayOfMonth = 16
+            dayOfMonth = 16;
         }
 
+        const parseDate = dayjs(data.data_ordem, 'DD/MM/YYYY');
+        const releaseDate = dayjs().set('month', month - 1).set('date', dayOfMonth);
+        const isoDateString = parseDate.toISOString();
+        const releaseIsoDate = releaseDate.toISOString();
 
-        const parseDate = dayjs(data.data_ordem, 'DD/MM/YYYY')
-        const releaseDate = dayjs().set('month', month - 1).set('date', dayOfMonth)
-        const isoDateString = parseDate.toISOString()
-        const releaseIsoDate = releaseDate.toISOString()
         const cleanedData = {
             ...data,
             data_ordem: isoDateString,
-            data_lancamento: releaseIsoDate
-
+            data_lancamento: releaseIsoDate,
+            algoritmo: typeof data.algoritmo === 'string'
+                ? accounting.unformat(data.algoritmo.replace(/\./g, '').replace(',', '.')).toFixed(2)
+                : data.algoritmo.toFixed(2),
+            recurso: typeof data.recurso === 'string'
+                ? accounting.unformat(data.recurso.replace(/\./g, '').replace(',', '.')).toFixed(2)
+                : data.recurso.toFixed(2),
+            glosa: typeof data.glosa === 'string'
+                ? accounting.unformat(data.glosa.replace(/\./g, '').replace(',', '.')).toFixed(2)
+                : data.glosa.toFixed(2),
+            valor: typeof data.valor === 'string'
+                ? accounting.unformat(data.valor.replace(/\./g, '').replace(',', '.')).toFixed(2)
+                : data.valor.toFixed(2),
+            anexo: typeof data.anexo === 'string'
+                ? accounting.unformat(data.anexo.replace(/\./g, '').replace(',', '.')).toFixed(2)
+                : data.anexo.toFixed(2),
         };
 
-        const token = window.localStorage.getItem('jwt_access_token');
+        cleanedData.algoritmo = parseFloat(cleanedData.algoritmo);
+        cleanedData.valor = parseFloat(cleanedData.valor);
+        cleanedData.recurso = parseFloat(cleanedData.recurso);
+        cleanedData.glosa = parseFloat(cleanedData.glosa);
+        cleanedData.anexo = parseFloat(cleanedData.anexo);
+
         api.put(jwtServiceConfig.finanGetInfo + `?lancamentoId=${id}`,
             cleanedData,
             { headers: { "Authorization": `Bearer ${token}` } })
@@ -155,12 +206,13 @@ export const editRelease = (data,id) => (dispatch) => {
                 reject(error);
             });
     });
+    }
 };
 export const deleteRelease = (id) => (dispatch) => {
-
+    const token = window.localStorage.getItem('jwt_access_token');
+    if (JwtService.isAuthTokenValid(token)) {
     return new Promise((resolve, reject) => {
    
-        const token = window.localStorage.getItem('jwt_access_token');
         api.delete(jwtServiceConfig.finanGetInfo + `/${id}`,
             { headers: { "Authorization": `Bearer ${token}` } })
             .then((response) => {
@@ -171,6 +223,7 @@ export const deleteRelease = (id) => (dispatch) => {
                 reject(error);
             });
     });
+    }
 };
 export const handleAuthValue = (data, id) => (dispatch) => {
     // const selectedDate = {
@@ -205,8 +258,9 @@ export const handleAuthRelease = (data, id, password) => (dispatch) => {
         mes: data.mes,
         periodo: data.periodo
     }
+    console.log("handleAuth",data)
+    const token = window.localStorage.getItem('jwt_access_token');
     return new Promise((resolve, reject) => {
-        const token = window.localStorage.getItem('jwt_access_token');
         api.put(jwtServiceConfig.finanGetInfo + `/authorize?lancamentoId=${id}`,
         { id: id,
          password: password},
@@ -222,6 +276,9 @@ export const handleAuthRelease = (data, id, password) => (dispatch) => {
             } else {
                 reject(error)
             }
+        })
+        .catch((error) => {
+            reject(error)
         })
 
     })

@@ -47,7 +47,7 @@ function ReportApp() {
                         >
                             <MenuItem value="dataGrid">Relatório Analítico</MenuItem>
                             <MenuItem value="sintetico">Relatório Sintético</MenuItem>
-           <MenuItem value="consolidado">Relatório Consolidado</MenuItem>
+                            <MenuItem value="consolidado">Relatório Consolidado</MenuItem>
                         </Select>
                     </FormControl>
                 </Card>
@@ -55,7 +55,6 @@ function ReportApp() {
                 <Box>
                         {selectedReport === 'dataGrid' && <DataGridInfos />}
                         {selectedReport === 'sintetico' && <SynthReport />}
-
                         {selectedReport === 'consolidado' && <ConsolidatedReport />}
                 </Box>
             </div>

@@ -18,7 +18,6 @@ import dayjs from 'dayjs';
 
 function CardSelection() {
     const dispatch = useDispatch()
-    const [year, setYear] = useState()
     const selectedDate = useSelector(state => state.release.selectedDate)
     const selectedStatus = useSelector(state => state.release.selectedStatus)
     const selectedYear = useSelector(state => state.release.selectedYear)
