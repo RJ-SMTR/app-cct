@@ -29,6 +29,7 @@ import jsPDF from 'jspdf';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import 'jspdf-autotable';
 import ptBR from 'rsuite/locales/pt_BR';
+import { utils, writeFileXLSX } from 'xlsx';
 
 const consorciosStatus = [
     { label: 'Todos' },
@@ -59,7 +60,6 @@ export default function BasicEditingGrid() {
     const synthData = useSelector(state => state.report.synthData)
     const totalSynth = useSelector(state => state.report.totalSynth)
     const reportType = useSelector(state => state.report.reportType);
-    const reportList = useSelector(state => state.report.reportList)
     const userList = useSelector(state => state.admin.userList) || []
     const [isLoading, setIsLoading] = useState(false)
     const [loadingUsers, setLoadingUsers] = useState(false)
@@ -224,7 +224,7 @@ export default function BasicEditingGrid() {
             ]);
         });
 
-        csvData.push(['Valor Total', '', '', '', formatter.format(reportList?.valor)]);
+        csvData.push(['Valor Total', '', '', '', `${totalSynth}`]);
 
         return csvData;
     };
@@ -252,7 +252,60 @@ export default function BasicEditingGrid() {
 
    
 
-    // Export PDF
+
+    // Export XLSX
+    const exportToXLSX = (rows) => {
+        const status = getValues('status');
+        const whichStatus = status?.join(',');
+        const selectedDate = getValues('dateRange');
+        const dateInicio = selectedDate[0];
+        const dateFim = selectedDate[1];
+
+        const data = [
+            ["Status selecionado", "", whichStatus || "Todos"],
+            [],
+            ["Data Transação", "Dt. Efetiva Pgto.", "Consórcio", "Favorecido", "Valor p/ Pagamento", "Status", "Ocorrência"],
+        ];
+
+        Object.entries(rows).forEach(([consorcio, group]) => {
+            data.push([`Consórcio: ${consorcio}`]);
+
+            group.items.forEach(item => {
+                const row = [
+                    item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
+                    item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
+                    item.consorcio,
+                    item.favorecido,
+                    formatter.format(item.valor),
+                    showStatus(item.status),
+                    item.status === 'naopago' ? item.mensagem_status : '',
+                ];
+                data.push(row);
+            });
+
+            data.push([
+                `Subtotal ${consorcio}`,
+                '',
+                '',
+                '',
+                formatter.format(group.items.reduce((sum, item) => sum + item.valor, 0)),
+                '',
+                ''
+            ]);
+        });
+
+        data.push(['Valor Total', '', '', '', `${totalSynth}`]);
+
+        const wb = utils.book_new();
+        const ws = utils.aoa_to_sheet(data);
+        utils.book_append_sheet(wb, ws, 'Relatório');
+
+        const filename = `relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.xlsx`;
+
+        writeFileXLSX(wb, filename);
+    };
+
+
     const exportToPDF = (rows) => {
         const doc = new jsPDF();
         const tableColumn = ["Nome", "Valor"];
@@ -260,8 +313,10 @@ export default function BasicEditingGrid() {
 
 
         const selectedDate = getValues('dateRange');
+        console.log(selectedDate)
         const dateInicio = selectedDate[0];
         const dateFim = selectedDate[1];
+        console.log(dateFim, dateInicio)
 
         const status = getValues('status');
         const selectedStatus = status.join(',');
@@ -272,8 +327,8 @@ export default function BasicEditingGrid() {
 
 
 
-    
-        const csvData = prepareCSVData(rows); 
+
+        const csvData = prepareCSVData(rows);
 
         const tableData = csvData.map(item => [
             item['Data Transação'],
@@ -285,7 +340,7 @@ export default function BasicEditingGrid() {
             item['Ocorrência'],
         ]);
 
-    
+
         doc.autoTable({
             head: [['Data Transação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência']],
             body: tableData,
@@ -300,7 +355,7 @@ export default function BasicEditingGrid() {
                 doc.setLineWidth(0.3);
                 doc.line(14, hrYPosition, 196, hrYPosition);
 
-
+                
                 doc.setFontSize(10);
                 doc.text(`Relatório dos dias: ${format(dateInicio, 'dd/MM/yyyy')} a ${format(dateFim, 'dd/MM/yyyy')}`, 14, 45);
                 doc.text(`Status observado: ${selectedStatus || 'Todos'}`, 14, 50);
@@ -326,35 +381,13 @@ export default function BasicEditingGrid() {
             doc.text(text, xPos, yPos);
         }
 
-        const totalValue = `Valor total: ${formatter.format(totalSynth)}`;
+        const totalValue = `Valor total: ${totalSynth}`;
         doc.setFontSize(10);
         doc.text(totalValue, 14, doc.internal.pageSize.height - 10);
 
 
         doc.save(`relatorio_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.pdf`);
     };
-
-    // Export XLSX
-    const exportToXLSX = (rows) => {
-        const selectedDate = getValues('dateRange');
-        const dateInicio = selectedDate[0];
-        const dateFim = selectedDate[1];
-        const data = [
-            ["Status selecionado", "", whichStatus || "Todos"],
-            ["Nome", "Valor"],
-            ...reportList.data.map(report => [
-                report.favorecido,
-                formatter.format(report.valor),
-            ]),
-            ["Valor Total", "", formatter.format(totalSynth)],
-
-        ];
-
-        const wb = utils.book_new();
-        utils.book_append_sheet(wb, utils.json_to_sheet(data));
-        writeFileXLSX(wb, `relatorio_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.xlsx`);
-    };
-
 
 
 
@@ -588,7 +621,7 @@ export default function BasicEditingGrid() {
                                                     clearErrors("valorMax");
                                                     clearErrors("valorMin");
                                                 } else {
-                                                    trigger("valorMin");  // Trigger validation for valorMin
+                                                    trigger("valorMin"); 
                                                 }
                                             }}
                                             onMouseEnter={() => {
@@ -684,11 +717,8 @@ export default function BasicEditingGrid() {
                                 {!isLoading ? (
                                     Object.entries(rows).length > 0 ? (
                                         Object.entries(rows).map(([consorcio, group]) => {
-                                            let totalConsorcio = 0;
+                                            let totalConsorcio = group.total;
 
-                                            group.items.forEach(item => {
-                                                totalConsorcio += item.valor;
-                                            });
 
                                             return (
                                                 <React.Fragment key={consorcio}>
@@ -713,20 +743,17 @@ export default function BasicEditingGrid() {
                                                     {Object.entries(
                                                         group.items.reduce((acc, item) => {
                                                             let key;
-
                                                             if (item.consorcio === "STPC" || item.consorcio === "STPL") {
                                                                 key = `${item.datapagamento}-${item.status}-${item.favorecido}`;
                                                             } else {
                                                                 key = `${item.datapagamento}-${item.status}`;
                                                             }
-
                                                             if (!acc[key]) acc[key] = [];
                                                             acc[key].push(item);
                                                             return acc;
                                                         }, {})
                                                     ).map(([key, items]) => {
                                                         const [datapagamento, status, favorecido] = key.split("-");
-
                                                         const isGroupedByFavorecido = items.some(item => item.consorcio === "STPC" || item.consorcio === "STPL");
 
                                                         return (
@@ -740,61 +767,43 @@ export default function BasicEditingGrid() {
                                                                             {item.datapagamento ? format(parseISO(item.datapagamento), "dd/MM/yyyy") : null}
                                                                         </TableCell>
                                                                         <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{item.consorcio}</TableCell>
-                                                                        <TableCell
-                                                                            colSpan={4.5}
-                                                                            className='text-[1.2rem]'
-                                                                            sx={{
-                                                                                minWidth: 300,
-                                                                                maxWidth: 350,
-                                                                                overflow: "hidden",
-                                                                                textOverflow: "ellipsis",
-                                                                                padding: 0
-                                                                            }}
-                                                                        >
+                                                                        <TableCell colSpan={4.5} className='text-[1.2rem]' sx={{ minWidth: 300, maxWidth: 350, overflow: "hidden", textOverflow: "ellipsis", padding: 0 }}>
                                                                             {item.favorecido}
                                                                         </TableCell>
                                                                         <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{formatter.format(item.valor)}</TableCell>
                                                                         <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{showStatus(item.status)}</TableCell>
                                                                         {item.status === "naopago" ? (
-                                                                            <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }} colSpan={3} >
+                                                                            <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }} colSpan={3}>
                                                                                 {item.mensagem_status}
                                                                             </TableCell>
                                                                         ) : null}
                                                                     </TableRow>
                                                                 ))}
                                                                 <TableRow>
-                                                                    {isGroupedByFavorecido ? (
-                                                                        <Box className="flex pb-[20px] gap-10">
-                                                                            <p style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
-                                                                                Subtotal:
-                                                                            </p>
-                                                                            <p className="font-bold">
-                                                                                {formatter.format(items.reduce((sum, item) => sum + item.valor, 0))}
-                                                                            </p>
-                                                                        </Box>
-                                                                    ) : (
-                                                                        <Box className="flex pb-[20px] gap-10">
-                                                                            <p style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
-                                                                                Subtotal do dia:
-                                                                            </p>
-                                                                            <p className="font-bold">
-                                                                                {formatter.format(items.reduce((sum, item) => sum + item.valor, 0))}
-                                                                            </p>
-                                                                        </Box>
-                                                                    )}
+                                                                    <Box className="flex pb-[20px] gap-10">
+                                                                        <p style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
+                                                                            {isGroupedByFavorecido ? "Subtotal:" : "Subtotal do dia:"}
+                                                                        </p>
+                                                                        <p className="font-bold">
+                                                                            {formatter.format(items.reduce((sum, item) => sum + item.valor, 0))}
+                                                                        </p>
+                                                                    </Box>
                                                                 </TableRow>
                                                             </React.Fragment>
                                                         );
                                                     })}
 
                                                     <Box className="flex pb-[20px] gap-10">
-                                                                <p style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
-                                                                    Total {consorcio}:
-                                                                </p>
-                                                                <p className="font-bold">
-                                                                    {formatter.format(totalConsorcio)}
-                                                                </p>
-                                                            </Box>
+                                                        <p style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
+                                                            Total {consorcio}:
+                                                        </p>
+                                                        <p className="font-bold">
+                                                          {totalConsorcio}
+                                                        </p>
+                                                    </Box>
+
+                                                 
+
                                                 </React.Fragment>
                                             );
                                         })
@@ -808,6 +817,7 @@ export default function BasicEditingGrid() {
                                         <TableCell colSpan={8}>Carregando...</TableCell>
                                     </TableRow>
                                 )}
+
 
 
 

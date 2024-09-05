@@ -24,6 +24,7 @@ import ApprovalConfig from '../main/pages/admin/Approval/ApprovalConfig';
 import FinanEditConfig from '../main/pages/admin/FinanRelease/FinanEdit/FinanEditConfig';
 import StatementsConfig from '../main/pages/admin/Statements/StatementsConfig';
 import ReportConfig from '../main/pages/admin/Report/ReportConfig';
+import ReportReleaseConfig from '../main/pages/admin/ReportRelease/ReportReleaseConfig';
 const routeConfigs = [
   // HomeConifg,
   SignOutConfig,
@@ -45,7 +46,8 @@ const routeConfigs = [
   FinanSignInConfig,
   FinanEditConfig,
   StatementsConfig,
-  ReportConfig
+  ReportConfig,
+  ReportReleaseConfig
 ];
 
 const routes = [

@@ -10,28 +10,37 @@ i18next.addResourceBundle('ar', 'navigation', ar);
 const navAdminConfig = [
    
     {
-        id: 'trigger-component',
-        title: 'trigger',
-        translate: `Lançamentos Financeiros`,
-        type: 'item',
-        icon: 'heroicons-outline:plus-circle',
-        url: 'lancamentos',
-    },
-    {
-        id: 'trigger-component',
-        title: 'trigger',
-        translate: 'Alçada de Aprovação',
-        type: 'item',
-        icon: 'heroicons-outline:currency-dollar',
-        url: 'aprovação',
-    },
-    {
-        id: 'trigger-component',
-        title: 'trigger',
-        translate: 'Movimentações Financeiras',
-        type: 'item',
-        icon: 'heroicons-outline:currency-dollar',
-        url: 'extrato-lançamentos',
+        id: 'Financeiro',
+        title: 'Financeiro',
+        subtitle: '',
+        type: 'group',
+        icon: '',
+        children: [
+            {
+                id: 'trigger-component',
+                title: 'trigger',
+                translate: 'Lançamentos Financeiros',
+                type: 'item',
+                icon: 'heroicons-outline:plus-circle',
+                url: 'lancamentos',
+            },
+            {
+                id: 'trigger-component',
+                title: 'trigger',
+                translate: 'Alçada de Aprovação',
+                type: 'item',
+                icon: 'heroicons-outline:currency-dollar',
+                url: 'aprovação',
+            },
+            {
+                id: 'trigger-component',
+                title: 'report',
+                translate: 'Relatório Lançamentos',
+                type: 'item',
+                icon: 'heroicons-outline:document-report',
+                url: 'relatorio-lançamento',
+            },
+        ]
     },
 
 

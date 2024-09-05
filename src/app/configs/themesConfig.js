@@ -31,7 +31,7 @@ const themesConfig = {
         contrastText: darkPaletteText.primary,
       },
       secondary: {
-        light: '#818cf8',
+        light: '#ffffff',
         main: '#0DB1E3',
         dark: '#097B9E',
         contrastText: darkPaletteText.primary,
@@ -72,7 +72,7 @@ const themesConfig = {
         contrastText: darkPaletteText.primary,
       },
       secondary: {
-        light: '#818cf8',
+        light: '#ffffff',
         main: '#0DB1E3',
         dark: '#097B9E',
         contrastText: darkPaletteText.primary,
