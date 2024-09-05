@@ -43,6 +43,7 @@ const schema = yup.object().shape({
 });
 function FinanRelease() {
     const { success } = useContext(AuthContext)
+    const [selectedFavorecido, setselectedFavorecido] = useState('');
     const dispatch = useDispatch()
     const [valuesState, setValuesState] = useState({
         algoritmo: 0,
@@ -95,7 +96,6 @@ function FinanRelease() {
     const c = useStyles()
 
     const onSubmit = (info) => {
-
         info.valor = info.valor_a_pagar
         dispatch(setRelease(info))
             .then((response) => {
@@ -159,6 +159,16 @@ function FinanRelease() {
     const valuePropsGlosa = {
         startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
     }
+    const handleAutocompleteChange = (newValue) => {
+        if (newValue) {
+            setselectedFavorecido(newValue.id); 
+            setValue('favorecido', newValue.id); 
+        } else {
+            setselectedFavorecido(null);
+            setValue('favorecido', ''); 
+        }
+        clearErrors('favorecido');
+    };
     return (
         <>
             <div className="p-24 pt-10">
@@ -180,24 +190,24 @@ function FinanRelease() {
                                 <FormControl fullWidth>
                                     <Autocomplete
                                         id='favorecidos'
-                                        getOptionLabel={(option) => option.nome}
                                         options={clientesFavorecidos}
+                                        getOptionLabel={(option) => option.nome}
+                                        onChange={(_, newValue) => handleAutocompleteChange(newValue)}
                                         renderInput={(params) => (
                                             <TextField
                                                 {...params}
-                                                {...register('favorecido')}
                                                 label='Selecionar Favorecido'
                                                 id="bank-autocomplete"
                                                 variant='outlined'
                                                 name='favorecido'
                                                 error={!!errors.favorecido}
-                                                onChange={() => clearErrors('favorecido')}
                                                 helperText={errors.favorecido?.message}
-
                                             />
                                         )}
                                     />
+                                    <input type="hidden" {...register('favorecido')} />
                                 </FormControl>
+
                                 <FormControl fullWidth>
                                     <InputLabel id="select-mes">Selecionar Mês</InputLabel >
                                     <Controller

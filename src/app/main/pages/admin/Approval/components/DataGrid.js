@@ -76,7 +76,7 @@ export default function BasicEditingGrid(props) {
 
 
     useEffect(() => {
-        const sum = props.data.reduce((accumulator, item) => accumulator + accounting.unformat(item.valor.replace(/\./g, '').replace('.', ','), ','), 0);
+        const sum = props.data.reduce((accumulator, item) => accumulator + item.valor, 0);
         const formattedValue = accounting.formatMoney(sum, {
             symbol: "",
             decimal: ",",
@@ -85,16 +85,21 @@ export default function BasicEditingGrid(props) {
         });
         setSumTotal(formattedValue)
         setRows(props.data.map((item, index) => {
+            const formattedToPay = (data) => {
+                return accounting.formatMoney(data, {
+                    symbol: "",
+                    decimal: ",",
+                    thousand: ".",
+                    precision: 2
+                } )}
             return {
                 id: item.id,
                 processNumber: item.numero_processo,
-                name: item.descricao,
-                toPay: 'R$ ' + item.valor,
-                setBy: item.user.fullName,
+                name: item.clienteFavorecido.nome,
+                toPay: "R$ " + formattedToPay(item.valor),
+                setBy: item.clienteFavorecido.nome,
                 paymentOrder: new Date(item.data_ordem),
-                authBy: item.autorizadopor.map(i => i.fullName
-
-                ),
+                authBy: item.autorizado_por.map(i => i.fullName                ),
                 effectivePayment: new Date(item.data_pgto)
             };
         }))
@@ -330,7 +335,7 @@ export default function BasicEditingGrid(props) {
                 <Box sx={style}>
                     <Box>
                         <Typography id="modal-modal-title" variant="h6" component="h2">
-                            Favorecido: {dataAuth?.descricao}
+                            Favorecido: {dataAuth?.favorecido}
                         </Typography>
                         <h4 id="modal-modal-title">
                             N.º Processo: {dataAuth?.numero_processo}
@@ -396,7 +401,7 @@ export default function BasicEditingGrid(props) {
                             <h4 className="font-semibold mb-5">
                                 Valor a Pagar
                             </h4>
-                            <TextField prefix='R$' value={dataAuth?.valor_a_pagar?.replace(/R\$/g, '')} disabled InputProps={{
+                            <TextField prefix='R$' value={dataAuth?.valor?.replace(/R\$/g, '')} disabled InputProps={{
 
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
@@ -418,7 +423,7 @@ export default function BasicEditingGrid(props) {
                             Tem certeza que deseja deletar este registro?
                         </Typography>
                         <p variant="h6" component="h2">
-                            Favorecido: {dataAuth?.descricao}
+                            Favorecido: {dataAuth?.favorecido}
                         </p>
                         <h4>
                             N.º Processo: {dataAuth?.numero_processo}

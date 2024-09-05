@@ -55,7 +55,17 @@ export default stepSlice.reducer;
 export const getData = (data) => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
 
-    api.get(jwtServiceConfig.finanGetInfo + `?mes=${data.selectedDate.mes}&periodo=${data.selectedDate.periodo}&ano=${data.selectedYearFormat}&autorizado=${data.selectedStatus?.status ?? null}`, {
+    let url = `${jwtServiceConfig.finanGetInfo}?mes=${data.selectedDate.mes}&periodo=${data.selectedDate.periodo}`;
+
+    if (data.selectedYearFormat !== null) {
+        url += `&ano=${data.selectedYearFormat}`;
+    }
+
+    if (data.selectedStatus && data.selectedStatus.status !== null) {
+        url += `&autorizado=${data.selectedStatus.status}`;
+    }
+
+    api.get(url, {
         headers: { "Authorization": `Bearer ${token}` },
     })
         .then((response) => {
@@ -63,6 +73,7 @@ export const getData = (data) => (dispatch) => {
             dispatch(setSelectedPeriod(true));
         });
 };
+
 export const getFavorecidos = () => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
     
@@ -79,7 +90,6 @@ export const getFavorecidos = () => (dispatch) => {
 
 
 export const setRelease = (data)  => (dispatch) => {
-    console.log(data)
     const token = window.localStorage.getItem('jwt_access_token');
 
     if(JwtService.isAuthTokenValid(token)){
@@ -101,9 +111,10 @@ export const setRelease = (data)  => (dispatch) => {
             
             const isoDateString = parseDate.toISOString()
             const releaseIsoDate = releaseDate.toISOString()
+            const parsedIdFavorecido = parseFloat(data.favorecido)
             const cleanedData = {
                 ...data,
-
+                id_cliente_favorecido: parsedIdFavorecido,
                 algoritmo: accounting.unformat(data.algoritmo.replace(/\./g, '').replace(',', '.')).toFixed(2),
                 valor_a_pagar: accounting.unformat(data.valor_a_pagar.replace(/\./g, '').replace(',', '.')).toFixed(2),
                 recurso: accounting.unformat(data.recurso.replace(/\./g, '').replace(',', '.')).toFixed(2),
@@ -120,7 +131,7 @@ export const setRelease = (data)  => (dispatch) => {
             cleanedData.valor = parseFloat(cleanedData.valor);
             cleanedData.recurso = parseFloat(cleanedData.recurso);
             cleanedData.glosa = parseFloat(cleanedData.glosa);
-            cleanedData.anexo = parseFloat(cleanedData.anexo3);
+            cleanedData.anexo = parseFloat(cleanedData.anexo);
 
             api.post(jwtServiceConfig.setRelease,
                 cleanedData,
