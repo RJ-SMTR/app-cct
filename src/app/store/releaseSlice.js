@@ -57,7 +57,7 @@ export const getData = (data) => (dispatch) => {
 
     let url = `${jwtServiceConfig.finanGetInfo}?mes=${data.selectedDate.mes}&periodo=${data.selectedDate.periodo}`;
 
-    if (data.selectedYearFormat !== null) {
+    if (data.selectedYearFormat && data.selectedYearFormat !==null ) {
         url += `&ano=${data.selectedYearFormat}`;
     }
 
@@ -92,7 +92,6 @@ export const getFavorecidos = () => (dispatch) => {
 export const setRelease = (data)  => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
 
-    if(JwtService.isAuthTokenValid(token)){
         return new Promise((resolve, reject) => {
             const month = data.mes
             const period = parseFloat(data.periodo)
@@ -145,7 +144,6 @@ export const setRelease = (data)  => (dispatch) => {
                     reject(error);
                 });
         });
-    } 
 
 
 };
@@ -260,8 +258,8 @@ export const handleAuthRelease = (data, id, password) => (dispatch) => {
         mes: data.mes,
         periodo: data.periodo
     }
+    console.log("handleAuth",data)
     const token = window.localStorage.getItem('jwt_access_token');
-    if (JwtService.isAuthTokenValid(token)) {
     return new Promise((resolve, reject) => {
         api.put(jwtServiceConfig.finanGetInfo + `/authorize?lancamentoId=${id}`,
         { id: id,
@@ -279,7 +277,9 @@ export const handleAuthRelease = (data, id, password) => (dispatch) => {
                 reject(error)
             }
         })
+        .catch((error) => {
+            reject(error)
+        })
 
     })
-    }
 }

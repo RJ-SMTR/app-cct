@@ -9,7 +9,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import ptBR from 'date-fns/locale/pt-BR';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { NumericFormat } from 'react-number-format';
-import { getFavorecidos, setRelease, setSelectedYear } from 'app/store/releaseSlice';
+import { getFavorecidos, setListTransactions, setRelease, setSelectedDate, setSelectedPeriod, setSelectedYear } from 'app/store/releaseSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { AuthContext } from 'src/app/auth/AuthContext';
 import dayjs from 'dayjs';
@@ -57,6 +57,12 @@ function FinanRelease() {
 
 
     useEffect(() => {
+        dispatch(setListTransactions([]))
+        dispatch(setSelectedPeriod(false))
+        dispatch(setSelectedDate({
+            mes: null,
+            periodo: null
+        }))
         dispatch(getFavorecidos())
     }, [])
    

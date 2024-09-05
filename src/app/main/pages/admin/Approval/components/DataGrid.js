@@ -15,6 +15,7 @@ import jwtServiceConfig from 'src/app/auth/services/jwtService/jwtServiceConfig'
 import dayjs from 'dayjs';
 import { selectUser } from 'app/store/userSlice';
 import accounting from 'accounting';
+import { showMessage } from 'app/store/fuse/messageSlice';
 var updateLocale = require('dayjs/plugin/updateLocale')
 dayjs.extend(updateLocale)
 require('dayjs/locale/pt-br')
@@ -68,7 +69,6 @@ export default function BasicEditingGrid(props) {
     const [openPasswordModal, setOpenPasswordModal] = useState(false)
 
     useEffect(() => {
-        console.log(dataAuth)
         if (dataAuth) {
             const sum = dataAuth.algoritmo - dataAuth.glosa + dataAuth.recurso
             setSumOfItems(sum);
@@ -100,8 +100,8 @@ export default function BasicEditingGrid(props) {
                 toPay: "R$ " + formattedToPay(item.valor),
                 setBy: item.clienteFavorecido.nome,
                 paymentOrder: new Date(item.data_ordem),
-                authBy: item.autorizado_por.map(i => i.fullName                ),
-                effectivePayment: new Date(item.data_pgto)
+                authBy: item.autorizado_por.map(i => i.nome                ),
+                effectivePayment: item.data_pgto !== null ? new Date(item.data_pgto) : null
             };
         }))
     }, [props])
@@ -116,7 +116,6 @@ export default function BasicEditingGrid(props) {
         const response = await api.get(jwtServiceConfig.finanGetInfo + `/${id}`, {
             headers: { "Authorization": `Bearer ${token}` },
         });
-        console.log(response)
         if (response.data.auth_usersIds) {
             const auth_usersIdsArray = response.data.auth_usersIds.split(",");
             response.data.auth_usersIds = auth_usersIdsArray;
@@ -182,7 +181,7 @@ export default function BasicEditingGrid(props) {
                     if (row.id === id) {
                         const updatedAutorizadopor = props.data.find(item => item.id === id);
                         if (updatedAutorizadopor) {
-                            return { ...row, authBy: updatedAutorizadopor.autorizadopor.map(i => i.fullName), };
+                            return { ...row, authBy: updatedAutorizadopor.autorizado_por.map(i => i.fullName), };
                         }
                     }
                     return row;
@@ -190,9 +189,16 @@ export default function BasicEditingGrid(props) {
 
                 setRows(updatedRows);
                 setOpenPasswordModal(false);
+                
             })
             .catch((error) => {
-                success(error, "Não autorizado!");
+                console.log(error)
+                if(error.response.status == 412){
+                    dispatch(showMessage({ message: "Usuário atual já autorizou. É necessário outro usuário para liberar o lançamento!" }))
+                } else {
+
+                    dispatch(showMessage({message: "Não autorizado!"}))
+                }
             });
     };
 
