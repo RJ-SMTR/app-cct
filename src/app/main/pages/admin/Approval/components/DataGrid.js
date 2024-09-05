@@ -15,6 +15,7 @@ import jwtServiceConfig from 'src/app/auth/services/jwtService/jwtServiceConfig'
 import dayjs from 'dayjs';
 import { selectUser } from 'app/store/userSlice';
 import accounting from 'accounting';
+import { showMessage } from 'app/store/fuse/messageSlice';
 var updateLocale = require('dayjs/plugin/updateLocale')
 dayjs.extend(updateLocale)
 require('dayjs/locale/pt-br')
@@ -55,7 +56,7 @@ export default function BasicEditingGrid(props) {
     const [openDelete, setOpenDelete] = useState(false)
     const [initialRows, setInitialRows] = useState(false)
     const [selectedId, setSelectedId] = useState()
-    const [dataAuth, setDataAuth] = useState()
+    const [dataAuth, setDataAuth] = useState([])
     const [sumOfItems, setSumOfItems] = useState(0);
     const [dateOrder, setDateOrder] = useState({
         month: null,
@@ -76,7 +77,7 @@ export default function BasicEditingGrid(props) {
 
 
     useEffect(() => {
-        const sum = props.data.reduce((accumulator, item) => accumulator + accounting.unformat(item.valor.replace(/\./g, '').replace('.', ','), ','), 0);
+        const sum = props.data.reduce((accumulator, item) => accumulator + item.valor, 0);
         const formattedValue = accounting.formatMoney(sum, {
             symbol: "",
             decimal: ",",
@@ -85,17 +86,22 @@ export default function BasicEditingGrid(props) {
         });
         setSumTotal(formattedValue)
         setRows(props.data.map((item, index) => {
+            const formattedToPay = (data) => {
+                return accounting.formatMoney(data, {
+                    symbol: "",
+                    decimal: ",",
+                    thousand: ".",
+                    precision: 2
+                } )}
             return {
                 id: item.id,
                 processNumber: item.numero_processo,
-                name: item.descricao,
-                toPay: 'R$ ' + item.valor,
-                setBy: item.user.fullName,
+                name: item.clienteFavorecido.nome,
+                toPay: "R$ " + formattedToPay(item.valor),
+                setBy: item.clienteFavorecido.nome,
                 paymentOrder: new Date(item.data_ordem),
-                authBy: item.autorizadopor.map(i => i.fullName
-
-                ),
-                effectivePayment: new Date(item.data_pgto)
+                authBy: item.autorizado_por.map(i => i.nome                ),
+                effectivePayment: item.data_pgto !== null ? new Date(item.data_pgto) : null
             };
         }))
     }, [props])
@@ -175,7 +181,7 @@ export default function BasicEditingGrid(props) {
                     if (row.id === id) {
                         const updatedAutorizadopor = props.data.find(item => item.id === id);
                         if (updatedAutorizadopor) {
-                            return { ...row, authBy: updatedAutorizadopor.autorizadopor.map(i => i.fullName), };
+                            return { ...row, authBy: updatedAutorizadopor.autorizado_por.map(i => i.fullName), };
                         }
                     }
                     return row;
@@ -183,9 +189,16 @@ export default function BasicEditingGrid(props) {
 
                 setRows(updatedRows);
                 setOpenPasswordModal(false);
+                
             })
             .catch((error) => {
-                success(error, "Não autorizado!");
+                console.log(error)
+                if(error.response.status == 412){
+                    dispatch(showMessage({ message: "Usuário atual já autorizou. É necessário outro usuário para liberar o lançamento!" }))
+                } else {
+
+                    dispatch(showMessage({message: "Não autorizado!"}))
+                }
             });
     };
 
@@ -290,6 +303,16 @@ export default function BasicEditingGrid(props) {
             },
         },
     ];
+    const formatMoney = (value) => {
+        const formattedValue = accounting.formatMoney(value, {
+            symbol: "",
+            decimal: ",",
+            thousand: ".",
+            precision: 2
+        })
+
+        return formattedValue
+    }
 
     return (
         <>
@@ -330,7 +353,7 @@ export default function BasicEditingGrid(props) {
                 <Box sx={style}>
                     <Box>
                         <Typography id="modal-modal-title" variant="h6" component="h2">
-                            Favorecido: {dataAuth?.descricao}
+                            Favorecido: {dataAuth?.favorecido}
                         </Typography>
                         <h4 id="modal-modal-title">
                             N.º Processo: {dataAuth?.numero_processo}
@@ -361,7 +384,7 @@ export default function BasicEditingGrid(props) {
                             <h4 className="font-semibold mb-5">
                                 Valor Algoritmo
                             </h4>
-                            <TextField prefix='R$' value={dataAuth?.algoritmo?.replace(/R\$/g, '')} disabled InputProps={{
+                            <TextField prefix='R$' value={formatMoney(dataAuth?.algoritmo)} disabled InputProps={{
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
                         </Box>
@@ -369,7 +392,7 @@ export default function BasicEditingGrid(props) {
                             <h4 className="font-semibold mb-5">
                                 Valor Glosa
                             </h4>
-                            <TextField className='glosa' prefix='R$' value={dataAuth?.glosa === '' ? '0,00' : dataAuth?.glosa?.replace(/R\$/g, '')} disabled InputProps={{
+                            <TextField className='glosa' prefix='R$' value={formatMoney(dataAuth?.glosa)} disabled InputProps={{
 
                                 startAdornment: <InputAdornment position='start'>R$ </InputAdornment>,
                             }} />
@@ -378,7 +401,7 @@ export default function BasicEditingGrid(props) {
                             <h4 className="font-semibold mb-5">
                                 Valor Recurso
                             </h4>
-                            <TextField prefix='R$' className={dataAuth?.recurso.includes('-') ? "glosa" : ""} value={dataAuth?.recurso === '' ? '0,00' : dataAuth?.recurso?.replace(/R\$/g, '')} disabled InputProps={{
+                            <TextField prefix='R$' className={dataAuth?.recurso ? "glosa" : ""} value={formatMoney(dataAuth?.recurso)} disabled InputProps={{
 
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
@@ -387,7 +410,7 @@ export default function BasicEditingGrid(props) {
                             <h4 className="font-semibold mb-5">
                                Anexo III
                             </h4>
-                            <TextField prefix='R$' className={dataAuth?.anexo?.includes('-') ? "glosa" : ""} value={dataAuth?.anexo === null ? '0,00' : dataAuth?.anexo?.replace(/R\$/g, '')} disabled InputProps={{
+                            <TextField prefix='R$' className={dataAuth?.anexo ? "glosa" : ""} value={formatMoney(dataAuth?.recurso)} disabled InputProps={{
                                 
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
@@ -396,7 +419,7 @@ export default function BasicEditingGrid(props) {
                             <h4 className="font-semibold mb-5">
                                 Valor a Pagar
                             </h4>
-                            <TextField prefix='R$' value={dataAuth?.valor_a_pagar?.replace(/R\$/g, '')} disabled InputProps={{
+                            <TextField prefix='R$' value={formatMoney(dataAuth?.valor)} disabled InputProps={{
 
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
@@ -418,7 +441,7 @@ export default function BasicEditingGrid(props) {
                             Tem certeza que deseja deletar este registro?
                         </Typography>
                         <p variant="h6" component="h2">
-                            Favorecido: {dataAuth?.descricao}
+                            Favorecido: {dataAuth?.favorecido}
                         </p>
                         <h4>
                             N.º Processo: {dataAuth?.numero_processo}
