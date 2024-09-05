@@ -53,9 +53,7 @@ const predefinedFiltersStatus = [
 
 const columns = [
     { field: 'date', headerName: 'Dt. Efetivação', width: 145, editable: false },
-    { field: 'dateExpire', headerName: 'Dt. Vencimento', width: 150, editable: false },
     { field: 'favorecido', headerName: 'Favorecido', width: 180, editable: false, cellClassName: 'noWrapName' },
-    { field: 'consorcio', headerName: 'Consórcio', width: 130, editable: false },
     { field: 'value', headerName: 'Valor Real Efetivado', width: 180, editable: false },
     {
         field: 'status',
@@ -253,7 +251,6 @@ export default function BasicEditingGrid() {
         return (
             <Box className='mt-10 flex flex-col md:flex-row gap-x-10'>
                 Valor Total Pago: {loading ? <></> : `R$ ${sumTotal}`}
-                <span className='text-red-600'>Valor Total Pendente (erro): {loading ? <></> : `R$ ${sumTotalErro}`}</span>
             </Box>
         );
     };
