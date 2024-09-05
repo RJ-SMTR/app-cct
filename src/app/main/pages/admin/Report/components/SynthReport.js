@@ -588,7 +588,7 @@ export default function BasicEditingGrid() {
                                                     clearErrors("valorMax");
                                                     clearErrors("valorMin");
                                                 } else {
-                                                    trigger("valorMin");  // Trigger validation for valorMin
+                                                    trigger("valorMin"); 
                                                 }
                                             }}
                                             onMouseEnter={() => {
@@ -684,11 +684,8 @@ export default function BasicEditingGrid() {
                                 {!isLoading ? (
                                     Object.entries(rows).length > 0 ? (
                                         Object.entries(rows).map(([consorcio, group]) => {
-                                            let totalConsorcio = 0;
+                                            let totalConsorcio = group.total;
 
-                                            group.items.forEach(item => {
-                                                totalConsorcio += item.valor;
-                                            });
 
                                             return (
                                                 <React.Fragment key={consorcio}>
@@ -713,20 +710,17 @@ export default function BasicEditingGrid() {
                                                     {Object.entries(
                                                         group.items.reduce((acc, item) => {
                                                             let key;
-
                                                             if (item.consorcio === "STPC" || item.consorcio === "STPL") {
                                                                 key = `${item.datapagamento}-${item.status}-${item.favorecido}`;
                                                             } else {
                                                                 key = `${item.datapagamento}-${item.status}`;
                                                             }
-
                                                             if (!acc[key]) acc[key] = [];
                                                             acc[key].push(item);
                                                             return acc;
                                                         }, {})
                                                     ).map(([key, items]) => {
                                                         const [datapagamento, status, favorecido] = key.split("-");
-
                                                         const isGroupedByFavorecido = items.some(item => item.consorcio === "STPC" || item.consorcio === "STPL");
 
                                                         return (
@@ -740,61 +734,43 @@ export default function BasicEditingGrid() {
                                                                             {item.datapagamento ? format(parseISO(item.datapagamento), "dd/MM/yyyy") : null}
                                                                         </TableCell>
                                                                         <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{item.consorcio}</TableCell>
-                                                                        <TableCell
-                                                                            colSpan={4.5}
-                                                                            className='text-[1.2rem]'
-                                                                            sx={{
-                                                                                minWidth: 300,
-                                                                                maxWidth: 350,
-                                                                                overflow: "hidden",
-                                                                                textOverflow: "ellipsis",
-                                                                                padding: 0
-                                                                            }}
-                                                                        >
+                                                                        <TableCell colSpan={4.5} className='text-[1.2rem]' sx={{ minWidth: 300, maxWidth: 350, overflow: "hidden", textOverflow: "ellipsis", padding: 0 }}>
                                                                             {item.favorecido}
                                                                         </TableCell>
                                                                         <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{formatter.format(item.valor)}</TableCell>
                                                                         <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{showStatus(item.status)}</TableCell>
                                                                         {item.status === "naopago" ? (
-                                                                            <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }} colSpan={3} >
+                                                                            <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }} colSpan={3}>
                                                                                 {item.mensagem_status}
                                                                             </TableCell>
                                                                         ) : null}
                                                                     </TableRow>
                                                                 ))}
                                                                 <TableRow>
-                                                                    {isGroupedByFavorecido ? (
-                                                                        <Box className="flex pb-[20px] gap-10">
-                                                                            <p style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
-                                                                                Subtotal:
-                                                                            </p>
-                                                                            <p className="font-bold">
-                                                                                {formatter.format(items.reduce((sum, item) => sum + item.valor, 0))}
-                                                                            </p>
-                                                                        </Box>
-                                                                    ) : (
-                                                                        <Box className="flex pb-[20px] gap-10">
-                                                                            <p style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
-                                                                                Subtotal do dia:
-                                                                            </p>
-                                                                            <p className="font-bold">
-                                                                                {formatter.format(items.reduce((sum, item) => sum + item.valor, 0))}
-                                                                            </p>
-                                                                        </Box>
-                                                                    )}
+                                                                    <Box className="flex pb-[20px] gap-10">
+                                                                        <p style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
+                                                                            {isGroupedByFavorecido ? "Subtotal:" : "Subtotal do dia:"}
+                                                                        </p>
+                                                                        <p className="font-bold">
+                                                                            {formatter.format(items.reduce((sum, item) => sum + item.valor, 0))}
+                                                                        </p>
+                                                                    </Box>
                                                                 </TableRow>
                                                             </React.Fragment>
                                                         );
                                                     })}
 
                                                     <Box className="flex pb-[20px] gap-10">
-                                                                <p style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
-                                                                    Total {consorcio}:
-                                                                </p>
-                                                                <p className="font-bold">
-                                                                    {formatter.format(totalConsorcio)}
-                                                                </p>
-                                                            </Box>
+                                                        <p style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
+                                                            Total {consorcio}:
+                                                        </p>
+                                                        <p className="font-bold">
+                                                          {totalConsorcio}
+                                                        </p>
+                                                    </Box>
+
+                                                 
+
                                                 </React.Fragment>
                                             );
                                         })
@@ -808,6 +784,7 @@ export default function BasicEditingGrid() {
                                         <TableCell colSpan={8}>Carregando...</TableCell>
                                     </TableRow>
                                 )}
+
 
 
 
