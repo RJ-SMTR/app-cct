@@ -306,10 +306,14 @@ export default function BasicEditingGrid() {
     };
 
     const exportToPDF = (rows) => {
-        const doc = new jsPDF();
+        const doc = new jsPDF({ orientation: 'landscape' });
         const logoImg = 'assets/icons/logoPrefeitura.png';
-        const logoH = 15;
-        const logoW = 30;
+        const logoH = 7.5;
+        const logoW = 15;
+
+        const addLogo = () => {
+            doc.addImage(logoImg, 'PNG', 7, 7, logoW, logoH);
+        };
 
         const selectedDate = getValues('dateRange');
         const dateInicio = selectedDate[0];
@@ -317,10 +321,42 @@ export default function BasicEditingGrid() {
         const status = getValues('status');
         const selectedStatus = status?.join(',') || 'Todos';
 
-        let currentY = 60;
-        console.log(rows)
+        const pageWidth = doc.internal.pageSize.width;
+        const pageHeight = doc.internal.pageSize.height;
+
+        let currentY = 40;
+        let previousConsorcio = '';
+
+        const addHeader = () => {
+            addLogo();
+            doc.setFontSize(10);
+            doc.text(`Relatório dos dias: ${format(dateInicio, 'dd/MM/yyyy')} a ${format(dateFim, 'dd/MM/yyyy')}`, 7, 20);
+            doc.text(`Status observado: ${selectedStatus}`, 7, 25);
+            doc.setLineWidth(0.3);
+            doc.line(7, 28, pageWidth - 7, 28);
+        };
+
+        const startNewPage = () => {
+            doc.addPage();
+            currentY = 40;
+            addHeader();
+        };
+
+        addHeader();
 
         Object.entries(rows).forEach(([consorcio, group], index) => {
+            if (consorcio !== previousConsorcio && index > 0) {
+                if (currentY + 10 + (group.items.length * 10) > pageHeight - 30) {
+                    startNewPage(); 
+                }
+            }
+
+            previousConsorcio = consorcio;
+
+            doc.setFontSize(10);
+            doc.text(`Consórcio: ${consorcio}`, 7, currentY);
+            currentY += 10; 
+
             const tableData = group.items.map(item => [
                 item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
                 item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
@@ -331,25 +367,12 @@ export default function BasicEditingGrid() {
                 item.status === 'naopago' ? item.mensagem_status : '',
             ]);
 
-            if (index === 0) {
-                doc.addImage(logoImg, 'PNG', 14, 10, logoW, logoH);
-                doc.setFontSize(10);
-                doc.text(`Relatório dos dias: ${format(dateInicio, 'dd/MM/yyyy')} a ${format(dateFim, 'dd/MM/yyyy')}`, 14, 45);
-                doc.text(`Status observado: ${selectedStatus}`, 14, 50);
-
-                doc.setLineWidth(0.3);
-                doc.line(14, 30, 196, 30);
-            }
-
-            doc.setFontSize(12);
-            doc.text(`Consórcio: ${consorcio}`, 14, currentY);
-            currentY += 5;
-
             doc.autoTable({
                 head: [['Data Transação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência']],
                 body: tableData,
                 startY: currentY,
-                margin: { left: 14, right: 14 },
+                margin: { left: 7, right: 7 },
+                styles: { cellPadding: 1, fontSize: 8 },
                 didDrawPage: (data) => {
                     currentY = data.cursor.y + 10;
                 },
@@ -357,28 +380,26 @@ export default function BasicEditingGrid() {
 
             const subtotal = group.items[0].subtotal;
             doc.setFontSize(10);
-            doc.text(`Subtotal ${consorcio}: ${formatter.format(subtotal)}`, 14, currentY);
+            doc.text(`Subtotal ${consorcio}: ${formatter.format(subtotal)}`, 7, currentY);
 
             currentY += 10;
 
-            if (currentY > doc.internal.pageSize.height - 30) {
-                doc.addPage();
-                currentY = 60; 
+            if (currentY > pageHeight - 30) {
+                startNewPage();
             }
         });
 
-
-        doc.setFontSize(12);
+        doc.setFontSize(10);
         const totalValue = `Valor Total: ${totalSynth}`;
-        doc.text(totalValue, 14, currentY);
+        doc.text(totalValue, 7, currentY + 10);
 
         const pageCount = doc.internal.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
             doc.setFontSize(10);
             const text = `Página ${i} de ${pageCount}`;
-            const xPos = 14;
-            const yPos = doc.internal.pageSize.height - 5;
+            const xPos = pageWidth - 30;
+            const yPos = pageHeight - 10;
             doc.text(text, xPos, yPos);
         }
 
