@@ -305,90 +305,85 @@ export default function BasicEditingGrid() {
         writeFileXLSX(wb, filename);
     };
 
-
     const exportToPDF = (rows) => {
         const doc = new jsPDF();
-        const tableColumn = ["Nome", "Valor"];
-        const tableRows = [];
-
-
-        const selectedDate = getValues('dateRange');
-        console.log(selectedDate)
-        const dateInicio = selectedDate[0];
-        const dateFim = selectedDate[1];
-        console.log(dateFim, dateInicio)
-
-        const status = getValues('status');
-        const selectedStatus = status.join(',');
-
         const logoImg = 'assets/icons/logoPrefeitura.png';
         const logoH = 15;
         const logoW = 30;
 
+        const selectedDate = getValues('dateRange');
+        const dateInicio = selectedDate[0];
+        const dateFim = selectedDate[1];
+        const status = getValues('status');
+        const selectedStatus = status?.join(',') || 'Todos';
 
+        let currentY = 60;
+        console.log(rows)
 
+        Object.entries(rows).forEach(([consorcio, group], index) => {
+            const tableData = group.items.map(item => [
+                item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
+                item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
+                item.consorcio,
+                item.favorecido,
+                formatter.format(item.valor),
+                showStatus(item.status),
+                item.status === 'naopago' ? item.mensagem_status : '',
+            ]);
 
-        const csvData = prepareCSVData(rows);
-
-        const tableData = csvData.map(item => [
-            item['Data Transação'],
-            item['Dt. Efetiva Pgto.'],
-            item['Consórcio'],
-            item['Favorecido'],
-            item['Valor p/ Pagamento'],
-            item['Status'],
-            item['Ocorrência'],
-        ]);
-
-
-        doc.autoTable({
-            head: [['Data Transação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência']],
-            body: tableData,
-            margin: { left: 14, right: 14, top: 60 },
-            startY: 60,
-            didDrawPage: (data) => {
-
+            if (index === 0) {
                 doc.addImage(logoImg, 'PNG', 14, 10, logoW, logoH);
-
-
-                const hrYPosition = 30;
-                doc.setLineWidth(0.3);
-                doc.line(14, hrYPosition, 196, hrYPosition);
-
-                
                 doc.setFontSize(10);
                 doc.text(`Relatório dos dias: ${format(dateInicio, 'dd/MM/yyyy')} a ${format(dateFim, 'dd/MM/yyyy')}`, 14, 45);
-                doc.text(`Status observado: ${selectedStatus || 'Todos'}`, 14, 50);
+                doc.text(`Status observado: ${selectedStatus}`, 14, 50);
 
+                doc.setLineWidth(0.3);
+                doc.line(14, 30, 196, 30);
+            }
 
+            doc.setFontSize(12);
+            doc.text(`Consórcio: ${consorcio}`, 14, currentY);
+            currentY += 5;
 
+            doc.autoTable({
+                head: [['Data Transação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência']],
+                body: tableData,
+                startY: currentY,
+                margin: { left: 14, right: 14 },
+                didDrawPage: (data) => {
+                    currentY = data.cursor.y + 10;
+                },
+            });
 
+            const subtotal = group.items[0].subtotal;
+            doc.setFontSize(10);
+            doc.text(`Subtotal ${consorcio}: ${formatter.format(subtotal)}`, 14, currentY);
 
-            },
+            currentY += 10;
+
+            if (currentY > doc.internal.pageSize.height - 30) {
+                doc.addPage();
+                currentY = 60; 
+            }
         });
 
-        const pageCount = doc.internal.getNumberOfPages();
 
+        doc.setFontSize(12);
+        const totalValue = `Valor Total: ${totalSynth}`;
+        doc.text(totalValue, 14, currentY);
+
+        const pageCount = doc.internal.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
             doc.setFontSize(10);
-
-            const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
-            const text = `Página ${currentPage} de ${pageCount}`;
+            const text = `Página ${i} de ${pageCount}`;
             const xPos = 14;
             const yPos = doc.internal.pageSize.height - 5;
-
             doc.text(text, xPos, yPos);
         }
 
-        const totalValue = `Valor total: ${totalSynth}`;
-        doc.setFontSize(10);
-        doc.text(totalValue, 14, doc.internal.pageSize.height - 10);
-
-
-        doc.save(`relatorio_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.pdf`);
+        doc.save(`relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.pdf`);
     };
-
 
 
 
