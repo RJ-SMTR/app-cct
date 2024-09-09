@@ -1,5 +1,3 @@
-import React, { useEffect, useState } from 'react';
-import { utils, writeFile as writeFileXLSX } from 'xlsx';
 
 import {
     DataGrid,
@@ -11,48 +9,65 @@ import {
     GridToolbarQuickFilter,
     useGridApiRef
 } from '@mui/x-data-grid';
-import accounting from 'accounting';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
     Box,
     MenuItem,
+    Table,
+    TableBody,
+    Autocomplete,
+    TextField,
+    Button,
+    TableRow,
+    TableHead,
+    TableCell,
     Paper,
-    IconButton,
-    FormGroup,
+    CircularProgress,
+    InputAdornment,
     Menu,
-    FormControlLabel,
-    Checkbox,
-    Badge
+    IconButton
 } from '@mui/material';
-import { DateRangePicker } from 'rsuite';
-import jwtServiceConfig from 'src/app/auth/services/jwtService/jwtServiceConfig';
-import { api } from 'app/configs/api/api';
-import { ptBR as pt } from '@mui/x-data-grid';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import { parseISO, format } from 'date-fns';
-import { useDispatch } from 'react-redux';
-import { handleSynthData, setSynthData } from 'app/store/reportSlice';
-import JwtService from 'src/app/auth/services/jwtService';
+import { format, parseISO } from 'date-fns';
+import { useDispatch, useSelector } from 'react-redux';
+import { CustomProvider, DateRangePicker } from 'rsuite';
+import { useForm, Controller } from 'react-hook-form';
+import { handleReportInfo, setTotalSynth } from 'app/store/reportSlice';
+import { getUser } from 'app/store/adminSlice';
+import { NumericFormat } from 'react-number-format';
+import { CSVLink } from 'react-csv';
+import { ClearIcon } from '@mui/x-date-pickers';
+import jsPDF from 'jspdf';
+import { showMessage } from 'app/store/fuse/messageSlice';
+import 'jspdf-autotable';
+import ptBR from 'rsuite/locales/pt_BR';
+import { utils, writeFileXLSX } from 'xlsx';
 
-const locale = pt;
 
-const predefinedFilters = [
-    { label: 'Todos', filterFn: () => true },
-    { label: 'STPL', filterFn: (row) => row.consorcio.includes('STPL') },
-    { label: 'STPC', filterFn: (row) => row.consorcio.includes('STPC') },
-    { label: 'MobiRio', filterFn: (row) => row.consorcio.includes('MobiRio') },
-    { label: 'Internorte', filterFn: (row) => row.consorcio.includes('Internorte') },
-    { label: 'Intersul', filterFn: (row) => row.consorcio.includes('Intersul') },
-    { label: 'Transcarioca', filterFn: (row) => row.consorcio.includes('Transcarioca') },
-    { label: 'Santa Cruz', filterFn: (row) => row.consorcio.includes('Santa Cruz') },
-    { label: 'VLT', filterFn: (row) => row.consorcio.includes('VLT') },
+const consorciosStatus = [
+    { label: 'Todos' },
+    { label: 'A pagar' },
+    { label: 'Pago' },
+    { label: 'Erro' },
 ];
-
-const predefinedFiltersStatus = [
-    { label: 'Todos', filterFn: () => true },
-    { label: 'Pago', filterFn: (row) => row.status.includes('Pago') },
-    { label: 'Erro', filterFn: (row) => row.status.includes('Erro') },
+const consorcios = [
+    { label: 'Todos', value: "Todos" },
+    { label: 'Internorte', value: "Internorte" },
+    { label: 'Intersul', value: "Intersul" },
+    { label: 'MobiRio', value: "MobiRio" },
+    { label: 'Santa Cruz', value: "Santa Cruz" },
+    { label: 'STPC', value: "STPC" },
+    { label: 'STPL', value: "STPL" },
+    { label: 'Transcarioca', value: "Transcarioca" },
+    { label: 'VLT', value: "VLT" }
 ];
-
+const CustomBadge = ({ data }) => {
+    return (
+        <Badge
+            badgeContent={data}
+            color={data === "Pago" ? 'success' : 'error'}
+        />
+    );
+};
 const columns = [
     { field: 'date', headerName: 'Dt. Efetivação', width: 145, editable: false },
     { field: 'dateExpire', headerName: 'Dt. Vencimento', width: 150, editable: false },
@@ -69,315 +84,376 @@ const columns = [
     { field: 'ocorrencia', headerName: 'Ocorrência', width: 150, editable: false, cellClassName: 'noWrapName' },
 ];
 
-const formatToBRL = (value) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-};
 
-const CustomBadge = ({ data }) => {
-    return (
-        <Badge
-            badgeContent={data}
-            color={data === "Pago" ? 'success' : 'error'}
-        />
-    );
-};
+
 
 export default function BasicEditingGrid() {
     const dispatch = useDispatch()
-
-    
+    const reportType = useSelector(state => state.report.reportType);
+    const userList = useSelector(state => state.admin.userList) || []
+    const [isLoading, setIsLoading] = useState(false)
+    const [loadingUsers, setLoadingUsers] = useState(false)
+    const [userOptions, setUserOptions] = useState([])
+    const [showClearMin, setShowClearMin] = useState(false)
+    const [showClearMax, setShowClearMax] = useState(false)
     const [rowModesModel, setRowModesModel] = useState({});
     const [rows, setRows] = useState([]);
-    const [date, setDate] = useState([]);
-    const [checkedFilters, setCheckedFilters] = useState(new Array(predefinedFilters.length).fill(false));
-    const [checkedFiltersStatus, setCheckedFiltersStatus] = useState(new Array(predefinedFiltersStatus.length).fill(false));
-    const [loading, setLoading] = useState(false);
-    const [consorcioAnchorEl, setConsorcioAnchorEl] = useState(null);
-    const [statusAnchorEl, setStatusAnchorEl] = useState(null);
-    const openConsorcioMenu = Boolean(consorcioAnchorEl);
-    const openStatusMenu = Boolean(statusAnchorEl);
     const apiRef = useGridApiRef();
-    const [sumTotal, setSumTotal] = useState(0);
-    const [sumTotalErro, setSumTotalErro] = useState(0);
     
 
-    useEffect(() => {
-        if (date.length > 0) {
-            const fetchData = async () => {
-                const token = window.localStorage.getItem('jwt_access_token');
-  
-                if(JwtService.isAuthTokenValid(token)){
-                    const config = {
-                        method: 'get',
-                        maxBodyLength: Infinity,
-                        url: `/cnab/arquivoPublicacao?dt_inicio=${date[0]}&dt_fim=${date[1]}`,
-                        headers: { "Authorization": `Bearer ${token}` },
-                    };
-                    try {
-                        setLoading(true);
-                        const formatDate = (data) => {
-                            const parsed = parseISO(data);
-                            const correctedParse = new Date(parsed.valueOf() + parsed.getTimezoneOffset() * 60 * 1000);
-                            const formatted = format(new Date(correctedParse), 'dd/MM/yyyy');
-                            return formatted;
-                        };
-                        const response = await api.request(config);
-                        const formattedRows = response.data.map((item) => ({
-                            id: item.id,
-                            date: item.dataEfetivacao === null ? '--/--/--' : format(new Date(item.dataEfetivacao), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }),
-                            dateExpire: formatDate(item.dataVencimento),
-                            favorecido: item.favorecido,
-                            consorcio: item.nomeConsorcio,
-                            value: formatToBRL(item.valor),
-                            status: item.isPago ? 'Pago' : 'Erro',
-                            ocorrencia: item.isPago ? '' : item.ocorrencias.join(', '),
-                        }));
 
 
-                        setRows(formattedRows);
-                        dispatch(handleSynthData(formattedRows))
-
-                    } catch (error) {
-                        console.error(error);
-                    } finally {
-                        setLoading(false);
-                    }
-                } 
-            };
-            fetchData();
+    const { reset, handleSubmit, setValue, control, getValues, trigger, clearErrors } = useForm({
+        defaultValues: {
+            name: [],
+            dateRange: [],
+            valorMax: '',
+            valorMin: '',
+            consorcioName: [],
+            favorecidoSearch: '',
+            status: []
         }
-    }, [date]);
-
-    useEffect(() => {
-        const filteredPago = filteredRows.filter((item) => item.status.includes('Pago'))
-        const filteredErro = filteredRows.filter((item) => item.status.includes('Erro'))
-        const sum = filteredPago.reduce((accumulator, item) => accumulator + accounting.unformat(item.value.replace(/\./g, '').replace('.', ','), ','), 0);
-        const formattedValue = accounting.formatMoney(sum, {
-            symbol: "",
-            decimal: ",",
-            thousand: ".",
-            precision: 2
-        });
-        setSumTotal(formattedValue)
-        const sumErro = filteredErro.reduce((accumulator, item) => accumulator + accounting.unformat(item.value.replace(/\./g, '').replace('.', ','), ','), 0);
-        const formattedValueErro = accounting.formatMoney(sumErro, {
-            symbol: "",
-            decimal: ",",
-            thousand: ".",
-            precision: 2
-        });
-        setSumTotalErro(formattedValueErro);
-    }, [rows, checkedFilters, checkedFiltersStatus]);
-
-    const handleDateChange = (data) => {
-        if (data?.length > 0) {
-            const firstDate = format(data[0], 'yyyy-MM-dd');
-            const lastDate = format(data[1], 'yyyy-MM-dd');
-            setDate([firstDate, lastDate]);
-        }
+    });
+    const onSubmit = (data) => {
+        setIsLoading(true)
+        dispatch(setTotalSynth(''))
+        dispatch(handleReportInfo(data, reportType))
+            .then((response) => {
+                setIsLoading(false)
+            })
+            .catch((error) => {
+                dispatch(showMessage({ message: 'Erro na busca, verifique os campos e tente novamente.' }))
+            });
     };
-
-    const handleCheckboxChange = (index) => {
-        const newCheckedFilters = [...checkedFilters];
-        newCheckedFilters[index] = !newCheckedFilters[index];
-        setCheckedFilters(newCheckedFilters);
-    };
-
-    const handleCheckboxChangeStatus = (index) => {
-        const newCheckedFiltersStatus = [...checkedFiltersStatus];
-        newCheckedFiltersStatus[index] = !newCheckedFiltersStatus[index];
-        setCheckedFiltersStatus(newCheckedFiltersStatus);
-    };
-
-    const applyFilters = () => {
-        const activeFilters = predefinedFilters
-            .filter((_, i) => checkedFilters[i])
-            .map(({ filterFn }) => filterFn);
-
-        const activeFiltersStatus = predefinedFiltersStatus
-            .filter((_, i) => checkedFiltersStatus[i])
-            .map(({ filterFn }) => filterFn);
-
-        if (activeFilters.length === 0 && activeFiltersStatus.length === 0) {
-            return rows;
-        }
-
-        return rows.filter(row =>
-            (activeFilters.length === 0 || activeFilters.some(filterFn => filterFn(row))) &&
-            (activeFiltersStatus.length === 0 || activeFiltersStatus.some(filterFn => filterFn(row)))
-        );
-    };
-
-    const handleConsorcioClick = (event) => {
-        setConsorcioAnchorEl(event.currentTarget);
-    };
-
-    const handleStatusClick = (event) => {
-        setStatusAnchorEl(event.currentTarget);
-    };
-
-    const handleCloseConsorcioMenu = () => {
-        setConsorcioAnchorEl(null);
-    };
-
-    const handleCloseStatusMenu = () => {
-        setStatusAnchorEl(null);
-    };
-
-    const filteredRows = applyFilters();
-    function gg() {
-        const wb = utils.book_new();
-        utils.book_append_sheet(wb, utils.json_to_sheet(rows));
-        writeFileXLSX(wb, `cct_report_${date[0]}_${date[1]}.xlsx`);
+    const handleClear = () => {
+        setValue('name', [])
+        setValue('dateRange', [])
+        setValue('valorMax', '')
+        setValue('valorMin', '')
+        setValue('consorcioName', [])
+        setValue('favorecidoSearch', '')
+        setValue('status', [])
+        document.querySelectorAll('.MuiAutocomplete-clearIndicator').forEach(button => button.click());
     }
 
-    const ToolBarCustom = () => (
-        <GridToolbarContainer className='w-[100%] flex justify-between'>
-            <GridToolbarQuickFilter />
-            <GridToolbarExportContainer>
-                <GridCsvExportMenuItem
-                    options={{
-                        fileName: `cct_report_${date[0]}_${date[1]}` 
-                    }} />
-                <button className='px-[16px]' onClick={gg}>Baixar como XLSX</button>
-                <GridPrintExportMenuItem options={{
-                    hideToolbar: true,
-                    fileName: `cct_report_${date[0]}_${date[1]}`
-                }} />
-               
-            </GridToolbarExportContainer >
-           
-          
-        </GridToolbarContainer>
-    );
 
-    const CustomFooter = () => {
-        return (
-            <Box className='mt-10 flex flex-col md:flex-row gap-x-10'>
-                Valor Total Pago: {loading ? <></> : `R$ ${sumTotal}`}
-                <span className='text-red-600'>Valor Total Pendente (erro): {loading ? <></> : `R$ ${sumTotalErro}`}</span>
-            </Box>
-        );
+    const fetchUsers = async () => {
+        setLoadingUsers(true);
+        dispatch(getUser());
+        setLoadingUsers(false);
     };
 
-    return (
-            <Paper>
-            <Box className="w-full md:mx-9 p-24 relative mt-32">
-                <header className="flex justify-between items-center">
-                    <h3 className="font-semibold mb-24">
-                        Data Vigente: {format(new Date(), 'dd/MM/yyyy')}
-                    </h3>
-                    <DateRangePicker
-                        id="custom-date-input"
-                        showOneCalendar
-                        showHeader={false}
-                        placement='auto'
-                        placeholder="Selecionar Data"
-                        format='dd/MM/yy'
-                        character=' - '
-                        onChange={(newValue) => handleDateChange(newValue)}
-                    />
-                </header>
-                <div className="flex items-center mb-4">
-                    <Box className="flex items-center">
-                        <p>Filtrar por consórcio</p>
-                        <IconButton
-                            id="consorcio-filter-button"
-                            aria-controls={openConsorcioMenu ? 'consorcio-menu' : undefined}
-                            aria-haspopup="true"
-                            aria-expanded={openConsorcioMenu ? 'true' : undefined}
-                            onClick={handleConsorcioClick}
-                        >
-                            <FilterListIcon />
-                        </IconButton>
-                        <Menu
-                            id="consorcio-menu"
-                            anchorEl={consorcioAnchorEl}
-                            open={openConsorcioMenu}
-                            onClose={handleCloseConsorcioMenu}
-                        >
-                            <FormGroup>
-                                {predefinedFilters.map((filter, index) => (
-                                    <MenuItem key={filter.label}>
-                                        <FormControlLabel
-                                            control={
-                                                <Checkbox
-                                                    checked={checkedFilters[index]}
-                                                    onChange={() => handleCheckboxChange(index)}
-                                                />
-                                            }
-                                            label={filter.label}
-                                        />
-                                    </MenuItem>
-                                ))}
-                            </FormGroup>
-                        </Menu>
-                    </Box>
-                    <Box className="flex items-center">
-                        <p>Filtrar por status</p>
-                        <IconButton
-                            id="status-filter-button"
-                            aria-controls={openStatusMenu ? 'status-menu' : undefined}
-                            aria-haspopup="true"
-                            aria-expanded={openStatusMenu ? 'true' : undefined}
-                            onClick={handleStatusClick}
-                        >
-                            <FilterListIcon />
-                        </IconButton>
-                        <Menu
-                            id="status-menu"
-                            anchorEl={statusAnchorEl}
-                            open={openStatusMenu}
-                            onClose={handleCloseStatusMenu}
-                        >
-                            <FormGroup>
-                                {predefinedFiltersStatus.map((filter, index) => (
-                                    <MenuItem key={filter.label}>
-                                        <FormControlLabel
-                                            control={
-                                                <Checkbox
-                                                    checked={checkedFiltersStatus[index]}
-                                                    onChange={() => handleCheckboxChangeStatus(index)}
-                                                />
-                                            }
-                                            label={filter.label}
-                                        />
-                                    </MenuItem>
-                                ))}
-                            </FormGroup>
-                        </Menu>
-                    </Box>
-                </div>
-                <div style={{ height: '65vh', width: '100%' }}>
-                    <DataGrid
-                        id='data-table'
-                        localeText={locale.components.MuiDataGrid.defaultProps.localeText}
-                        rows={filteredRows}
-                        disableColumnMenu
-                        disableColumnSelector
-                        disableDensitySelector
-                        disableMultipleColumnsFiltering
-                        apiRef={apiRef}
-                        columns={columns}
-                        slots={{ toolbar: ToolBarCustom, footer: CustomFooter }}
-                        loading={loading}
-                        rowHeight={85}
-                        slotProps={{
-                            toolbar: {
-                                showQuickFilter: true,
-                            },
-                        }}
-                        rowModesModel={rowModesModel}
-                        onRowEditStop={(params, event) => {
-                            event.defaultMuiPrevented = true;
-                        }}
-                        componentsProps={{
-                            toolbar: { setRows, setRowModesModel },
-                        }}
-                    />
-                </div>
+    useEffect(() => {
+        fetchUsers()
+    }, []);
 
-            </Box>
+    useEffect(() => {
+        setIsLoading(false)
+    }, [rows]);
+   
+    const valueProps = {
+        startAdornment: <InputAdornment position='start'>R$</InputAdornment>
+    };
+    const formatter = new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+    });
+
+    return (
+        <>
+            <Paper>
+                <Box className="w-full md:mx-9 p-24 relative mt-32">
+                    <header>Filtros de Pesquisa</header>
+                    <Box className="flex items-center py-10 gap-10">
+                        <form onSubmit={handleSubmit(onSubmit)}>
+                            <Box className="flex gap-10 flex-wrap mb-20">
+
+
+                                <Autocomplete
+                                    id="favorecidos"
+                                    multiple
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
+                                    getOptionLabel={(option) => option.value.fullName}
+                                    filterSelectedOptions
+                                    options={userOptions}
+                                    filterOptions={(options, state) => {
+
+                                        return options.filter(option =>
+                                            option.value?.cpfCnpj?.includes(state.inputValue) ||
+                                            option.value?.permitCode?.includes(state.inputValue) ||
+                                            option.value?.fullName?.toLowerCase().includes(state.inputValue.toLowerCase())
+                                        );
+                                    }}
+                                    loading={loadingUsers}
+                                    onChange={(_, newValue) => handleAutocompleteChange('name', newValue)}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="Selecionar Favorecido"
+                                            variant="outlined"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                endAdornment: (
+                                                    <>
+                                                        {loadingUsers ? <CircularProgress color="inherit" size={20} /> : null}
+                                                        {params.InputProps.endAdornment}
+                                                    </>
+                                                ),
+                                            }}
+                                        />
+                                    )}
+                                />
+
+                                <Autocomplete
+                                    id="consorcio"
+                                    multiple
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
+                                    getOptionLabel={(option) => option.label}
+                                    filterSelectedOptions
+                                    options={consorcios}
+                                    onChange={(_, newValue) => handleAutocompleteChange('consorcioName', newValue)}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="Selecionar Consórcios"
+                                            variant="outlined"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                endAdornment: (
+                                                    <>
+                                                        {params.InputProps.endAdornment}
+                                                    </>
+                                                ),
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </Box>
+
+                            <Box className="flex items-center gap-10 flex-wrap">
+                                <Autocomplete
+                                    id="status"
+                                    multiple
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
+                                    getOptionLabel={(option) => option.label}
+                                    filterSelectedOptions
+                                    options={consorciosStatus}
+                                    onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="Selecionar Status"
+                                            variant="outlined"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                endAdornment: (
+                                                    <>
+                                                        {params.InputProps.endAdornment}
+                                                    </>
+                                                ),
+                                            }}
+                                        />
+                                    )}
+                                />
+                                <Box>
+                                    <CustomProvider locale={ptBR}>
+                                        <Controller
+                                            name="dateRange"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <DateRangePicker
+                                                    {...field}
+                                                    id="custom-date-input"
+                                                    showOneCalendar
+                                                    showHeader={false}
+                                                    placement="auto"
+                                                    placeholder="Selecionar Data"
+                                                    format="dd/MM/yy"
+                                                    character=" - "
+                                                    className="custom-date-range-picker"
+                                                />)}
+                                        />
+                                    </CustomProvider>
+                                    <br />
+                                    <span className='absolute text-xs text-red-600'>Campo data obrigatório*</span>
+                                </Box>
+                            </Box>
+                            <Box className="flex items-center my-[3.5rem] gap-10 flex-wrap">
+                                <Controller
+                                    name="valorMin"
+                                    control={control}
+                                    rules={{
+                                        validate: (value) => {
+                                            if (!value) return true;
+                                            const valorMin = parseFloat(value.replace(',', '.'));
+                                            const valorMax = parseFloat(getValues("valorMax").replace(',', '.'));
+                                            return valorMin <= valorMax || "Valor Mínimo não pode ser maior que o Valor Máximo";
+                                        }
+                                    }}
+
+                                    render={({ field, fieldState: { error } }) => (
+                                        <NumericFormat
+                                            {...field}
+                                            thousandSeparator="."
+                                            decimalSeparator=","
+                                            fixedDecimalScale
+                                            decimalScale={2}
+                                            customInput={TextField}
+                                            label="Valor Mínimo"
+                                            value={field.value}
+                                            onChange={(e) => {
+                                                field.onChange(e);
+                                                const valorMin = parseFloat(e.target.value.replace(',', '.'));
+                                                const valorMax = parseFloat(getValues("valorMax").replace(',', '.'));
+
+                                                if (valorMin <= valorMax) {
+                                                    clearErrors("valorMin");
+                                                    clearErrors("valorMax");
+                                                } else {
+                                                    trigger("valorMax");
+                                                }
+                                            }}
+                                            error={!!error}
+                                            helperText={error ? error.message : null}
+                                            onMouseEnter={() => {
+                                                if (field.value) setShowClearMin(true);
+
+                                            }}
+                                            onMouseLeave={() => setShowClearMin(false)}
+                                            FormHelperTextProps={{
+                                                sx: { color: 'red', fontSize: '1rem', position: 'absolute', bottom: '-3.5rem' }
+                                            }}
+                                            InputProps={{
+                                                endAdornment: showClearMin && field.value && (
+                                                    <InputAdornment sx={{ position: "absolute", right: '1rem' }} position="end">
+                                                        <IconButton onClick={() => clearSelect('valorMin')} sx={{ height: '2rem', width: '2rem' }}>
+                                                            <ClearIcon sx={{ height: '2rem' }} />
+                                                        </IconButton>
+                                                    </InputAdornment>
+                                                ),
+                                                ...valueProps,
+                                            }}
+                                        />
+                                    )}
+                                />
+                                <Controller
+                                    name="valorMax"
+                                    control={control}
+                                    rules={{
+                                        validate: (value) => {
+                                            if (!value) return true;
+                                            const valorMax = parseFloat(value.replace(',', '.'));
+                                            const valorMin = parseFloat(getValues("valorMin").replace(',', '.'));
+                                            return valorMax >= valorMin || "Valor Máximo não pode ser menor que o Valor Mínimo";
+                                        }
+                                    }}
+                                    render={({ field, fieldState: { error } }) => (
+                                        <NumericFormat
+                                            {...field}
+                                            thousandSeparator="."
+                                            decimalSeparator=","
+                                            fixedDecimalScale
+                                            decimalScale={2}
+                                            customInput={TextField}
+                                            label="Valor Máximo"
+                                            value={field.value}
+                                            onChange={(e) => {
+                                                field.onChange(e);
+                                                const valorMax = parseFloat(e.target.value.replace(',', '.'));
+                                                const valorMin = parseFloat(getValues("valorMin").replace(',', '.'));
+
+                                                if (valorMax >= valorMin) {
+                                                    clearErrors("valorMax");
+                                                    clearErrors("valorMin");
+                                                } else {
+                                                    trigger("valorMin");
+                                                }
+                                            }}
+                                            onMouseEnter={() => {
+                                                if (field.value) setShowClearMax(true);
+                                            }}
+                                            onMouseLeave={() => setShowClearMax(false)}
+                                            error={!!error}
+                                            helperText={error ? error.message : null}
+                                            FormHelperTextProps={{
+                                                sx: { color: 'red', fontSize: '1rem', position: 'absolute', bottom: '-3.5rem' }
+                                            }}
+                                            InputProps={{
+                                                endAdornment: showClearMax && field.value && (
+                                                    <InputAdornment sx={{ position: "absolute", right: '1rem' }} position="end">
+                                                        <IconButton onClick={() => clearSelect('valorMax')} sx={{ height: '2rem', width: '2rem' }}>
+                                                            <ClearIcon sx={{ height: '2rem' }} />
+                                                        </IconButton>
+                                                    </InputAdornment>
+                                                ),
+
+                                                ...valueProps,
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </Box>
+                            <Box>
+
+                            </Box>
+                            <Box>
+                                <Button
+                                    variant="contained"
+                                    color="secondary"
+                                    className=" w-35% mt-16 z-10"
+                                    aria-label="Pesquisar"
+                                    type="submit"
+                                    size="medium"
+                                >
+                                    Pesquisar
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    className=" w-35% mt-16 mx-10 z-10"
+                                    aria-label="Limpar Filtros"
+                                    type="button"
+                                    size="medium"
+                                    onClick={() => handleClear()}
+                                >
+                                    Limpar Filtros
+                                </Button>
+                            </Box>
+                        </form>
+
+                    </Box>
+                </Box>
             </Paper>
+            <Paper>
+                <Box className="w-full md:mx-9 p-24 relative mt-32">
+                    <div style={{ height: '65vh', width: '100%' }}>
+                        <DataGrid
+                            id='data-table'
+                            // localeText={locale.components.MuiDataGrid.defaultProps.localeText}
+                            rows={rows}
+                            disableColumnMenu
+                            disableColumnSelector
+                            disableDensitySelector
+                            disableMultipleColumnsFiltering
+                            apiRef={apiRef}
+                            columns={columns}
+                            loading={isLoading}
+                            rowHeight={85}
+                            slotProps={{
+                                toolbar: {
+                                    showQuickFilter: true,
+                                },
+                            }}
+                            rowModesModel={rowModesModel}
+                            onRowEditStop={(params, event) => {
+                                event.defaultMuiPrevented = true;
+                            }}
+                            componentsProps={{
+                                toolbar: { setRows, setRowModesModel },
+                            }}
+                        />
+                    </div>
+
+                </Box>
+            </Paper></>
     );
 }
