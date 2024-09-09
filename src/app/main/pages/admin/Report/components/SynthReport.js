@@ -305,90 +305,106 @@ export default function BasicEditingGrid() {
         writeFileXLSX(wb, filename);
     };
 
-
     const exportToPDF = (rows) => {
-        const doc = new jsPDF();
-        const tableColumn = ["Nome", "Valor"];
-        const tableRows = [];
+        const doc = new jsPDF({ orientation: 'landscape' });
+        const logoImg = 'assets/icons/logoPrefeitura.png';
+        const logoH = 7.5;
+        const logoW = 15;
 
+        const addLogo = () => {
+            doc.addImage(logoImg, 'PNG', 7, 7, logoW, logoH);
+        };
 
         const selectedDate = getValues('dateRange');
-        console.log(selectedDate)
         const dateInicio = selectedDate[0];
         const dateFim = selectedDate[1];
-        console.log(dateFim, dateInicio)
-
         const status = getValues('status');
-        const selectedStatus = status.join(',');
+        const selectedStatus = status?.join(',') || 'Todos';
 
-        const logoImg = 'assets/icons/logoPrefeitura.png';
-        const logoH = 15;
-        const logoW = 30;
+        const pageWidth = doc.internal.pageSize.width;
+        const pageHeight = doc.internal.pageSize.height;
 
+        let currentY = 40;
+        let previousConsorcio = '';
 
+        const addHeader = () => {
+            addLogo();
+            doc.setFontSize(10);
+            doc.text(`Relatório dos dias: ${format(dateInicio, 'dd/MM/yyyy')} a ${format(dateFim, 'dd/MM/yyyy')}`, 7, 20);
+            doc.text(`Status observado: ${selectedStatus}`, 7, 25);
+            doc.setLineWidth(0.3);
+            doc.line(7, 28, pageWidth - 7, 28);
+        };
 
+        const startNewPage = () => {
+            doc.addPage();
+            currentY = 40;
+            addHeader();
+        };
 
-        const csvData = prepareCSVData(rows);
+        addHeader();
 
-        const tableData = csvData.map(item => [
-            item['Data Transação'],
-            item['Dt. Efetiva Pgto.'],
-            item['Consórcio'],
-            item['Favorecido'],
-            item['Valor p/ Pagamento'],
-            item['Status'],
-            item['Ocorrência'],
-        ]);
+        Object.entries(rows).forEach(([consorcio, group], index) => {
+            if (consorcio !== previousConsorcio && index > 0) {
+                if (currentY + 10 + (group.items.length * 10) > pageHeight - 30) {
+                    startNewPage(); 
+                }
+            }
 
+            previousConsorcio = consorcio;
 
-        doc.autoTable({
-            head: [['Data Transação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência']],
-            body: tableData,
-            margin: { left: 14, right: 14, top: 60 },
-            startY: 60,
-            didDrawPage: (data) => {
+            doc.setFontSize(10);
+            doc.text(`Consórcio: ${consorcio}`, 7, currentY);
+            currentY += 10; 
 
-                doc.addImage(logoImg, 'PNG', 14, 10, logoW, logoH);
+            const tableData = group.items.map(item => [
+                item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
+                item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
+                item.consorcio,
+                item.favorecido,
+                formatter.format(item.valor),
+                showStatus(item.status),
+                item.status === 'naopago' ? item.mensagem_status : '',
+            ]);
 
+            doc.autoTable({
+                head: [['Data Transação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência']],
+                body: tableData,
+                startY: currentY,
+                margin: { left: 7, right: 7 },
+                styles: { cellPadding: 1, fontSize: 8 },
+                didDrawPage: (data) => {
+                    currentY = data.cursor.y + 10;
+                },
+            });
 
-                const hrYPosition = 30;
-                doc.setLineWidth(0.3);
-                doc.line(14, hrYPosition, 196, hrYPosition);
+            const subtotal = group.items[0].subtotal;
+            doc.setFontSize(10);
+            doc.text(`Subtotal ${consorcio}: ${formatter.format(subtotal)}`, 7, currentY);
 
-                
-                doc.setFontSize(10);
-                doc.text(`Relatório dos dias: ${format(dateInicio, 'dd/MM/yyyy')} a ${format(dateFim, 'dd/MM/yyyy')}`, 14, 45);
-                doc.text(`Status observado: ${selectedStatus || 'Todos'}`, 14, 50);
+            currentY += 10;
 
-
-
-
-
-            },
+            if (currentY > pageHeight - 30) {
+                startNewPage();
+            }
         });
 
-        const pageCount = doc.internal.getNumberOfPages();
+        doc.setFontSize(10);
+        const totalValue = `Valor Total: ${totalSynth}`;
+        doc.text(totalValue, 7, currentY + 10);
 
+        const pageCount = doc.internal.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
             doc.setFontSize(10);
-
-            const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
-            const text = `Página ${currentPage} de ${pageCount}`;
-            const xPos = 14;
-            const yPos = doc.internal.pageSize.height - 5;
-
+            const text = `Página ${i} de ${pageCount}`;
+            const xPos = pageWidth - 30;
+            const yPos = pageHeight - 10;
             doc.text(text, xPos, yPos);
         }
 
-        const totalValue = `Valor total: ${totalSynth}`;
-        doc.setFontSize(10);
-        doc.text(totalValue, 14, doc.internal.pageSize.height - 10);
-
-
-        doc.save(`relatorio_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.pdf`);
+        doc.save(`relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.pdf`);
     };
-
 
 
 
