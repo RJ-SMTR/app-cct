@@ -162,9 +162,7 @@ export const handleSynthData = (reportData) => async (dispatch) => {
 
 
         acc[key].items.push(item);
-
         acc[key].total = item.subtotal;
-
 
         const status = item.status;
         if (!acc[key].totalsByStatus[status]) {

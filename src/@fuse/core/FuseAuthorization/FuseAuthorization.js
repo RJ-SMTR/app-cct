@@ -42,8 +42,7 @@ class FuseAuthorization extends Component {
     const { pathname } = location;
 
     const matchedRoutes = matchRoutes(state.routes, pathname);
-    // Verifica se a url contém conclude-registration
-    const matchedPath = matchPath({path: '/conclude-registration/:hash'},pathname)
+    const matchedPath = matchPath({ path: '/conclude-registration/:hash' }, pathname);
 
     const matched = matchedRoutes ? matchedRoutes[0] : false;
 
@@ -51,7 +50,11 @@ class FuseAuthorization extends Component {
 
     const ignoredPaths = ['/', '/callback', '/sign-in', '/sign-out', '/logout', '/404', matchedPath?.pathname, '/forgot-password'];
 
-    if (matched && !userHasPermission && !ignoredPaths.includes(pathname) ) {
+    if (pathname === "/financeiro/sign-in" || pathname === "/admin/sign-in" || pathname === "/sign-in") {
+      localStorage.setItem('loginUrl', pathname);
+    }
+
+    if (matched && !userHasPermission && !ignoredPaths.includes(pathname)) {
       switch (pathname) {
         case "/financeiro/sign-in":
           setSessionRedirectUrl("/lancamentos");
@@ -62,7 +65,6 @@ class FuseAuthorization extends Component {
         default:
           setSessionRedirectUrl("/");
       }
-
     }
 
     return {
@@ -74,20 +76,22 @@ class FuseAuthorization extends Component {
     const { userRole } = this.props;
     const redirectUrl = getSessionRedirectUrl() || this.props.loginRedirectUrl;
     const lastUserRole = this.state.lastUserRole;
- 
+
+    const savedLoginUrl = localStorage.getItem('loginUrl');
+
     if (!userRole || userRole.length === 0) {
       switch (lastUserRole) {
         case 'Admin Master':
         case 'Lançador financeiro':
         case 'Aprovador financeiro':
         case 'Admin Finan':
-          setTimeout(() => history.push('/financeiro/sign-in'), 0);
+          setTimeout(() => history.push(savedLoginUrl || '/financeiro/sign-in'), 0);
           break;
         case 'Admin':
-          setTimeout(() => history.push('/admin/sign-in'), 0);
+          setTimeout(() => history.push(savedLoginUrl || '/admin/sign-in'), 0);
           break;
         default:
-          setTimeout(() => history.push('/sign-in'), 0);
+          setTimeout(() => history.push(savedLoginUrl || '/sign-in'), 0);
       }
     } else {
       setTimeout(() => history.push(redirectUrl), 0);
@@ -101,6 +105,8 @@ class FuseAuthorization extends Component {
     return this.state.accessGranted ? this.props.children : null;
   }
 }
+
+
 
 FuseAuthorization.contextType = AppContext;
 
