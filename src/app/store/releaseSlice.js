@@ -12,12 +12,12 @@ const initialState = {
     selectedPeriod: false,
     listTransactions: [],
     selectedDate: {
-        mes: null,
-        periodo: null
+        mes: '',
+        periodo: ''
     },
     authValue: '',
     selectedStatus: null,
-    selectedYear: null,
+    selectedYear: '',
     clientesFavorecidos: []
 };
 
