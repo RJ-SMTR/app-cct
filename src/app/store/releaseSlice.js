@@ -83,7 +83,11 @@ export const getFavorecidos = () => (dispatch) => {
         }
     })
         .then((response) => {
-            dispatch(setClientesFavorecidos(response.data))
+            const array = response.data
+            const withoutVLT = array.filter(item => !item.nome.includes('VLT'))
+            const withVLT = array.filter(item => item.nome.includes('VLT'))
+            const orderedArray = [...withoutVLT, ...withVLT]
+            dispatch(setClientesFavorecidos(orderedArray))
         })
 
 }
