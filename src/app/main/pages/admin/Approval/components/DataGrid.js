@@ -254,16 +254,12 @@ export default function BasicEditingGrid(props) {
                 label="Delete"
                 onClick={handleDeleteClick(id.id)}
                 color="inherit"
-                disabled={hasMultipleAuthBy}
                 sx={{
                     backgroundColor: 'red',
                     '&:hover': {
                         backgroundColor: 'red',
                     },
-                    '&:disabled': {
-                        backgroundColor: 'gray',
-                        opacity: 0.8
-                    },
+                  
 
                     
                 }}
@@ -353,7 +349,7 @@ export default function BasicEditingGrid(props) {
                 <Box sx={style}>
                     <Box>
                         <Typography id="modal-modal-title" variant="h6" component="h2">
-                            Favorecido: {dataAuth?.favorecido}
+                            Favorecido: {dataAuth?.clienteFavorecido.nome}
                         </Typography>
                         <h4 id="modal-modal-title">
                             N.º Processo: {dataAuth?.numero_processo}
@@ -441,7 +437,7 @@ export default function BasicEditingGrid(props) {
                             Tem certeza que deseja deletar este registro?
                         </Typography>
                         <p variant="h6" component="h2">
-                            Favorecido: {dataAuth?.favorecido}
+                            Favorecido: {dataAuth?.clienteFavorecido.nome}
                         </p>
                         <h4>
                             N.º Processo: {dataAuth?.numero_processo}
