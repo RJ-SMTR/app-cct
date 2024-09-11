@@ -88,6 +88,7 @@ export const getFavorecidos = () => (dispatch) => {
             const withVLT = array.filter(item => item.nome.includes('VLT'))
             const orderedArray = [...withoutVLT, ...withVLT]
             dispatch(setClientesFavorecidos(orderedArray))
+
         })
 
 }

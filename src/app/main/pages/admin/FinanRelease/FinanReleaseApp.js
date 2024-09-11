@@ -199,6 +199,7 @@ function FinanRelease() {
                                         options={clientesFavorecidos}
                                         getOptionLabel={(option) => option.nome}
                                         getOptionDisabled={(option) => option.nome.includes('VLT')} 
+
                                         onChange={(_, newValue) => handleAutocompleteChange(newValue)}
                                         renderInput={(params) => (
                                             <TextField
