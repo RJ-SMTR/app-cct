@@ -29,6 +29,7 @@ const defaultValues = {
 
 function FinanSignIn() {
     const [sent, setSent] = useState(false)
+    const isHmg = window.location.href.includes("hmg")
     const { control, formState, handleSubmit, setError, setValue } = useForm({
         mode: 'onChange',
         defaultValues,
@@ -58,7 +59,12 @@ function FinanSignIn() {
                         <img src="assets/icons/logoPrefeitura.png" width="155" className='mb-10' alt='logo CCT' />
                        Login de Administrador Financeiro
                     </Typography>
-                  
+                    {isHmg && (
+                        <Box className="mt-10 bg-red-500 uppercase text-white text-center p-10 rounded-4 text-xl">
+                            Homologação
+                        </Box>
+                    )}
+
                         <form
                             name="loginForm"
                             noValidate
