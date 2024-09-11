@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Card, Select, TextField, Typography, MenuItem, InputLabel } from '@mui/material';
+import { Card, Select, TextField, Typography, MenuItem, InputLabel, Button } from '@mui/material';
 import { Box } from '@mui/system';
 import { useForm } from 'react-hook-form';
 import { FormControl, Autocomplete } from "@mui/material";
@@ -13,6 +13,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import ptBR from 'date-fns/locale/pt-BR';
 import dayjs from 'dayjs';
+import { showMessage } from 'app/store/fuse/messageSlice';
 
 
 
@@ -43,20 +44,29 @@ function CardSelection() {
         dispatch(setSelectedYear(newValue));
     };
 
-    useEffect(() => {
-        let selectedYearFormat = null
-        if(selectedYear){
-             selectedYearFormat = dayjs(selectedYear).year()
+   
+
+
+    const searchData = () => {
+        if (selectedYear !== null) {
+            const selectedYearFormat = dayjs(selectedYear).year();
+            dispatch(setSelectedYear(selectedYearFormat))
+            dispatch(getData({ selectedDate, selectedStatus, selectedYear }))
+                .catch((error) => {
+                    if (error.response.status == 400) {
+                        dispatch(showMessage({ message: 'Verifique os campos e tente novamente!' }))
+                    }
+                })
+        } else {
+            dispatch(getData({ selectedDate, selectedStatus }))
+                    .catch((error) => {
+                        if (error.response.status == 400) {
+                        dispatch(showMessage({message: 'Verifique os campos e tente novamente!'}))
+                        }
+                    })
         }
-    
-        if (selectedDate.mes && selectedDate.periodo || selectedStatus) {
+    };
 
-            dispatch(getData({selectedDate, selectedStatus, selectedYearFormat}))
-
-        } 
-
-           
-    }, [selectedDate, selectedStatus,selectedYear])
 
 
   
@@ -148,9 +158,15 @@ function CardSelection() {
                                 </FormControl>
 
                             </Box>
-                    <Link to={'/lancamentos'} className='absolute right-0 top-0 m-16 bg-[#004A80] pr-10 rounded text-white'>
+                    <Link to={'/lancamentos'} className='absolute right-0 top-0 m-16 bg-[#10B0E3] pr-10 rounded text-white'>
                 <AddIcon/> Novo
             </Link>
+                    <Button variant="contained"
+                        color="secondary"
+                        className=" w-35% mt-16 z-10"
+                        aria-label="Pesquisar" type='button' onClick={searchData}>
+                    Pesquisar
+                </Button>
                          
                     </Card>
                 </Box>
