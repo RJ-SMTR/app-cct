@@ -12,12 +12,12 @@ const initialState = {
     selectedPeriod: false,
     listTransactions: [],
     selectedDate: {
-        mes: null,
-        periodo: null
+        mes: '',
+        periodo: ''
     },
     authValue: '',
     selectedStatus: null,
-    selectedYear: null,
+    selectedYear: '',
     clientesFavorecidos: []
 };
 
@@ -65,13 +65,18 @@ export const getData = (data) => (dispatch) => {
         url += `&autorizado=${data.selectedStatus.status}`;
     }
 
-    api.get(url, {
-        headers: { "Authorization": `Bearer ${token}` },
+    return new Promise((resolve, reject) => {
+        api.get(url, {
+            headers: { "Authorization": `Bearer ${token}` },
+        })
+            .then((response) => {
+                dispatch(setListTransactions(response.data));
+                dispatch(setSelectedPeriod(true));
+            })
+            .catch((error) => {
+                reject(error)
+            })
     })
-        .then((response) => {
-            dispatch(setListTransactions(response.data));
-            dispatch(setSelectedPeriod(true));
-        });
 };
 
 export const getFavorecidos = () => (dispatch) => {
