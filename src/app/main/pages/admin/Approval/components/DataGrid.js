@@ -159,10 +159,12 @@ export default function BasicEditingGrid(props) {
     const handleCloseDelete = () => setOpenDelete(false);
     const handleOpenPasswordModal = () => {
         setOpenPasswordModal(true);
+        setPassword('')
     };
 
     const handleClosePasswordModal = () => {
         setOpenPasswordModal(false);
+    
     };
 
 
@@ -349,7 +351,7 @@ export default function BasicEditingGrid(props) {
                 <Box sx={style}>
                     <Box>
                         <Typography id="modal-modal-title" variant="h6" component="h2">
-                            Favorecido: {dataAuth?.clienteFavorecido.nome}
+                            Favorecido: {dataAuth?.clienteFavorecido?.nome}
 
                         </Typography>
                         <h4 id="modal-modal-title">
@@ -438,7 +440,7 @@ export default function BasicEditingGrid(props) {
                             Tem certeza que deseja deletar este registro?
                         </Typography>
                         <p variant="h6" component="h2">
-                            Favorecido: {dataAuth?.clienteFavorecido.nome}
+                            Favorecido: {dataAuth?.clienteFavorecido?.nome}
 
                         </p>
                         <h4>
