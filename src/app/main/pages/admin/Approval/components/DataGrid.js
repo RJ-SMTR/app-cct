@@ -159,10 +159,12 @@ export default function BasicEditingGrid(props) {
     const handleCloseDelete = () => setOpenDelete(false);
     const handleOpenPasswordModal = () => {
         setOpenPasswordModal(true);
+        setPassword('')
     };
 
     const handleClosePasswordModal = () => {
         setOpenPasswordModal(false);
+    
     };
 
 

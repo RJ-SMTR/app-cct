@@ -412,11 +412,8 @@ export default function BasicEditingGrid() {
                             fileName: `cct_report_${date[0]}_${date[1]}`
                         }} />
                     <button className='px-[16px]' onClick={gg}>XLSX</button>
-                    <button className='px-[16px]' onClick={exportToPDF}>Exportar PDF</button>
-                    <GridPrintExportMenuItem options={{
-                        hideToolbar: true,
-                        fileName: `cct_report_${date[0]}_${date[1]}`
-                    }} />
+                    <button className='px-[16px]' onClick={exportToPDF}>PDF</button>
+                  
                     
 
                 </GridToolbarExportContainer >
