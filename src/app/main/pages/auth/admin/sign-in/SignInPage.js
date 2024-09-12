@@ -69,7 +69,7 @@ function SignInPage() {
                             Homologação
                         </Box>
                     )}
-   
+
                     {sent ? <><Box>Foi enviado um email para que você possa prosseguir com seu login!</Box> <Link className='underline' to={link}>Link que seria enviado para email</Link></>: 
                     <form
                         name="loginForm"
