@@ -54,6 +54,7 @@ export default function BasicEditingGrid(props) {
     const listTransactions = useSelector(state => state.release.listTransactions)
     const [open, setOpen] = useState(false)
     const [openDelete, setOpenDelete] = useState(false)
+    const [authBy, setAuthBy] = useState(null)
     const [initialRows, setInitialRows] = useState(false)
     const [selectedId, setSelectedId] = useState()
     const [dataAuth, setDataAuth] = useState([])
@@ -204,6 +205,19 @@ export default function BasicEditingGrid(props) {
             });
     };
 
+    const checkStatus = (data) => {
+        const authBy = data.autorizado_por.map(i => i.id )
+        setAuthBy(authBy)
+        const userId = user.id
+        if(authBy == userId){
+            dispatch(showMessage({ message: "Usuário atual já autorizou. É necessário outro usuário para liberar o lançamento!" }))
+        } else {
+            handleOpenPasswordModal()
+        }
+             
+
+    }
+
     const processRowUpdate = (newRow) => {
         const updatedRow = { ...newRow, isNew: false };
         setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
@@ -219,8 +233,7 @@ export default function BasicEditingGrid(props) {
         return (
             <button
                 onClick={() => handleOpen(id.id)}
-                className={`rounded p-3 uppercase min-w-[91.98px] text-white font-medium px-10 text-xs ${hasMultipleAuthBy ? 'bg-green-500' : (hasSingleAuthBy ? 'bg-yellow-800' : 'bg-[#004A80]')
-                    }`}
+                className={`rounded p-3 uppercase min-w-[91.98px] text-white font-medium px-10 text-xs ${hasMultipleAuthBy ? 'bg-green-500' : (hasSingleAuthBy ? 'bg-yellow-900' : 'bg-[#004A80]')}`}
             >
                 {hasMultipleAuthBy ? 'Autorizado' : (hasSingleAuthBy ? 'Autorizar (1)' : 'Autorizar')}
             </button>
@@ -368,8 +381,8 @@ export default function BasicEditingGrid(props) {
                             {dataAuth?.auth_usersIds?.length > 1 ? <button className='rounded p-3 uppercase text-white bg-green-500  font-medium px-10 text-xs' disabled>
                                 Autorizado
                             </button> : <button
-                                onClick={() => handleOpenPasswordModal()}
-                                className='rounded p-3 uppercase text-white bg-[#004A80]  font-medium px-10 text-xs'
+                                onClick={() => checkStatus(dataAuth)}
+                                    className={`rounded p-3 uppercase text-white ${authBy == user.id ? 'bg-yellow-900' : 'bg-[#004A80]'} font-medium px-10 text-xs`}
                                 disabled={user.role.id === 3}
                             >
                                 Autorizar
@@ -408,7 +421,7 @@ export default function BasicEditingGrid(props) {
                             <h4 className="font-semibold mb-5">
                                Anexo III
                             </h4>
-                            <TextField prefix='R$' className={dataAuth?.anexo ? "glosa" : ""} value={formatMoney(dataAuth?.recurso)} disabled InputProps={{
+                            <TextField prefix='R$' className={dataAuth?.anexo ? "glosa" : ""} value={formatMoney(dataAuth?.anexo)} disabled InputProps={{
                                 
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
