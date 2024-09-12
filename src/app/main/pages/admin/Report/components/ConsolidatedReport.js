@@ -92,6 +92,7 @@ export default function BasicEditingGrid() {
             .catch((error) => {
                dispatch(showMessage({message: 'Erro na busca, verifique os campos e tente novamente.'}))
                 setIsLoading(false)
+
             });
     };
 

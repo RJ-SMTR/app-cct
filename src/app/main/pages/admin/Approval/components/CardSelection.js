@@ -26,6 +26,7 @@ function CardSelection() {
         periodo: false,
     });
 
+
     function handleChange(event) {
         const { name, value } = event.target;
         dispatch(setSelectedDate({

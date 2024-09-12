@@ -18,6 +18,7 @@ const initialState = {
     authValue: '',
     selectedStatus: null,
     selectedYear: '',
+
     clientesFavorecidos: []
 };
 
@@ -76,6 +77,7 @@ export const getData = (data) => (dispatch) => {
             .catch((error) => {
                 reject(error)
             })
+
     })
 };
 
