@@ -57,18 +57,17 @@ const predefinedFilters = [
 
 const predefinedFiltersStatus = [
     { label: 'Todos', filterFn: () => true },
-    { label: 'Pago', filterFn: (row) => row.status.includes('Pago') },
-    { label: 'Erro', filterFn: (row) => row.status.includes('Erro') },
+    { label: 'Pago', filterFn: (row) => row.statusPago.includes('Pago') },
+    { label: 'Erro', filterFn: (row) => row.statusPago.includes('Não Pago') },
 ];
 
 
 
 const columns = [
-    { field: 'date', headerName: 'Dt. Efetivação', width: 145, editable: false },
+    { field: 'date', headerName: 'Dt. Ordem Pgto.', width: 145, editable: false },
     { field: 'processo', headerName: 'Num. Processo', width: 145, editable: false },
     { field: 'favorecido', headerName: 'Favorecido', width: 400, editable: false, cellClassName: 'noWrapName' },
-    { field: 'value', headerName: 'Valor Real Efetivado', width: 180, editable: false },
-    { field: 'status', headerName: 'Status', width: 180, editable: false },
+    { field: 'value', headerName: 'Valor a Pagar', width: 180, editable: false },
     {
         field: 'statusPago',
         headerName: 'Status Pgto.',
@@ -138,11 +137,10 @@ export default function BasicEditingGrid() {
                 .then((response) => {
                     const formattedRows = response.data.map((item) => ({
                         id: item.id,
-                        date: item.data_pgto === null ? '--/--/--' : format(new Date(item.data_pgto), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }),
+                        date: item.data_ordem === null ? '--/--/--' : format(new Date(item.data_ordem), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }),
                         processo: item.numero_processo,
                         favorecido: item.clienteFavorecido.nome,
                         value: formatToBRL(item.valor),
-                        status: item.status,
                         statusPago: item.is_pago ? 'Pago' : 'Não Pago',
                         ocorrencia: item.is_pago ? '' : item.ocorrencias.join(', '),
                     }));
@@ -158,7 +156,7 @@ export default function BasicEditingGrid() {
                     .then((response) => {
                         const formattedRows = response.data.map((item) => ({
                             id: item.id,
-                            date: item.data_pgto === null ? '--/--/--' : format(new Date(item.data_pgto), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }),
+                            date: item.data_ordem === null ? '--/--/--' : format(new Date(item.data_ordem), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }),
                             processo: item.numero_processo,
                             favorecido: item.clienteFavorecido.nome,
                             value: formatToBRL(item.valor),
@@ -195,8 +193,8 @@ export default function BasicEditingGrid() {
     }
 
     useEffect(() => {
-        const filteredPago = filteredRows.filter((item) => item.status.includes('Pago'))
-        const filteredErro = filteredRows.filter((item) => item.status.includes('Erro'))
+        const filteredPago = filteredRows.filter((item) => item.statusPago.includes('Pago'))
+        const filteredErro = filteredRows.filter((item) => item.statusPago.includes('Não Pago'))
         const sum = filteredPago.reduce((accumulator, item) => accumulator + accounting.unformat(item.value.replace(/\./g, '').replace('.', ','), ','), 0);
         const formattedValue = accounting.formatMoney(sum, {
             symbol: "",
