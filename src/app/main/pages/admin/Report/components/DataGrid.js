@@ -69,19 +69,19 @@ const CustomBadge = ({ data }) => {
     );
 };
 const columns = [
-    { field: 'date', headerName: 'Dt. Efetivação', width: 145, editable: false },
-    { field: 'dateExpire', headerName: 'Dt. Vencimento', width: 150, editable: false },
-    { field: 'favorecido', headerName: 'Favorecido', width: 180, editable: false, cellClassName: 'noWrapName' },
+    // { field: 'date', headerName: 'Dt. Efetivação', width: 145, editable: false },
+    // { field: 'dateExpire', headerName: 'Dt. Vencimento', width: 150, editable: false },
+    // { field: 'favorecido', headerName: 'Favorecido', width: 180, editable: false, cellClassName: 'noWrapName' },
     { field: 'consorcio', headerName: 'Consórcio', width: 130, editable: false },
     { field: 'value', headerName: 'Valor Real Efetivado', width: 180, editable: false },
-    {
-        field: 'status',
-        headerName: 'Status',
-        width: 130,
-        editable: false,
-        renderCell: (params) => <CustomBadge data={params.value} />
-    },
-    { field: 'ocorrencia', headerName: 'Ocorrência', width: 150, editable: false, cellClassName: 'noWrapName' },
+    // {
+    //     field: 'status',
+    //     headerName: 'Status',
+    //     width: 130,
+    //     editable: false,
+    //     renderCell: (params) => <CustomBadge data={params.value} />
+    // },
+    // { field: 'ocorrencia', headerName: 'Ocorrência', width: 150, editable: false, cellClassName: 'noWrapName' },
 ];
 
 
@@ -114,15 +114,26 @@ export default function BasicEditingGrid() {
             status: []
         }
     });
+    const formatter = new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+    });
+
     const onSubmit = (data) => {
-        setIsLoading(true)
-        dispatch(setTotalSynth(''))
+   
         dispatch(handleReportInfo(data, reportType))
             .then((response) => {
+                const formattedRows = response.data.map((item) => ({
+                    id: Math.random(),
+                    consorcio: item.nomefavorecido,
+                    value: formatter.format(item.valor),
+                }));
+                setRows(formattedRows)
                 setIsLoading(false)
             })
             .catch((error) => {
                 dispatch(showMessage({ message: 'Erro na busca, verifique os campos e tente novamente.' }))
+                setIsLoading(false)
             });
     };
     const handleClear = () => {
@@ -154,11 +165,10 @@ export default function BasicEditingGrid() {
     const valueProps = {
         startAdornment: <InputAdornment position='start'>R$</InputAdornment>
     };
-    const formatter = new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    });
-
+  
+    const handleAutocompleteChange = (field, newValue) => {
+        setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
+    };
     return (
         <>
             <Paper>
