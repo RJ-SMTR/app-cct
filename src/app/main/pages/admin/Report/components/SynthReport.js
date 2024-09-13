@@ -232,11 +232,15 @@ export default function BasicEditingGrid() {
 
     const CSVExportButton = ({ rows }) => {
         const csvData = exportToCSV(rows);
-
+        let dateInicio;
+        let dateFim;
         const selectedDate = getValues('dateRange');
-        const dateInicio = selectedDate[0];
-        const dateFim = selectedDate[1];
-
+    
+        if(selectedDate !==null){
+            dateInicio = selectedDate[0];
+             dateFim = selectedDate[1];
+        }
+       
         const csvFilename = useMemo(() => {
             if (dateInicio && dateFim) {
                 return `relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.csv`;
@@ -258,9 +262,14 @@ export default function BasicEditingGrid() {
     const exportToXLSX = (rows) => {
         const status = getValues('status');
         const whichStatus = status?.join(',');
+        let dateInicio;
+        let dateFim;
         const selectedDate = getValues('dateRange');
-        const dateInicio = selectedDate[0];
-        const dateFim = selectedDate[1];
+
+        if (selectedDate !== null) {
+            dateInicio = selectedDate[0];
+            dateFim = selectedDate[1];
+        }
 
         const data = [
             ["Status selecionado", "", whichStatus || "Todos"],
@@ -316,9 +325,14 @@ export default function BasicEditingGrid() {
             doc.addImage(logoImg, 'PNG', 7, 7, logoW, logoH);
         };
 
+        let dateInicio;
+        let dateFim;
         const selectedDate = getValues('dateRange');
-        const dateInicio = selectedDate[0];
-        const dateFim = selectedDate[1];
+
+        if (selectedDate !== null) {
+            dateInicio = selectedDate[0];
+            dateFim = selectedDate[1];
+        }
         const status = getValues('status');
         const selectedStatus = status?.join(',') || 'Todos';
 
