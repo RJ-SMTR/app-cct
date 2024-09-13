@@ -59,6 +59,7 @@ function FinanRelease() {
     useEffect(() => {
         dispatch(setListTransactions([]))
         dispatch(setSelectedPeriod(false))
+        dispatch(setSelectedYear(''))
         dispatch(setSelectedDate({
             mes: null,
             periodo: null
@@ -67,11 +68,12 @@ function FinanRelease() {
     }, [])
    
 
-    const { handleSubmit, register, control, reset, setValue, formState, clearErrors } = useForm({
+    const { handleSubmit, register, control, reset, setValue, formState, clearErrors, getValues,watch } = useForm({
         defaultValues: {
-            favorecido: null,
+            favorecido: '',
             mes: '',
             periodo: '',
+            ano: null,
             numero_processo: null,
             algoritmo: '',
             glosa: '',
@@ -79,7 +81,6 @@ function FinanRelease() {
             anexo: '',
             data_ordem: null,
             valor_a_pagar: '',
-            ano: ''
         },
         resolver: yupResolver(schema),
     })
@@ -91,10 +92,7 @@ function FinanRelease() {
         }));
     };
 
-    const handleYearChange = (newValue) => {
-        dispatch(setSelectedYear(newValue));
-    };
-
+ 
 
     const useStyles = makeStyles(() => ({
         glosa: styling,
@@ -102,35 +100,44 @@ function FinanRelease() {
     const c = useStyles()
 
     const onSubmit = (info) => {
-        info.valor = info.valor_a_pagar
+        info.valor = info.valor_a_pagar;
         dispatch(setRelease(info))
             .then((response) => {
-                success(response, "Informações Lançadas!")
-                reset();
-                setValue('valor_a_pagar', '')
-                setValue('algoritmo', '')
-                setValue('mes', '')
-                setValue('periodo', '')
-                setValue('recurso', '')
-                setValue('anexo', '')
-                setValue('glosa', '')
-                setValue('ano', '')
+                reset({
+                    favorecido: '',
+                    mes: '',
+                    periodo: '',
+                    ano: null,
+                    numero_processo: null,
+                    algoritmo: '',
+                    glosa: '',
+                    recurso: '',
+                    anexo: '',
+                    data_ordem: null,
+                    valor_a_pagar: '',
+                });
+                setselectedFavorecido('')
+                setValuesState({
+                    algoritmo: 0,
+                    glosa: 0,
+                    recurso: 0,
+                    anexo: 0,
+                });
 
+                success(response, "Informações Lançadas!");
 
             })
             .catch((error) => {
-                console.log(error)
-                if(error){
-                    dispatch(showMessage({ message: `Erro ao salvar, tente novamente mais tarde. Erro: ${error.response.status}` }))
+                if (error) {
+                    dispatch(showMessage({
+                        message: `Erro ao salvar, tente novamente mais tarde. Erro: ${error.response.status}`
+                    }));
                 }
             });
+    };
 
-    }
 
-
-    useEffect(() => {
-
-        
+    useEffect(() => {        
         const sanitizedValuesState = Object.fromEntries(
             Object.entries(valuesState).map(([key, value]) => [key, value === '' ? 0 : value])
         );
@@ -167,13 +174,20 @@ function FinanRelease() {
     }
     const handleAutocompleteChange = (newValue) => {
         if (newValue) {
-            setselectedFavorecido(newValue.id); 
+            setselectedFavorecido(newValue.id);
             setValue('favorecido', newValue.id); 
         } else {
-            setselectedFavorecido(null);
-            setValue('favorecido', ''); 
+            setselectedFavorecido(null);  
+            setValue('favorecido', null); 
         }
-        clearErrors('favorecido');
+        clearErrors('favorecido'); 
+    };
+  
+    const handleKeyDown = (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            return false;
+        }
     };
     return (
         <>
@@ -191,6 +205,7 @@ function FinanRelease() {
                             noValidate
                             className="flex flex-col justify-center w-full mt-32"
                             onSubmit={handleSubmit(onSubmit)}
+                            onKeyDown={handleKeyDown}
                         >
                             <Box className="grid gap-10  md:grid-cols-3">
                                 <FormControl fullWidth>
@@ -198,6 +213,8 @@ function FinanRelease() {
                                         id='favorecidos'
                                         options={clientesFavorecidos}
                                         getOptionLabel={(option) => option.nome}
+                                        getOptionDisabled={(option) => option.nome.includes('VLT')}
+                                        value={clientesFavorecidos.find(option => option.id === selectedFavorecido) || null}
                                         onChange={(_, newValue) => handleAutocompleteChange(newValue)}
                                         renderInput={(params) => (
                                             <TextField
@@ -212,6 +229,7 @@ function FinanRelease() {
                                         )}
                                     />
                                     <input type="hidden" {...register('favorecido')} />
+
                                 </FormControl>
 
                                 <FormControl fullWidth>
@@ -281,11 +299,26 @@ function FinanRelease() {
                                 </FormControl>
                                 <FormControl fullWidth>
                                     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-
-                                        <DatePicker {...register('ano')} onChange={handleYearChange} label={'Selecionar Ano'} openTo="year" views={['year']} />
-
+                                        <DatePicker
+                                            name='ano'
+                                            label='Selecionar Ano'
+                                            openTo="year"
+                                            views={['year']}
+                                            value={watch('ano') || null} 
+                                            onChange={(date) => {
+                                                setValue('ano', date, { shouldValidate: true });  
+                                            }}
+                                            renderInput={(params) => (
+                                                <TextField
+                                                    {...params}
+                                                    error={!!errors.ano}
+                                                    helperText={errors.ano?.message}
+                                                />
+                                            )}
+                                        />
                                     </LocalizationProvider>
                                 </FormControl>
+
 
 
                                 <FormControl>

@@ -18,7 +18,6 @@ function ApprovalApp() {
         <>
             <div className="p-24 pt-10">
             <Box className='flex flex-col md:flex-row mt-24 max-w-[684px] spacing-x-2'>
-                <CardBalance type={"Saldo da Banco"} amount={100000000}/>
                     {authValue ? <CardBalance type={"Valor Autorizado"} amount={authValue} />: null}
             </Box>
                 <CardSelection/>

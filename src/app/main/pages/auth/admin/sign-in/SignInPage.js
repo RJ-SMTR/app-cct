@@ -13,6 +13,7 @@ import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import jwtService from 'src/app/auth/services/jwtService';
 import { useState } from 'react';
+import { Badge } from '@mui/material';
 
 /**
  * Form Validation Schema
@@ -31,6 +32,7 @@ const defaultValues = {
 
 function SignInPage() {
     const [sent, setSent] = useState(false)
+    const isHmg = window.location.href.includes("hmg")
     const { control, formState, handleSubmit, setError, setValue } = useForm({
         mode: 'onChange',
         defaultValues,
@@ -62,7 +64,11 @@ function SignInPage() {
 
                       
                     </Typography>
-                    
+                    {isHmg && (
+                        <Box className="mt-10 bg-red-500 uppercase text-white text-center p-10 rounded-4 text-xl">
+                            Homologação
+                        </Box>
+                    )}
                     
                     {sent ? <><Box>Foi enviado um email para que você possa prosseguir com seu login!</Box> <Link className='underline' to={link}>Link que seria enviado para email</Link></>: 
                     <form
