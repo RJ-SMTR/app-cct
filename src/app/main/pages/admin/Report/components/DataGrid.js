@@ -1,26 +1,14 @@
 
 import {
     DataGrid,
-    GridCsvExportMenuItem,
-    GridPrintExportMenuItem,
-    GridToolbarContainer,
-    GridToolbarExport,
-    GridToolbarExportContainer,
-    GridToolbarQuickFilter,
     useGridApiRef
 } from '@mui/x-data-grid';
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Box,
-    MenuItem,
-    Table,
-    TableBody,
     Autocomplete,
     TextField,
     Button,
-    TableRow,
-    TableHead,
-    TableCell,
     Paper,
     CircularProgress,
     InputAdornment,
@@ -31,16 +19,13 @@ import { format, parseISO } from 'date-fns';
 import { useDispatch, useSelector } from 'react-redux';
 import { CustomProvider, DateRangePicker } from 'rsuite';
 import { useForm, Controller } from 'react-hook-form';
-import { handleReportInfo, setTotalSynth } from 'app/store/reportSlice';
+import { handleReportInfo } from 'app/store/reportSlice';
 import { getUser } from 'app/store/adminSlice';
 import { NumericFormat } from 'react-number-format';
-import { CSVLink } from 'react-csv';
 import { ClearIcon } from '@mui/x-date-pickers';
-import jsPDF from 'jspdf';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import 'jspdf-autotable';
 import ptBR from 'rsuite/locales/pt_BR';
-import { utils, writeFileXLSX } from 'xlsx';
 
 
 const consorciosStatus = [
@@ -157,6 +142,28 @@ export default function BasicEditingGrid() {
     useEffect(() => {
         fetchUsers()
     }, []);
+    useEffect(() => {
+        if (userList && userList.length > 0) {
+            const options = userList.map((user) => ({
+                label: user.label,
+                value: {
+                    cpfCnpj: user.cpfCnpj,
+                    permitCode: user.permitCode,
+                    fullName: user.fullName
+                }
+            }));
+            const sortedOptions = options.sort((a, b) => {
+
+                return a.value.fullName.localeCompare(b.value.fullName);
+
+
+            });
+
+            setUserOptions([{ label: "Todos", value: { fullName: 'Todos' } }, ...sortedOptions]);
+        } else {
+            setUserOptions([]);
+        }
+    }, [userList]);
 
     useEffect(() => {
         setIsLoading(false)
