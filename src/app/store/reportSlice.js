@@ -69,17 +69,26 @@ function handleData(data) {
 
     if (data.status && data.status.length > 0) {
         data.status.forEach(status => {
-            if(status !== "Todos"){
-                if (status === 'Pago') {
-                    requestData.pago = true;
-                } else if (status === 'Erro') {
-                    requestData.pago = false
-                } else {
-                    requestData.aPagar = true
+
+            if (status !== "Todos") {
+                switch (status) {
+                    case 'Pago':
+                        requestData.pago = true;
+                        break;
+                    case 'Erro':
+                        requestData.pago = false;
+                        break;
+                    case 'Aguardando pagamento':
+                        requestData.aguardando = true;
+                        break;
+                    default:
+                        requestData.aPagar = true;
+                        break;
                 }
             }
         });
     }
+
     const addIfValid = (key, value) => {
         if (value !== null && value !== '') {
             const unformattedValue = accounting.unformat(value.replace(/\./g, '').replace(',', '.'));

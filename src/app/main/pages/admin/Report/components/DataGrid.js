@@ -30,9 +30,10 @@ import ptBR from 'rsuite/locales/pt_BR';
 
 const consorciosStatus = [
     { label: 'Todos' },
+    { label: 'Aguardando pagamento' },
     { label: 'A pagar' },
-    { label: 'Pago' },
     { label: 'Erro' },
+    { label: 'Pago' },
 ];
 const consorcios = [
     { label: 'Todos', value: "Todos" },
@@ -259,7 +260,7 @@ export default function BasicEditingGrid() {
                                     renderInput={(params) => (
                                         <TextField
                                             {...params}
-                                            label="Selecionar Status"
+                                            label="Selecionar Status de Pagamento"
                                             variant="outlined"
                                             InputProps={{
                                                 ...params.InputProps,
