@@ -213,13 +213,14 @@ export default function BasicEditingGrid() {
                 ];
                 csvData.push(row);
             });
+            const subtotal = group.items[0].subtotal
 
             csvData.push([
                 `Subtotal ${consorcio}`,
                 '',
                 '',
                 '',
-                formatter.format(group.items.reduce((sum, item) => sum + item.valor, 0)),
+                formatter.format(subtotal),
                 '',
                 ''
             ]);
@@ -292,13 +293,13 @@ export default function BasicEditingGrid() {
                 ];
                 data.push(row);
             });
-
+            const subtotal = group.items[0].subtotal
             data.push([
                 `Subtotal ${consorcio}`,
                 '',
                 '',
                 '',
-                formatter.format(group.items.reduce((sum, item) => sum + item.valor, 0)),
+                formatter.format(subtotal),
                 '',
                 ''
             ]);
