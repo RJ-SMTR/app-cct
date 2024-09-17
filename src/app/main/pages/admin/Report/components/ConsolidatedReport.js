@@ -189,9 +189,15 @@ export default function BasicEditingGrid() {
             ...reportListData,
             valorTotal
     ]
+    let dateInicio;
+    let dateFim;
     const selectedDate = getValues('dateRange');
-    const dateInicio = selectedDate[0];
-    const dateFim = selectedDate[1];
+
+    if (selectedDate !== null) {
+        dateInicio = selectedDate[0];
+        dateFim = selectedDate[1];
+    }
+
 
     const csvFilename = useMemo(() => {
         if (dateInicio && dateFim) {
@@ -213,10 +219,14 @@ export default function BasicEditingGrid() {
             ];
             tableRows.push(reportData);
         });
-
+        let dateInicio;
+        let dateFim;
         const selectedDate = getValues('dateRange');
-        const dateInicio = selectedDate[0];
-        const dateFim = selectedDate[1];
+
+        if (selectedDate !== null) {
+            dateInicio = selectedDate[0];
+            dateFim = selectedDate[1];
+        }
 
         const status = getValues('status');
         const selectedStatus = status.join(',');
@@ -278,9 +288,15 @@ export default function BasicEditingGrid() {
 
     // Export XLSX
     const exportXLSX = () => {
+        let dateInicio;
+        let dateFim;
         const selectedDate = getValues('dateRange');
-        const dateInicio = selectedDate[0];
-        const dateFim = selectedDate[1];
+
+        if (selectedDate !== null) {
+            dateInicio = selectedDate[0];
+            dateFim = selectedDate[1];
+        }
+
         const data = [
             [ "Status selecionado","", whichStatus || "Todos"],
             ["Nome", "Valor"], 
