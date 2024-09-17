@@ -60,6 +60,7 @@ function FinanRelease() {
         dispatch(setListTransactions([]))
         dispatch(setSelectedPeriod(false))
         dispatch(setSelectedYear(''))
+
         dispatch(setSelectedDate({
             mes: null,
             periodo: null
@@ -71,6 +72,7 @@ function FinanRelease() {
     const { handleSubmit, register, control, reset, setValue, formState, clearErrors, getValues,watch } = useForm({
         defaultValues: {
             favorecido: '',
+
             mes: '',
             periodo: '',
             ano: null,
@@ -101,6 +103,7 @@ function FinanRelease() {
 
     const onSubmit = (info) => {
         info.valor = info.valor_a_pagar;
+
         dispatch(setRelease(info))
             .then((response) => {
                 reset({
@@ -132,6 +135,7 @@ function FinanRelease() {
                     dispatch(showMessage({
                         message: `Erro ao salvar, tente novamente mais tarde. Erro: ${error.response.status}`
                     }));
+
                 }
             });
     };
@@ -188,6 +192,7 @@ function FinanRelease() {
             event.preventDefault();
             return false;
         }
+
     };
     return (
         <>
@@ -215,6 +220,7 @@ function FinanRelease() {
                                         getOptionLabel={(option) => option.nome}
                                         getOptionDisabled={(option) => option.nome.includes('VLT')}
                                         value={clientesFavorecidos.find(option => option.id === selectedFavorecido) || null}
+
                                         onChange={(_, newValue) => handleAutocompleteChange(newValue)}
                                         renderInput={(params) => (
                                             <TextField

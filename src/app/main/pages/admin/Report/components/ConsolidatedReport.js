@@ -198,6 +198,7 @@ export default function BasicEditingGrid() {
         dateFim = selectedDate[1];
     }
 
+
     const csvFilename = useMemo(() => {
         if (dateInicio && dateFim) {
             return `relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.csv`;
@@ -226,6 +227,7 @@ export default function BasicEditingGrid() {
             dateInicio = selectedDate[0];
             dateFim = selectedDate[1];
         }
+
         const status = getValues('status');
         const selectedStatus = status.join(',');
 
@@ -294,6 +296,7 @@ export default function BasicEditingGrid() {
             dateInicio = selectedDate[0];
             dateFim = selectedDate[1];
         }
+
         const data = [
             [ "Status selecionado","", whichStatus || "Todos"],
             ["Nome", "Valor"], 

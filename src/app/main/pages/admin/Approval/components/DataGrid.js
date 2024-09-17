@@ -365,6 +365,7 @@ export default function BasicEditingGrid(props) {
                     <Box>
                         <Typography id="modal-modal-title" variant="h6" component="h2">
                             Favorecido: {dataAuth?.clienteFavorecido?.nome}
+
                         </Typography>
                         <h4 id="modal-modal-title">
                             N.º Processo: {dataAuth?.numero_processo}
@@ -422,6 +423,7 @@ export default function BasicEditingGrid(props) {
                                Anexo III
                             </h4>
                             <TextField prefix='R$' className={dataAuth?.anexo ? "glosa" : ""} value={formatMoney(dataAuth?.anexo)} disabled InputProps={{
+
                                 
                                 startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
                             }} />
@@ -453,6 +455,7 @@ export default function BasicEditingGrid(props) {
                         </Typography>
                         <p variant="h6" component="h2">
                             Favorecido: {dataAuth?.clienteFavorecido?.nome}
+
                         </p>
                         <h4>
                             N.º Processo: {dataAuth?.numero_processo}
