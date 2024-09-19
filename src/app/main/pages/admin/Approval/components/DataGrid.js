@@ -144,12 +144,12 @@ export default function BasicEditingGrid(props) {
         dispatch(deleteRelease(id, justification, password))
             .then((response) => {
                 setRows(rows.filter((row) => row.id !== id));
-                dispatch(({message: "Deletado com sucesso!"}));
+                dispatch(showMessage({message: "Deletado com sucesso!"}));
                 setOpenDelete(false);
             })
             .catch((error) => {
-                console.log(error.response.data.message)
-                dispatch(showMessage({ message: `${error.response.data.message}`}))
+                console.log(error)
+                dispatch(showMessage({ message: `${error}`}))
             })
     };
     const handleDeleteClick = (id) => () => {

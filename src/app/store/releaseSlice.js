@@ -232,12 +232,11 @@ export const deleteRelease = (id, justification, password) => (dispatch) => {
             api.delete(
                 `${jwtServiceConfig.finanGetInfo}/${id}`,
                 {
+                    headers: { "Authorization": `Bearer ${token}` },
+                    data: {
                         password: password,
                         motivo_cancelamento: justification,
-                },
-                {
-                    headers: { "Authorization": `Bearer ${token}` },
-                 
+                    },
                 }
             )
                 .then((response) => {
