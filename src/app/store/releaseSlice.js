@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import axios from 'axios';
 import JwtService from '../auth/services/jwtService';
 import accounting from 'accounting';
+import { format } from 'date-fns';
 
 
 const initialState = {
@@ -55,14 +56,19 @@ export default stepSlice.reducer;
 export const getData = (data) => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
 
-    let url = `${jwtServiceConfig.finanGetInfo}?mes=${data.selectedDate.mes}&periodo=${data.selectedDate.periodo}`;
+    let url = `${jwtServiceConfig.finanGetInfo}`;
 
-    if (data.selectedYearFormat && data.selectedYearFormat !== null) {
-        url += `&ano=${data.selectedYearFormat}`;
+    if (data.selectedDate.mes !== '' && data.selectedDate.periodo !== '') {
+        url += `?mes=${data.selectedDate.mes}&periodo=${data.selectedDate.periodo}`;
     }
 
-    if (data.selectedStatus && data.selectedStatus.status !== null) {
-        url += `&autorizado=${data.selectedStatus.status}`;
+    if (data.selectedYear && data.selectedYear !== null) {
+        const year = format(data.selectedYear, 'yyyy');
+        url += url.includes('?') ? `&ano=${year}` : `?ano=${year}`;
+    }
+
+    if (data.selectedStatus && data.selectedStatus.status !== null && data.selectedStatus.status !== 'todos') {
+        url += url.includes('?') ? `&status=${data.selectedStatus.status}` : `?status=${data.selectedStatus.status}`;
     }
 
     return new Promise((resolve, reject) => {
@@ -72,12 +78,12 @@ export const getData = (data) => (dispatch) => {
             .then((response) => {
                 dispatch(setListTransactions(response.data));
                 dispatch(setSelectedPeriod(true));
-                resolve(response)
+                resolve(response);
             })
             .catch((error) => {
-                reject(error)
-            })
-    })
+                reject(error);
+            });
+    });
 };
 
 export const getFavorecidos = () => (dispatch) => {
@@ -218,16 +224,25 @@ export const editRelease = (data, id) => (dispatch) => {
         });
     }
 };
-export const deleteRelease = (id) => (dispatch) => {
+export const deleteRelease = (id, justification, password) => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
+    console.log(justification, password)
+
     if (JwtService.isAuthTokenValid(token)) {
         return new Promise((resolve, reject) => {
-
-            api.delete(jwtServiceConfig.finanGetInfo + `/${id}`,
-                { headers: { "Authorization": `Bearer ${token}` } })
+            api.delete(
+                `${jwtServiceConfig.finanGetInfo}/${id}`,
+                {
+                        password: password,
+                        motivo_cancelamento: justification,
+                },
+                {
+                    headers: { "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsInJvbGUiOnsiaWQiOjAsIm5hbWUiOiJBZG1pbiBNYXN0ZXIifSwiaWF0IjoxNzI2NzcxNTk1LCJleHAiOjE3MjY4NTc5OTV9.usM0jhQF4qrViphEU82DhmQhUO9U__22rFWm7UgYulY` },
+                 
+                }
+            )
                 .then((response) => {
                     resolve();
-
                 })
                 .catch((error) => {
                     reject(error);
@@ -235,40 +250,44 @@ export const deleteRelease = (id) => (dispatch) => {
         });
     }
 };
-export const handleAuthValue = (data, id) => (dispatch) => {
-    // const selectedDate = {
-    //     mes: data.mes,
-    //     periodo: data.periodo
-    // }
 
+export const handleAuthValue = (data) => (dispatch) => {
     return new Promise((resolve, reject) => {
         const token = window.localStorage.getItem('jwt_access_token');
-        api.get(jwtServiceConfig.finanGetInfo + `/getValorAutorizado?mes=${data.mes}&periodo=${data.periodo}&ano=2024`,
 
-            {
-                headers: { "Authorization": `Bearer ${token}` }
-            })
+        let url = `${jwtServiceConfig.finanGetInfo}/getValorAutorizado?ano=2024`;
+
+        if (data.selectedDate.mes !== '') {
+            url += `&mes=${data.mes}`;
+        }
+
+        if (data.selectedDate.periodo !== '') {
+            url += `&periodo=${data.periodo}`;
+        }
+
+        api.get(url, {
+            headers: { "Authorization": `Bearer ${token}` }
+        })
             .then((response) => {
                 if (response.status === 200) {
-                    resolve()
-                    dispatch(setAuthValue(response.data.valor_autorizado))
-                    // dispatch(getData({ selectedDate, selectedStatus, selectedYear }))
+                    resolve();
+                    dispatch(setAuthValue(response.data.valor_autorizado));
                 } else {
                     reject(new Error('Erro'));
                 }
             })
             .catch((error) => {
                 reject(error);
-            })
+            });
+    });
+};
 
-    })
-}
-export const handleAuthRelease = (data, id, password) => (dispatch) => {
-    const selectedDate = {
-        mes: data.mes,
-        periodo: data.periodo
-    }
-    console.log("handleAuth", data)
+export const handleAuthRelease = (selectedDate,selectedStatus, id, password) => (dispatch) => {
+    const searchParams = {
+        selectedDate: { ...selectedDate },
+        selectedStatus,
+    };
+
     const token = window.localStorage.getItem('jwt_access_token');
     return new Promise((resolve, reject) => {
         api.put(jwtServiceConfig.finanGetInfo + `/authorize?lancamentoId=${id}`,
@@ -282,8 +301,8 @@ export const handleAuthRelease = (data, id, password) => (dispatch) => {
             .then((response) => {
                 if (response.status === 200) {
                     resolve()
-                    dispatch(getData({ selectedDate, selectedStatus }))
-                    dispatch(handleAuthValue(data))
+                    dispatch(getData(searchParams))
+                    // dispatch(handleAuthValue(data))
 
                 } else {
                     reject(error)

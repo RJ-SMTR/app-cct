@@ -213,7 +213,7 @@ function FinanRelease() {
                                         id='favorecidos'
                                         options={clientesFavorecidos}
                                         getOptionLabel={(option) => option.nome}
-                                        getOptionDisabled={(option) => option.nome.includes('VLT')}
+                                        // getOptionDisabled={(option) => option.nome.includes('VLT')}
                                         value={clientesFavorecidos.find(option => option.id === selectedFavorecido) || null}
                                         onChange={(_, newValue) => handleAutocompleteChange(newValue)}
                                         renderInput={(params) => (
@@ -231,7 +231,27 @@ function FinanRelease() {
                                     <input type="hidden" {...register('favorecido')} />
 
                                 </FormControl>
-
+                                <FormControl fullWidth>
+                                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                                        <DatePicker
+                                            name='ano'
+                                            label='Selecionar Ano'
+                                            openTo="year"
+                                            views={['year']}
+                                            value={watch('ano') || null}
+                                            onChange={(date) => {
+                                                setValue('ano', date, { shouldValidate: true });
+                                            }}
+                                            renderInput={(params) => (
+                                                <TextField
+                                                    {...params}
+                                                    error={!!errors.ano}
+                                                    helperText={errors.ano?.message}
+                                                />
+                                            )}
+                                        />
+                                    </LocalizationProvider>
+                                </FormControl>
                                 <FormControl fullWidth>
                                     <InputLabel id="select-mes">Selecionar Mês</InputLabel >
                                     <Controller
@@ -297,27 +317,7 @@ function FinanRelease() {
                                         )}
                                     />
                                 </FormControl>
-                                <FormControl fullWidth>
-                                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                                        <DatePicker
-                                            name='ano'
-                                            label='Selecionar Ano'
-                                            openTo="year"
-                                            views={['year']}
-                                            value={watch('ano') || null} 
-                                            onChange={(date) => {
-                                                setValue('ano', date, { shouldValidate: true });  
-                                            }}
-                                            renderInput={(params) => (
-                                                <TextField
-                                                    {...params}
-                                                    error={!!errors.ano}
-                                                    helperText={errors.ano?.message}
-                                                />
-                                            )}
-                                        />
-                                    </LocalizationProvider>
-                                </FormControl>
+                            
 
 
 

@@ -3,12 +3,9 @@ import { DataGrid, GridActionsCellItem, ptBR } from '@mui/x-data-grid';
 import { Box, Button, Card, Modal, TextField, Typography, InputAdornment } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
-import SaveIcon from '@mui/icons-material/Save';
-import CancelIcon from '@mui/icons-material/Close';
-import { NumericFormat } from 'react-number-format';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { deleteRelease, handleAuthRelease, handleAuthValue, listTransactions } from 'app/store/releaseSlice';
+import { deleteRelease, handleAuthRelease } from 'app/store/releaseSlice';
 import { AuthContext } from 'src/app/auth/AuthContext';
 import { api } from 'app/configs/api/api';
 import jwtServiceConfig from 'src/app/auth/services/jwtService/jwtServiceConfig';
@@ -16,6 +13,8 @@ import dayjs from 'dayjs';
 import { selectUser } from 'app/store/userSlice';
 import accounting from 'accounting';
 import { showMessage } from 'app/store/fuse/messageSlice';
+import { Controller, useForm } from 'react-hook-form';
+import { ModalDelete } from './ModalDelete';
 var updateLocale = require('dayjs/plugin/updateLocale')
 dayjs.extend(updateLocale)
 require('dayjs/locale/pt-br')
@@ -37,6 +36,7 @@ const style = {
     transform: 'translate(-50%, -50%)',
     width: '50rem',
     maxWidth: '90%',
+    maxHeight: '85vh',
     borderRadius: '.5rem',
     bgcolor: 'background.paper',
     boxShadow: 24,
@@ -51,55 +51,59 @@ export default function BasicEditingGrid(props) {
     const navigate = useNavigate()
     const dispatch = useDispatch()
     const selectedDate = useSelector(state => state.release.selectedDate)
-    const listTransactions = useSelector(state => state.release.listTransactions)
+    const selectedStatus = useSelector(state => state.release.selectedStatus)
     const [open, setOpen] = useState(false)
     const [openDelete, setOpenDelete] = useState(false)
     const [authBy, setAuthBy] = useState(null)
     const [initialRows, setInitialRows] = useState(false)
     const [selectedId, setSelectedId] = useState()
     const [dataAuth, setDataAuth] = useState([])
-    const [sumOfItems, setSumOfItems] = useState(0);
+    const [openPassword, setOpenPassword] = useState(false);
     const [dateOrder, setDateOrder] = useState({
-        month: null,
-        period: null
+        month: '',
+        period: ''
 
     })
     const [sumTotal, setSumTotal] = useState()
     const [rows, setRows] = useState(initialRows)
-    const [password, setPassword] = useState("")
-    const [openPasswordModal, setOpenPasswordModal] = useState(false)
-
-    useEffect(() => {
-        if (dataAuth) {
-            const sum = dataAuth.algoritmo - dataAuth.glosa + dataAuth.recurso
-            setSumOfItems(sum);
-        }
-    }, [dataAuth]);
-
-
-    useEffect(() => {
-        const sum = props.data.reduce((accumulator, item) => accumulator + item.valor, 0);
-        const formattedValue = accounting.formatMoney(sum, {
+    const formatMoney = (value) => {
+        const formattedValue = accounting.formatMoney(value, {
             symbol: "",
             decimal: ",",
             thousand: ".",
             precision: 2
-        });
+        })
+
+        return formattedValue
+    }
+
+    useEffect(() => {
+   
+        const sum = props.data.reduce((accumulator, item) => accumulator + item.valor, 0);
+        const formattedValue = formatMoney(sum)
+        setSumTotal(formattedValue)
+    }, [dataAuth, rows]);
+
+
+
+    const {  handleSubmit, control, getValues, reset } = useForm();
+
+
+
+
+    useEffect(() => {
+        const sum = props.data.reduce((accumulator, item) => accumulator + item.valor, 0);
+        const formattedValue = formatMoney(sum)
         setSumTotal(formattedValue)
         setRows(props.data.map((item, index) => {
             const formattedToPay = (data) => {
-                return accounting.formatMoney(data, {
-                    symbol: "",
-                    decimal: ",",
-                    thousand: ".",
-                    precision: 2
-                } )}
+                return formatMoney(data)}
             return {
                 id: item.id,
                 processNumber: item.numero_processo,
                 name: item.clienteFavorecido.nome,
                 toPay: "R$ " + formattedToPay(item.valor),
-                setBy: item.clienteFavorecido.nome,
+                setBy:item.autor.fullName,
                 paymentOrder: new Date(item.data_ordem),
                 authBy: item.autorizado_por.map(i => i.nome                ),
                 effectivePayment: item.data_pgto !== null ? new Date(item.data_pgto) : null
@@ -107,10 +111,8 @@ export default function BasicEditingGrid(props) {
         }))
     }, [props])
 
-    useEffect(() => {
-            dispatch(handleAuthValue(selectedDate))
 
-    }, [listTransactions])
+
 
     async function getInfoAuth(id) {
         const token = window.localStorage.getItem('jwt_access_token');
@@ -138,15 +140,16 @@ export default function BasicEditingGrid(props) {
         setOpen(true)
 
     };
-    const deleteInfo = (id) => () => {
-        dispatch(deleteRelease(id))
+    const deleteInfo = (id, justification, password) => {
+        dispatch(deleteRelease(id, justification, password))
             .then((response) => {
                 setRows(rows.filter((row) => row.id !== id));
-                success(response, "Deletado com sucesso!");
+                dispatch(({message: "Deletado com sucesso!"}));
                 setOpenDelete(false);
             })
             .catch((error) => {
-                success(error, "Não autorizado!");
+                console.log(error.response.data.message)
+                dispatch(showMessage({ message: `${error.response.data.message}`}))
             })
     };
     const handleDeleteClick = (id) => () => {
@@ -156,17 +159,12 @@ export default function BasicEditingGrid(props) {
     };
 
 
-    const handleClose = () => setOpen(false);
+    const handleClose = () => {
+        setOpen(false)
+        setOpenPassword(false)
+    };
     const handleCloseDelete = () => setOpenDelete(false);
-    const handleOpenPasswordModal = () => {
-        setOpenPasswordModal(true);
-        setPassword('')
-    };
-
-    const handleClosePasswordModal = () => {
-        setOpenPasswordModal(false);
-    
-    };
+   
 
 
 
@@ -176,10 +174,12 @@ export default function BasicEditingGrid(props) {
     };
 
     const handleAuthWithPassword = (id) => () => {
-        dispatch(handleAuthRelease(selectedDate, id, password)) 
+        const password = getValues('password')
+        dispatch(handleAuthRelease(selectedDate, selectedStatus, id, password)) 
             .then((response) => {
                 success(response, "Autorizado!");
                 setOpen(false);
+                reset()
                 const updatedRows = rows.map(row => {
                     if (row.id === id) {
                         const updatedAutorizadopor = props.data.find(item => item.id === id);
@@ -191,7 +191,6 @@ export default function BasicEditingGrid(props) {
                 });
 
                 setRows(updatedRows);
-                setOpenPasswordModal(false);
                 
             })
             .catch((error) => {
@@ -205,18 +204,6 @@ export default function BasicEditingGrid(props) {
             });
     };
 
-    const checkStatus = (data) => {
-        const authBy = data.autorizado_por.map(i => i.id )
-        setAuthBy(authBy)
-        const userId = user.id
-        if(authBy == userId){
-            dispatch(showMessage({ message: "Usuário atual já autorizou. É necessário outro usuário para liberar o lançamento!" }))
-        } else {
-            handleOpenPasswordModal()
-        }
-             
-
-    }
 
     const processRowUpdate = (newRow) => {
         const updatedRow = { ...newRow, isNew: false };
@@ -242,7 +229,7 @@ export default function BasicEditingGrid(props) {
     const CellActions = (id) => {
         const targetRow = id.rows.find(row => row.id === id.id)
 
-        const hasMultipleAuthBy = targetRow && targetRow.authBy.length > 1;
+        const hasMultipleAuthBy = targetRow && targetRow.authBy.length > 0 && user.role.id === 3;
 
 
         return [
@@ -268,6 +255,7 @@ export default function BasicEditingGrid(props) {
                 icon={<DeleteIcon sx={{ color: 'white' }} />}
                 label="Delete"
                 onClick={handleDeleteClick(id.id)}
+                disabled={hasMultipleAuthBy}
                 color="inherit"
                 sx={{
                     backgroundColor: 'red',
@@ -314,17 +302,7 @@ export default function BasicEditingGrid(props) {
             },
         },
     ];
-    const formatMoney = (value) => {
-        const formattedValue = accounting.formatMoney(value, {
-            symbol: "",
-            decimal: ",",
-            thousand: ".",
-            precision: 2
-        })
-
-        return formattedValue
-    }
-
+ 
     return (
         <>
             <Box className="w-full md:mx-9 p-24 relative mt-32">
@@ -355,13 +333,14 @@ export default function BasicEditingGrid(props) {
                     Valor Total:  R$ {sumTotal}
                 </Box>
             </Box>
+
             <Modal
                 open={open}
                 onClose={handleClose}
                 aria-labelledby="modal-modal-title"
                 aria-describedby="modal-modal-description"
             >
-                <Box sx={style}>
+                <Box sx={style} className="overflow-scroll ">
                     <Box>
                         <Typography id="modal-modal-title" variant="h6" component="h2">
                             Favorecido: {dataAuth?.clienteFavorecido?.nome}
@@ -378,134 +357,137 @@ export default function BasicEditingGrid(props) {
                                     : `20/${dayjs().month(dateOrder.month - 1).format('MM')}`}
                             </p>
 
-                            {dataAuth?.auth_usersIds?.length > 1 ? <button className='rounded p-3 uppercase text-white bg-green-500  font-medium px-10 text-xs' disabled>
-                                Autorizado
-                            </button> : <button
-                                onClick={() => checkStatus(dataAuth)}
-                                    className={`rounded p-3 uppercase text-white ${authBy == user.id ? 'bg-yellow-900' : 'bg-[#004A80]'} font-medium px-10 text-xs`}
-                                disabled={user.role.id === 3}
-                            >
-                                Autorizar
-                            </button>}
+                            {dataAuth?.auth_usersIds?.length > 1 ? (
+                                <button className='rounded p-3 uppercase text-white bg-green-500 font-medium px-10 text-xs' disabled>
+                                    Autorizado
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => setOpenPassword(true)}
+                                    className={`rounded p-3 uppercase text-white ${authBy === user.id ? 'bg-yellow-900' : 'bg-[#004A80]'} font-medium px-10 text-xs`}
+                                    disabled={user.role.id === 3}
+                                >
+                                    Autorizar
+                                </button>
+                            )}
                         </Box>
                     </Box>
                     <hr className='mt-10' />
-                    <Box className="grid gap-10  md:grid-cols-2 mt-12">
+                    <Box className="grid gap-10 sm:grid-cols-2 mt-12 ">
                         <Box>
-                            <h4 className="font-semibold mb-5">
-                                Valor Algoritmo
-                            </h4>
-                            <TextField prefix='R$' value={formatMoney(dataAuth?.algoritmo)} disabled InputProps={{
-                                startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
-                            }} />
+                            <h4 className="font-semibold mb-5">Valor Algoritmo</h4>
+                            <TextField
+                                prefix="R$"
+                                value={formatMoney(dataAuth?.algoritmo)}
+                                disabled
+                                InputProps={{
+                                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                                }}
+                            />
                         </Box>
                         <Box>
-                            <h4 className="font-semibold mb-5">
-                                Valor Glosa
-                            </h4>
-                            <TextField className='glosa' prefix='R$' value={formatMoney(dataAuth?.glosa)} disabled InputProps={{
-
-                                startAdornment: <InputAdornment position='start'>R$ </InputAdornment>,
-                            }} />
+                            <h4 className="font-semibold mb-5">Valor Glosa</h4>
+                            <TextField
+                                className="glosa"
+                                prefix="R$"
+                                value={formatMoney(dataAuth?.glosa)}
+                                disabled
+                                InputProps={{
+                                    startAdornment: <InputAdornment position="start">R$ </InputAdornment>,
+                                }}
+                            />
                         </Box>
                         <Box>
-                            <h4 className="font-semibold mb-5">
-                                Valor Recurso
-                            </h4>
-                            <TextField prefix='R$' className={dataAuth?.recurso ? "glosa" : ""} value={formatMoney(dataAuth?.recurso)} disabled InputProps={{
-
-                                startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
-                            }} />
+                            <h4 className="font-semibold mb-5">Valor Recurso</h4>
+                            <TextField
+                                prefix="R$"
+                                className={dataAuth?.recurso ? 'glosa' : ''}
+                                value={formatMoney(dataAuth?.recurso)}
+                                disabled
+                                InputProps={{
+                                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                                }}
+                            />
                         </Box>
                         <Box>
-                            <h4 className="font-semibold mb-5">
-                               Anexo III
-                            </h4>
-                            <TextField prefix='R$' className={dataAuth?.anexo ? "glosa" : ""} value={formatMoney(dataAuth?.anexo)} disabled InputProps={{
-                                
-                                startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
-                            }} />
+                            <h4 className="font-semibold mb-5">Anexo III</h4>
+                            <TextField
+                                prefix="R$"
+                                className={dataAuth?.anexo ? 'glosa' : ''}
+                                value={formatMoney(dataAuth?.anexo)}
+                                disabled
+                                InputProps={{
+                                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                                }}
+                            />
                         </Box>
                         <Box>
-                            <h4 className="font-semibold mb-5">
-                                Valor a Pagar
-                            </h4>
-                            <TextField prefix='R$' value={formatMoney(dataAuth?.valor)} disabled InputProps={{
-
-                                startAdornment: <InputAdornment position='start'>R$</InputAdornment>,
-                            }} />
-                        </Box>
-                    </Box>
-                </Box>
-            </Modal>
-
-
-            <Modal
-                open={openDelete}
-                onClose={handleCloseDelete}
-                aria-labelledby="modal-modal-title"
-                aria-describedby="modal-modal-description"
-            >
-                <Box sx={style}>
-                    <Box>
-                        <Typography id="modal-modal-title text-center" variant="h6" component="h2" className='text-center'>
-                            Tem certeza que deseja deletar este registro?
-                        </Typography>
-                        <p variant="h6" component="h2">
-                            Favorecido: {dataAuth?.clienteFavorecido?.nome}
-                        </p>
-                        <h4>
-                            N.º Processo: {dataAuth?.numero_processo}
-                        </h4>
-                        <p>Mês: {dayjs().month(dateOrder?.month - 1).format('MMMM')}</p>
-                        <p>
-                            Período: {dateOrder.period} Quinzena -{' '}
-                            {dateOrder.period === 1
-                                ? `05/${dayjs().month(dateOrder.month - 1).format('MM')}`
-                                : `20/${dayjs().month(dateOrder.month - 1).format('MM')}`}
-                        </p>
-                        <Box className="md:flex justify-between w-full">
-
-                            <button
-                                onClick={deleteInfo(selectedId)}
-                                className='rounded p-3 uppercase text-white bg-red w-[100%]  font-medium px-10 mt-10'
-                            >
-                                Deletar
-                            </button>
+                            <h4 className="font-semibold mb-5">Valor a Pagar</h4>
+                            <TextField
+                                prefix="R$"
+                                value={formatMoney(dataAuth?.valor)}
+                                disabled
+                                InputProps={{
+                                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                                }}
+                            />
                         </Box>
                     </Box>
 
+                    {openPassword && (
+                        <form onSubmit={handleSubmit(handleAuthWithPassword(dataAuth?.id))}>
+                            <Typography variant="h6" component="h2" gutterBottom className='mt-20'>
+                                Digite a senha:
+                            </Typography>
+                            <Controller
+                                name="password"
+                                control={control}
+                                defaultValue=""
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        label="Senha"
+                                        type="password"
+                                        fullWidth
+                                        autoFocus
+                                        margin="normal"
+                                        variant="outlined"
+                                    />
+                                )}
+                            />
+                            <Box className="sm:flex justify-between w-full gap-10">
+                                <button
+                                    type="button"
+                                    onClick={() => { setOpenPassword(false), handleClose() }}
+                                    className='rounded p-3 uppercase text-white bg-gray-500 w-[100%] font-medium px-10 mt-10'
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className='rounded p-3 uppercase text-white bg-[#004A80] w-[100%] font-medium px-10 mt-10'
+                                >
+                                    Autorizar
+                                </button>
+                           
+                            </Box>
+                        </form>
+                    )}
                 </Box>
             </Modal>
+
+            <ModalDelete
+                openDelete={openDelete}
+                handleCloseDelete={handleCloseDelete}
+                dataAuth={dataAuth}
+                dateOrder={dateOrder}
+                selectedId={selectedId}
+                deleteInfo={deleteInfo}
+            />
+
 
             {/* MODAL SENHA */}
-            <Modal
-                open={openPasswordModal}
-                onClose={handleClosePasswordModal}
-                aria-labelledby="password-modal-title"
-                aria-describedby="password-modal-description"
-            >
-                <Box sx={style}>
-                    <Typography variant="h6" component="h2" gutterBottom>
-                        Digite a senha:
-                    </Typography>
-                    <TextField
-                        label="Senha"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        fullWidth
-                        autoFocus
-                        margin="normal"
-                    />
-                    <button
-                        onClick={handleAuthWithPassword(dataAuth?.id)}
-                        className='rounded p-3 uppercase text-white bg-[#004A80]  w-[100%]  font-medium px-10 mt-10'
-                    >
-                        Autorizar
-                    </button>
-                </Box>
-            </Modal>
+         
         </>
     );
 }
