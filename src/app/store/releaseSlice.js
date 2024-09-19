@@ -53,6 +53,7 @@ export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTrans
 export default stepSlice.reducer;
 
 export const getData = (data) => (dispatch) => {
+    console.log(data)
     const token = window.localStorage.getItem('jwt_access_token');
 
     let url = `${jwtServiceConfig.finanGetInfo}?mes=${data.selectedDate.mes}&periodo=${data.selectedDate.periodo}`;

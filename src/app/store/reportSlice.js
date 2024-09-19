@@ -101,9 +101,14 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
 
     if (JwtService.isAuthTokenValid(token)) {
         return new Promise(async (resolve, reject) => {
-            
+            let reportTypeUrl;
             const requestData = handleData(data);
-            const reportTypeUrl = reportType;
+            if(reportType === 'plain'){
+
+                 reportTypeUrl = 'sintetico';
+            } else {
+                 reportTypeUrl = reportType;
+            }
 
             let config = {
                 method: 'get',
@@ -131,8 +136,9 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
                     };
                     if(reportType == 'sintetico'){
                         dispatch(handleSynthData(combinedResponse))
+                    } else if(reportType == 'plain') {
+                        dispatch(handlePlainData(combinedResponse));
                     } else {
-
                         dispatch(setReportList(combinedResponse));
                     }
                     resolve(combinedResponse);
@@ -194,3 +200,44 @@ export const handleSynthData = (reportData) => async (dispatch) => {
     dispatch(setSynthData(groupedData));
 
 }
+
+
+export const handlePlainData = (reportData) => async (dispatch) => {
+    const total = accounting.formatMoney(reportData.valor, {
+        symbol: 'R$ ',
+        decimal: ',',
+        thousand: '.',
+        precision: 2
+    });
+    dispatch(setTotalSynth(total));
+
+    const subtotalsByDate = reportData.data.reduce((acc, item) => {
+        if (!acc[item.datapagamento]) {
+            acc[item.datapagamento] = item.valor;
+        } else {
+            acc[item.datapagamento] += item.valor;
+        }
+        return acc;
+    }, {});
+
+    const groupedByFavorecido = Object.values(
+        reportData.data.reduce((acc, item) => {
+            const key = `${item.favorecido}-${item.datapagamento}`;
+            if (!acc[key]) {
+                acc[key] = {
+                    ...item,
+                    valor: item.valor,
+                    subtotalByDate: subtotalsByDate[item.datapagamento] 
+                };
+            } else {
+                acc[key].valor += item.valor;
+            }
+            return acc;
+        }, {})
+    );
+
+    console.log(groupedByFavorecido);
+
+    dispatch(setReportList(groupedByFavorecido));
+};
+
