@@ -226,7 +226,6 @@ export const editRelease = (data, id) => (dispatch) => {
 };
 export const deleteRelease = (id, justification, password) => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
-    console.log(justification, password)
 
     if (JwtService.isAuthTokenValid(token)) {
         return new Promise((resolve, reject) => {
@@ -237,7 +236,7 @@ export const deleteRelease = (id, justification, password) => (dispatch) => {
                         motivo_cancelamento: justification,
                 },
                 {
-                    headers: { "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsInJvbGUiOnsiaWQiOjAsIm5hbWUiOiJBZG1pbiBNYXN0ZXIifSwiaWF0IjoxNzI2NzcxNTk1LCJleHAiOjE3MjY4NTc5OTV9.usM0jhQF4qrViphEU82DhmQhUO9U__22rFWm7UgYulY` },
+                    headers: { "Authorization": `Bearer ${token}` },
                  
                 }
             )

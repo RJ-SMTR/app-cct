@@ -60,10 +60,10 @@ function FinanRelease() {
         dispatch(setListTransactions([]))
         dispatch(setSelectedPeriod(false))
         dispatch(setSelectedYear(''))
-        dispatch(setSelectedDate({
-            mes: null,
-            periodo: null
-        }))
+        // dispatch(setSelectedDate({
+        //     mes: null,
+        //     periodo: null
+        // }))
         dispatch(getFavorecidos())
     }, [])
    
