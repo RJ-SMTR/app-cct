@@ -262,6 +262,10 @@ export default function BasicEditingGrid(props) {
                     '&:hover': {
                         backgroundColor: 'red',
                     },
+                    '&:disabled': {
+                        backgroundColor: 'gray',
+                        opacity: 0.8
+                    },
                   
 
                     

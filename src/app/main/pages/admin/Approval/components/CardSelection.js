@@ -165,7 +165,7 @@ function CardSelection() {
                                 <MenuItem value={'todos'}>Ver todos</MenuItem>
                                 <MenuItem value={'autorizado'}>Autorizado</MenuItem>
                                 <MenuItem value={'autorizado parcial'}>Autorizado Parcial</MenuItem>
-                                <MenuItem value={'gerado'}>Gerado</MenuItem>
+                                <MenuItem value={'gerado'}>Lançado</MenuItem>
                             </Select>
                         </FormControl>
                     </Box>

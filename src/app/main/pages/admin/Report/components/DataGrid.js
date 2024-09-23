@@ -28,6 +28,7 @@ import 'jspdf-autotable';
 import ptBR from 'rsuite/locales/pt_BR';
 
 
+
 const consorciosStatus = [
     { label: 'Todos' },
     { label: 'A pagar' },
@@ -84,6 +85,7 @@ export default function BasicEditingGrid() {
     const [rowModesModel, setRowModesModel] = useState({});
     const [rows, setRows] = useState([]);
     const apiRef = useGridApiRef();
+    const [whichStatus, setWhichStatus] = useState([])
     
 
 
@@ -174,6 +176,10 @@ export default function BasicEditingGrid() {
     };
   
     const handleAutocompleteChange = (field, newValue) => {
+        if (field === 'status') {
+            const status = newValue.map(i => i.label)
+            setWhichStatus(status)
+        }
         setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
     };
     return (
@@ -413,6 +419,11 @@ export default function BasicEditingGrid() {
                             <Box>
 
                             </Box>
+                            {whichStatus.includes("A pagar") && (
+                                <span className="text-sm text-red-600">
+                                    Atenção: Para o status "a pagar", a data escolhida deve ser referente a data da transação (quarta a quinta-feira).
+                                </span>
+                            )}
                             <Box>
                                 <Button
                                     variant="contained"
