@@ -78,7 +78,6 @@ export default function BasicEditingGrid(props) {
     }
 
     useEffect(() => {
-   
         const sum = props.data.reduce((accumulator, item) => accumulator + item.valor, 0);
         const formattedValue = formatMoney(sum)
         setSumTotal(formattedValue)
@@ -162,6 +161,7 @@ export default function BasicEditingGrid(props) {
     const handleClose = () => {
         setOpen(false)
         setOpenPassword(false)
+        reset()
     };
     const handleCloseDelete = () => setOpenDelete(false);
    
