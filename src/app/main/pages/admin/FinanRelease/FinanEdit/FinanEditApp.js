@@ -16,6 +16,7 @@ import { api } from 'app/configs/api/api';
 import jwtServiceConfig from 'src/app/auth/services/jwtService/jwtServiceConfig';
 import dayjs from 'dayjs';
 import accounting from 'accounting';
+import { showMessage } from 'app/store/fuse/messageSlice';
 
 
 
@@ -151,7 +152,8 @@ useEffect(() => {
                 reset(info)
             })
             .catch((error) => {
-                success(response, "Houve um erro ao tentar atualizar. Tente novamente mais tarde!")
+                console.error(error)
+                dispatch(showMessage({ message: "Houve um erro ao tentar atualizar. Tente novamente mais tarde!"}))
             })
     }
 
@@ -198,6 +200,11 @@ useEffect(() => {
 
                                 />
                                 <FormControl fullWidth>
+                                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                                        <DatePicker {...register('ano')} onChange={(newValue) => setYear(newValue)} label={'Selecionar Ano'} openTo="year" views={['year']} />
+                                    </LocalizationProvider>
+                                </FormControl>
+                                <FormControl fullWidth>
                                     <InputLabel id="select-mes">Selecionar Mês</InputLabel >
                                  
                                             <Select
@@ -239,11 +246,7 @@ useEffect(() => {
                                             </Select>
 
                                 </FormControl>
-                                <FormControl fullWidth>
-                                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                                        <DatePicker {...register('ano')} onChange={(newValue) => setYear(newValue)} label={'Selecionar Ano'} openTo="year" views={['year']} />
-                                    </LocalizationProvider>
-                                </FormControl>
+                              
 
                                 <FormControl>
                                     <Controller
