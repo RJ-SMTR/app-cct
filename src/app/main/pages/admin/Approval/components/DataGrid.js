@@ -229,12 +229,12 @@ export default function BasicEditingGrid(props) {
     const CellActions = (id) => {
         const targetRow = id.rows.find(row => row.id === id.id)
 
-        const hasMultipleAuthBy = targetRow && targetRow.authBy.length > 0 && user.role.id === 3;
+        const hasMultipleAuthBy = targetRow && targetRow.authBy.length > 0 || user.role.id === 3;
 
 
         return [
             <GridActionsCellItem
-                icon={<EditIcon sx={{ color: 'white' }} />}
+                icon={<EditIcon sx={{ color: `${hasMultipleAuthBy ? 'black' : "white"}`, opacity:`${hasMultipleAuthBy ? .5 : 1}` }} />}
                 label="Edit"
                 onClick={handleEditClick(id.id)}
                 color="inherit"
@@ -246,13 +246,14 @@ export default function BasicEditingGrid(props) {
                     },
                     '&:disabled': {
                         backgroundColor: 'gray',
+                        
                         opacity: 0.8
                     },
                 }}
 
             />,
             <GridActionsCellItem
-                icon={<DeleteIcon sx={{ color: 'white' }} />}
+                icon={<DeleteIcon sx={{ color: `${hasMultipleAuthBy ? 'black' : "white"}`, opacity: `${hasMultipleAuthBy ? .5 : 1}` }} />}
                 label="Delete"
                 onClick={handleDeleteClick(id.id)}
                 disabled={hasMultipleAuthBy}
