@@ -73,12 +73,12 @@ export default function BasicEditingGrid() {
 
     const dispatch = useDispatch()
 
-    const { reset, handleSubmit, setValue, control, getValues, watch } = useForm({
+    const { reset, handleSubmit, setValue, control, getValues, trigger, clearErrors } = useForm({
         defaultValues: {
             name: [],
             dateRange: [],
-            valorMax: null,
-            valorMin: null,
+            valorMax: '',
+            valorMin: '',
             consorcioName: [],
             status: []
         }
@@ -461,7 +461,16 @@ export default function BasicEditingGrid() {
                                 <Controller
                                     name="valorMin"
                                     control={control}
-                                    render={({ field }) => (
+                                    rules={{
+                                        validate: (value) => {
+                                            if (!value) return true;
+                                            const valorMin = parseFloat(value.replace(',', '.'));
+                                            const valorMax = parseFloat(getValues("valorMax").replace(',', '.'));
+                                            return valorMin <= valorMax || "Valor Mínimo não pode ser maior que o Valor Máximo";
+                                        }
+                                    }}
+
+                                    render={({ field, fieldState: { error } }) => (
                                         <NumericFormat
                                             {...field}
                                             thousandSeparator="."
@@ -471,13 +480,31 @@ export default function BasicEditingGrid() {
                                             customInput={TextField}
                                             label="Valor Mínimo"
                                             value={field.value}
+                                            onChange={(e) => {
+                                                field.onChange(e);
+                                                const valorMin = parseFloat(e.target.value.replace(',', '.'));
+                                                const valorMax = parseFloat(getValues("valorMax").replace(',', '.'));
+
+                                                if (valorMin <= valorMax) {
+                                                    clearErrors("valorMin");
+                                                    clearErrors("valorMax");
+                                                } else {
+                                                    trigger("valorMax");
+                                                }
+                                            }}
+                                            error={!!error}
+                                            helperText={error ? error.message : null}
                                             onMouseEnter={() => {
                                                 if (field.value) setShowClearMin(true);
+
                                             }}
                                             onMouseLeave={() => setShowClearMin(false)}
+                                            FormHelperTextProps={{
+                                                sx: { color: 'red', fontSize: '1rem', position: 'absolute', bottom: '-3.5rem' }
+                                            }}
                                             InputProps={{
                                                 endAdornment: showClearMin && field.value && (
-                                                    <InputAdornment  sx={{ position: "absolute", right: '1rem' }} position="end">
+                                                    <InputAdornment sx={{ position: "absolute", right: '1rem' }} position="end">
                                                         <IconButton onClick={() => clearSelect('valorMin')} sx={{ height: '2rem', width: '2rem' }}>
                                                             <ClearIcon sx={{ height: '2rem' }} />
                                                         </IconButton>
@@ -491,7 +518,15 @@ export default function BasicEditingGrid() {
                                 <Controller
                                     name="valorMax"
                                     control={control}
-                                    render={({ field }) => (
+                                    rules={{
+                                        validate: (value) => {
+                                            if (!value) return true;
+                                            const valorMax = parseFloat(value.replace(',', '.'));
+                                            const valorMin = parseFloat(getValues("valorMin").replace(',', '.'));
+                                            return valorMax >= valorMin || "Valor Máximo não pode ser menor que o Valor Mínimo";
+                                        }
+                                    }}
+                                    render={({ field, fieldState: { error } }) => (
                                         <NumericFormat
                                             {...field}
                                             thousandSeparator="."
@@ -501,19 +536,36 @@ export default function BasicEditingGrid() {
                                             customInput={TextField}
                                             label="Valor Máximo"
                                             value={field.value}
+                                            onChange={(e) => {
+                                                field.onChange(e);
+                                                const valorMax = parseFloat(e.target.value.replace(',', '.'));
+                                                const valorMin = parseFloat(getValues("valorMin").replace(',', '.'));
+
+                                                if (valorMax >= valorMin) {
+                                                    clearErrors("valorMax");
+                                                    clearErrors("valorMin");
+                                                } else {
+                                                    trigger("valorMin");
+                                                }
+                                            }}
                                             onMouseEnter={() => {
                                                 if (field.value) setShowClearMax(true);
                                             }}
                                             onMouseLeave={() => setShowClearMax(false)}
+                                            error={!!error}
+                                            helperText={error ? error.message : null}
+                                            FormHelperTextProps={{
+                                                sx: { color: 'red', fontSize: '1rem', position: 'absolute', bottom: '-3.5rem' }
+                                            }}
                                             InputProps={{
                                                 endAdornment: showClearMax && field.value && (
-                                                    <InputAdornment  sx={{ position: "absolute", right: '1rem' }} position="end">
+                                                    <InputAdornment sx={{ position: "absolute", right: '1rem' }} position="end">
                                                         <IconButton onClick={() => clearSelect('valorMax')} sx={{ height: '2rem', width: '2rem' }}>
                                                             <ClearIcon sx={{ height: '2rem' }} />
                                                         </IconButton>
                                                     </InputAdornment>
                                                 ),
-                                             
+
                                                 ...valueProps,
                                             }}
                                         />
