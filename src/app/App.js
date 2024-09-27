@@ -47,7 +47,12 @@ function App() {
 
   const langDirection = useSelector(selectCurrentLanguageDirection);
   const mainTheme = useSelector(selectMainTheme);
-  const loginRedirectUrl = user.role?.name === 'Admin' ? '/admin' : settingsConfig.loginRedirectUrl;
+  const loginRedirectUrl = user.role?.name?.includes('Financeiro')
+    ? '/lancamentos'
+    : user.role?.name?.includes('Admin')
+      ? '/admin'
+      : settingsConfig.loginRedirectUrl;
+
   
   return (
     <CacheProvider value={createCache(emotionCacheOptions[langDirection])}>
