@@ -66,20 +66,36 @@ function handleData(data) {
             requestData.favorecidoNome = data.name.map(i => i.fullName).toString()
 
     } 
-
     if (data.status && data.status.length > 0) {
+        let hasPago = false;
+        let hasErro = false;
+
         data.status.forEach(status => {
-            if(status !== "Todos"){
-                if (status === 'Pago') {
-                    requestData.pago = true;
-                } else if (status === 'Erro') {
-                    requestData.pago = false
-                } else {
-                    requestData.aPagar = true
-                }
+            switch (status) {
+                case 'Pago':
+                    hasPago = true;
+                    break;
+                case 'Erro':
+                    hasErro = true;
+                    break;
+                case 'Aguardando Pagamento':
+                    requestData.emprocessamento = true;
+                    break;
+                case 'Todos':
+                    break;
+                default:
+                    requestData.aPagar = true;
+                    break;
             }
         });
+
+        if (hasPago && !hasErro) {
+            requestData.pago = true;
+        } else if (hasErro && !hasPago) {
+            requestData.pago = false;
+        }
     }
+
     const addIfValid = (key, value) => {
         if (value !== null && value !== '') {
             const unformattedValue = accounting.unformat(value.replace(/\./g, '').replace(',', '.'));

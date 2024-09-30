@@ -46,6 +46,7 @@ const consorciosStatus = [
     { label: 'Todos' },
     { label: 'A pagar' },
     { label: 'Pago' },
+    { label: 'Aguardando Pagamento' },
     { label: 'Erro' },
 ];
 const consorcios = [
