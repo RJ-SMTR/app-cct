@@ -79,7 +79,7 @@ function handleData(data) {
                     hasErro = true;
                     break;
                 case 'Aguardando Pagamento':
-                    requestData.emprocessamento = true;
+                    requestData.emProcessamento = true;
                     break;
                 case 'Todos':
                     break;
