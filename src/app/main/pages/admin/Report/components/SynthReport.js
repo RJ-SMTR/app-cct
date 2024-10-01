@@ -47,7 +47,8 @@ const consorcios = [
     { label: 'STPC', value: "STPC" },
     { label: 'STPL', value: "STPL" },
     { label: 'Transcarioca', value: "Transcarioca" },
-    { label: 'VLT', value: "VLT" }
+    { label: 'VLT', value: "VLT" },
+{label: 'TEC', value: "TEC"}
 ];
 
 
