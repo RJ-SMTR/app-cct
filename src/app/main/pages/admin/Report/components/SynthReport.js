@@ -35,6 +35,7 @@ const consorciosStatus = [
     { label: 'Todos' },
     { label: 'A pagar' },
     { label: 'Pago' },
+    { label: 'Aguardando Pagamento' },
     { label: 'Erro' },
 ];
 const consorcios = [
@@ -46,7 +47,8 @@ const consorcios = [
     { label: 'STPC', value: "STPC" },
     { label: 'STPL', value: "STPL" },
     { label: 'Transcarioca', value: "Transcarioca" },
-    { label: 'VLT', value: "VLT" }
+    { label: 'VLT', value: "VLT" },
+{label: 'TEC', value: "TEC"}
 ];
 
 
@@ -68,6 +70,7 @@ export default function BasicEditingGrid() {
     const [showClearMax, setShowClearMax] = useState(false)
     const [rows, setRows] = useState([])
     const [anchorEl, setAnchorEl] = useState(null);
+    const [whichStatusShow, setWhichStatus] =  useState([])
 
 
   useEffect(() => {
@@ -152,6 +155,11 @@ export default function BasicEditingGrid() {
     }, [userList]);
 
     const handleAutocompleteChange = (field, newValue) => {
+
+        if(field === 'status'){
+            const status = newValue.map(i => i.label)
+            setWhichStatus(status)
+        }
         setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
     };
 
@@ -683,6 +691,11 @@ export default function BasicEditingGrid() {
                             <Box>
 
                             </Box>
+                            {/* {whichStatusShow.includes("A pagar")  && (
+                                <span className="text-sm text-red-600">
+                                    Atenção: Para o status "a pagar", a data escolhida deve ser referente a data da transação (quarta a quinta-feira).
+                                </span>
+                            )} */}
                             <Box>
                                 <Button
                                     variant="contained"

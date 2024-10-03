@@ -43,6 +43,7 @@ const consorciosStatus = [
     { label: 'Todos' },
     { label: 'A pagar' },
     { label: 'Pago' },
+    { label: 'Aguardando Pagamento' },
     { label: 'Erro' },
 ];
 const consorcios = [
@@ -54,7 +55,8 @@ const consorcios = [
     { label: 'STPC', value: "STPC" },
     { label: 'STPL', value: "STPL" },
     { label: 'Transcarioca', value: "Transcarioca" },
-    { label: 'VLT', value: "VLT" }
+    { label: 'VLT', value: "VLT" },
+{label: 'TEC', value: "TEC"}
 ];
 
 
@@ -69,15 +71,16 @@ export default function BasicEditingGrid() {
     const [showClearMin, setShowClearMin] = useState(false)
     const [showClearMax, setShowClearMax] = useState(false)
     const [showButton, setShowButton] = useState(false)
+    const [whichStatusShow, setWhichStatus] = useState([])
 
     const dispatch = useDispatch()
 
-    const { reset, handleSubmit, setValue, control, getValues, watch } = useForm({
+    const { reset, handleSubmit, setValue, control, getValues, trigger, clearErrors } = useForm({
         defaultValues: {
             name: [],
             dateRange: [],
-            valorMax: null,
-            valorMin: null,
+            valorMax: '',
+            valorMin: '',
             consorcioName: [],
             status: []
         }
@@ -147,6 +150,10 @@ export default function BasicEditingGrid() {
     }, [ userList]);
 
     const handleAutocompleteChange = (field, newValue) => {
+        if (field === 'status') {
+            const status = newValue.map(i => i.label)
+            setWhichStatus(status)
+        }
         
         setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
     };
@@ -198,7 +205,6 @@ export default function BasicEditingGrid() {
         dateFim = selectedDate[1];
     }
 
-
     const csvFilename = useMemo(() => {
         if (dateInicio && dateFim) {
             return `relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.csv`;
@@ -227,7 +233,6 @@ export default function BasicEditingGrid() {
             dateInicio = selectedDate[0];
             dateFim = selectedDate[1];
         }
-
         const status = getValues('status');
         const selectedStatus = status.join(',');
 
@@ -296,7 +301,6 @@ export default function BasicEditingGrid() {
             dateInicio = selectedDate[0];
             dateFim = selectedDate[1];
         }
-
         const data = [
             [ "Status selecionado","", whichStatus || "Todos"],
             ["Nome", "Valor"], 
@@ -459,7 +463,16 @@ export default function BasicEditingGrid() {
                                 <Controller
                                     name="valorMin"
                                     control={control}
-                                    render={({ field }) => (
+                                    rules={{
+                                        validate: (value) => {
+                                            if (!value) return true;
+                                            const valorMin = parseFloat(value.replace(',', '.'));
+                                            const valorMax = parseFloat(getValues("valorMax").replace(',', '.'));
+                                            return valorMin <= valorMax || "Valor Mínimo não pode ser maior que o Valor Máximo";
+                                        }
+                                    }}
+
+                                    render={({ field, fieldState: { error } }) => (
                                         <NumericFormat
                                             {...field}
                                             thousandSeparator="."
@@ -469,13 +482,31 @@ export default function BasicEditingGrid() {
                                             customInput={TextField}
                                             label="Valor Mínimo"
                                             value={field.value}
+                                            onChange={(e) => {
+                                                field.onChange(e);
+                                                const valorMin = parseFloat(e.target.value.replace(',', '.'));
+                                                const valorMax = parseFloat(getValues("valorMax").replace(',', '.'));
+
+                                                if (valorMin <= valorMax) {
+                                                    clearErrors("valorMin");
+                                                    clearErrors("valorMax");
+                                                } else {
+                                                    trigger("valorMax");
+                                                }
+                                            }}
+                                            error={!!error}
+                                            helperText={error ? error.message : null}
                                             onMouseEnter={() => {
                                                 if (field.value) setShowClearMin(true);
+
                                             }}
                                             onMouseLeave={() => setShowClearMin(false)}
+                                            FormHelperTextProps={{
+                                                sx: { color: 'red', fontSize: '1rem', position: 'absolute', bottom: '-3.5rem' }
+                                            }}
                                             InputProps={{
                                                 endAdornment: showClearMin && field.value && (
-                                                    <InputAdornment  sx={{ position: "absolute", right: '1rem' }} position="end">
+                                                    <InputAdornment sx={{ position: "absolute", right: '1rem' }} position="end">
                                                         <IconButton onClick={() => clearSelect('valorMin')} sx={{ height: '2rem', width: '2rem' }}>
                                                             <ClearIcon sx={{ height: '2rem' }} />
                                                         </IconButton>
@@ -489,7 +520,15 @@ export default function BasicEditingGrid() {
                                 <Controller
                                     name="valorMax"
                                     control={control}
-                                    render={({ field }) => (
+                                    rules={{
+                                        validate: (value) => {
+                                            if (!value) return true;
+                                            const valorMax = parseFloat(value.replace(',', '.'));
+                                            const valorMin = parseFloat(getValues("valorMin").replace(',', '.'));
+                                            return valorMax >= valorMin || "Valor Máximo não pode ser menor que o Valor Mínimo";
+                                        }
+                                    }}
+                                    render={({ field, fieldState: { error } }) => (
                                         <NumericFormat
                                             {...field}
                                             thousandSeparator="."
@@ -499,19 +538,36 @@ export default function BasicEditingGrid() {
                                             customInput={TextField}
                                             label="Valor Máximo"
                                             value={field.value}
+                                            onChange={(e) => {
+                                                field.onChange(e);
+                                                const valorMax = parseFloat(e.target.value.replace(',', '.'));
+                                                const valorMin = parseFloat(getValues("valorMin").replace(',', '.'));
+
+                                                if (valorMax >= valorMin) {
+                                                    clearErrors("valorMax");
+                                                    clearErrors("valorMin");
+                                                } else {
+                                                    trigger("valorMin");
+                                                }
+                                            }}
                                             onMouseEnter={() => {
                                                 if (field.value) setShowClearMax(true);
                                             }}
                                             onMouseLeave={() => setShowClearMax(false)}
+                                            error={!!error}
+                                            helperText={error ? error.message : null}
+                                            FormHelperTextProps={{
+                                                sx: { color: 'red', fontSize: '1rem', position: 'absolute', bottom: '-3.5rem' }
+                                            }}
                                             InputProps={{
                                                 endAdornment: showClearMax && field.value && (
-                                                    <InputAdornment  sx={{ position: "absolute", right: '1rem' }} position="end">
+                                                    <InputAdornment sx={{ position: "absolute", right: '1rem' }} position="end">
                                                         <IconButton onClick={() => clearSelect('valorMax')} sx={{ height: '2rem', width: '2rem' }}>
                                                             <ClearIcon sx={{ height: '2rem' }} />
                                                         </IconButton>
                                                     </InputAdornment>
                                                 ),
-                                             
+
                                                 ...valueProps,
                                             }}
                                         />
@@ -519,8 +575,13 @@ export default function BasicEditingGrid() {
                                 />
                             </Box>
                             <Box>
-
+                          
                             </Box>
+                            {/* {whichStatusShow.includes("A pagar") && (
+                                <span className="text-sm text-red-600">
+                                    Atenção: Para o status "a pagar", a data escolhida deve ser referente a data da transação (quarta a quinta-feira).
+                                </span>
+                            )} */}
                             <Box>
                                 <Button
                                     variant="contained"

@@ -5,7 +5,8 @@ import { useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 import AddIcon from '@mui/icons-material/Add';
 
-import { getData, setSelectedDate, setSelectedYear, setSelectedStatus } from 'app/store/releaseSlice';
+import { getData, setSelectedDate, setSelectedYear, setSelectedStatus, handleAuthValue } from 'app/store/releaseSlice';
+
 import { Link } from 'react-router-dom';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -51,33 +52,37 @@ function CardSelection() {
     };
 
     const searchData = () => {
-        const hasErrors = !selectedDate.mes || !selectedDate.periodo;
+        const hasErrors = (!selectedDate.mes || !selectedDate.periodo) && !selectedStatus?.status;
+
         setErrors({
-            mes: !selectedDate.mes,
-            periodo: !selectedDate.periodo,
+            mes: !selectedDate.mes && !selectedStatus?.status,
+            periodo: !selectedDate.periodo && !selectedStatus?.status,
         });
 
         if (hasErrors) {
             return;
         }
 
+        const searchParams = {
+            selectedDate: { ...selectedDate },
+            selectedStatus,
+        };
+
         if (selectedYear !== null) {
             const selectedYearFormat = dayjs(selectedYear).year();
             dispatch(setSelectedYear(selectedYearFormat));
-            dispatch(getData({ selectedDate, selectedStatus, selectedYear }))
-                .catch((error) => {
-                    if (error.response.status === 400) {
-                        dispatch(showMessage({ message: 'Verifique os campos e tente novamente!' }));
-                    }
-                });
-        } else {
-            dispatch(getData({ selectedDate, selectedStatus }))
-                .catch((error) => {
-                    if (error.response.status === 400) {
-                        dispatch(showMessage({ message: 'Verifique os campos e tente novamente!' }));
-                    }
-                });
+            searchParams.selectedYear = selectedYearFormat;
         }
+
+        dispatch(getData(searchParams))
+            .catch((error) => {
+                if (error.response?.status === 400) {
+                    dispatch(showMessage({ message: 'Verifique os campos e tente novamente!' }));
+                }
+            });
+
+        // dispatch(handleAuthValue(searchParams))
+
     };
 
     return (
@@ -90,6 +95,13 @@ function CardSelection() {
                         </h3>
                     </header>
                     <Box className="grid gap-x-10 grid-cols-3">
+
+
+                        <FormControl fullWidth>
+                            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                                <DatePicker {...register('ano')} onChange={handleYearChange} label={'Selecionar Ano'} openTo="year" views={['year']} />
+                            </LocalizationProvider>
+                        </FormControl>
                         <FormControl className='relative' fullWidth>
                             <InputLabel id="select-mes">Selecionar Mês</InputLabel>
                             <Select
@@ -134,11 +146,6 @@ function CardSelection() {
                             {errors.periodo && <span className='absolute text-xs text-red-600 bottom-[-20px]'>Campo obrigatório para pesquisa de período*</span>}
                         </FormControl>
 
-                        <FormControl fullWidth>
-                            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                                <DatePicker {...register('ano')} onChange={handleYearChange} label={'Selecionar Ano'} openTo="year" views={['year']} />
-                            </LocalizationProvider>
-                        </FormControl>
                     </Box>
 
                     <header className="flex justify-between items-center mt-40">
@@ -158,9 +165,11 @@ function CardSelection() {
                                 onChange={handleChangeStatus}
                                 value={selectedStatus?.status}
                             >
-                                <MenuItem value={null}>Ver todos</MenuItem>
-                                <MenuItem value={0}>Não autorizado</MenuItem>
-                                <MenuItem value={1}>Autorizado</MenuItem>
+                                <MenuItem value={'todos'}>Ver todos</MenuItem>
+                                <MenuItem value={'autorizado'}>Autorizado</MenuItem>
+                                <MenuItem value={'autorizado parcial'}>Autorizado Parcial</MenuItem>
+                                <MenuItem value={'gerado'}>Lançado</MenuItem>
+
                             </Select>
                         </FormControl>
                     </Box>

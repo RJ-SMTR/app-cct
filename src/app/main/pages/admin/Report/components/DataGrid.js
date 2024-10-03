@@ -3,19 +3,32 @@ import {
     DataGrid,
     useGridApiRef
 } from '@mui/x-data-grid';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
     Box,
+    MenuItem,
+    ListItemText,
+    Checkbox,
+    Table,
+    TableHead,
+    TableBody,
     Autocomplete,
     TextField,
     Button,
+    TableRow,
+    TableCell,
     Paper,
+    Select,
+    InputLabel,
+    FormControl,
     CircularProgress,
     InputAdornment,
+    TableFooter,
     Menu,
     IconButton
 } from '@mui/material';
 import { format, parseISO } from 'date-fns';
+import { CSVLink } from 'react-csv';
 import { useDispatch, useSelector } from 'react-redux';
 import { CustomProvider, DateRangePicker } from 'rsuite';
 import { useForm, Controller } from 'react-hook-form';
@@ -28,10 +41,12 @@ import 'jspdf-autotable';
 import ptBR from 'rsuite/locales/pt_BR';
 
 
+
 const consorciosStatus = [
     { label: 'Todos' },
     { label: 'A pagar' },
     { label: 'Pago' },
+    { label: 'Aguardando Pagamento' },
     { label: 'Erro' },
 ];
 const consorcios = [
@@ -43,7 +58,8 @@ const consorcios = [
     { label: 'STPC', value: "STPC" },
     { label: 'STPL', value: "STPL" },
     { label: 'Transcarioca', value: "Transcarioca" },
-    { label: 'VLT', value: "VLT" }
+    { label: 'VLT', value: "VLT" },
+{label: 'TEC', value: "TEC"}
 ];
 const CustomBadge = ({ data }) => {
     return (
@@ -76,6 +92,7 @@ export default function BasicEditingGrid() {
     const dispatch = useDispatch()
     const reportType = useSelector(state => state.report.reportType);
     const userList = useSelector(state => state.admin.userList) || []
+    const reportList = useSelector(state => state.report.reportList)
     const [isLoading, setIsLoading] = useState(false)
     const [loadingUsers, setLoadingUsers] = useState(false)
     const [userOptions, setUserOptions] = useState([])
@@ -84,6 +101,8 @@ export default function BasicEditingGrid() {
     const [rowModesModel, setRowModesModel] = useState({});
     const [rows, setRows] = useState([]);
     const apiRef = useGridApiRef();
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [whichStatusShow, setWhichStatus] = useState([])
     
 
 
@@ -142,6 +161,173 @@ export default function BasicEditingGrid() {
     useEffect(() => {
         fetchUsers()
     }, []);
+    const status = getValues('status')
+    const whichStatus = status?.join(',')
+
+    const reportListData = reportList.count > 0
+        ? reportList.data?.map(report => ({
+            Nome: report.nomefavorecido,
+            Valor: formatter.format(report.valor),
+            Status: "",
+        }))
+        : [];
+
+    const valorTotal = {
+        Nome: "Valor Total",
+        Valor: "",
+        Status: formatter.format(reportList?.valor),
+    }
+
+    const statusRow = {
+        Nome: "Status selecionado",
+        Valor: "",
+        Status: whichStatus || "Todos",
+    };
+
+    const csvData = [
+        statusRow,
+        ...reportListData,
+        valorTotal
+    ]
+    let dateInicio;
+    let dateFim;
+    const selectedDate = getValues('dateRange');
+
+    if (selectedDate !== null) {
+        dateInicio = selectedDate[0];
+        dateFim = selectedDate[1];
+    }
+
+    const csvFilename = useMemo(() => {
+        if (dateInicio && dateFim) {
+            return `relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.csv`;
+        }
+        return `relatorio_${format(new Date(), 'dd-MM-yyyy')}.csv`;
+    }, [dateInicio, dateFim])
+
+    // Export PDF
+    const exportPDF = () => {
+        const doc = new jsPDF();
+        const tableColumn = ["Nome", "Valor"];
+        const tableRows = [];
+
+        reportList.data.forEach(report => {
+            const reportData = [
+                report.nomefavorecido,
+                formatter.format(report.valor)
+            ];
+            tableRows.push(reportData);
+        });
+        let dateInicio;
+        let dateFim;
+        const selectedDate = getValues('dateRange');
+
+        if (selectedDate !== null) {
+            dateInicio = selectedDate[0];
+            dateFim = selectedDate[1];
+        }
+        const status = getValues('status');
+        const selectedStatus = status.join(',');
+
+        const logoImg = 'assets/icons/logoPrefeitura.png';
+        const logoH = 15;
+        const logoW = 30;
+
+
+
+
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            margin: { left: 14, right: 14, top: 60 },
+            startY: 60,
+            didDrawPage: (data) => {
+
+                doc.addImage(logoImg, 'PNG', 14, 10, logoW, logoH);
+
+
+                const hrYPosition = 30;
+                doc.setLineWidth(0.3);
+                doc.line(14, hrYPosition, 196, hrYPosition);
+
+
+                doc.setFontSize(10);
+                doc.text(`Relatório dos dias: ${format(dateInicio, 'dd/MM/yyyy')} a ${format(dateFim, 'dd/MM/yyyy')}`, 14, 45);
+                doc.text(`Status observado: ${selectedStatus || 'Todos'}`, 14, 50);
+
+
+
+
+
+            },
+        });
+
+        const pageCount = doc.internal.getNumberOfPages();
+
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(10);
+
+            const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
+            const text = `Página ${currentPage} de ${pageCount}`;
+            const xPos = 14;
+            const yPos = doc.internal.pageSize.height - 5;
+
+            doc.text(text, xPos, yPos);
+        }
+
+        const totalValue = `Valor total: ${formatter.format(reportList.valor ?? 0)}`;
+        doc.setFontSize(10);
+        doc.text(totalValue, 14, doc.internal.pageSize.height - 10);
+
+
+        doc.save(`relatorio_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.pdf`);
+    };
+
+    // Export XLSX
+    const exportXLSX = () => {
+        let dateInicio;
+        let dateFim;
+        const selectedDate = getValues('dateRange');
+
+        if (selectedDate !== null) {
+            dateInicio = selectedDate[0];
+            dateFim = selectedDate[1];
+        }
+        const data = [
+            ["Status selecionado", "", whichStatus || "Todos"],
+            ["Nome", "Valor"],
+            ...reportList.data.map(report => [
+                report.nomefavorecido,
+                formatter.format(report.valor),
+            ]),
+            ["Valor Total", "", formatter.format(reportList.valor ?? 0)],
+
+        ];
+
+        const wb = utils.book_new();
+        utils.book_append_sheet(wb, utils.json_to_sheet(data));
+        writeFileXLSX(wb, `relatorio_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.xlsx`);
+    };
+
+
+
+
+
+    const handleMenuClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleMenuClose = (option) => {
+        setAnchorEl(null);
+        if (option === 'csv') {
+            document.getElementById('csv-export-link').click();
+        } else if (option === 'pdf') {
+            exportPDF();
+        } else if (option === 'xlsx') {
+            exportXLSX();
+        }
+    };
     useEffect(() => {
         if (userList && userList.length > 0) {
             const options = userList.map((user) => ({
@@ -174,6 +360,10 @@ export default function BasicEditingGrid() {
     };
   
     const handleAutocompleteChange = (field, newValue) => {
+        if (field === 'status') {
+            const status = newValue.map(i => i.label)
+            setWhichStatus(status)
+        }
         setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
     };
     return (
@@ -413,6 +603,11 @@ export default function BasicEditingGrid() {
                             <Box>
 
                             </Box>
+                            {/* {whichStatusShow.includes("A pagar") && (
+                                <span className="text-sm text-red-600">
+                                    Atenção: Para o status "a pagar", a data escolhida deve ser referente a data da transação (quarta a quinta-feira).
+                                </span>
+                            )} */}
                             <Box>
                                 <Button
                                     variant="contained"
@@ -442,34 +637,79 @@ export default function BasicEditingGrid() {
             </Paper>
             <Paper>
                 <Box className="w-full md:mx-9 p-24 relative mt-32">
-                    <div style={{ height: '65vh', width: '100%' }}>
-                        <DataGrid
-                            id='data-table'
-                            // localeText={locale.components.MuiDataGrid.defaultProps.localeText}
-                            rows={rows}
-                            disableColumnMenu
-                            disableColumnSelector
-                            disableDensitySelector
-                            disableMultipleColumnsFiltering
-                            apiRef={apiRef}
-                            columns={columns}
-                            loading={isLoading}
-                            rowHeight={85}
-                            slotProps={{
-                                toolbar: {
-                                    showQuickFilter: true,
-                                },
-                            }}
-                            rowModesModel={rowModesModel}
-                            onRowEditStop={(params, event) => {
-                                event.defaultMuiPrevented = true;
-                            }}
-                            componentsProps={{
-                                toolbar: { setRows, setRowModesModel },
-                            }}
-                        />
-                    </div>
+                    <header className="flex justify-between items-center">
+                        <h3 className="font-semibold mb-24">
+                            Data Vigente: {format(new Date(), 'dd/MM/yyyy')}
+                        </h3>
 
+
+                        <Button
+                            aria-controls="simple-menu"
+                            aria-haspopup="true"
+                            onClick={handleMenuClick}
+                            style={{ marginTop: '20px' }}
+                        >
+                            <svg class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium muiltr-hgpioi-MuiSvgIcon-root h-[2rem]" focusable="false" aria-hidden="true" viewBox="0 0 24 24" data-testid="SaveAltIcon"><path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"></path></svg> Exportar
+                        </Button>
+                        <Menu
+                            id="simple-menu"
+                            anchorEl={anchorEl}
+                            keepMounted
+                            open={Boolean(anchorEl)}
+                            onClose={() => setAnchorEl(null)}
+                        >
+                            <MenuItem onClick={() => handleMenuClose('csv')}>CSV</MenuItem>
+                            <MenuItem onClick={() => handleMenuClose('pdf')}>PDF</MenuItem>
+                            <MenuItem onClick={() => handleMenuClose('xlsx')}>XLSX</MenuItem>
+                        </Menu>
+
+                        <CSVLink
+                            id="csv-export-link"
+                            data={csvData}
+                            filename={csvFilename}
+                            className="hidden"
+
+                        />
+                    </header>
+
+                    <div style={{ height: '50vh', width: '100%' }} className="overflow-scroll">
+                        <Table size='small'>
+                            <TableHead className="items-center mb-4">
+                                <TableRow>
+                                    <TableCell>Nome</TableCell>
+                                    <TableCell>Valor</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {!isLoading ? (
+                                    reportList.count > 0 ? (
+                                        reportList.data?.map((report, index) => (
+                                            <TableRow key={index}>
+                                                <TableCell>{report.nomefavorecido}</TableCell>
+                                                <TableCell>{formatter.format(report.valor)}</TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={2}>Não há dados para serem exibidos</TableCell>
+                                        </TableRow>
+                                    )
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={5}>
+                                            <Box className="flex justify-center items-center m-10">
+                                                <CircularProgress />
+                                            </Box>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                                <TableRow key={Math.random()}>
+                                    <TableCell className='font-bold'>Valor Total: </TableCell>
+                                    <TableCell className='font-bold'> {formatter.format(reportList.valor ?? 0)}</TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </div>
                 </Box>
             </Paper></>
     );

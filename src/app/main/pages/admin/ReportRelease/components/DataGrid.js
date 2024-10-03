@@ -53,6 +53,7 @@ const predefinedFilters = [
     { label: 'CONSORCIO TRANSCARIOCA DE TRANSPORTES', filterFn: (row) => row.consorcio.includes('Transcarioca') },
     { label: 'CONSORCIO SANTA CRUZ TRANSPORTES', filterFn: (row) => row.consorcio.includes('Santa Cruz') },
     { label: 'CONCESSIONARIA DO VLT CARIOCA S.A.', filterFn: (row) => row.consorcio.includes('VLT') },
+    { label: 'TEC', filterFn: (row) => row.consorcio.includes('TEC') },
 ];
 
 const predefinedFiltersStatus = [

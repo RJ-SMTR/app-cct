@@ -46,7 +46,6 @@ function ReportApp() {
                             onChange={handleSelectChange}
                         >
                             <MenuItem value="analitico">Relatório Analítico</MenuItem>
-
                             <MenuItem value="sintetico">Relatório Sintético</MenuItem>
                             <MenuItem value="consolidado">Relatório Consolidado</MenuItem>
                         </Select>
@@ -55,7 +54,6 @@ function ReportApp() {
 
                 <Box>
                         {selectedReport === 'analitico' && <DataGridInfos />}
-
                         {selectedReport === 'sintetico' && <SynthReport />}
                         {selectedReport === 'consolidado' && <ConsolidatedReport />}
                 </Box>
