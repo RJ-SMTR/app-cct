@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import AddIcon from '@mui/icons-material/Add';
 
 import { getData, setSelectedDate, setSelectedYear, setSelectedStatus, handleAuthValue } from 'app/store/releaseSlice';
+
 import { Link } from 'react-router-dom';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -81,6 +82,7 @@ function CardSelection() {
             });
 
         // dispatch(handleAuthValue(searchParams))
+
     };
 
     return (
@@ -93,6 +95,7 @@ function CardSelection() {
                         </h3>
                     </header>
                     <Box className="grid gap-x-10 grid-cols-3">
+
 
                         <FormControl fullWidth>
                             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
@@ -166,6 +169,7 @@ function CardSelection() {
                                 <MenuItem value={'autorizado'}>Autorizado</MenuItem>
                                 <MenuItem value={'autorizado parcial'}>Autorizado Parcial</MenuItem>
                                 <MenuItem value={'gerado'}>Lançado</MenuItem>
+
                             </Select>
                         </FormControl>
                     </Box>
