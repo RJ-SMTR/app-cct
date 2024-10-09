@@ -96,7 +96,6 @@ function CardSelection() {
                     </header>
                     <Box className="grid gap-x-10 grid-cols-3">
 
-
                         <FormControl fullWidth>
                             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
                                 <DatePicker {...register('ano')} onChange={handleYearChange} label={'Selecionar Ano'} openTo="year" views={['year']} />
@@ -169,7 +168,6 @@ function CardSelection() {
                                 <MenuItem value={'autorizado'}>Autorizado</MenuItem>
                                 <MenuItem value={'autorizado parcial'}>Autorizado Parcial</MenuItem>
                                 <MenuItem value={'gerado'}>Lançado</MenuItem>
-
                             </Select>
                         </FormControl>
                     </Box>
