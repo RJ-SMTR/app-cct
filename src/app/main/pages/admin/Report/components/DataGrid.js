@@ -41,6 +41,7 @@ import 'jspdf-autotable';
 import ptBR from 'rsuite/locales/pt_BR';
 
 
+
 const consorciosStatus = [
     { label: 'Todos' },
     { label: 'A pagar' },
@@ -48,6 +49,7 @@ const consorciosStatus = [
     { label: 'Erro' },
     { label: 'Pago' },
     { label: 'Pagamento Indevido' }
+
 ];
 const consorcios = [
     { label: 'Todos', value: "Todos" },
@@ -60,6 +62,7 @@ const consorcios = [
     { label: 'TEC', value: "TEC" },
     { label: 'Transcarioca', value: "Transcarioca" },
     { label: 'VLT', value: "VLT" }
+
 ];
 const CustomBadge = ({ data }) => {
     return (

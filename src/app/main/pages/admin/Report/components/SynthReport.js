@@ -30,6 +30,7 @@ import { showMessage } from 'app/store/fuse/messageSlice';
 import 'jspdf-autotable';
 import ptBR from 'rsuite/locales/pt_BR';
 import { utils, writeFileXLSX } from 'xlsx';
+
 const consorciosStatus = [
     { label: 'Todos' },
     { label: 'A pagar' },
@@ -50,6 +51,10 @@ const consorcios = [
     { label: 'Transcarioca', value: "Transcarioca" },
     { label: 'VLT', value: "VLT" }
 ];
+
+
+
+
 
 
 
