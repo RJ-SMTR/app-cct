@@ -81,6 +81,9 @@ function handleData(data) {
                 case 'Aguardando Pagamento':
                     requestData.emProcessamento = true;
                     break;
+                case 'Pagamento Indevido':
+                    requestData.pagamentoIndevido = true;
+                    break;
                 case 'Todos':
                     break;
                 default:
