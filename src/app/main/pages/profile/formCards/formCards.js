@@ -227,7 +227,7 @@ export function BankInfo({ user }) {
 
 
     function onSubmit(info) {
-        if (info.bankCode === 184 || info.bankCode === 29 || info.bankCode === 479) {
+        if (info.bankCode === 184 || info.bankCode === 29 || info.bankCode === 479 || info.bankCode === 386) {
 
             setError('bankCode', {
                 message: 'Você deve alterar seu banco antes de salvar'
