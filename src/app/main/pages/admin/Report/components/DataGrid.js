@@ -603,11 +603,11 @@ export default function BasicEditingGrid() {
                             <Box>
 
                             </Box>
-                            {/* {whichStatusShow.includes("A pagar") && (
+                            {whichStatusShow.includes("A pagar") && (
                                 <span className="text-sm text-red-600">
-                                    Atenção: Para o status "a pagar", a data escolhida deve ser referente a data da transação (quarta a quinta-feira).
+                                    Atenção: Para o status "a pagar", a data escolhida deve ser referente a data da transação (quinta a quarta-feira).
                                 </span>
-                            )} */}
+                            )}
                             <Box>
                                 <Button
                                     variant="contained"
