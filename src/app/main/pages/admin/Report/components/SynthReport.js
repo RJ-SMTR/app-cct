@@ -446,7 +446,7 @@ export default function BasicEditingGrid() {
             case 'naopago':
                 return 'Erro';
             default:
-                return '';
+                return status;
         }
     };
 
