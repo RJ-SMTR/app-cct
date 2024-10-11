@@ -183,8 +183,7 @@ export function BankInfo({ user }) {
     const [saved, setSaved] = useState(false)
     const [userBank, setUserBank] = useState('')
 
-
-    const { handleSubmit, register, setError, formState, clearErrors, setValue } = useForm({
+    const { handleSubmit, register, setError, formState, watch, clearErrors, setValue } = useForm({
         defaultValues: {
             bankCode: user.bankCode ?? '',
             bankAgency: user.bankAgency ?? '',
@@ -194,51 +193,48 @@ export function BankInfo({ user }) {
     });
     const { isValid, errors } = formState;
 
+    const bankAccountValue = watch("bankAccount")
+    const bankAgencyValue = watch("bankAgency")
 
-  
     useEffect(() => {
         fetchBankOptions();
         if (user.bankCode === 184 || user.bankCode === 29 || user.bankCode === 479 || user.bankCode === 386) {
             setError('bankCode', { message: `Erro: Código do banco ${user.bankCode} não é permitido. Por favor, contacte o suporte!` });
-
         }
         setSaved(false)
     }, [user]);
-
 
     const fetchBankOptions = async () => {
         try {
             const response = await api.get('/banks');
             response.data = response.data.sort((a, b) => a.name.localeCompare(b.name));
-            setUserBank(response.data.find((bank) => bank.code === selectedBankCode) || null)
-            const filteredData = response.data.filter(({ code }) => code !== 184 && code !== 29 && code !== 479 && code !== 386 )
-
+            setUserBank(response.data.find((bank) => bank.code === selectedBankCode) || null);
+            const filteredData = response.data.filter(({ code }) => code !== 184 && code !== 29 && code !== 479 && code !== 386);
             setBankOptions(filteredData);
         } catch (error) {
             console.error('Error fetching bank options:', error);
         }
     };
 
-
     const handleAutocompleteChange = (_, newValue) => {
-        setValue('bankCode', newValue ? newValue.code : '')
-        setSelectedBankCode(newValue ? newValue.code : '')
-    }
-
+        setValue('bankCode', newValue ? newValue.code : '');
+        setSelectedBankCode(newValue ? newValue.code : '');
+    };
 
     function onSubmit(info) {
-        if (info.bankCode === 184 || info.bankCode === 29 || info.bankCode === 479) {
+        info.bankAccount = String(info.bankAccount);
 
+        if (info.bankCode === 184 || info.bankCode === 29 || info.bankCode === 479) {
             setError('bankCode', {
                 message: 'Você deve alterar seu banco antes de salvar'
-            })
+            });
         } else {
             patchInfo(info, user.id)
                 .then((response) => {
                     if (isValid) {
-                        setIsEditable(false)
-                        setSaved(true)
-                        success(response, "Seus dados foram salvos!")
+                        setIsEditable(false);
+                        setSaved(true);
+                        success(response, "Seus dados foram salvos!");
                     }
                 })
                 .catch((_errors) => {
@@ -259,46 +255,36 @@ export function BankInfo({ user }) {
                     }
                 });
         }
-      
     }
-
 
     const renderButton = () => {
         if (!isEditable) {
             return (
-                <button className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-12' onClick={() => { setIsEditable(true), setSaved(false) }}>
+                <button className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-12' onClick={() => { setIsEditable(true); setSaved(false); }}>
                     Editar
                 </button>
             );
         } else {
             return (
                 <div className='flex'>
-                
                     <button type='submit' className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10' onClick={() => setIsEditable(true)}>
                         Salvar
                     </button>
                 </div>
             );
         }
-    }
+    };
+
     return (
         <>
-       
-            <Card className=" w-full md:mx-9 p-24 relative mt-24 md:mt-0">
+            <Card className="w-full md:mx-9 p-24 relative mt-24 md:mt-0">
                 <header className="flex justify-between items-center">
-                    <h1 className="font-semibold">
-                        Dados Bancários
-                    </h1>
-
+                    <h1 className="font-semibold">Dados Bancários</h1>
                 </header>
-                <form name="Bank"
-                    noValidate
-                    className="flex flex-col justify-center w-full mt-32"
-                    onSubmit={handleSubmit(onSubmit)}>
+                <form name="Bank" noValidate className="flex flex-col justify-center w-full mt-32" onSubmit={handleSubmit(onSubmit)}>
                     <div className='absolute right-24 top-24'>
                         {renderButton()}
                     </div>
-
 
                     <FormControl fullWidth>
                         <Autocomplete
@@ -324,30 +310,41 @@ export function BankInfo({ user }) {
                     </FormControl>
 
                     <TextField
-                        {...register("bankAgency")}
+                        {...register("bankAgency", {
+                            required: "A agência é obrigatória",
+                            pattern: {
+                                value: /^[0-9]*$/,
+                                message: "A agência deve conter apenas números"
+                            }
+                        })}
                         className="mb-24"
                         label="Agência"
-                        type="string"
+                        type="text" 
                         variant="outlined"
                         fullWidth
                         inputProps={{ maxLength: 4 }}
-                        disabled={!isEditable}
                         error={!!errors.bankAgency}
-                        helperText={errors?.bankAgency?.message}
+                        helperText={errors?.bankAgency?.message || (bankAgencyValue && !/^[0-9]*$/.test(bankAgencyValue) ? "A agência deve conter apenas números" : "")}
+                        disabled={!isEditable}
                     />
+
                     <Box className="flex justify-between">
                         <TextField
-                            {...register("bankAccount")}
+                            {...register("bankAccount", {
+                                required: "A conta bancária é obrigatória",
+                                pattern: {
+                                    value: /^[0-9]*$/,
+                                    message: "A conta bancária deve conter apenas números"
+                                }
+                            })}
                             className="mb-24 w-[68%]"
                             label="Conta"
-                            type="string"
+                            type="text" 
                             variant="outlined"
                             fullWidth
-
                             inputProps={{ maxLength: 12 }}
-
                             error={!!errors.bankAccount}
-                            helperText={errors?.bankAccount?.message}
+                            helperText={errors?.bankAccount?.message || (bankAccountValue && !/^[0-9]*$/.test(bankAccountValue) ? "A conta bancária deve conter apenas números" : "")}
                             disabled={!isEditable}
                         />
                         <TextField
@@ -357,16 +354,15 @@ export function BankInfo({ user }) {
                             type="string"
                             variant="outlined"
                             fullWidth
-                            inputProps={{ maxLength: 2}}
+                            inputProps={{ maxLength: 2 }}
                             disabled={!isEditable}
                             error={!!errors.bankAccountDigit}
                             helperText={errors?.bankAccountDigit?.message}
                         />
-
                     </Box>
-
                 </form>
             </Card>
         </>
-    )
+    );
 }
+
