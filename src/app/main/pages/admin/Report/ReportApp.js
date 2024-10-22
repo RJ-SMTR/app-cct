@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import DataGridInfos from './components/DataGrid';
 import SynthReport from './components/SynthReport';
 import ConsolidatedReport from './components/ConsolidatedReport';
+import UndueReport from './components/UndueReport'
 import { useDispatch } from "react-redux";
 import { setReportList, setReportType, setSynthData, setTotalSynth } from "app/store/reportSlice";
 
@@ -48,6 +49,7 @@ function ReportApp() {
                             <MenuItem value="analitico">Relatório Analítico</MenuItem>
                             <MenuItem value="sintetico">Relatório Sintético</MenuItem>
                             <MenuItem value="consolidado">Relatório Consolidado</MenuItem>
+                            <MenuItem value="indevido">Relatório Pagamentos Indevidos</MenuItem>
                         </Select>
                     </FormControl>
                 </Card>
@@ -56,6 +58,7 @@ function ReportApp() {
                         {selectedReport === 'analitico' && <DataGridInfos />}
                         {selectedReport === 'sintetico' && <SynthReport />}
                         {selectedReport === 'consolidado' && <ConsolidatedReport />}
+                        {selectedReport === 'indevido' && <UndueReport />}
                 </Box>
             </div>
         </>
