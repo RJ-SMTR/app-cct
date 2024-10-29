@@ -197,7 +197,7 @@ export function BankInfo({ user }) {
 
   
     useEffect(() => {
-        const bankCodes = [184, 29, 479, 386, 332, 272, 290, 249]
+        const bankCodes = [184, 29, 479, 386, 249]
         fetchBankOptions();
         if (bankCodes.includes(user.bankCode)) {
             setError('bankCode', { message: `Erro: Código do banco ${user.bankCode} não é permitido. Por favor, contacte o suporte!` });
@@ -210,7 +210,7 @@ export function BankInfo({ user }) {
     const fetchBankOptions = async () => {
         try {
             const response = await api.get('/banks');
-            const bankCodes = [184, 29, 479, 386, 332, 272, 290, 249]
+            const bankCodes = [184, 29, 479, 386, 249]
             response.data = response.data.sort((a, b) => a.name.localeCompare(b.name));
             setUserBank(response.data.find((bank) => bank.code === selectedBankCode) || null)
             const filteredData = response.data.filter(({ code }) => !bankCodes.includes(code));
