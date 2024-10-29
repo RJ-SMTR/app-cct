@@ -207,7 +207,7 @@ export function PersonalInfo({ user }) {
 export function BankInfo({user}) {
     const [bankCode, setBankCode] = useState()
     const [bankRm, setBankRm] = useState(false)
-    const bankCodes = [184, 29, 479, 386, 332, 272,290, 249]
+    const bankCodes = [184, 29, 479, 386, 249]
     useEffect(() => {
         if (user.aux_bank != null) {
             setBankCode(`${user.bankCode} - ${user.aux_bank.name}`);
