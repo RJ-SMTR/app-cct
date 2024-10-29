@@ -145,7 +145,7 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
                         valor: responseData.reduce((sum, curr) => sum + curr.valor, 0),
                         status: 'Todos'
                     };
-                    if(reportType == 'sintetico'){
+                    if(reportType == 'sintetico' || reportType == 'pendente'){
                         dispatch(handleSynthData(combinedResponse))
                     } else {
 
