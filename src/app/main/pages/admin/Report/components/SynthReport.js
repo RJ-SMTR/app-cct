@@ -788,7 +788,7 @@ export default function BasicEditingGrid() {
                                                     {Object.entries(
                                                         group.items.reduce((acc, item) => {
                                                             let key;
-                                                            if (item.consorcio === "STPC" || item.consorcio === "STPL") {
+                                                            if (item.consorcio === "STPC" || item.consorcio === "STPL" || item.consorcio === "TEC") {
                                                                 key = `${item.datapagamento}-${item.status}-${item.favorecido}`;
                                                             } else {
                                                                 key = `${item.datapagamento}-${item.status}`;
@@ -799,7 +799,7 @@ export default function BasicEditingGrid() {
                                                         }, {})
                                                     ).map(([key, items]) => {
                                                         const [datapagamento, status, favorecido] = key.split("-");
-                                                        const isGroupedByFavorecido = items.some(item => item.consorcio === "STPC" || item.consorcio === "STPL");
+                                                        const isGroupedByFavorecido = items.some(item => item.consorcio === "STPC" || item.consorcio === "STPL" || item.consorcio === "TEC");
 
                                                         return (
                                                             <React.Fragment key={`${consorcio}-${datapagamento}-${status}-${favorecido || ''}`}>
