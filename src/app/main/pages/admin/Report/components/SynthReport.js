@@ -34,10 +34,9 @@ import { utils, writeFileXLSX } from 'xlsx';
 const consorciosStatus = [
     { label: 'Todos' },
     { label: 'A pagar' },
+    { label: 'Pago' },
     { label: 'Aguardando Pagamento' },
     { label: 'Erro' },
-    { label: 'Pago' },
-    { label: 'Pagamento Indevido' }
 ];
 const consorcios = [
     { label: 'Todos', value: "Todos" },
@@ -47,15 +46,10 @@ const consorcios = [
     { label: 'Santa Cruz', value: "Santa Cruz" },
     { label: 'STPC', value: "STPC" },
     { label: 'STPL', value: "STPL" },
-    { label: 'TEC', value: "TEC" },
     { label: 'Transcarioca', value: "Transcarioca" },
-    { label: 'VLT', value: "VLT" }
+    { label: 'VLT', value: "VLT" },
+{label: 'TEC', value: "TEC"}
 ];
-
-
-
-
-
 
 
 
@@ -452,7 +446,7 @@ export default function BasicEditingGrid() {
             case 'naopago':
                 return 'Erro';
             default:
-                return '';
+                return status;
         }
     };
 
@@ -697,11 +691,11 @@ export default function BasicEditingGrid() {
                             <Box>
 
                             </Box>
-                            {/* {whichStatusShow.includes("A pagar")  && (
+                          {whichStatusShow.includes("A pagar")  && (
                                 <span className="text-sm text-red-600">
-                                    Atenção: Para o status "a pagar", a data escolhida deve ser referente a data da transação (quarta a quinta-feira).
+                                    Atenção: Para o status "a pagar", a data escolhida deve ser referente a data da transação (quinta a quarta-feira).
                                 </span>
-                            )} */}
+                            )} 
                             <Box>
                                 <Button
                                     variant="contained"
@@ -794,7 +788,7 @@ export default function BasicEditingGrid() {
                                                     {Object.entries(
                                                         group.items.reduce((acc, item) => {
                                                             let key;
-                                                            if (item.consorcio === "STPC" || item.consorcio === "STPL") {
+                                                            if (item.consorcio === "STPC" || item.consorcio === "STPL" || item.consorcio === "TEC") {
                                                                 key = `${item.datapagamento}-${item.status}-${item.favorecido}`;
                                                             } else {
                                                                 key = `${item.datapagamento}-${item.status}`;
@@ -805,7 +799,7 @@ export default function BasicEditingGrid() {
                                                         }, {})
                                                     ).map(([key, items]) => {
                                                         const [datapagamento, status, favorecido] = key.split("-");
-                                                        const isGroupedByFavorecido = items.some(item => item.consorcio === "STPC" || item.consorcio === "STPL");
+                                                        const isGroupedByFavorecido = items.some(item => item.consorcio === "STPC" || item.consorcio === "STPL" || item.consorcio === "TEC");
 
                                                         return (
                                                             <React.Fragment key={`${consorcio}-${datapagamento}-${status}-${favorecido || ''}`}>
