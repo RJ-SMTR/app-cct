@@ -16,7 +16,7 @@ import {
     Menu,
     IconButton
 } from '@mui/material';
-import { format, parseISO } from 'date-fns';
+import { compareAsc, format, parseISO } from 'date-fns';
 import { useDispatch, useSelector } from 'react-redux';
 import { CustomProvider, DateRangePicker } from 'rsuite';
 import { useForm, Controller } from 'react-hook-form';
@@ -793,21 +793,31 @@ export default function BasicEditingGrid() {
                                                     {Object.entries(
                                                         group.items.reduce((acc, item) => {
                                                             let key;
-                                                            if (item.consorcio === "STPC" || item.consorcio === "STPL" || item.consorcio === "TEC") {
-                                                                key = `${item.datapagamento}-${item.status}-${item.favorecido}`;
+
+                                                            if (item.datatransacao) {
+                                                                const validDateString = item.datatransacao.replace(' ', 'T');
+                                                                const formattedDate = format(parseISO(validDateString), "dd/MM/yyyy");
+
+                                                                key = `${formattedDate}-${item.status}`;
                                                             } else {
-                                                                key = `${item.datapagamento}-${item.status}`;
+                                                                key = `Invalid Date-${item.status}`;
                                                             }
                                                             if (!acc[key]) acc[key] = [];
                                                             acc[key].push(item);
                                                             return acc;
                                                         }, {})
-                                                    ).map(([key, items]) => {
-                                                        const [datapagamento, status, favorecido] = key.split("-");
+                                                    ).sort((a, b) => {
+                                                        const [dateA] = a[0].split('-');
+                                                        const [dateB] = b[0].split('-');
+                                                        const parsedDateA = new Date(dateA.split('/').reverse().join('-'));
+                                                        const parsedDateB = new Date(dateB.split('/').reverse().join('-'));
+                                                        return compareAsc(parsedDateA, parsedDateB)
+                                                    }).map(([key, items]) => {
+                                                        const [datatransacao, status] = key.split("-");
                                                         const isGroupedByFavorecido = items.some(item => item.consorcio === "STPC" || item.consorcio === "STPL" || item.consorcio === "TEC");
 
                                                         return (
-                                                            <React.Fragment key={`${consorcio}-${datapagamento}-${status}-${favorecido || ''}`}>
+                                                            <React.Fragment key={`${datatransacao}-${consorcio}-${status}`}>
                                                                 {items.map((item) => (
                                                                     <TableRow sx={{ width: "100%" }} className="w-full" key={item.id}>
                                                                         <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>
