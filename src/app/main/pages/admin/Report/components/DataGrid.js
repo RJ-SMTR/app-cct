@@ -481,6 +481,11 @@ export default function BasicEditingGrid() {
                                     }}
                                     loading={loadingUsers}
                                     onChange={(_, newValue) => handleAutocompleteChange('name', newValue)}
+                                    renderOption={(props, option) => (
+                                        <li {...props} key={option.value.cpfCnpj}>
+                                            {option.value.fullName}
+                                        </li>
+                                    )}
                                     renderInput={(params) => (
                                         <TextField
                                             {...params}
