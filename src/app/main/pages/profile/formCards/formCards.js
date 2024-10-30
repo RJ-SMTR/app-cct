@@ -200,6 +200,7 @@ export function BankInfo({ user }) {
         const bankCodes = [184, 29, 479, 386, 249]
         fetchBankOptions();
         if (bankCodes.includes(user.bankCode)) {
+
             setError('bankCode', { message: `Erro: Código do banco ${user.bankCode} não é permitido. Por favor, contacte o suporte!` });
 
         }
@@ -215,6 +216,7 @@ export function BankInfo({ user }) {
             setUserBank(response.data.find((bank) => bank.code === selectedBankCode) || null)
             const filteredData = response.data.filter(({ code }) => !bankCodes.includes(code));
 
+
             setBankOptions(filteredData);
         } catch (error) {
             console.error('Error fetching bank options:', error);
@@ -229,7 +231,7 @@ export function BankInfo({ user }) {
 
 
     function onSubmit(info) {
-        if (info.bankCode === 184 || info.bankCode === 29 || info.bankCode === 479) {
+        if (info.bankCode === 184 || info.bankCode === 29 || info.bankCode === 479 || info.bankCode === 386) {
 
             setError('bankCode', {
                 message: 'Você deve alterar seu banco antes de salvar'

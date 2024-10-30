@@ -81,6 +81,12 @@ function handleData(data) {
                 case 'Aguardando Pagamento':
                     requestData.emProcessamento = true;
                     break;
+
+                case 'Pagamento Indevido':
+                    requestData.pagamentoIndevido = true;
+                    break;
+
+
                 case 'Todos':
                     break;
                 default:
@@ -146,6 +152,7 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
                         status: 'Todos'
                     };
                 if (reportType == 'sintetico' || reportType == 'analitico'){
+
                         dispatch(handleSynthData(combinedResponse))
                     } else {
 
