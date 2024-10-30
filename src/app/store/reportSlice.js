@@ -82,6 +82,7 @@ function handleData(data) {
                     requestData.emProcessamento = true;
                     break;
 
+
                 case 'Pagamento Indevido':
                     requestData.pagamentoIndevido = true;
                     break;
