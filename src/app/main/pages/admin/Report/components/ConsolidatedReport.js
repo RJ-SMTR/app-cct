@@ -58,6 +58,10 @@ const consorcios = [
     { label: 'VLT', value: "VLT" },
 {label: 'TEC', value: "TEC"}
 ];
+const específicos = [
+    { label: 'Todos' },
+    { label: 'Eleição' },
+];
 
 
 export default function BasicEditingGrid() {
@@ -573,6 +577,33 @@ export default function BasicEditingGrid() {
                                         />
                                     )}
                                 />
+                            </Box>
+                            <Box className="flex items-center gap-10 mb-20 flex-wrap">
+                                <Autocomplete
+                                    id="status"
+                                    multiple
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
+                                    getOptionLabel={(option) => option.label}
+                                    filterSelectedOptions
+                                    options={específicos}
+                                    onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="Selecionar Específicos"
+                                            variant="outlined"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                endAdornment: (
+                                                    <>
+                                                        {params.InputProps.endAdornment}
+                                                    </>
+                                                ),
+                                            }}
+                                        />
+                                    )}
+                                />
+
                             </Box>
                             <Box>
                           
