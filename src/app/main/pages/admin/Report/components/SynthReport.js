@@ -805,27 +805,27 @@ export default function BasicEditingGrid() {
                                                             <React.Fragment key={`${consorcio}-${datapagamento}-${status}-${favorecido || ''}`}>
                                                                 {items.map((item) => (
                                                                     <TableRow sx={{ width: "100%" }} className="w-full" key={item.id}>
-                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>
+                                                                        <TableCell className='p-0 text-[1rem]' sx={{ paddingLeft: '0px' }}>
                                                                             {item.datatransacao ? format(parseISO(item.datatransacao), "dd/MM/yyyy") : null}
                                                                         </TableCell>
-                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>
+                                                                        <TableCell className='p-0 text-[1rem]' sx={{ paddingLeft: '0px' }}>
                                                                             {item.datapagamento ? format(parseISO(item.datapagamento), "dd/MM/yyyy") : null}
                                                                         </TableCell>
-                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{item.consorcio}</TableCell>
-                                                                        <TableCell colSpan={4.5} className='text-[1.2rem]' sx={{ minWidth: 300, maxWidth: 350, overflow: "hidden", textOverflow: "ellipsis", padding: 0 }}>
+                                                                        <TableCell className='p-0 text-[1rem]' sx={{ paddingLeft: '0px' }}>{item.consorcio}</TableCell>
+                                                                        <TableCell colSpan={4.5} className='text-[1rem]' sx={{ minWidth: 300, maxWidth: 350, overflow: "hidden", textOverflow: "ellipsis", padding: 0 }}>
                                                                             {item.favorecido}
                                                                         </TableCell>
-                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{formatter.format(item.valor)}</TableCell>
-                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{showStatus(item.status)}</TableCell>
+                                                                        <TableCell className='p-0 text-[1rem]' sx={{ paddingLeft: '0px' }}>{formatter.format(item.valor)}</TableCell>
+                                                                        <TableCell className='p-0 text-[1rem]' sx={{ paddingLeft: '0px' }}>{showStatus(item.status)}</TableCell>
                                                                         {item.status === "naopago" ? (
-                                                                            <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }} colSpan={3}>
+                                                                            <TableCell className='p-0 text-[1rem]' sx={{ paddingLeft: '0px' }} colSpan={3}>
                                                                                 {item.mensagem_status}
                                                                             </TableCell>
                                                                         ) : null}
                                                                     </TableRow>
                                                                 ))}
                                                                 <TableRow>
-                                                                    <Box className="flex pb-[20px] gap-10">
+                                                                    <Box className="flex gap-10">
                                                                         <p style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
                                                                             {isGroupedByFavorecido ? "Subtotal:" : "Subtotal do dia:"}
                                                                         </p>

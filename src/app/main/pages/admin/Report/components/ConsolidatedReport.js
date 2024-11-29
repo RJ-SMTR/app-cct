@@ -660,8 +660,8 @@ export default function BasicEditingGrid() {
                                     reportList.count > 0 ? (
                                         reportList.data?.map((report, index) => (
                                             <TableRow key={index}>
-                                                <TableCell>{report.nomefavorecido}</TableCell>
-                                                <TableCell>{formatter.format(report.valor)}</TableCell>
+                                                <TableCell className='text-[1rem]'>{report.nomefavorecido}</TableCell>
+                                                <TableCell className='text-[1rem]'>{formatter.format(report.valor)}</TableCell>
                                             </TableRow>
                                         ))
                                     ) : (
