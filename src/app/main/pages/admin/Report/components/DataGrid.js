@@ -45,9 +45,11 @@ import ptBR from 'rsuite/locales/pt_BR';
 const consorciosStatus = [
     { label: 'Todos' },
     { label: 'A pagar' },
-    { label: 'Pago' },
     { label: 'Aguardando Pagamento' },
     { label: 'Erro' },
+    { label: 'Pago' },
+    { label: 'Pagamento Indevido' }
+
 ];
 const consorcios = [
     { label: 'Todos', value: "Todos" },
@@ -57,9 +59,10 @@ const consorcios = [
     { label: 'Santa Cruz', value: "Santa Cruz" },
     { label: 'STPC', value: "STPC" },
     { label: 'STPL', value: "STPL" },
+    { label: 'TEC', value: "TEC" },
     { label: 'Transcarioca', value: "Transcarioca" },
-    { label: 'VLT', value: "VLT" },
-{label: 'TEC', value: "TEC"}
+    { label: 'VLT', value: "VLT" }
+
 ];
 const CustomBadge = ({ data }) => {
     return (
