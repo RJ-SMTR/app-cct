@@ -61,6 +61,11 @@ const consorcios = [
     { label: 'VLT', value: "VLT" },
 {label: 'TEC', value: "TEC"}
 ];
+
+const específicos = [
+    { label: 'Todos' },
+    { label: 'Eleição' },
+];
 const CustomBadge = ({ data }) => {
     return (
         <Badge
@@ -485,7 +490,7 @@ export default function BasicEditingGrid() {
                                     <span className='absolute text-xs text-red-600'>Campo data obrigatório*</span>
                                 </Box>
                             </Box>
-                            <Box className="flex items-center my-[3.5rem] gap-10 flex-wrap">
+                            <Box className="flex items-center my-20 gap-10 flex-wrap">
                                 <Controller
                                     name="valorMin"
                                     control={control}
@@ -599,6 +604,33 @@ export default function BasicEditingGrid() {
                                         />
                                     )}
                                 />
+                            </Box>
+                            <Box className="flex items-center gap-10 mb-20 flex-wrap">
+                                <Autocomplete
+                                    id="status"
+                                    multiple
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
+                                    getOptionLabel={(option) => option.label}
+                                    filterSelectedOptions
+                                    options={específicos}
+                                    onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="Selecionar Específicos"
+                                            variant="outlined"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                endAdornment: (
+                                                    <>
+                                                        {params.InputProps.endAdornment}
+                                                    </>
+                                                ),
+                                            }}
+                                        />
+                                    )}
+                                />
+                             
                             </Box>
                             <Box>
 
