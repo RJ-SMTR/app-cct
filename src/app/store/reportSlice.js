@@ -10,7 +10,8 @@ const initialState = {
     synthData: [],
     reportType: '',
     reportList: [],
-    totalSynth: ''
+    totalSynth: '',
+    specificValue: false,
 };
 
 const reportSlice = createSlice({
@@ -29,6 +30,9 @@ const reportSlice = createSlice({
         setTotalSynth: (state, action) => {
             state.totalSynth = action.payload;
         },
+        setSpecificValue: (state,action) => {
+            state.specificValue = action.payload;
+        }
     },
 });
 
@@ -40,7 +44,9 @@ export const {
     reportList,
     setReportList,
     totalSynth,
-    setTotalSynth
+    setTotalSynth,
+    specificValue,
+    setSpecificValue
  } = reportSlice.actions;
 
 export default reportSlice.reducer;
@@ -94,6 +100,11 @@ function handleData(data) {
         } else if (hasErro && !hasPago) {
             requestData.pago = false;
         }
+
+        if(data.eleicao){
+            requestData.eleicao = true
+        }
+        
     }
 
     const addIfValid = (key, value) => {
@@ -138,7 +149,7 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
                     const mergedData = responseData.reduce((acc, curr) => {
                         return acc.concat(curr.data);
                     }, []);
-
+                    
                     const combinedResponse = {
                         count: mergedData.length,
                         data: mergedData,
@@ -162,20 +173,34 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
 };
 
 
-export const handleSynthData = (reportData) => async (dispatch) => {
-    const total = accounting.formatMoney(reportData.valor, {
+export const handleSynthData = (reportData) => async (dispatch, getState) => {
+    const specificValue = getState().report.specificValue;
+    let filteredData = {}
+  if (!specificValue){
+     filteredData = {
+          ...reportData,
+          data: reportData.data.filter((item) => item.valor !== 1030),
+      };
+
+  } else {
+      filteredData = {
+          ...reportData,
+          data: reportData.data.filter((item) => item.valor === 1030),
+      };
+  }
+    const total = accounting.formatMoney(filteredData.valor, {
         symbol: 'R$ ',
         decimal: ',',
         thousand: '.',
-        precision: 2
-    })
-    dispatch(setTotalSynth(total))
-    const groupedData = reportData.data.reduce((acc, item) => {
+        precision: 2,
+    });
+    dispatch(setTotalSynth(total));
+
+    const groupedData = filteredData.data.reduce((acc, item) => {
         const key = item.consorcio;
         if (!acc[key]) {
             acc[key] = { items: [], total: 0, totalsByStatus: {} };
         }
-
 
         acc[key].items.push(item);
         acc[key].total = item.subtotal;
@@ -194,7 +219,7 @@ export const handleSynthData = (reportData) => async (dispatch) => {
             symbol: 'R$',
             decimal: ',',
             thousand: '.',
-            precision: 2
+            precision: 2,
         });
 
         for (const status in groupedData[key].totalsByStatus) {
@@ -202,11 +227,10 @@ export const handleSynthData = (reportData) => async (dispatch) => {
                 symbol: 'R$',
                 decimal: ',',
                 thousand: '.',
-                precision: 2
+                precision: 2,
             });
         }
     }
 
     dispatch(setSynthData(groupedData));
-
-}
+};

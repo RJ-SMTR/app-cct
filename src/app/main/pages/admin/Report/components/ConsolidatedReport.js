@@ -27,7 +27,7 @@ import { format } from 'date-fns';
 import { useDispatch, useSelector } from 'react-redux';
 import { DateRangePicker } from 'rsuite';
 import { useForm, Controller } from 'react-hook-form';
-import { handleReportInfo, setReportList } from 'app/store/reportSlice';
+import { handleReportInfo, setReportList, setSpecificValue } from 'app/store/reportSlice';
 import { getUser } from 'app/store/adminSlice';
 import { NumericFormat } from 'react-number-format';
 import { CSVLink } from 'react-csv';
@@ -68,6 +68,7 @@ export default function BasicEditingGrid() {
     const reportType = useSelector(state => state.report.reportType);
     const reportList = useSelector(state => state.report.reportList)
     const userList = useSelector(state => state.admin.userList) || []
+    const specificValue = useSelector(state => state.report.specificValue)
     const [isLoading, setIsLoading] = useState(false)
     const [loadingUsers, setLoadingUsers] = useState(false)
     const [userOptions, setUserOptions] = useState([])
@@ -92,6 +93,9 @@ export default function BasicEditingGrid() {
 
     const onSubmit = (data) => {
             setIsLoading(true)
+            if(specificValue){
+                data.eleicao = true
+            }
         dispatch(handleReportInfo(data, reportType))
             .then((response) => {
                 setIsLoading(false)
@@ -415,6 +419,36 @@ export default function BasicEditingGrid() {
                                         />
                                     )}
                                 />
+                                <Autocomplete
+                                    id="status"
+                                    multiple
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                                    options={específicos}
+                                    getOptionLabel={(option) => option.label}
+                                    filterSelectedOptions
+                                    onChange={(_, newValue) => {
+                                        if (newValue.length === 0) {
+                                            dispatch(setSpecificValue(false));
+                                        } else {
+                                            dispatch(setSpecificValue(true));
+                                        }
+                                    }}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="Selecionar Específicos"
+                                            variant="outlined"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                endAdornment: (
+                                                    <>
+                                                        {params.InputProps.endAdornment}
+                                                    </>
+                                                ),
+                                            }}
+                                        />
+                                    )}
+                                />
                             </Box>
 
                             <Box className="flex items-center gap-10 flex-wrap">
@@ -578,33 +612,7 @@ export default function BasicEditingGrid() {
                                     )}
                                 />
                             </Box>
-                            <Box className="flex items-center gap-10 mb-20 flex-wrap">
-                                <Autocomplete
-                                    id="status"
-                                    multiple
-                                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
-                                    getOptionLabel={(option) => option.label}
-                                    filterSelectedOptions
-                                    options={específicos}
-                                    onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
-                                    renderInput={(params) => (
-                                        <TextField
-                                            {...params}
-                                            label="Selecionar Específicos"
-                                            variant="outlined"
-                                            InputProps={{
-                                                ...params.InputProps,
-                                                endAdornment: (
-                                                    <>
-                                                        {params.InputProps.endAdornment}
-                                                    </>
-                                                ),
-                                            }}
-                                        />
-                                    )}
-                                />
-
-                            </Box>
+                         
                             <Box>
                           
                             </Box>
