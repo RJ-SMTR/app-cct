@@ -172,35 +172,20 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
     }
 };
 
-
-export const handleSynthData = (reportData) => async (dispatch, getState) => {
-    const specificValue = getState().report.specificValue;
-    let filteredData = {}
-  if (!specificValue){
-     filteredData = {
-          ...reportData,
-          data: reportData.data.filter((item) => item.valor !== 1030),
-      };
-
-  } else {
-      filteredData = {
-          ...reportData,
-          data: reportData.data.filter((item) => item.valor === 1030),
-      };
-  }
-    const total = accounting.formatMoney(filteredData.valor, {
+export const handleSynthData = (reportData) => async (dispatch) => {
+    const total = accounting.formatMoney(reportData.valor, {
         symbol: 'R$ ',
         decimal: ',',
         thousand: '.',
-        precision: 2,
-    });
-    dispatch(setTotalSynth(total));
-
-    const groupedData = filteredData.data.reduce((acc, item) => {
+        precision: 2
+    })
+    dispatch(setTotalSynth(total))
+    const groupedData = reportData.data.reduce((acc, item) => {
         const key = item.consorcio;
         if (!acc[key]) {
             acc[key] = { items: [], total: 0, totalsByStatus: {} };
         }
+
 
         acc[key].items.push(item);
         acc[key].total = item.subtotal;
@@ -219,7 +204,7 @@ export const handleSynthData = (reportData) => async (dispatch, getState) => {
             symbol: 'R$',
             decimal: ',',
             thousand: '.',
-            precision: 2,
+            precision: 2
         });
 
         for (const status in groupedData[key].totalsByStatus) {
@@ -227,10 +212,11 @@ export const handleSynthData = (reportData) => async (dispatch, getState) => {
                 symbol: 'R$',
                 decimal: ',',
                 thousand: '.',
-                precision: 2,
+                precision: 2
             });
         }
     }
 
     dispatch(setSynthData(groupedData));
-};
+
+}
