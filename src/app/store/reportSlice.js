@@ -75,38 +75,42 @@ function handleData(data) {
     if (data.status && data.status.length > 0) {
         let hasPago = false;
         let hasErro = false;
+        const statusSet = new Set(data.status);
 
-        data.status.forEach(status => {
-            switch (status) {
-                case 'Pago':
-                    hasPago = true;
-                    break;
-                case 'Erro':
-                    hasErro = true;
-                    break;
-                case 'Aguardando Pagamento':
-                    requestData.emProcessamento = true;
-                    break;
-                case 'Todos':
-                    break;
-                default:
-                    requestData.aPagar = true;
-                    break;
+        const hasAllStatuses = statusSet.has('Pago') && statusSet.has('Erro') && statusSet.has('Aguardando Pagamento');
+
+        if (!hasAllStatuses) {
+            data.status.forEach(status => {
+                switch (status) {
+                    case 'Pago':
+                        hasPago = true;
+                        break;
+                    case 'Erro':
+                        hasErro = true;
+                        break;
+                    case 'Aguardando Pagamento':
+                        requestData.emProcessamento = true;
+                        break;
+                    case 'Todos':
+                        break;
+                    default:
+                        requestData.aPagar = true;
+                        break;
+                }
+            });
+
+            if (hasPago && !hasErro) {
+                requestData.pago = true;
+            } else if (hasErro && !hasPago) {
+                requestData.pago = false;
             }
-        });
-
-        if (hasPago && !hasErro) {
-            requestData.pago = true;
-        } else if (hasErro && !hasPago) {
-            requestData.pago = false;
         }
-
-        if(data.eleicao){
+        if (data.eleicao) {
             requestData.eleicao = true
         }
-        
     }
 
+   
     const addIfValid = (key, value) => {
         if (value !== null && value !== '') {
             const unformattedValue = accounting.unformat(value.replace(/\./g, '').replace(',', '.'));
@@ -124,6 +128,7 @@ function handleData(data) {
 
 
 export const handleReportInfo = (data, reportType) => async (dispatch) => {
+    console.log(data)
     const token = window.localStorage.getItem('jwt_access_token');
 
     if (JwtService.isAuthTokenValid(token)) {
