@@ -188,7 +188,7 @@ export default function BasicEditingGrid() {
         Object.entries(rows).forEach(([consorcio, group]) => {
             group.items.forEach(item => {
                 const row = {
-                    'Data Transação': item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
+                    'Data da Operação': item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
                     'Dt. Efetiva Pgto.': item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
                     'Consórcio': item.consorcio,
                     'Favorecido': item.favorecido,
@@ -211,7 +211,7 @@ export default function BasicEditingGrid() {
         const csvData = [
             ['Status selecionado', '', whichStatus || 'Todos'],
             [],
-            ['Data Transação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência'],
+            ['Data da Operação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência'],
         ];
 
         Object.entries(rows).forEach(([consorcio, group]) => {
@@ -291,7 +291,7 @@ export default function BasicEditingGrid() {
         const data = [
             ["Status selecionado", "", whichStatus || "Todos"],
             [],
-            ["Data Transação", "Dt. Efetiva Pgto.", "Consórcio", "Favorecido", "Valor p/ Pagamento", "Status", "Ocorrência"],
+            ["Data da Operação", "Dt. Efetiva Pgto.", "Consórcio", "Favorecido", "Valor p/ Pagamento", "Status", "Ocorrência"],
         ];
 
         Object.entries(rows).forEach(([consorcio, group]) => {
@@ -400,7 +400,7 @@ export default function BasicEditingGrid() {
             ]);
 
             doc.autoTable({
-                head: [['Data Transação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência']],
+                head: [['Data da Operação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência']],
                 body: tableData,
                 startY: currentY,
                 margin: { left: 7, right: 7 },
@@ -817,7 +817,7 @@ export default function BasicEditingGrid() {
                                                     </TableRow>
 
                                                     <TableRow>
-                                                        <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Data Transação</TableCell>
+                                                        <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Data da Operação</TableCell>
                                                         <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Dt. Efetiva Pgto.</TableCell>
                                                         <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Consórcio</TableCell>
                                                         <TableCell colSpan={4.5} className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Favorecido</TableCell>
