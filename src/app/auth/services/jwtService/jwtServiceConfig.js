@@ -23,7 +23,9 @@ const jwtServiceConfig = {
   finanGetInfo: 'lancamento',
   setRelease: 'lancamento/create',
   finanGetByStatus: 'lancamento/getbystatus',
-  report: 'cnab/relatorio'
+  report: 'cnab/relatorio',
+  odpMensal: '/ordem-pagamento/mensal',
+  odpSemanal: '/ordem-pagamento/semanal'
 
 };
 

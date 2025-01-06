@@ -144,7 +144,7 @@ function UserApp() {
           {user && (
             <>
            <div className='md:flex mt-10 '>
-                <Entries type="Valor diário" isDay="true" />
+                {/* <Entries type="Valor diário" isDay="true" /> */}
                 <Entries type={valorAcumulado} isDay="false" />
                 <Entries type={paidValue} isDay="false" />
            </div>

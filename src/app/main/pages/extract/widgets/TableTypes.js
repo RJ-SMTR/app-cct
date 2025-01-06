@@ -59,7 +59,7 @@ function TableTypes() {
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                            Valor Transação
+                                            Valor Operação
                                         </Typography>
                                     </TableCell>
                                 </TableRow>

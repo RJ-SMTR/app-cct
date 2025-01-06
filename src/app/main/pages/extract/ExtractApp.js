@@ -37,7 +37,7 @@ function ExtractApp() {
       <div className="p-24 pt-10">
         <Typography className='font-medium text-3xl'>Resumo dos Valores</Typography>
         <Box className='flex flex-col md:flex-row mt-24 justify-around spacing-x-1'>
-          <Entries  type="Valor Transação - Diário" isDay="true" />
+          {/* <Entries  type="Valor Transação - Diário" isDay="true" /> */}
           <Entries type={valorTransação} isDay="false" />
           <Entries type={valorPago} isDay="false" />
         </Box>

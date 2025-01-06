@@ -11,6 +11,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 
 export function CustomTable(data) {
+
   const [dayAmount, setDayAmount] = useState(null)
   const searchingDay = useSelector(state => state.extract.searchingDay);
   const searchingWeek = useSelector(state => state.extract.searchingWeek);
@@ -31,28 +32,35 @@ export function CustomTable(data) {
     const formattedDate = format(zonedDate, 'dd/MM/yyyy HH:mm:ss');
     return formattedDate
   }
+  const dateUTCMonth = (i) => {
+    const tz = 'UTC'
+    const parsed = new Date(i)
+    const zonedDate = utcToZonedTime(parsed, tz)
+    const formattedDate = format(zonedDate, 'dd/MM/yyyy');
+    return formattedDate
+  }
   const CustomBadge = (data) => {
     const i = data.data.data
     const getStatus = (i) => {
 
-      return i.status
+      return i.statusRemessa
     }
     return <Badge className={`${data.c?.root}  whitespace-nowrap`}
-      color={i.status === 'Pendente' ? 'error' : i.status === 'Pago' ? 'success' : i.status === 'A pagar' ? 'warning' : 'op'}
+      color={i.statusRemessa === 'Pendente' ? 'error' : i.statusRemessa === 'Pago' ? 'success' : i.statusRemessa === 'A pagar' ? 'warning' : 'op'}
 
       badgeContent={getStatus(i)}
     />
   }
   const ErrorBadge = (data) => {
-  
     const i = data.data.data
-    const errorDescription = i.errors.length > 0 ? i.errors.map(error => `${error.message}`).join("\n") : <></>;
+    const errorDescription = i.statusRemessa ? i.errors?.map(error => `${error.message}`).join("\n") : <></>;
+    // const errorDescription =<></>;
     const getStatus = (i) => {
       return  (
         <span className='underline'> Erro  <InfoOutlinedIcon fontSize='small' /></span>
       )
     }
-    if(i.errors.length > 0){
+    if(i.statusRemessa){
       return (
             
         <Tooltip   title={errorDescription} arrow enterTouchDelay={10} leaveTouchDelay={10000}>
@@ -80,11 +88,11 @@ export function CustomTable(data) {
 
 
   return (
-    data ? <TableRow key={data.data.id} className="hover:bg-gray-100 cursor-pointer">
+    data ? <TableRow key={data.data.ordemPagamentoAgrupadoId} className="hover:bg-gray-100 cursor-pointer">
       <TableCell component="th" scope="row" onClick={searchingDay ? undefined : data.handleClickRow}>
         <Typography className={searchingDay ? "whitespace-nowrap " : "whitespace-nowrap underline"}>
 
-          {searchingDay ? dateUTC(data.data.date) : data.date}
+          {searchingDay ? dateUTC(data.data.data) : dateUTCMonth(data.data.data)}
 
         </Typography>
       </TableCell>
@@ -93,7 +101,7 @@ export function CustomTable(data) {
         <TableCell component="th" scope="row">
           {data.data.count?.toLocaleString()}
         </TableCell> : <></>}
-      <TableCell component="th" scope="row">
+      {/* <TableCell component="th" scope="row">
         <Typography className="whitespace-nowrap">
           {searchingDay ? (
             <>
@@ -104,7 +112,7 @@ export function CustomTable(data) {
           )}
         </Typography>
 
-      </TableCell>
+      </TableCell> */}
       <TableCell component="th" scope="row">
         {/* VALOR PAGO */}
         {searchingDay ? (
@@ -112,7 +120,7 @@ export function CustomTable(data) {
             {formatter.format(data.data.paidValue ?? data.data.paidValueSum ?? 0)}
           </>
         ) : (
-          <>  {formatter.format(data.data.paidAmount ?? data.data.paidValueSum ?? 0)}</>
+            <>  {formatter.format(data.data.valorTotal ?? data.data.paidValueSum ?? 0)}</>
         )}
 
 

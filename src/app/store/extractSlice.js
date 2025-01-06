@@ -17,7 +17,7 @@ const initialState = {
     multipliedEntries: [],
     listByType: [],
     firstDate: [],
-    valorAcumuladoLabel:'Valor Transação - Acumulado Mensal',
+    valorAcumuladoLabel:'Valor Operação - Acumulado Mensal',
     valorPagoLabel:'Valor Pago - Acumulado Mensal',
   
     sumInfo: [],
@@ -27,6 +27,7 @@ const initialState = {
     isLoading: false,
     isLoadingWeek: false,
     isLoadingPrevious: false,
+    ordemPgtoId: '',
 };
 
 const extractSlice = createSlice({
@@ -138,33 +139,13 @@ export const {
 } = extractSlice.actions;
 
 export default extractSlice.reducer;
-function handleRequestData(previousDays, dateRange, searchingDay, searchingWeek) {
-    if (Array.isArray(dateRange) && !searchingDay && searchingWeek) {
-        const endDate = format(new Date(dateRange[1]), 'yyyy-MM-dd');
-        if (!searchingDay && !searchingWeek) {
-            return {
-                yearMonth: dateRange
-            }
-        }
-        return {
-            endDate
-        };
-    } 
-    else if (!searchingDay && searchingWeek) {
-        const endDate = dateRange
-        return {
-            endDate
-        };
-    }
-    else if (searchingDay && searchingWeek) {
-        return {
-            startDate: dateRange[0],
-            endDate: dateRange[1]
-        };
-    } else {
+function handleRequestData(previousDays, dateRange) {
+
         return previousDays > 0 ? { timeInterval: previousDays } : { timeInterval: 'lastMonth', yearMonth: dateRange }
-    }
+
 }
+
+
 export const  getPreviousDays = (dateRange, interval='lastWeek', userId) => async (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
    
@@ -224,19 +205,21 @@ export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) =>
     }
 };
 
-export const getStatements = (previousDays, dateRange, searchingDay, searchingWeek, userId) => async (dispatch) => {
+export const getStatements = (previousDays, dateRange, searchingDay, searchingWeek, userId,idOrdem) => async (dispatch) => {
     const requestData = handleRequestData(previousDays, dateRange, searchingDay, searchingWeek);
-    const todayDate = new Date()
-    const formattedDate = format(todayDate, 'yyyy-MM-dd')
     let apiRoute = ''
     if(!userId){
         apiRoute = searchingWeek && searchingDay
             ? jwtServiceConfig.revenuesDay
             : searchingWeek 
                 ? jwtServiceConfig.revenuesUn
-                : jwtServiceConfig.bankStatement
+                : jwtServiceConfig.odpMensal
     } else {
-        apiRoute = searchingWeek && searchingDay ? jwtServiceConfig.revenuesDay + `?userId=${userId}` : searchingWeek  ? jwtServiceConfig.revenuesUn + `?userId=${userId}` : jwtServiceConfig.bankStatement + `?userId=${userId}`;
+        apiRoute = searchingWeek && searchingDay 
+        ? jwtServiceConfig.revenuesDay + `?userId=${userId}` 
+        : searchingWeek  
+                ? jwtServiceConfig.odpSemanal + `?ordemPagamentoAgrupadoId=${idOrdem}` 
+        : jwtServiceConfig.odpMensal + `?userId=${userId}`;
     }
     const method = 'get';
     const token = window.localStorage.getItem('jwt_access_token');
@@ -277,7 +260,7 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
 
             } else {
                 dispatch(setSumInfo(response.data))
-                dispatch(setStatements(response.data.data));
+                dispatch(setStatements(response.data.ordens));
             }
 
             return response.data;

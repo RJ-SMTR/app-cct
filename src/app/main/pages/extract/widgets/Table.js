@@ -172,7 +172,7 @@ function TableTransactions({ id }) {
         dispatch(setLoading(true))
         dispatch(setLoadingWeek(true))
         dispatch(setLoadingPrevious(true))
-        dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Mensal'))
+        dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Mensal'))
         dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'))
 
     }
@@ -185,36 +185,45 @@ function TableTransactions({ id }) {
     }
 
 
-    const handleClickRow = (event) => {
+    const handleClickRow = (idOrder, event) => {
+        console.log(idOrder)
+        console.log(event)
         dispatch(setLoading(true))
         dispatch(setLoadingWeek(true))
         dispatch(setLoadingPrevious(true))
-        const start = event.target.innerText;
-        const [day, month, year] = start.split('/');
-        const transformedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-        const tz = 'America/Sao_Paulo';
+        // if (user.role.name.includes("Admin")) {
+        //     dispatch(getStatements(previousDays, dateRange, searchingDay, searchingWeek, id, idOrder))
 
-        if (fullReport) {
-            if (searchingWeek) {
-                dispatch(setSearchingDay(true))
-                dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Diário'));
-                dispatch(setValorPagoLabel('Valor Pago - Acumulado Diário'));
-                dispatch(setDateRange([transformedDate, transformedDate]));
-            } else {
-                if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Semanal'));
-                if (!searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
+        // } else {
+        //     dispatch(getStatements(previousDays, dateRange, searchingDay, searchingWeek))
 
-                if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Mensal'));
-                if (searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'));
-                const clickedDate = parseISO(transformedDate);
-                const clickedDateToday = utcToZonedTime(clickedDate, tz);
-                setCurrentWeekStart(clickedDateToday);
-                dispatch(setSearchingWeek(true));
-                setPage(0);
-            }
-        } else {
-            navigate('/extrato')
-        }
+        // }
+        // const start = event.target.innerText;
+        // const [day, month, year] = start.split('/');
+        // const transformedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        // const tz = 'America/Sao_Paulo';
+
+        // if (fullReport) {
+        //     if (searchingWeek) {
+        //         dispatch(setSearchingDay(true))
+        //         dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Diário'));
+        //         dispatch(setValorPagoLabel('Valor Pago - Acumulado Diário'));
+        //         dispatch(setDateRange([transformedDate, transformedDate]));
+        //     } else {
+        //         if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
+        //         if (!searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
+
+        //         if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Mensal'));
+        //         if (searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'));
+        //         const clickedDate = parseISO(transformedDate);
+        //         const clickedDateToday = utcToZonedTime(clickedDate, tz);
+        //         setCurrentWeekStart(clickedDateToday);
+        //         dispatch(setSearchingWeek(true));
+        //         setPage(0);
+        //     }
+        // } else {
+        //     navigate('/extrato')
+        // }
     }
 
     const handleBack = () => {
@@ -223,7 +232,7 @@ function TableTransactions({ id }) {
         dispatch(setLoadingPrevious(true))
         dispatch(setLoading(true))
         if (searchingDay) {
-            dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Semanal'));
+            dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
             dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
             dispatch(setDateRange(lastDate))
             setPage(0)
@@ -231,9 +240,9 @@ function TableTransactions({ id }) {
             
 
         } else {
-            if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Semanal'));
+            if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
             if (!searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
-            if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Mensal'));
+            if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Mensal'));
             if (searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'));
             setPage(0)
             dispatch(setSearchingWeek(false))
@@ -341,16 +350,16 @@ function TableTransactions({ id }) {
                                         {!searchingWeek ? 'Data' : 'Data Processamento'}
                                     </Typography>
                                 </TableCell>
-                                {searchingWeek ? <TableCell>
+                                {/* {searchingWeek ? <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
                                         Catracadas
                                     </Typography>
-                                </TableCell> : <></>}
-                                <TableCell>
+                                </TableCell> : <></>} */}
+                                {/* <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
                                         Valor Transação
                                     </Typography>
-                                </TableCell>
+                                </TableCell> */}
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
                                         Valor para pagamento
@@ -385,10 +394,10 @@ function TableTransactions({ id }) {
                             : statements.length > 0 ?
                             statements?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
                                 const tz = 'UTC'
-                                const date = parseISO(i.date ?? i.dateTime ?? i.partitionDate);
+                                const date = parseISO(i.data ?? i.dateTime ?? i.partitionDate);
                                 const zonedDate = utcToZonedTime(date, tz)
                                 const formattedDate = format(zonedDate, 'dd/MM/yyyy');
-                                return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={handleClickRow} />
+                                return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={(event) => handleClickRow(i.ordemPagamentoAgrupadoId, event)} />
                             }) : 
                                 <TableCell colSpan={4}>
                                     <p>Não há dados para sem exibidos</p>

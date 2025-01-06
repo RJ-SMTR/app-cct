@@ -39,9 +39,10 @@ function Entries(type) {
 
     useEffect( () => {
         if(statements?.length >= 1){
+            console.log(statements[0])
             const tz = 'UTC';
-            const dateFirst = new Date(`${statements[statements?.length - 1]?.date ?? statements[statements?.length - 1]?.partitionDate}`)
-            const dateLast = new Date(`${statements[0]?.date ?? statements[0]?.partitionDate}`)
+            const dateFirst = new Date(`${statements[statements?.length - 1]?.data ?? statements[statements?.length - 1]?.partitionDate}`)
+            const dateLast = new Date(`${statements[0]?.data ?? statements[0]?.partitionDate}`)
             const zonedDateFirst = utcToZonedTime(dateFirst, tz);
             const zonedDateLast = utcToZonedTime(dateLast, tz);
              setFirstDate(format(zonedDateFirst, 'dd/MM/yyyy'))
@@ -67,7 +68,7 @@ function Entries(type) {
                           ? formatter.format(sumInfo?.todaySum)
                           : searchingWeek
                               ? formatter.format(type.type.includes("Pago") ? sumInfoWeek?.paidSum ?? 0 : sumInfoWeek?.amountSum)
-                              : formatter.format(type.type.includes("Pago") ? sumInfo?.paidSum : sumInfo?.amountSum)
+                              : formatter.format(type.type.includes("Pago") ? sumInfo?.valorTotalPago : sumInfo?.valorTotal)
                   }
 
               </Typography>
