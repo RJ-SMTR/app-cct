@@ -3,7 +3,6 @@ import { Typography, Box, Button } from '@mui/material';
 import React, { useContext, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { selectUser } from 'app/store/userSlice';
-import Chart from './widgets/Chart';
 import Entries from './widgets/Entries';
 import TableTransactions from './widgets/Table'
 
@@ -32,7 +31,7 @@ function ExtractApp() {
 
       <div className="p-24 text-white bg-[#004A80] overflow">
         <h2 className='fw-black'>Bem vindo, {first}</h2>
-        <p className='w-[100%] md:w-[35%]'>Esse é seu painel financeiro, aqui você pode conferir os valores que deve receber nos próximos dias, a lista de transações recentes e uma média das suas entradas.</p>
+        <p className='w-[100%] md:w-[35%]'>Esse é seu painel financeiro, aqui você pode conferir os valores que deve receber nos próximos dias e uma média das suas entradas.</p>
       </div>
       <div className="p-24 pt-10">
         <Typography className='font-medium text-3xl'>Resumo dos Valores</Typography>
@@ -51,10 +50,10 @@ function ExtractApp() {
             <>
 
               <Box className='flex flex-col md:flex-row   justify-around'>
-                <TableTypes />
+                {/* <TableTypes /> */}
               </Box>
               <Box className='flex flex-col  justify-around mt-24'>
-                <TablePending />
+                {/* <TablePending /> */}
               </Box>
               </>
               : <></>

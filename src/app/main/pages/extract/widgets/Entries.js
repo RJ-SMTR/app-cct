@@ -39,7 +39,6 @@ function Entries(type) {
 
     useEffect( () => {
         if(statements?.length >= 1){
-            console.log(statements[0])
             const tz = 'UTC';
             const dateFirst = new Date(`${statements[statements?.length - 1]?.data ?? statements[statements?.length - 1]?.partitionDate}`)
             const dateLast = new Date(`${statements[0]?.data ?? statements[0]?.partitionDate}`)

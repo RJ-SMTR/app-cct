@@ -19,7 +19,6 @@ const initialState = {
     firstDate: [],
     valorAcumuladoLabel:'Valor Operação - Acumulado Mensal',
     valorPagoLabel:'Valor Pago - Acumulado Mensal',
-  
     sumInfo: [],
     sumInfoWeek: [],
     pendingValue: [],
@@ -95,6 +94,9 @@ const extractSlice = createSlice({
         setLoadingPrevious: (state, action) => {
             state.isLoadingPrevious = action.payload;
         },
+        setOrdemPgto: (state, action) => {
+            state.ordemPgtoId = action.payload;
+        },
        
     },
 });
@@ -135,7 +137,8 @@ export const {
     setLoading,
     setLoadingWeek,
     setLoadingPrevious,
-
+    setOrdemPgto,
+    ordemPgtoId
 } = extractSlice.actions;
 
 export default extractSlice.reducer;
@@ -146,67 +149,69 @@ function handleRequestData(previousDays, dateRange) {
 }
 
 
-export const  getPreviousDays = (dateRange, interval='lastWeek', userId) => async (dispatch) => {
-    const token = window.localStorage.getItem('jwt_access_token');
+// export const  getPreviousDays = (dateRange, interval='lastWeek', userId) => async (dispatch) => {
+//     const token = window.localStorage.getItem('jwt_access_token');
    
-    if(JwtService.isAuthTokenValid(token)){
-        let config = {
-            method: 'get',
-            maxBodyLength: Infinity,
-            url: userId ? jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=${interval}&userId=${userId}` : jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=${interval}`,
-            headers: { "Authorization": `Bearer ${token}` },
-        }
-        try {
-            dispatch(setLoadingPrevious(true))
-            const response = await api.request(config)
-            dispatch(setPendingValue(response.data.statusCounts))
-            dispatch(setPendingList(response.data))
-        } catch (error) {
-            console.error(error);
-        } finally {
-            dispatch(setLoadingPrevious(false))
-        }
-    }
+//     if(JwtService.isAuthTokenValid(token)){
+//         let config = {
+//             method: 'get',
+//             maxBodyLength: Infinity,
+//             url: userId ? jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=${interval}&userId=${userId}` : jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=${interval}`,
+//             headers: { "Authorization": `Bearer ${token}` },
+//         }
+//         try {
+//             dispatch(setLoadingPrevious(true))
+//             const response = await api.request(config)
+//             dispatch(setPendingValue(response.data.statusCounts))
+//             dispatch(setPendingList(response.data))
+//         } catch (error) {
+//             console.error(error);
+//         } finally {
+//             dispatch(setLoadingPrevious(false))
+//         }
+//     }
 
-}
+// }
 
-export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) => async (dispatch) => {
+// export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) => async (dispatch) => {
 
-    const requestData = handleRequestData(null, dateRange, searchingDay, searchingWeek);
+//     const requestData = searchingWeek ?  null: handleRequestData(null, dateRange, searchingDay, searchingWeek);
 
-    const token = window.localStorage.getItem('jwt_access_token');
+//     const token = window.localStorage.getItem('jwt_access_token');
 
-    let config = {
-        method: 'get',
-        maxBodyLength: Infinity,
-        url: userId ? jwtServiceConfig.revenues + `?userId=${userId}` : jwtServiceConfig.revenues,
-        headers: {
-            "Authorization": `Bearer ${token}`
-        },
-        params: {
-            ...requestData
-        }
-    };
+//     let config = {
+//         method: 'get',
+//         maxBodyLength: Infinity,
+//         url: userId ? jwtServiceConfig.revenues + `?userId=${userId}` : jwtServiceConfig.revenues,
+//         headers: {
+//             "Authorization": `Bearer ${token}`
+//         },
+//         params: {
+//             ...requestData
+//         }
+//     };
 
-    try {
-        dispatch(setLoadingWeek(true))
-        const response = await api.request(config);
-        const order = ["Integral", "Integração", "Gratuidade"];
+//     try {
+//         dispatch(setLoadingWeek(true))
+//         const response = await api.request(config);
+//         const order = ["Integral", "Integração", "Gratuidade"];
 
-        const sortedObject = Object.fromEntries(
-            Object.entries(response.data.transactionTypeCounts)
-                .sort(([keyA], [keyB]) => order.indexOf(keyA) - order.indexOf(keyB))
-        );
-        dispatch(setListByType(sortedObject));
-    } catch (error) {
-        console.error(error);
-    } finally {
-        dispatch(setLoadingWeek(false))
-    }
-};
+//         const sortedObject = Object.fromEntries(
+//             Object.entries(response.data.transactionTypeCounts)
+//                 .sort(([keyA], [keyB]) => order.indexOf(keyA) - order.indexOf(keyB))
+//         );
+//         dispatch(setListByType(sortedObject));
+//     } catch (error) {
+//         console.error(error);
+//     } finally {
+//         dispatch(setLoadingWeek(false))
+//     }
+// };
 
-export const getStatements = (previousDays, dateRange, searchingDay, searchingWeek, userId,idOrdem) => async (dispatch) => {
-    const requestData = handleRequestData(previousDays, dateRange, searchingDay, searchingWeek);
+export const getStatements = (dateRange, searchingDay, searchingWeek, userId, idOrdem) => async (dispatch) => {
+
+
+    const requestData = searchingWeek && searchingDay ? { ordemPagamentoId: idOrdem } : searchingWeek ?  null : handleRequestData(null, dateRange, searchingDay, searchingWeek);
     let apiRoute = ''
     if(!userId){
         apiRoute = searchingWeek && searchingDay
@@ -218,7 +223,7 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
         apiRoute = searchingWeek && searchingDay 
         ? jwtServiceConfig.revenuesDay + `?userId=${userId}` 
         : searchingWeek  
-                ? jwtServiceConfig.odpSemanal + `?ordemPagamentoAgrupadoId=${idOrdem}` 
+                ? jwtServiceConfig.odpSemanal + `/${idOrdem}`
         : jwtServiceConfig.odpMensal + `?userId=${userId}`;
     }
     const method = 'get';
@@ -243,20 +248,8 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
             const response = await api(config);
 
             if (searchingWeek || searchingDay) {
-                const interval = searchingDay ? 'lastDay' : 'lastWeek';
-                dispatch(setStatements(response.data.data));
+                dispatch(setStatements(response.data.ordens));
                 dispatch(setSumInfoWeek(response.data))
-                if (userId) {
-                    if (!searchingDay) {
-                        dispatch(getFirstTypes(userId, requestData.endDate, searchingWeek, searchingDay));
-                    } else {
-                        dispatch(getFirstTypes(userId, dateRange, searchingWeek, searchingDay));
-                    }
-                    dispatch(getPreviousDays(requestData.endDate, interval, userId))
-                } else {
-                    dispatch(getFirstTypes(null, dateRange, searchingWeek, searchingDay));
-                    dispatch(getPreviousDays(requestData.endDate, interval))
-                }
 
             } else {
                 dispatch(setSumInfo(response.data))
@@ -275,39 +268,9 @@ export const getStatements = (previousDays, dateRange, searchingDay, searchingWe
 
 
 
-export const getTodayStatements = () => async (dispatch) => {
-    const token = window.localStorage.getItem('jwt_access_token');
-    const today = new Date()
-    const formattedDate = format(today, 'yyyy-MM-dd');
-
-
-    const config = {
-        method: 'get',
-        maxBodyLength: Infinity,
-        url: jwtServiceConfig.revenuesUn,
-        headers: {
-            "Authorization": `Bearer ${token}`
-        },
-        params: {
-            startDate: formattedDate ,
-            endDate: formattedDate, 
-        }
-    };
-
-    try {
-        const response = await api(config);
-
-        dispatch(setTodayStatements(response.data.data));
-        dispatch(setMapInfo(response.data.data));
-
-        return response.data.data;
-    } catch (error) {
-        throw error;
-    }
-};
 
 export const getMultipliedEntries = (statements, searchingDay, searchingWeek) => (dispatch) => {
-    if (statements.length > 0) {
+    if (statements?.length > 0) {
         if (searchingDay) {
             const sum = statements.map((statement) => statement)
                 .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
