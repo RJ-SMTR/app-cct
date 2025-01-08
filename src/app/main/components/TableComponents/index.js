@@ -11,7 +11,6 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 
 export function CustomTable(data) {
-
   const [dayAmount, setDayAmount] = useState(null)
   const searchingDay = useSelector(state => state.extract.searchingDay);
   const searchingWeek = useSelector(state => state.extract.searchingWeek);
@@ -42,25 +41,32 @@ export function CustomTable(data) {
   const CustomBadge = (data) => {
     const i = data.data.data
     const getStatus = (i) => {
-
-      return i.statusRemessa
+      let status = ''
+      switch (i.statusRemessa){
+        case 1:
+          status = 'A pagar';
+          break;
+          case 5:
+           status =  'Pendente'
+        default:
+          status ='Pago';
+      }
+     return status
     }
     return <Badge className={`${data.c?.root}  whitespace-nowrap`}
-      color={i.statusRemessa === 'Pendente' ? 'error' : i.statusRemessa === 'Pago' ? 'success' : i.statusRemessa === 'A pagar' ? 'warning' : 'op'}
-
+      color={i.statusRemessa === 5 ? 'error' : i.statusRemessa === 'Pago' ? 'success' : i.statusRemessa === 1 ? 'warning' : 'op'}
       badgeContent={getStatus(i)}
     />
   }
   const ErrorBadge = (data) => {
     const i = data.data.data
-    const errorDescription = i.statusRemessa ? i.errors?.map(error => `${error.message}`).join("\n") : <></>;
-    // const errorDescription =<></>;
+    const errorDescription = i.motivoStatusRemessa ? i.descricaoMotivoStatusRemessa : <></>;
     const getStatus = (i) => {
       return  (
         <span className='underline'> Erro  <InfoOutlinedIcon fontSize='small' /></span>
       )
     }
-    if(i.statusRemessa){
+    if(i.statusRemessa === 5){
       return (
             
         <Tooltip   title={errorDescription} arrow enterTouchDelay={10} leaveTouchDelay={10000}>
@@ -92,39 +98,37 @@ export function CustomTable(data) {
       <TableCell component="th" scope="row" onClick={searchingDay ? undefined : data.handleClickRow}>
         <Typography className={searchingDay ? "whitespace-nowrap " : "whitespace-nowrap underline"}>
 
-          {searchingDay ? dateUTC(data.data.data) : dateUTCMonth(data.data.data)}
+          {searchingDay ? dateUTC(data.data.datetime_transacao) : searchingWeek ? dateUTCMonth(data.data.dataOrdem) : dateUTCMonth(data.data.data)}
 
         </Typography>
       </TableCell>
 
-      {searchingWeek ?
+      {/* {searchingWeek ?
         <TableCell component="th" scope="row">
           {data.data.count?.toLocaleString()}
-        </TableCell> : <></>}
-      {/* <TableCell component="th" scope="row">
-        <Typography className="whitespace-nowrap">
-          {searchingDay ? (
-            <>
-              {data.data.transactionType == "Botoeria" ? "R$ 0" : formatter.format(data.data.transactionValue ?? data.data.transactionValueSum)}
-            </>
-          ) : (
-            <>{formatter.format(data.data.amount ?? data.data.transactionValueSum)}</>
-          )}
-        </Typography>
-
-      </TableCell> */}
+        </TableCell> : <></>} */}
+     
       <TableCell component="th" scope="row">
         {/* VALOR PAGO */}
         {searchingDay ? (
           <>
-            {formatter.format(data.data.paidValue ?? data.data.paidValueSum ?? 0)}
+            {formatter.format(data.data.valor_pagamento ?? 0)}
           </>
         ) : (
-            <>  {formatter.format(data.data.valorTotal ?? data.data.paidValueSum ?? 0)}</>
+            <>  {formatter.format(data.data.valorTotal ?? data.data.valor ?? 0)}</>
         )}
 
 
       </TableCell>
+      {searchingDay && (
+      <TableCell component="th" scope="row">
+        <Typography className="whitespace-nowrap">
+      
+              {data.data.tipo_transacao}
+      
+        </Typography>
+
+      </TableCell>)}
       {!searchingWeek ? <>
         <TableCell className='status' component="th" scope='row'> <CustomBadge data={data} /> </TableCell>
         <MyTableCell data={data} />

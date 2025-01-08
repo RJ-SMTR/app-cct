@@ -84,7 +84,6 @@ function TableTransactions({ id }) {
     }, [dateRange])
     const previousOrder = useRef();
     useEffect(() => {
-        console.log("ordem", ordemPgtoId)
         if (searchingWeek || searchingDay) {
             if (ordemPgtoId !== previousOrder.current) {
                 
@@ -156,7 +155,7 @@ function TableTransactions({ id }) {
             dispatch(getStatements(dateRange, searchingDay, searchingWeek, id, ordemPgtoId))
              
         } else {
-            dispatch(getStatements(dateRange, searchingDay, searchingWeek, idOrder))
+            dispatch(getStatements(dateRange, searchingDay, searchingWeek, ordemPgtoId))
 
         }
 
@@ -209,8 +208,8 @@ function TableTransactions({ id }) {
             if (searchingWeek) {
                 
                 dispatch(setSearchingDay(true))
-                dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Diário'));
-                dispatch(setValorPagoLabel('Valor Pago - Acumulado Diário'));
+                dispatch(setValorAcumuladoLabel('Valor Operação - Detalhado'));
+                dispatch(setValorPagoLabel('Valor Pago - Detalhado'));
                 dispatch(setDateRange([transformedDate, transformedDate]));
                 dispatch(setOrdemPgto(idOrder))
             } else {
@@ -239,7 +238,6 @@ function TableTransactions({ id }) {
             dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
             dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
             dispatch(setDateRange(lastDate))
-            console.log(lastId)
             dispatch(setOrdemPgto(lastId))
             setPage(0)
             dispatch(setSearchingDay(false))
@@ -269,7 +267,7 @@ function TableTransactions({ id }) {
         <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
             <div className="flex flex-row justify-between">
                 <Typography className="mr-16 text-lg font-medium tracking-tight leading-6 truncate">
-                    {searchingDay ? <p>Catracadas durante o dia</p> : (searchingWeek ? <p>Catracadas da semana</p> : <p>Valores recebidos</p>)}
+                    {searchingDay ? <p>Detalhes da ordem</p> : (searchingWeek ? <p>Valores da semana</p> : <p>Valores recebidos</p>)}
                 </Typography>
 
                 {fullReport ? <> <Hidden smUp >
@@ -355,21 +353,16 @@ function TableTransactions({ id }) {
                                         {!searchingWeek ? 'Data' : 'Data Processamento'}
                                     </Typography>
                                 </TableCell>
-                                {/* {searchingWeek ? <TableCell>
-                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        Catracadas
-                                    </Typography>
-                                </TableCell> : <></>} */}
-                                {/* <TableCell>
-                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        Valor Transação
-                                    </Typography>
-                                </TableCell> */}
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
                                         Valor para pagamento
                                     </Typography>
                                 </TableCell>
+                                {searchingDay ? <TableCell>
+                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                        Tipo Transação
+                                    </Typography>
+                                </TableCell> : <></>}
                                 {searchingWeek ? <></> :
                                     <>
                                         <TableCell>
@@ -399,10 +392,11 @@ function TableTransactions({ id }) {
                             : statements?.length > 0 ?
                             statements?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
                                 const tz = 'UTC'
-                                const date = parseISO(i.data ?? i.dateTime ?? i.partitionDate);
+                                const date = parseISO(i.data ?? i.dataOrdem ?? i.datetime_processamento);
                                 const zonedDate = utcToZonedTime(date, tz)
                                 const formattedDate = format(zonedDate, 'dd/MM/yyyy');
-                                return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={(event) => handleClickRow(123, event)} />
+                                const idOrdem = searchingWeek ? i.ordemId : i.ordemPagamentoAgrupadoId
+                                return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={(event) => handleClickRow(idOrdem, event)} />
                             }) : 
                                 <TableCell colSpan={4}>
                                     <p>Não há dados para sem exibidos</p>
@@ -412,7 +406,7 @@ function TableTransactions({ id }) {
                     </Table>
                 </TableContainer>
 
-                {searchingDay && (
+                {searchingDay || searchingWeek ? 
                     
                     <TablePagination
                         className={`overflow-visible ${c.root}`}
@@ -423,7 +417,7 @@ function TableTransactions({ id }) {
                         onPageChange={handleChangePage}
                         labelRowsPerPage="Linhas por página"
                         labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-                        rowsPerPageOptions={[50, 100, 150]}
+                        rowsPerPageOptions={[10,50, 100, 150]}
                         onRowsPerPageChange={handleChangeRowsPerPage}
                         ActionsComponent={() => (
                             <div className="my-4 flex space-x-2">
@@ -436,7 +430,7 @@ function TableTransactions({ id }) {
                         )}
 
                     />
-                )}
+                : <></>}
             </Box>
         </Paper>
     );

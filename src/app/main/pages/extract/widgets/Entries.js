@@ -20,7 +20,7 @@ function Entries(type) {
 
     const statements = useSelector(state => state.extract.statements);
     const sumInfo = useSelector(state => state.extract.sumInfo)
-    const sumInfoWeek = useSelector(state => state.extract.sumInfoWeek)
+    const sumInfoDay = useSelector(state => state.extract.sumInfoDay)
     const searchingWeek = useSelector(state => state.extract.searchingWeek)
     const searchingDay = useSelector(state => state.extract.searchingDay)
    
@@ -37,17 +37,25 @@ function Entries(type) {
     }, [])
   
 
-    useEffect( () => {
-        if(statements?.length >= 1){
-            const tz = 'UTC';
-            const dateFirst = new Date(`${statements[statements?.length - 1]?.data ?? statements[statements?.length - 1]?.partitionDate}`)
-            const dateLast = new Date(`${statements[0]?.data ?? statements[0]?.partitionDate}`)
-            const zonedDateFirst = utcToZonedTime(dateFirst, tz);
-            const zonedDateLast = utcToZonedTime(dateLast, tz);
-             setFirstDate(format(zonedDateFirst, 'dd/MM/yyyy'))
-             setLastDate(format(zonedDateLast, 'dd/MM/yyyy'))
+    useEffect(() => {
+        if (statements?.length > 0) {
+            // const tz = 'UTC';
+
+            const getDateValue = (item) => item?.data || item?.dataOrdem || item?.datetime_transacao;
+
+            const firstDateValue = getDateValue(statements[statements.length - 1]);
+            const lastDateValue = getDateValue(statements[0]);
+
+            if (firstDateValue && lastDateValue) {
+                const dateFirst = utcToZonedTime(new Date(firstDateValue));
+                const dateLast = utcToZonedTime(new Date(lastDateValue));
+
+                setFirstDate(format(dateFirst, 'dd/MM/yyyy'));
+                setLastDate(format(dateLast, 'dd/MM/yyyy'));
+            }
         }
-    }, [statements])
+    }, [statements]);
+
   return (
       <>{statements?.length ? <Paper className="relative flex flex-col flex-auto p-12 pr-12  rounded-2xl shadow overflow-hidden mx-5 mt-10 md:mt-0">
           <div className="flex items-center justify-between">
@@ -63,11 +71,9 @@ function Entries(type) {
           <div className="flex flex-row flex-wrap mt-8 ">
               <Typography className="mt-8 font-medium text-3xl leading-none">
                   {
-                      type.isDay == "true"
-                          ? formatter.format(sumInfo?.todaySum)
-                          : searchingWeek
-                              ? formatter.format(type.type.includes("Pago") ? sumInfoWeek?.paidSum ?? 0 : sumInfoWeek?.amountSum)
-                              : formatter.format(type.type.includes("Pago") ? sumInfo?.valorTotalPago : sumInfo?.valorTotal)
+                      searchingDay ? 
+                          formatter.format(type.type.includes("Pago") ? 0 : sumInfoDay)
+                          : formatter.format(type.type.includes("Pago") ? sumInfo?.valorTotalPago : sumInfo?.valorTotal)
                   }
 
               </Typography>

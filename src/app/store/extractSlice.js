@@ -20,7 +20,7 @@ const initialState = {
     valorAcumuladoLabel:'Valor Operação - Acumulado Mensal',
     valorPagoLabel:'Valor Pago - Acumulado Mensal',
     sumInfo: [],
-    sumInfoWeek: [],
+    sumInfoDay: [],
     pendingValue: [],
     pendingList: [],
     isLoading: false,
@@ -69,8 +69,8 @@ const extractSlice = createSlice({
         setSumInfo: (state, action) => {
             state.sumInfo = action.payload;
         },
-        setSumInfoWeek: (state, action) => {
-            state.sumInfoWeek = action.payload;
+        setSumInfoDay: (state, action) => {
+            state.sumInfoDay = action.payload;
         },
         setValorAcumuladoLabel: (state, action) => {
             state.valorAcumuladoLabel = action.payload;
@@ -128,8 +128,8 @@ export const {
     setValorPagoLabel,
     sumInfo,
     setSumInfo,
-    sumInfoWeek,
-    setSumInfoWeek,
+    sumInfoDay,
+    setSumInfoDay,
     setPendingList,
     pendingList,
     setPendingValue,
@@ -211,7 +211,7 @@ function handleRequestData(previousDays, dateRange) {
 export const getStatements = (dateRange, searchingDay, searchingWeek, userId, idOrdem) => async (dispatch) => {
 
 
-    const requestData = searchingWeek && searchingDay ? { ordemPagamentoId: idOrdem } : searchingWeek ?  null : handleRequestData(null, dateRange, searchingDay, searchingWeek);
+    const requestData = searchingWeek || searchingDay ?  null : handleRequestData(null, dateRange, searchingDay, searchingWeek);
     let apiRoute = ''
     if(!userId){
         apiRoute = searchingWeek && searchingDay
@@ -221,7 +221,7 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
                 : jwtServiceConfig.odpMensal
     } else {
         apiRoute = searchingWeek && searchingDay 
-        ? jwtServiceConfig.revenuesDay + `?userId=${userId}` 
+            ? jwtServiceConfig.odpDiario + `/${idOrdem}` 
         : searchingWeek  
                 ? jwtServiceConfig.odpSemanal + `/${idOrdem}`
         : jwtServiceConfig.odpMensal + `?userId=${userId}`;
@@ -248,8 +248,12 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
             const response = await api(config);
 
             if (searchingWeek || searchingDay) {
-                dispatch(setStatements(response.data.ordens));
-                dispatch(setSumInfoWeek(response.data))
+                dispatch(setStatements(response.data));
+                if(searchingDay){
+                    const sum = response.data.map((statement) => statement.valor_pagamento)
+                        .reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+                    dispatch(setSumInfoDay(sum))
+                }
 
             } else {
                 dispatch(setSumInfo(response.data))
@@ -272,8 +276,8 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
 export const getMultipliedEntries = (statements, searchingDay, searchingWeek) => (dispatch) => {
     if (statements?.length > 0) {
         if (searchingDay) {
-            const sum = statements.map((statement) => statement)
-                .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+            const sum = statements.map((statement) => statement.valor_pagamento)
+                .reduce((accumulator, currentValue) => accumulator + currentValue, 0)
             dispatch(setMultipliedEntries(sum));
         } else if (searchingWeek) {
             const sum = statements.map((statement) => statement.transactionValueSum)

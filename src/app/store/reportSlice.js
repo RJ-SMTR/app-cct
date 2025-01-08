@@ -128,7 +128,6 @@ function handleData(data) {
 
 
 export const handleReportInfo = (data, reportType) => async (dispatch) => {
-    console.log(data)
     const token = window.localStorage.getItem('jwt_access_token');
 
     if (JwtService.isAuthTokenValid(token)) {

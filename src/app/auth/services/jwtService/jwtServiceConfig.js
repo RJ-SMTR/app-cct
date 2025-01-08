@@ -25,7 +25,8 @@ const jwtServiceConfig = {
   finanGetByStatus: 'lancamento/getbystatus',
   report: 'cnab/relatorio',
   odpMensal: '/ordem-pagamento/mensal',
-  odpSemanal: '/ordem-pagamento/semanal'
+  odpSemanal: '/ordem-pagamento/semanal',
+  odpDiario: '/ordem-pagamento/diario'
 
 };
 
