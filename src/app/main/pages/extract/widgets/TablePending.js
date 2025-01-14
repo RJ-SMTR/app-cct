@@ -63,17 +63,7 @@ function TablePending() {
                             <TableRow>
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        Data Transação
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
                                         Data Processamento
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        Valor da Transação
                                     </Typography>
                                 </TableCell>
                                 <TableCell>
@@ -84,21 +74,6 @@ function TablePending() {
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
                                         Valor para pagamento
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        Data Pagamento Efetivo
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        Status
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        Erro
                                     </Typography>
                                 </TableCell>
                             </TableRow>
@@ -112,49 +87,24 @@ function TablePending() {
                                         </Box>
                                     </TableCell>
                                     </TableRow>
-                            :  pendingList.count > 0 ? pendingList.data?.map((i) => {
+                            :  pendingList.length > 0 ? pendingList?.map((i) => {
                                 return <TableRow key={Math.random()}>
                                     <TableCell component="th" scope="row">
                                         <Typography className="whitespace-nowrap">
-                                            {format(parseISO(i.transactionDate), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' })}
+                                            {format(parseISO(i.dataOrdem), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' })}
 
                                         </Typography>
                                     </TableCell>
                                     <TableCell component="th" scope="row">
                                         <Typography className="whitespace-nowrap">
-                                            {format(parseISO(i.processingDate), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' })}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell component="th" scope="row">
-                                        {formatter.format(i.amount ?? 0)}
-                                    </TableCell>
-                                    <TableCell component="th" scope="row">
-                                        <Typography className="whitespace-nowrap">
-                                            {i.paymentOrderDate ? format(parseISO(i.paymentOrderDate), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }) : ''}
+                                            {format(parseISO(i.dataOrdem), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' })}
 
                                         </Typography>
                                     </TableCell>
                                     <TableCell component="th" scope="row">
-                                        <Typography className="whitespace-nowrap">
-                                            {formatter.format(i.paidAmount ?? 0)}
-                                        </Typography>
+                                        {formatter.format(i.valor ?? 0)}
                                     </TableCell>
-                                    <TableCell component="th" scope="row">
-                                        <Typography className="whitespace-nowrap">
-                                            {i.effectivePaymentDate ? format(parseISO(i.effectivePaymentDate), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }) : ''}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell component="th" scope="row">
-                                        <Typography className="whitespace-nowrap">
-                                            <CustomBadge data={i} />
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell component="th" scope="row">
-                                        <Typography className="whitespace-nowrap underline cursor-pointer">
-                                            <Tooltip title={i.error} placement="top-start">
-                                            </Tooltip>
-                                        </Typography>
-                                    </TableCell>
+                               
                                 </TableRow>
                             }) : <TableCell colSpan={4}>
                                 Não há dados para serem exibidos

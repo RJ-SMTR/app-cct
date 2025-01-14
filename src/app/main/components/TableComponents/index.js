@@ -25,10 +25,9 @@ export function CustomTable(data) {
     currency: 'BRL',
   });
   const dateUTC = (i) => {
-    const tz = 'UTC'
+    // const tz = 'UTC'
     const parsed = new Date(i)
-    const zonedDate = utcToZonedTime(parsed, tz)
-    const formattedDate = format(zonedDate, 'dd/MM/yyyy HH:mm:ss');
+    const formattedDate = format(parsed, 'dd/MM/yyyy HH:mm:ss');
     return formattedDate
   }
   const dateUTCMonth = (i) => {
@@ -44,17 +43,17 @@ export function CustomTable(data) {
       let status = ''
       switch (i.statusRemessa){
         case 1:
-          status = 'A pagar';
+          status = 'Pago';
           break;
           case 5:
            status =  'Pendente'
         default:
-          status ='Pago';
+          status ='A pagar';
       }
      return status
     }
     return <Badge className={`${data.c?.root}  whitespace-nowrap`}
-      color={i.statusRemessa === 5 ? 'error' : i.statusRemessa === 'Pago' ? 'success' : i.statusRemessa === 1 ? 'warning' : 'op'}
+      color={i.statusRemessa === 5 ? 'error' : i.statusRemessa === 1 ? 'success' : i.statusRemessa === 0 ? 'warning' : 'op'}
       badgeContent={getStatus(i)}
     />
   }

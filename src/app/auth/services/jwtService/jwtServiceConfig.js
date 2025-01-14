@@ -26,7 +26,8 @@ const jwtServiceConfig = {
   report: 'cnab/relatorio',
   odpMensal: '/ordem-pagamento/mensal',
   odpSemanal: '/ordem-pagamento/semanal',
-  odpDiario: '/ordem-pagamento/diario'
+  odpDiario: '/ordem-pagamento/diario',
+  odpAnteriores: '/ordem-pagamento/transacoes-dias-anteriores',
 
 };
 

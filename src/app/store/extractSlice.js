@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { api } from 'app/configs/api/api';
-import { format, parseISO } from 'date-fns';
+import { compareAsc, compareDesc, format, parseISO } from 'date-fns';
 import accounting from 'accounting';
 import jwtServiceConfig from '../auth/services/jwtService/jwtServiceConfig';
 import JwtService from '../auth/services/jwtService';
@@ -27,6 +27,7 @@ const initialState = {
     isLoadingWeek: false,
     isLoadingPrevious: false,
     ordemPgtoId: '',
+    mocked: false
 };
 
 const extractSlice = createSlice({
@@ -97,6 +98,9 @@ const extractSlice = createSlice({
         setOrdemPgto: (state, action) => {
             state.ordemPgtoId = action.payload;
         },
+        setMocked: (state, action) => {
+            state.mocked = action.payload;
+        },
        
     },
 });
@@ -138,7 +142,9 @@ export const {
     setLoadingWeek,
     setLoadingPrevious,
     setOrdemPgto,
-    ordemPgtoId
+    ordemPgtoId,
+    mocked,
+    setMocked
 } = extractSlice.actions;
 
 export default extractSlice.reducer;
@@ -149,29 +155,30 @@ function handleRequestData(previousDays, dateRange) {
 }
 
 
-// export const  getPreviousDays = (dateRange, interval='lastWeek', userId) => async (dispatch) => {
-//     const token = window.localStorage.getItem('jwt_access_token');
+export const  getPreviousDays = (idOrdem, userId) => async (dispatch) => {
+    const token = window.localStorage.getItem('jwt_access_token');
    
-//     if(JwtService.isAuthTokenValid(token)){
-//         let config = {
-//             method: 'get',
-//             maxBodyLength: Infinity,
-//             url: userId ? jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=${interval}&userId=${userId}` : jwtServiceConfig.bankStatement + `/previous-days?endDate=${dateRange}&timeInterval=${interval}`,
-//             headers: { "Authorization": `Bearer ${token}` },
-//         }
-//         try {
-//             dispatch(setLoadingPrevious(true))
-//             const response = await api.request(config)
-//             dispatch(setPendingValue(response.data.statusCounts))
-//             dispatch(setPendingList(response.data))
-//         } catch (error) {
-//             console.error(error);
-//         } finally {
-//             dispatch(setLoadingPrevious(false))
-//         }
-//     }
+    if(JwtService.isAuthTokenValid(token)){
+        let config = {
+            method: 'get',
+            maxBodyLength: Infinity,
+            url: userId ? jwtServiceConfig.odpAnteriores + `/${idOrdem}?userId=${userId}` : jwtServiceConfig.bankStatement + `/${idOrdem}`,
+            headers: { "Authorization": `Bearer ${token}` },
+        }
+        try {
+            dispatch(setLoadingPrevious(true))
+            const response = await api.request(config)
+            console.log(response)
+            dispatch(setPendingValue(response.data.statusCounts))
+            dispatch(setPendingList(response.data))
+        } catch (error) {
+            console.error(error);
+        } finally {
+            dispatch(setLoadingPrevious(false))
+        }
+    }
 
-// }
+}
 
 // export const getFirstTypes = (userId, dateRange, searchingWeek, searchingDay) => async (dispatch) => {
 
@@ -208,7 +215,7 @@ function handleRequestData(previousDays, dateRange) {
 //     }
 // };
 
-export const getStatements = (dateRange, searchingDay, searchingWeek, userId, idOrdem) => async (dispatch) => {
+export const getStatements = (dateRange, searchingDay, searchingWeek, userId, idOrdem, mocked) => async (dispatch) => {
 
 
     const requestData = searchingWeek || searchingDay ?  null : handleRequestData(null, dateRange, searchingDay, searchingWeek);
@@ -221,9 +228,9 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
                 : jwtServiceConfig.odpMensal
     } else {
         apiRoute = searchingWeek && searchingDay 
-            ? jwtServiceConfig.odpDiario + `/${idOrdem}` 
+            ? jwtServiceConfig.odpDiario + `/${idOrdem}?userId=${userId}` 
         : searchingWeek  
-                ? jwtServiceConfig.odpSemanal + `/${idOrdem}`
+                ? jwtServiceConfig.odpSemanal + `/${idOrdem}?userId=${userId}`
         : jwtServiceConfig.odpMensal + `?userId=${userId}`;
     }
     const method = 'get';
@@ -246,18 +253,53 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
         try {
             dispatch(setLoading(true))
             const response = await api(config);
+            if (searchingDay){
+                const statementsSort = response.data.sort((a, b) =>
+                    compareDesc(parseISO(a.datetime_transacao), parseISO(b.datetime_transacao))
+                );
 
-            if (searchingWeek || searchingDay) {
-                dispatch(setStatements(response.data));
-                if(searchingDay){
-                    const sum = response.data.map((statement) => statement.valor_pagamento)
-                        .reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-                    dispatch(setSumInfoDay(sum))
+                dispatch(setStatements(statementsSort));
+
+                const sum = response.data.map((statement) => statement.valor_pagamento)
+                    .reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+                dispatch(setSumInfoDay(sum))
+            }
+            else if (searchingWeek  ) {
+                    dispatch(getPreviousDays(idOrdem, userId))
+              
+                if(!mocked){
+                    const statementsSort = response.data.sort((a, b) =>
+                        compareDesc(parseISO(a.dataOrdem), parseISO(b.dataOrdem))
+                    );
+                    const summedByDate =statementsSort.reduce((acc, curr) => {
+                        const date = curr.dataOrdem.split("T")[0]; 
+
+                        if (!acc[date]) {
+                            acc[date] = { dataOrdem: date, valor: 0 };
+                        }
+                        acc[date].valor += curr.valor;
+                        return acc;
+                    }, {});
+
+                    const resultArray = Object.values(summedByDate);
+                    dispatch(setStatements(resultArray))                  
+                } else {
+                    const statementsSort = response.data.sort((a, b) =>
+                        compareDesc(parseISO(a.dataOrdem), parseISO(b.dataOrdem))
+                    );
+                    const filtered = statementsSort.filter((i) => i.dataOrdem.split("T")[0] == dateRange[0])
+                    dispatch(setStatements(filtered));
                 }
 
+               
+
             } else {
+                const statementsSort = response.data.ordens.sort((a, b) =>
+                    compareDesc(parseISO(a.data), parseISO(b.data))
+                );
+
+                dispatch(setStatements(statementsSort));
                 dispatch(setSumInfo(response.data))
-                dispatch(setStatements(response.data.ordens));
             }
 
             return response.data;
