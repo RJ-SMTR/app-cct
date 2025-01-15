@@ -3,7 +3,7 @@ import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
 import { useSelector } from 'react-redux';
-import { useState, useEffect } from 'react';
+// import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -11,14 +11,11 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 
 export function CustomTable(data) {
-  const [dayAmount, setDayAmount] = useState(null)
+  // const [dayAmount, setDayAmount] = useState(null)
   const searchingDay = useSelector(state => state.extract.searchingDay);
   const searchingWeek = useSelector(state => state.extract.searchingWeek);
-  const statements = useSelector(state => state.extract.statements);
-  useEffect(() => {
+  // const statements = useSelector(state => state.extract.statements);
 
-    setDayAmount(parseInt(data.data.transactions) * 4.3);
-  }, [data, searchingDay]);
 
   const formatter = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -102,10 +99,13 @@ export function CustomTable(data) {
         </Typography>
       </TableCell>
 
-      {/* {searchingWeek ?
+      {searchingDay && (
         <TableCell component="th" scope="row">
-          {data.data.count?.toLocaleString()}
-        </TableCell> : <></>} */}
+          {data.lastDate}
+        </TableCell>
+      )
+      // ULTIMA DATA
+       }
      
       <TableCell component="th" scope="row">
         {/* VALOR PAGO */}

@@ -13,11 +13,12 @@ import { Badge, Box, CircularProgress, Skeleton, TableFooter, Tooltip } from '@m
 import { useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { format, parseISO } from 'date-fns';
+import { utcToZonedTime } from 'date-fns-tz';
 
 
 function TablePending() {
     const [selectedDate, setSelectedDate] = useState('')
-    const [values, setValues] = useState({})
+    const [values, setValues] = useState([])
     const pendingList = useSelector(state => state.extract.pendingList)
     const isLoadingPrevious = useSelector(state => state.extract.isLoadingPrevious)
     const {
@@ -37,6 +38,11 @@ function TablePending() {
         const now = new Date(); 
         const isoString = now.toISOString();
         setSelectedDate(format(parseISO(isoString), 'dd/MM/yyyy'));
+          const sum = pendingList.map((statement) => statement.valor)
+                        .reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+                 
+        setValues(sum)
+
     }, [pendingList]);
 
 
@@ -56,14 +62,14 @@ function TablePending() {
 
             <Box className="flex flex-col flex-auto mt-24  overflow-hidden">
 
-
+{/* VALOR PAGO */}
                 <TableContainer>
                     <Table className="min-w-full">
                         <TableHead>
                             <TableRow>
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        Data Processamento
+                                        Data Operação
                                     </Typography>
                                 </TableCell>
                                 <TableCell>
@@ -91,13 +97,13 @@ function TablePending() {
                                 return <TableRow key={Math.random()}>
                                     <TableCell component="th" scope="row">
                                         <Typography className="whitespace-nowrap">
-                                            {format(parseISO(i.dataOrdem), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' })}
+                                            {format(utcToZonedTime(new Date(i.dataOrdem ?? i.dataCaptura)), 'dd/MM/yyyy', 'UTC')}
 
                                         </Typography>
                                     </TableCell>
                                     <TableCell component="th" scope="row">
                                         <Typography className="whitespace-nowrap">
-                                            {format(parseISO(i.dataOrdem), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' })}
+                                            {format(utcToZonedTime(new Date(i.dataOrdem)), 'dd/MM/yyyy', 'UTC')}
 
                                         </Typography>
                                     </TableCell>
@@ -123,12 +129,11 @@ function TablePending() {
 
             </Box>
             <Box className="flex justify-end">
-                {/* <Box className="mr-16">
+                <Box className="mr-16">
                     <Typography className="font-bold">
-
-                        Total Pago:  {formatter.format(pendingList.paidValue)}
+                        Total Pago:  {formatter.format(values ?? 0)}
                     </Typography>
-                </Box> */}
+                </Box>
                 <Box className="mr-16">
                     <Typography className="font-bold">
 

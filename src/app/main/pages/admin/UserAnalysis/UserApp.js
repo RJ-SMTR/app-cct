@@ -144,7 +144,6 @@ function UserApp() {
           {user && (
             <>
            <div className='md:flex mt-10 '>
-                <Entries type={valorAcumulado} isDay="false" />
                 <Entries type={paidValue} isDay="false" />
            </div>
               <div className={`flex flex-col `}>

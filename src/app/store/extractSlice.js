@@ -168,8 +168,6 @@ export const  getPreviousDays = (idOrdem, userId) => async (dispatch) => {
         try {
             dispatch(setLoadingPrevious(true))
             const response = await api.request(config)
-            console.log(response)
-            dispatch(setPendingValue(response.data.statusCounts))
             dispatch(setPendingList(response.data))
         } catch (error) {
             console.error(error);
@@ -267,29 +265,12 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
             else if (searchingWeek  ) {
                     dispatch(getPreviousDays(idOrdem, userId))
               
-                if(!mocked){
                     const statementsSort = response.data.sort((a, b) =>
                         compareDesc(parseISO(a.dataOrdem), parseISO(b.dataOrdem))
                     );
-                    const summedByDate =statementsSort.reduce((acc, curr) => {
-                        const date = curr.dataOrdem.split("T")[0]; 
-
-                        if (!acc[date]) {
-                            acc[date] = { dataOrdem: date, valor: 0 };
-                        }
-                        acc[date].valor += curr.valor;
-                        return acc;
-                    }, {});
-
-                    const resultArray = Object.values(summedByDate);
-                    dispatch(setStatements(resultArray))                  
-                } else {
-                    const statementsSort = response.data.sort((a, b) =>
-                        compareDesc(parseISO(a.dataOrdem), parseISO(b.dataOrdem))
-                    );
-                    const filtered = statementsSort.filter((i) => i.dataOrdem.split("T")[0] == dateRange[0])
-                    dispatch(setStatements(filtered));
-                }
+                    dispatch(setStatements(statementsSort));
+            
+                    // }
 
                
 

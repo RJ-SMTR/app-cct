@@ -2,7 +2,7 @@ import { Paper, Skeleton, Typography } from "@mui/material"
 import FuseSvgIcon from "@fuse/core/FuseSvgIcon"
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from "react";
-import { getMultipliedEntries } from "app/store/extractSlice";
+import { getMultipliedEntries, setSumInfo } from "app/store/extractSlice";
 import { format } from "date-fns";
 import { utcToZonedTime } from 'date-fns-tz';
 
@@ -23,12 +23,24 @@ function Entries(type) {
     const sumInfoDay = useSelector(state => state.extract.sumInfoDay)
     const searchingWeek = useSelector(state => state.extract.searchingWeek)
     const searchingDay = useSelector(state => state.extract.searchingDay)
+    const pendingList = useSelector(state => state.extract.pendingList)
    
  
 
     useEffect(() => {
-            dispatch(getMultipliedEntries(statements, searchingDay, searchingWeek))
-    }, [])
+        if(searchingWeek && pendingList.length > 0){
+
+            const allValues = statements.concat(pendingList)
+            console.log(allValues)
+            const sum = allValues.map((statement) => statement.valor)
+                .reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+            dispatch(setSumInfo(sum))
+        } else {
+            const sum = statements.map((statement) => statement.valor)
+                .reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+            dispatch(setSumInfo(sum))
+        }
+    }, [searchingWeek,pendingList])
     useEffect(() => {
             const date = new Date()
             const today = format(date, 'dd/MM/yyyy')
@@ -39,7 +51,7 @@ function Entries(type) {
 
     useEffect(() => {
         if (statements?.length > 0) {
-            // const tz = 'UTC';
+
 
             const getDateValue = (item) => item?.data || item?.dataOrdem || item?.datetime_transacao;
 
@@ -72,8 +84,8 @@ function Entries(type) {
               <Typography className="mt-8 font-medium text-3xl leading-none">
                   {
                       searchingDay ? 
-                          formatter.format(type.type.includes("Pago") ? 0 : sumInfoDay)
-                          : formatter.format(type.type.includes("Pago") ? sumInfo?.valorTotalPago : sumInfo?.valorTotal)
+                          formatter.format(type.type.includes("Pago") ? sumInfoDay : 0)
+                          : formatter.format(type.type.includes("Pago") ? sumInfo?.valorTotal ?? sumInfo : sumInfo?.valorTotalPago)
                   }
 
               </Typography>

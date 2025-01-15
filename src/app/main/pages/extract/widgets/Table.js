@@ -60,8 +60,8 @@ function TableTransactions({ id }) {
         mocked
     } = useSelector((state) => state.extract);
     const MemoizedCustomTable = memo(CustomTable);
-
-
+ 
+// REMOVER CARD
 
     const [currentWeekStart, setCurrentWeekStart] = useState()
     const [isGreaterThanToday, setIsGreaterThanToday] = useState(false)
@@ -71,6 +71,7 @@ function TableTransactions({ id }) {
     const [lastDate, setLastDate] = useState([])
     const [rowsPerPage, setRowsPerPage] = useState(8);
     const [selectedDate, setSelectedDate] = useState(null)
+    const [dataOrderDay, setDataOrderDay] = useState('')
     
 
     const navigate = useNavigate()
@@ -91,7 +92,6 @@ function TableTransactions({ id }) {
                 previousStatementsRef.current = dateRange;
             }
         }
-
     }, [dateRange])
     const previousOrder = useRef();
     useEffect(() => {
@@ -214,13 +214,16 @@ function TableTransactions({ id }) {
         const [day, month, year] = start.split('/');
         const transformedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
         const tz = 'America/Sao_Paulo';
+
+        setDataOrderDay(start)
         if (fullReport) {
-            if (searchingWeek && !mocked) {
-                dispatch(setMocked(true))
-                dispatch(setDateRange([transformedDate, transformedDate]));
+            // if (searchingWeek && !mocked) {
+            //     dispatch(setMocked(true))
+            //     dispatch(setDateRange([transformedDate, transformedDate]));
      
                 
-            } else if(searchingWeek && mocked){
+            // } else 
+            if(searchingWeek){
                 dispatch(setValorAcumuladoLabel('Valor Operação - Detalhado'));
                 dispatch(setValorPagoLabel('Valor Pago - Detalhado'));
                 dispatch(setDateRange([transformedDate, transformedDate]));
@@ -246,23 +249,23 @@ function TableTransactions({ id }) {
     }
 
     const handleBack = () => {
-        if(mocked && !searchingDay){
-            dispatch(setMocked(false))
-            dispatch(setDateRange(lastDate))
+        // if(mocked && !searchingDay){
+        //     dispatch(setMocked(false))
+        //     dispatch(setDateRange(lastDate))
             
-        } else {
+        // } else {
             setSelectedDate(null);
             dispatch(setLoadingWeek(true))
             dispatch(setLoadingPrevious(true))
             dispatch(setLoading(true))
-            dispatch(setMocked(false))
+            // dispatch(setMocked(false))
             if (searchingDay) {
                 dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
                 dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
                 dispatch(setDateRange(lastDate))
                 dispatch(setOrdemPgto(lastId))
                 setPage(0)
-                dispatch(setMocked(true))
+                // dispatch(setMocked(true))
                 dispatch(setSearchingDay(false))
 
 
@@ -285,7 +288,7 @@ function TableTransactions({ id }) {
 
         }
        
-        }
+        // }
     }
 
  
@@ -377,9 +380,14 @@ function TableTransactions({ id }) {
                             <TableRow>
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        {!searchingWeek ? 'Data' : 'Data Processamento'}
+                                        {!searchingWeek ? 'Data' : 'Data Operação'}
                                     </Typography>
                                 </TableCell>
+                                {searchingDay ? <TableCell>
+                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                        Data Ordem Pagamento
+                                    </Typography>
+                                </TableCell> : <></>}
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
                                         Valor para pagamento
@@ -387,7 +395,7 @@ function TableTransactions({ id }) {
                                 </TableCell>
                                 {searchingDay ? <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        Tipo Transação
+                                        Tipo Operação
                                     </Typography>
                                 </TableCell> : <></>}
                                 {searchingWeek ? <></> :
@@ -423,7 +431,7 @@ function TableTransactions({ id }) {
                                 const zonedDate = utcToZonedTime(date, tz)
                                 const formattedDate = format(zonedDate, 'dd/MM/yyyy');
                                 const idOrdem = searchingWeek ? i.ordemId : i.ordemPagamentoAgrupadoId
-                                return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={(event) => handleClickRow(idOrdem, event)} />
+                                return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={(event) => handleClickRow(idOrdem, event)} lastDate={dataOrderDay}  />
                             }) : 
                                 <TableCell colSpan={4}>
                                     <p>Não há dados para sem exibidos</p>
