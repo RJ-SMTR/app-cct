@@ -94,7 +94,7 @@ export function CustomTable(data) {
       <TableCell component="th" scope="row" onClick={searchingDay ? undefined : data.handleClickRow}>
         <Typography className={searchingDay ? "whitespace-nowrap " : "whitespace-nowrap underline"}>
 
-          {searchingDay ? dateUTC(data.data.datetime_transacao) : searchingWeek ? dateUTCMonth(data.data.dataOrdem) : dateUTCMonth(data.data.data)}
+          {searchingDay ? dateUTC(data.data.datetime_transacao) : searchingWeek ? dateUTCMonth(data.data.dataCaptura) : dateUTCMonth(data.data.data)}
 
         </Typography>
       </TableCell>
@@ -123,8 +123,8 @@ export function CustomTable(data) {
       <TableCell component="th" scope="row">
         <Typography className="whitespace-nowrap">
       
-              {data.data.tipo_transacao}
-      
+              {data.data.tipo_transacao.includes("Integração") ? 'Integração' : 'Integral'}
+    
         </Typography>
 
       </TableCell>)}

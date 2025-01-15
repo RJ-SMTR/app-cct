@@ -28,18 +28,9 @@ function Entries(type) {
  
 
     useEffect(() => {
-        if(searchingWeek && pendingList.length > 0){
-
-            const allValues = statements.concat(pendingList)
-            console.log(allValues)
-            const sum = allValues.map((statement) => statement.valor)
-                .reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-            dispatch(setSumInfo(sum))
-        } else {
             const sum = statements.map((statement) => statement.valor)
                 .reduce((accumulator, currentValue) => accumulator + currentValue, 0)
             dispatch(setSumInfo(sum))
-        }
     }, [searchingWeek,pendingList])
     useEffect(() => {
             const date = new Date()
@@ -53,7 +44,7 @@ function Entries(type) {
         if (statements?.length > 0) {
 
 
-            const getDateValue = (item) => item?.data || item?.dataOrdem || item?.datetime_transacao;
+            const getDateValue = (item) => item?.data || item?.dataCaptura || item?.datetime_transacao;
 
             const firstDateValue = getDateValue(statements[statements.length - 1]);
             const lastDateValue = getDateValue(statements[0]);

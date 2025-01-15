@@ -150,7 +150,7 @@ function UserApp() {
                <div>
                  <Table id={id} />
                </div>
-                {searchingWeek ? <div>
+                {searchingWeek && !searchingDay ? <div>
                   <TablePending id={id} />
                 </div> : <></>}
 

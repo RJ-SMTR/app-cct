@@ -427,10 +427,10 @@ function TableTransactions({ id }) {
                             : statements?.length > 0 ?
                             statements?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
                                 const tz = 'UTC'
-                                const date = parseISO(i.data ?? i.dataOrdem ?? i.datetime_processamento);
+                                const date = parseISO(i.data ?? i.dataCaptura ?? i.datetime_processamento);
                                 const zonedDate = utcToZonedTime(date, tz)
                                 const formattedDate = format(zonedDate, 'dd/MM/yyyy');
-                                const idOrdem = searchingWeek ? i.ordemId : i.ordemPagamentoAgrupadoId
+                                const idOrdem = searchingWeek ? i.ids : i.ordemPagamentoAgrupadoId
                                 return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={(event) => handleClickRow(idOrdem, event)} lastDate={dataOrderDay}  />
                             }) : 
                                 <TableCell colSpan={4}>

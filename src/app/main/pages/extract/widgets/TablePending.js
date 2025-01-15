@@ -50,7 +50,7 @@ function TablePending() {
         <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
             <div className="flex flex-row justify-between">
                 <Typography className="mr-16 text-lg font-medium tracking-tight leading-6 truncate">
-                    Transações Dias Anteriores
+                    Dias Anteriores
                 </Typography>
 
 
@@ -69,14 +69,15 @@ function TablePending() {
                             <TableRow>
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        Data Operação
+                                        Data Ordem
                                     </Typography>
                                 </TableCell>
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        Data Ordem Pagamento
+                                        Data Ordem de Pagamento
                                     </Typography>
                                 </TableCell>
+                              
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
                                         Valor para pagamento
@@ -97,16 +98,17 @@ function TablePending() {
                                 return <TableRow key={Math.random()}>
                                     <TableCell component="th" scope="row">
                                         <Typography className="whitespace-nowrap">
-                                            {format(utcToZonedTime(new Date(i.dataOrdem ?? i.dataCaptura)), 'dd/MM/yyyy', 'UTC')}
+                                            {format(utcToZonedTime(new Date(i.dataOrdem)), 'dd/MM/yyyy', 'UTC')}
 
                                         </Typography>
                                     </TableCell>
                                     <TableCell component="th" scope="row">
                                         <Typography className="whitespace-nowrap">
-                                            {format(utcToZonedTime(new Date(i.dataOrdem)), 'dd/MM/yyyy', 'UTC')}
+                                            {format(utcToZonedTime(new Date( i.dataCaptura)), 'dd/MM/yyyy', 'UTC')}
 
                                         </Typography>
                                     </TableCell>
+                                  
                                     <TableCell component="th" scope="row">
                                         {formatter.format(i.valor ?? 0)}
                                     </TableCell>
@@ -134,12 +136,12 @@ function TablePending() {
                         Total Pago:  {formatter.format(values ?? 0)}
                     </Typography>
                 </Box>
-                <Box className="mr-16">
+                {/* <Box className="mr-16">
                     <Typography className="font-bold">
 
                         Total a Pagar:  {formatter.format(pendingList.toPayValue ?? 0)}
                     </Typography>
-                </Box>
+                </Box> */}
 
                 {/* <Box>
                     <Typography className="text-red font-bold">

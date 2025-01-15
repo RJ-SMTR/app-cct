@@ -215,8 +215,7 @@ export const  getPreviousDays = (idOrdem, userId) => async (dispatch) => {
 
 export const getStatements = (dateRange, searchingDay, searchingWeek, userId, idOrdem, mocked) => async (dispatch) => {
 
-
-    const requestData = searchingWeek || searchingDay ?  null : handleRequestData(null, dateRange, searchingDay, searchingWeek);
+    const requestData = searchingDay ? {ordemPagamentoIds: idOrdem}  : searchingWeek  ?  null : handleRequestData(null, dateRange, searchingDay, searchingWeek);
     let apiRoute = ''
     if(!userId){
         apiRoute = searchingWeek && searchingDay
@@ -226,7 +225,7 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
                 : jwtServiceConfig.odpMensal
     } else {
         apiRoute = searchingWeek && searchingDay 
-            ? jwtServiceConfig.odpDiario + `/${idOrdem}?userId=${userId}` 
+            ? jwtServiceConfig.odpDiario + `/?userId=${userId}` 
         : searchingWeek  
                 ? jwtServiceConfig.odpSemanal + `/${idOrdem}?userId=${userId}`
         : jwtServiceConfig.odpMensal + `?userId=${userId}`;
@@ -266,7 +265,7 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
                     dispatch(getPreviousDays(idOrdem, userId))
               
                     const statementsSort = response.data.sort((a, b) =>
-                        compareDesc(parseISO(a.dataOrdem), parseISO(b.dataOrdem))
+                        compareDesc(parseISO(a.dataCaptura), parseISO(b.dataCaptura))
                     );
                     dispatch(setStatements(statementsSort));
             
