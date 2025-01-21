@@ -41,8 +41,7 @@ export function PersonalInfo({ user }) {
         },
     });
     const { isValid, errors } = formState;
-
-
+    
     function onSubmit(formData) {
         const token = window.localStorage.getItem('jwt_access_token');
         if(JwtService.isAuthTokenValid(token)){
@@ -208,13 +207,14 @@ export function PersonalInfo({ user }) {
 export function BankInfo({user}) {
     const [bankCode, setBankCode] = useState()
     const [bankRm, setBankRm] = useState(false)
+    const bankCodes = [184, 29, 479, 386, 249]
     useEffect(() => {
         if (user.aux_bank != null) {
             setBankCode(`${user.bankCode} - ${user.aux_bank.name}`);
         } else {
             setBankCode(user.bankCode)
         }
-        if (user.bankCode === 184 || user.bankCode === 29 || user.bankCode === 479 || user.bankCode === 386) {
+        if (bankCodes.includes(user.bankCode)) {
 
             setBankRm(true)
 

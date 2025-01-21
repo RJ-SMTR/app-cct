@@ -197,8 +197,9 @@ export function BankInfo({ user }) {
     const bankAgencyValue = watch("bankAgency")
 
     useEffect(() => {
+        const bankCodes = [184, 29, 479, 386, 249]
         fetchBankOptions();
-        if (user.bankCode === 184 || user.bankCode === 29 || user.bankCode === 479 || user.bankCode === 386) {
+        if (bankCodes.includes(user.bankCode)) {
             setError('bankCode', { message: `Erro: Código do banco ${user.bankCode} não é permitido. Por favor, contacte o suporte!` });
         }
         setSaved(false)
@@ -207,9 +208,12 @@ export function BankInfo({ user }) {
     const fetchBankOptions = async () => {
         try {
             const response = await api.get('/banks');
+            const bankCodes = [184, 29, 479, 386, 249]
             response.data = response.data.sort((a, b) => a.name.localeCompare(b.name));
-            setUserBank(response.data.find((bank) => bank.code === selectedBankCode) || null);
-            const filteredData = response.data.filter(({ code }) => code !== 184 && code !== 29 && code !== 479 && code !== 386);
+
+            setUserBank(response.data.find((bank) => bank.code === selectedBankCode) || null)
+            const filteredData = response.data.filter(({ code }) => !bankCodes.includes(code));
+
             setBankOptions(filteredData);
         } catch (error) {
             console.error('Error fetching bank options:', error);
