@@ -69,18 +69,18 @@ function TablePending() {
                             <TableRow>
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        Data Ordem
+                                        Data Ordem de Pagamento
                                     </Typography>
                                 </TableCell>
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        Data Ordem de Pagamento
+                                        Data Processamento da Ordem
                                     </Typography>
                                 </TableCell>
                               
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        Valor para pagamento
+                                        Valor para pagamento <br/>(Inlcuido nos valores da semana)
                                     </Typography>
                                 </TableCell>
                             </TableRow>
