@@ -1,40 +1,93 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react';
 import { Typography } from '@mui/material';
 import { Box } from '@mui/system';
-import  { TableUsers } from './components/Table';
-import { useDispatch, useSelector } from 'react-redux';
+import { TableUsers } from './components/Table';
+import { useDispatch } from 'react-redux';
 import { getUser, getInfo } from 'app/store/adminSlice';
-
-import { setSearchingWeek, setSearchingDay, setStatements, setDateRange, setValorAcumuladoLabel, setValorPagoLabel } from 'app/store/extractSlice';
+import {
+    setSearchingWeek,
+    setSearchingDay,
+    setStatements,
+    setDateRange,
+    setValorAcumuladoLabel,
+    setValorPagoLabel
+} from 'app/store/extractSlice';
 import { setReportList } from 'app/store/reportSlice';
+import { Modal } from '@mui/material';
+import { Settings } from '@mui/icons-material';
 
-
+const style = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '54rem',
+    maxWidth: '90%',
+    maxHeight: '85vh',
+    borderRadius: '.5rem',
+    bgcolor: 'background.paper',
+    boxShadow: 24,
+    p: 4,
+};
 
 function AdminApp() {
-    const dispatch = useDispatch()
-    useEffect(() => {  
-        dispatch(setSearchingWeek(false))
-        dispatch(setSearchingDay(false)) 
-        dispatch(setDateRange([]))
-        dispatch(setStatements([]))
-        dispatch(getUser())
-        dispatch(getInfo())
-        dispatch(setReportList([]))
-        dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Mensal'))
-        dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'))
-        
-    }, [])
+    const [modal, setModal] = useState(false);
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        const modalShown = localStorage.getItem('modalShown');
+        if (!modalShown) {
+            setModal(true);
+            localStorage.setItem('modalShown', 'true'); 
+        }
+
+        dispatch(setSearchingWeek(false));
+        dispatch(setSearchingDay(false));
+        dispatch(setDateRange([]));
+        dispatch(setStatements([]));
+        dispatch(getUser());
+        dispatch(getInfo());
+        dispatch(setReportList([]));
+        dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Mensal'));
+        dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'));
+    }, [dispatch]);
+
+    const handleClose = () => {
+        setModal(false);
+    };
+
     return (
         <>
             <div className="p-24 pt-10">
-                <Typography className='font-medium text-3xl'>Administração</Typography>
-                <Box className='flex flex-col  justify-around'>
-                  <TableUsers/>
+                <Typography className="font-medium text-3xl">Administração</Typography>
+                <Box className="flex flex-col justify-around">
+                    <TableUsers />
                 </Box>
                 <br />
             </div>
+            <Modal
+                open={modal}
+                onClose={handleClose}
+                aria-labelledby="modal-modal-title"
+                aria-describedby="modal-modal-description"
+            >
+                <Box sx={style} className="overflow-scroll text-center">
+                    <Typography id="modal-modal-title" variant="h6" component="h3">
+                        Manutenção Programada
+                    </Typography>
+                    <p>Ocorrerá uma manuntenção do sistema no dia:</p>
+                    <Typography id="modal-modal-title font-bold" variant="h6" component="h3">
+                        03/02/2025
+                    </Typography>
+                    <p>
+                        
+                        Nesta data o sistema<strong> estará indisponível até às 19hrs.</strong><br/>
+                     
+                    </p>
+                </Box>
+            </Modal>
         </>
     );
 }
 
-export default AdminApp
+export default AdminApp;

@@ -1,6 +1,6 @@
-import { Typography, Box, Button } from '@mui/material';
+import { Typography, Box, Button, Modal } from '@mui/material';
 
-import React, { useContext, useEffect } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { selectUser } from 'app/store/userSlice';
 import Chart from './widgets/Chart';
@@ -11,7 +11,19 @@ import { setFullReport} from 'app/store/extractSlice';
 
 import TableTypes from './widgets/TableTypes';
 import TablePending from './widgets/TablePending';
-
+const style = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: '54rem',
+  maxWidth: '90%',
+  maxHeight: '85vh',
+  borderRadius: '.5rem',
+  bgcolor: 'background.paper',
+  boxShadow: 24,
+  p: 4,
+};
 
 
 function ExtractApp() {
@@ -23,8 +35,16 @@ function ExtractApp() {
   const [first] = fullName?.split(' ');
   const searchingWeek = useSelector(state => state.extract.searchingWeek)
   const searchingDay = useSelector(state => state.extract.searchingDay)
+  const [modal, setModal] = useState(false);
   dispatch(setFullReport(true))
 
+  useEffect(() => {
+    const modalShown = localStorage.getItem('modalShown');
+    if (!modalShown) {
+      setModal(true);
+      localStorage.setItem('modalShown', 'true');
+    }
+  }, [])
 
 
   return (
@@ -65,6 +85,27 @@ function ExtractApp() {
 
         <br />
       </div>
+      <Modal
+        open={modal}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style} className="overflow-scroll text-center">
+          <Typography id="modal-modal-title" variant="h6" component="h3">
+            Manutenção Programada
+          </Typography>
+          <p>Ocorrerá uma manuntenção do sistema no dia:</p>
+          <Typography id="modal-modal-title font-bold" variant="h6" component="h3">
+            03/02/2025
+          </Typography>
+          <p>
+
+            Nesta data o sistema<strong> estará indisponível até às 19hrs.</strong><br />
+
+          </p>
+        </Box>
+      </Modal>
     </>
   );
 }
