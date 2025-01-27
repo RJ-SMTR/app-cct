@@ -19,6 +19,7 @@ import 'leaflet/dist/leaflet.css';
 import { ExtractProvider } from './hooks/ExtractContext';
 import "rsuite/dist/rsuite-no-reset.min.css";
 import { ResumeProvider } from './hooks/ResumeContext';
+import { useEffect } from 'react';
 
 
 // import axios from 'axios';
@@ -45,6 +46,11 @@ const emotionCacheOptions = {
 function App() {
   const user = useSelector(selectUser);
 
+  useEffect(() => {
+    window.addEventListener("unload", () => {
+      sessionStorage.removeItem('modalShown');
+    });
+  }, [])
   const langDirection = useSelector(selectCurrentLanguageDirection);
   const mainTheme = useSelector(selectMainTheme);
   const loginRedirectUrl = user.role?.name?.includes('Financeiro')

@@ -35,10 +35,10 @@ function AdminApp() {
     const dispatch = useDispatch();
 
     useEffect(() => {
-        const modalShown = localStorage.getItem('modalShown');
+        const modalShown = sessionStorage.getItem('modalShown');
         if (!modalShown) {
             setModal(true);
-            localStorage.setItem('modalShown', 'true'); 
+            sessionStorage.setItem('modalShown', 'true'); 
         }
 
         dispatch(setSearchingWeek(false));

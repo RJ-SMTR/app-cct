@@ -22,7 +22,7 @@ function UserMenu(props) {
 
   const userMenuClose = () => {
     setUserMenu(null);
-    localStorage.removeItem('modalShown');
+    sessionStorage.removeItem('modalShown');
 
   };
   const fullName = user.fullName ?? ''
