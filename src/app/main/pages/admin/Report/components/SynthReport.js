@@ -796,9 +796,8 @@ export default function BasicEditingGrid() {
                         </Menu>
                     </header>
                     <div style={{ height: '65vh', width: '100%' }} className='overflow-scroll'>
-                        <Table dense table stickyHeader sx={{ tableLayout: 'fixed', width: '100%' }}>
+                        <Table dense table stickyHeader className='table-auto md:table-fixed w-full'>
 
-                         
                             <TableBody>
                                 {!isLoading ? (
                                     Object.entries(rows).length > 0 ? (
@@ -817,13 +816,13 @@ export default function BasicEditingGrid() {
                                                     </TableRow>
 
                                                     <TableRow>
-                                                        <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Data da Operação</TableCell>
-                                                        <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Dt. Efetiva Pgto.</TableCell>
-                                                        <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Consórcio</TableCell>
-                                                        <TableCell colSpan={4.5} className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Favorecido</TableCell>
-                                                        <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Valor p/ Pagamento</TableCell>
-                                                        <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Status</TableCell>
-                                                        <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Ocorrência</TableCell>
+                                                        <TableCell className="font-bold text-small md:p-0" sx={{ paddingLeft: '0px' }}>Data da Operação</TableCell>
+                                                        <TableCell className="font-bold text-small md:p-0" sx={{ paddingLeft: '0px' }}>Dt. Efetiva Pgto.</TableCell>
+                                                        <TableCell className="font-bold text-small md:p-0" sx={{ paddingLeft: '0px' }}>Consórcio</TableCell>
+                                                        <TableCell colSpan={4.5} className="font-bold text-small md:p-0" sx={{ paddingLeft: '0px' }}>Favorecido</TableCell>
+                                                        <TableCell className="font-bold text-small md:p-0" sx={{ paddingLeft: '0px' }}>Valor p/ Pagamento</TableCell>
+                                                        <TableCell className="font-bold text-small md:p-0" sx={{ paddingLeft: '0px' }}>Status</TableCell>
+                                                        <TableCell className="font-bold text-small md:p-0" sx={{ paddingLeft: '0px' }}>Ocorrência</TableCell>
                                                     </TableRow>
 
                                                     {Object.entries(
@@ -846,20 +845,20 @@ export default function BasicEditingGrid() {
                                                             <React.Fragment key={`${consorcio}-${datapagamento}-${status}-${favorecido || ''}`}>
                                                                 {items.map((item) => (
                                                                     <TableRow sx={{ width: "100%" }} className="w-full" key={item.id}>
-                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>
+                                                                        <TableCell className='md:p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>
                                                                             {item.datatransacao ? format(parseISO(item.datatransacao), "dd/MM/yyyy") : null}
                                                                         </TableCell>
-                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>
+                                                                        <TableCell className='md:p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>
                                                                             {item.datapagamento ? format(parseISO(item.datapagamento), "dd/MM/yyyy") : null}
                                                                         </TableCell>
-                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{item.consorcio}</TableCell>
+                                                                        <TableCell className='md:p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{item.consorcio}</TableCell>
                                                                         <TableCell colSpan={4.5} className='text-[1.2rem]' sx={{ minWidth: 300, maxWidth: 350, overflow: "hidden", textOverflow: "ellipsis", padding: 0 }}>
                                                                             {item.favorecido}
                                                                         </TableCell>
-                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{formatter.format(item.valor)}</TableCell>
-                                                                        <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{showStatus(item.status)}</TableCell>
+                                                                        <TableCell className='md:p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{formatter.format(item.valor)}</TableCell>
+                                                                        <TableCell className='md:p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{showStatus(item.status)}</TableCell>
                                                                         {item.status === "naopago" ? (
-                                                                            <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }} colSpan={3}>
+                                                                            <TableCell className='nowrap md:p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }} colSpan={3}>
                                                                                 {item.mensagem_status}
                                                                             </TableCell>
                                                                         ) : null}
