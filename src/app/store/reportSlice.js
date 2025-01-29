@@ -58,7 +58,9 @@ function handleData(data) {
 
     
     if (data.consorcioName && data.consorcioName.length > 0) {
-            requestData.consorcioNome = data.consorcioName.join(',');
+            if(data.consorcioName != "Todos"){
+                requestData.consorcioNome = data.consorcioName.join(',');
+            } 
     }
 
     if (data.dateRange && data.dateRange.length === 2) {
@@ -68,13 +70,13 @@ function handleData(data) {
 
     
     if (data.name.length > 0 ) {
-     
-            requestData.favorecidoNome = data.name.map(i => i.fullName).toString()
+        if (data.name[0].fullName != "Todos") {
+            requestData.userIds = data.name.map(i => i.userId).toString()
+        } 
+          
 
     } 
     if (data.status && data.status.length > 0) {
-        let hasPago = false;
-        let hasErro = false;
         const statusSet = new Set(data.status);
 
         const hasAllStatuses = statusSet.has('Pago') && statusSet.has('Erro') && statusSet.has('Aguardando Pagamento');
@@ -83,10 +85,10 @@ function handleData(data) {
             data.status.forEach(status => {
                 switch (status) {
                     case 'Pago':
-                        hasPago = true;
+                        requestData.pago = true;
                         break;
                     case 'Erro':
-                        hasErro = true;
+                        requestData.erro = true;
                         break;
                     case 'Aguardando Pagamento':
                         requestData.emProcessamento = true;
@@ -99,11 +101,7 @@ function handleData(data) {
                 }
             });
 
-            if (hasPago && !hasErro) {
-                requestData.pago = true;
-            } else if (hasErro && !hasPago) {
-                requestData.pago = false;
-            }
+          
         }
         if (data.eleicao) {
             requestData.eleicao = true
@@ -150,23 +148,23 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
                 const response = await api.request(config);
                 const responseData = response.data;
                 
-                    const mergedData = responseData.reduce((acc, curr) => {
-                        return acc.concat(curr.data);
-                    }, []);
+                    // const mergedData = responseData.reduce((acc, curr) => {
+                    //     return acc.concat(curr.data);
+                    // }, []);
                     
-                    const combinedResponse = {
-                        count: mergedData.length,
-                        data: mergedData,
-                        valor: responseData.reduce((sum, curr) => sum + curr.valor, 0),
-                        status: 'Todos'
-                    };
+                    // const combinedResponse = {
+                    //     count: mergedData.length,
+                    //     data: mergedData,
+                    //     valor: responseData.reduce((sum, curr) => sum + curr.valor, 0),
+                    //     status: 'Todos'
+                    // };
                     if(reportType == 'sintetico'){
                         dispatch(handleSynthData(combinedResponse))
                     } else {
 
-                        dispatch(setReportList(combinedResponse));
+                        dispatch(setReportList(responseData));
                     }
-                    resolve(combinedResponse);
+                    resolve(responseData);
              
             } catch (error) {
                 console.error(error);
