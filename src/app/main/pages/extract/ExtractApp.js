@@ -45,6 +45,9 @@ function ExtractApp() {
       sessionStorage.setItem('modalShown', 'true');
     }
   }, [])
+  const handleClose = () => {
+    setModal(false);
+  };
 
 
   return (
