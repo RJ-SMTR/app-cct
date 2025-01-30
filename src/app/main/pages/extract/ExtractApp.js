@@ -36,7 +36,6 @@ function ExtractApp() {
   const searchingWeek = useSelector(state => state.extract.searchingWeek)
   const searchingDay = useSelector(state => state.extract.searchingDay)
   const [modal, setModal] = useState(false);
-  dispatch(setFullReport(true))
 
   useEffect(() => {
     const modalShown = sessionStorage.getItem('modalShown');
@@ -44,6 +43,8 @@ function ExtractApp() {
       setModal(true);
       sessionStorage.setItem('modalShown', 'true');
     }
+    dispatch(setFullReport(true))
+
   }, [])
   const handleClose = () => {
     setModal(false);
@@ -59,12 +60,12 @@ function ExtractApp() {
       </div>
       <div className="p-24 pt-10">
         <Typography className='font-medium text-3xl'>Resumo dos Valores</Typography>
-        <Box className='flex flex-col md:flex-row mt-24 justify-around spacing-x-1'>
-          <Entries  type="Valor Transação - Diário" isDay="true" />
+        {/* <Box className='flex flex-col md:flex-row mt-24 justify-around spacing-x-1'>
+         <Entries  type="Valor Transação - Diário" isDay="true " />
           <Entries type={valorTransação} isDay="false" />
           <Entries type={valorPago} isDay="false" />
         </Box>
-        
+         */}
         <div className={`flex flex-col ${searchingDay && 'flex-col-reverse'}`}>
           <Box className='flex flex-col md:flex-row  justify-around'>
             <TableTransactions />
