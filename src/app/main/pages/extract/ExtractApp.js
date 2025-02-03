@@ -1,6 +1,6 @@
-import { Typography, Box, Button } from '@mui/material';
+import { Typography, Box, Button, Modal } from '@mui/material';
 
-import React, { useContext, useEffect } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { selectUser } from 'app/store/userSlice';
 import Entries from './widgets/Entries';
@@ -10,20 +10,36 @@ import { setFullReport} from 'app/store/extractSlice';
 
 import TableTypes from './widgets/TableTypes';
 import TablePending from './widgets/TablePending';
-
+const style = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: '54rem',
+  maxWidth: '90%',
+  maxHeight: '85vh',
+  borderRadius: '.5rem',
+  bgcolor: 'background.paper',
+  boxShadow: 24,
+  p: 4,
+};
 
 
 function ExtractApp() {
   const dispatch = useDispatch()
   const user = useSelector(selectUser);
   const fullName = user.fullName ?? 'Admin';
+  const paidValue = useSelector(state => state.extract.valorPagoLabel);
   const valorTransação = useSelector(state => state.extract.valorAcumuladoLabel);
   const valorPago = useSelector(state => state.extract.valorPagoLabel);
   const [first] = fullName?.split(' ');
   const searchingWeek = useSelector(state => state.extract.searchingWeek)
   const searchingDay = useSelector(state => state.extract.searchingDay)
-  dispatch(setFullReport(true))
 
+
+  useEffect(() => {
+    dispatch(setFullReport(true))
+  }, [])
 
 
   return (
@@ -36,34 +52,23 @@ function ExtractApp() {
       <div className="p-24 pt-10">
         <Typography className='font-medium text-3xl'>Resumo dos Valores</Typography>
         <Box className='flex flex-col md:flex-row mt-24 justify-around spacing-x-1'>
-          {/* <Entries  type="Valor Transação - Diário" isDay="true" /> */}
-          <Entries type={valorTransação} isDay="false" />
-          <Entries type={valorPago} isDay="false" />
+
         </Box>
-        
-        <div className={`flex flex-col ${searchingDay && 'flex-col-reverse'}`}>
+        <div className={`flex flex-col`}>
           <Box className='flex flex-col md:flex-row  justify-around'>
             <TableTransactions />
           </Box>
 
-          {searchingWeek || searchingDay ?
-            <>
-
-              <Box className='flex flex-col md:flex-row   justify-around'>
-                {/* <TableTypes /> */}
-              </Box>
-              <Box className='flex flex-col  justify-around mt-24'>
-                {/* <TablePending /> */}
-              </Box>
-              </>
-              : <></>
-            }
+       {searchingWeek && !searchingDay ? <div>
+                  <TablePending />
+                </div> : <></>}
 
         </div>
        
 
         <br />
       </div>
+    
     </>
   );
 }

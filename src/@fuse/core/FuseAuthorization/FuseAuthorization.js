@@ -63,7 +63,7 @@ class FuseAuthorization extends Component {
           setSessionRedirectUrl("/admin");
           break;
         default:
-          setSessionRedirectUrl("/");
+          setSessionRedirectUrl("/profile");
       }
     }
 
