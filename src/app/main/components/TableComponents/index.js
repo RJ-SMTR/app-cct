@@ -108,7 +108,7 @@ export function CustomTable(data) {
        }
      
       <TableCell component="th" scope="row">
-        {/* VALOR PAGO */}
+        {/* Valor */}
         {searchingDay ? (
           <>
             {formatter.format(data.data.valor_pagamento ?? 0)}

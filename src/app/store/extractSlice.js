@@ -18,7 +18,7 @@ const initialState = {
     listByType: [],
     firstDate: [],
     valorAcumuladoLabel:'Valor Operação - Acumulado Mensal',
-    valorPagoLabel:'Valor Pago - Acumulado Mensal',
+    valorPagoLabel:'Valor  - Acumulado Mensal',
     sumInfo: [],
     sumInfoDay: [],
     pendingValue: [],

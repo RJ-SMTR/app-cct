@@ -195,7 +195,7 @@ function TableTransactions({ id }) {
         dispatch(setLoadingWeek(true))
         dispatch(setLoadingPrevious(true))
         dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Mensal'))
-        dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'))
+        dispatch(setValorPagoLabel('Valor - Acumulado Mensal'))
 
     }
 
@@ -225,16 +225,16 @@ function TableTransactions({ id }) {
             // } else 
             if(searchingWeek){
                 dispatch(setValorAcumuladoLabel('Valor Operação - Detalhado'));
-                dispatch(setValorPagoLabel('Valor Pago - Detalhado'));
+                dispatch(setValorPagoLabel('Valor - Detalhado'));
                 dispatch(setDateRange([transformedDate, transformedDate]));
                 dispatch(setOrdemPgto(idOrder))
                 dispatch(setSearchingDay(true))
                 setPage(0)
             }else  {
                 if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
-                if (!searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
+                if (!searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Semanal'));
                 if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Mensal'));
-                if (searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'));
+                if (searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Mensal'));
                 const clickedDate = parseISO(transformedDate);
                 const clickedDateToday = utcToZonedTime(clickedDate, tz);
                 setCurrentWeekStart(clickedDateToday);
@@ -261,7 +261,7 @@ function TableTransactions({ id }) {
             // dispatch(setMocked(false))
             if (searchingDay) {
                 dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
-                dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
+                dispatch(setValorPagoLabel('Valor - Acumulado Semanal'));
                 dispatch(setDateRange(lastDate))
                 dispatch(setOrdemPgto(lastId))
                 setPage(0)
@@ -271,9 +271,9 @@ function TableTransactions({ id }) {
 
             } else {
                 if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
-                if (!searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
+                if (!searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Semanal'));
                 if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Mensal'));
-                if (searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'));
+                if (searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Mensal'));
                 setPage(0)
                 dispatch(setSearchingWeek(false))
 
