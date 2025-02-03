@@ -144,27 +144,15 @@ function UserApp() {
           {user && (
             <>
            <div className='md:flex mt-10 '>
-                <Entries type="Valor diário" isDay="true" />
-                <Entries type={valorAcumulado} isDay="false" />
                 <Entries type={paidValue} isDay="false" />
            </div>
-              <div className={`flex flex-col ${searchingDay && 'flex-col-reverse'}`}>
+              <div className={`flex flex-col `}>
                <div>
                  <Table id={id} />
                </div>
-
-                {searchingWeek || searchingDay ?
-                  <>
-                    <div>
-                      <TableTypes id={id} />
-                    </div>
-                    <div>
-
-                      <TablePending />
-                    </div>
-                    </>
-                   : <></>
-                 }
+                {searchingWeek && !searchingDay ? <div>
+                  <TablePending id={id} />
+                </div> : <></>}
 
          </div>
             </>

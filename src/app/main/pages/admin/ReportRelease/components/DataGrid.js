@@ -286,7 +286,6 @@ export default function BasicEditingGrid() {
 
         const dateInicio = selectedDate[0];
         const dateFim = selectedDate[1];
-        console.log(selectedDate)
 
 
 

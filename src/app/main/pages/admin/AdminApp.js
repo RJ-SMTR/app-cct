@@ -31,30 +31,20 @@ const style = {
 };
 
 function AdminApp() {
-    const [modal, setModal] = useState(false);
-    const dispatch = useDispatch();
-
-    useEffect(() => {
-        const modalShown = sessionStorage.getItem('modalShown');
-        if (!modalShown) {
-            setModal(true);
-            sessionStorage.setItem('modalShown', 'true'); 
-        }
-
-        dispatch(setSearchingWeek(false));
-        dispatch(setSearchingDay(false));
-        dispatch(setDateRange([]));
-        dispatch(setStatements([]));
-        dispatch(getUser());
-        dispatch(getInfo());
-        dispatch(setReportList([]));
-        dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Mensal'));
-        dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'));
-    }, [dispatch]);
-
-    const handleClose = () => {
-        setModal(false);
-    };
+  
+    const dispatch = useDispatch()
+    useEffect(() => {  
+        dispatch(setSearchingWeek(false))
+        dispatch(setSearchingDay(false)) 
+        dispatch(setDateRange([]))
+        dispatch(setStatements([]))
+        dispatch(getUser())
+        dispatch(getInfo())
+        dispatch(setReportList([]))
+        dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Mensal'))
+        dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'))
+        
+    }, [])
 
     return (
         <>

@@ -16,9 +16,8 @@ import withAppProviders from './withAppProviders';
 import { AuthProvider } from './auth/AuthContext';
 import 'leaflet/dist/leaflet.css';
 
-import { ExtractProvider } from './hooks/ExtractContext';
 import "rsuite/dist/rsuite-no-reset.min.css";
-import { ResumeProvider } from './hooks/ResumeContext';
+
 import { useEffect } from 'react';
 
 
@@ -64,8 +63,6 @@ function App() {
     <CacheProvider value={createCache(emotionCacheOptions[langDirection])}>
       <FuseTheme theme={mainTheme} direction={langDirection}>
         <AuthProvider>
-          <ExtractProvider>
-            <ResumeProvider>
           <BrowserRouter>
             <FuseAuthorization
               userRole={user.role?.name}
@@ -85,8 +82,6 @@ function App() {
               </SnackbarProvider>
             </FuseAuthorization>
           </BrowserRouter>
-          </ResumeProvider>
-          </ExtractProvider>
         </AuthProvider>
       </FuseTheme>
     </CacheProvider>
