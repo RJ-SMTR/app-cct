@@ -75,8 +75,8 @@ function Entries(type) {
               <Typography className="mt-8 font-medium text-3xl leading-none">
                   {
                       searchingDay ? 
-                          formatter.format(type.type.includes("Pago") ? sumInfoDay : 0)
-                          : formatter.format(type.type.includes("Pago") ? sumInfo?.valorTotal ?? sumInfo : sumInfo?.valorTotalPago)
+                          formatter.format(sumInfoDay)
+                          : formatter.format(sumInfo?.valorTotal ?? sumInfo ?? sumInfo?.valorTotalPago)
                   }
 
               </Typography>
