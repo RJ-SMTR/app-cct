@@ -13,8 +13,6 @@ import {
     setValorPagoLabel
 } from 'app/store/extractSlice';
 import { setReportList } from 'app/store/reportSlice';
-import { Modal } from '@mui/material';
-import { Settings } from '@mui/icons-material';
 
 const style = {
     position: 'absolute',
@@ -55,27 +53,7 @@ function AdminApp() {
                 </Box>
                 <br />
             </div>
-            <Modal
-                open={modal}
-                onClose={handleClose}
-                aria-labelledby="modal-modal-title"
-                aria-describedby="modal-modal-description"
-            >
-                <Box sx={style} className="overflow-scroll text-center">
-                    <Typography id="modal-modal-title" variant="h6" component="h3">
-                        Manutenção Programada
-                    </Typography>
-                    <p>Ocorrerá uma manuntenção do sistema no dia:</p>
-                    <Typography id="modal-modal-title font-bold" variant="h6" component="h3">
-                        03/02/2025
-                    </Typography>
-                    <p>
-                        
-                        Nesta data o sistema<strong> estará indisponível até às 19hrs.</strong><br/>
-                     
-                    </p>
-                </Box>
-            </Modal>
+    
         </>
     );
 }
