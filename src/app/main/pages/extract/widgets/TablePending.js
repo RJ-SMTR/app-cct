@@ -62,7 +62,7 @@ function TablePending() {
 
             <Box className="flex flex-col flex-auto mt-24  overflow-hidden">
 
-{/* VALOR PAGO */}
+{/* Valor */}
                 <TableContainer>
                     <Table className="min-w-full">
                         <TableHead>

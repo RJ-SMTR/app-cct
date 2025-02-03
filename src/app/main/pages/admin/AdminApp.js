@@ -40,7 +40,7 @@ function AdminApp() {
         dispatch(getInfo())
         dispatch(setReportList([]))
         dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Mensal'))
-        dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'))
+        dispatch(setValorPagoLabel('Valor - Acumulado Mensal'))
         
     }, [])
 

@@ -108,7 +108,7 @@ export function CustomTable(data) {
        }
      
       <TableCell component="th" scope="row">
-        {/* VALOR PAGO */}
+        {/* Valor */}
         {searchingDay ? (
           <>
             {formatter.format(data.data.valor_pagamento ?? 0)}
@@ -123,7 +123,7 @@ export function CustomTable(data) {
       <TableCell component="th" scope="row">
         <Typography className="whitespace-nowrap">
       
-              {data.data.tipo_transacao_smtr}
+              {data.data.tipo_transacao_smtr.includes('EMV') ? 'Integral' : data.data.tipo_transacao_smtr}
     
         </Typography>
 
