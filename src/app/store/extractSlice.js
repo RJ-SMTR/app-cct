@@ -9,7 +9,7 @@ const initialState = {
     searchingWeek: false,
     statements: [],
     mapInfo: [],
-    previousDays: "lastMonth",
+    previousDays: "",
     dateRange: [],
     searchingDay: false,
     fullReport: false,
@@ -150,7 +150,7 @@ export const {
 export default extractSlice.reducer;
 function handleRequestData(previousDays, dateRange) {
 
-        return previousDays > 0 ? { timeInterval: previousDays } : { timeInterval: 'lastMonth', yearMonth: dateRange }
+        return previousDays > 0 ? { timeInterval: previousDays } : { yearMonth: dateRange }
 
 }
 

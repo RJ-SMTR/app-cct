@@ -167,7 +167,6 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
                     resolve(responseData);
              
             } catch (error) {
-                console.error(error);
                 reject(error);
             }
         });

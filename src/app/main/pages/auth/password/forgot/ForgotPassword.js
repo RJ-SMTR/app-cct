@@ -105,7 +105,7 @@ function ForgotPassword() {
       </Paper>
 
       <Box className="relative hidden md:flex flex-auto items-center justify-center h-screen  overflow-hidden ">
-        <img src="assets/images/etc/BRT.jpg" className="w-full" alt="BRT" />
+    <img src="assets/images/etc/kombi.jpg" className="h-full w-full object-fill" alt="Kombis CCT" />
       </Box>
     </div>
   );
