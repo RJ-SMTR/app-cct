@@ -122,7 +122,7 @@ export const getUserStatements = (userId) => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
     if(JwtService.isAuthTokenValid(token)){
         return new Promise((resolve, reject) => {
-            const apiRoute = `bank-statements/me?userId=${userId}&timeInterval=lastMonth`
+            const apiRoute = `bank-statements/me?userId=${userId}`
             api.get(apiRoute, {
                 headers: { "Authorization": `Bearer ${token}` },
             })
