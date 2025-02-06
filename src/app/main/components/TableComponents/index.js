@@ -39,7 +39,7 @@ export function CustomTable(data) {
     const getStatus = (i) => {
       let status = ''
       switch (i.statusRemessa){
-        case 1:
+        case 4:
           status = 'Pago';
           break;
           case 5:
