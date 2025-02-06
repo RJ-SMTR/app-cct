@@ -40,10 +40,10 @@ function ExtractApp() {
 
   useEffect(() => {
     dispatch(setFullReport(true))
-    const modalShown = localStorage.getItem('modalShown');
+    const modalShown = sessionStorage.getItem('modalShown');
     if (!modalShown) {
       setModal(true);
-      localStorage.setItem('modalShown', 'true');
+      sessionStorage.setItem('modalShown', 'true');
     }
   }, [])
   const handleClose = () => {
