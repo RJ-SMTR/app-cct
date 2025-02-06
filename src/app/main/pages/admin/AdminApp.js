@@ -13,6 +13,7 @@ import {
     setValorPagoLabel
 } from 'app/store/extractSlice';
 import { setReportList } from 'app/store/reportSlice';
+import { Modal } from '@mui/material';
 
 const style = {
     position: 'absolute',
@@ -29,20 +30,30 @@ const style = {
 };
 
 function AdminApp() {
-  
-    const dispatch = useDispatch()
-    useEffect(() => {  
-        dispatch(setSearchingWeek(false))
-        dispatch(setSearchingDay(false)) 
-        dispatch(setDateRange([]))
-        dispatch(setStatements([]))
-        dispatch(getUser())
-        dispatch(getInfo())
-        dispatch(setReportList([]))
-        dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Mensal'))
-        dispatch(setValorPagoLabel('Valor - Acumulado Mensal'))
-        
-    }, [])
+    const [modal, setModal] = useState(false);
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        const modalShown = localStorage.getItem('modalShown');
+        if (!modalShown) {
+            setModal(true);
+            localStorage.setItem('modalShown', 'true');
+        }
+
+        dispatch(setSearchingWeek(false));
+        dispatch(setSearchingDay(false));
+        dispatch(setDateRange([]));
+        dispatch(setStatements([]));
+        dispatch(getUser());
+        dispatch(getInfo());
+        dispatch(setReportList([]));
+        dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Mensal'));
+        dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'));
+    }, [dispatch]);
+
+    const handleClose = () => {
+        setModal(false);
+    };
 
     return (
         <>
@@ -53,7 +64,21 @@ function AdminApp() {
                 </Box>
                 <br />
             </div>
-    
+            <Modal
+                open={modal}
+                onClose={handleClose}
+                aria-labelledby="modal-modal-title"
+                aria-describedby="modal-modal-description"
+            >
+                <Box sx={style} className="overflow-scroll text-center">
+                    <Typography id="modal-modal-title" variant="h6" component="h3">
+                        Comunicado:
+                    </Typography>
+                    <p>As informações anteriores ao dia 31/01/24 estão temporariamente indisponíveis.
+                        Qualquer dúvida, por favor, contacte o suporte!</p>
+
+                </Box>
+            </Modal>
         </>
     );
 }
