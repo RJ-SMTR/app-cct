@@ -61,7 +61,7 @@ function handleData(data) {
         if (data.consorcioName.includes('Todos')){
                 requestData.todosConsorcios = true
             }
-            else  if(data.consorcioName != "Todos"){
+            else {
                 requestData.consorcioNome = data.consorcioName.join(',');
             } 
     }
