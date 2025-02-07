@@ -58,7 +58,10 @@ function handleData(data) {
 
     
     if (data.consorcioName && data.consorcioName.length > 0) {
-            if(data.consorcioName != "Todos"){
+        if (data.consorcioName.includes('Todos')){
+                requestData.todosConsorcios = true
+            }
+            else  if(data.consorcioName != "Todos"){
                 requestData.consorcioNome = data.consorcioName.join(',');
             } 
     }
@@ -70,7 +73,11 @@ function handleData(data) {
 
     
     if (data.name.length > 0 ) {
-        if (data.name[0].fullName != "Todos") {
+        const mappedNames = data.name.map(i => i.fullName)
+        if (mappedNames.includes("Todos")){
+            requestData.todosVanzeiros = true
+        }
+        else  {
             requestData.userIds = data.name.map(i => i.userId).toString()
         } 
           
@@ -159,7 +166,7 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
                     //     status: 'Todos'
                     // };
                     if(reportType == 'sintetico'){
-                        dispatch(handleSynthData(combinedResponse))
+                        dispatch(handleSynthData([]))
                     } else {
 
                         dispatch(setReportList(responseData));
