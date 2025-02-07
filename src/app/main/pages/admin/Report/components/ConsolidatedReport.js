@@ -27,7 +27,9 @@ import { format } from 'date-fns';
 import { useDispatch, useSelector } from 'react-redux';
 import { DateRangePicker } from 'rsuite';
 import { useForm, Controller } from 'react-hook-form';
+
 import { handleReportInfo, setReportList, setSpecificValue } from 'app/store/reportSlice';
+
 import { getUser } from 'app/store/adminSlice';
 import { NumericFormat } from 'react-number-format';
 import { CSVLink } from 'react-csv';
@@ -57,10 +59,12 @@ const consorcios = [
     { label: 'Transcarioca', value: "Transcarioca" },
     { label: 'VLT', value: "VLT" },
 {label: 'TEC', value: "TEC"}
+
 ];
 const específicos = [
     { label: 'Todos' },
     { label: 'Eleição' },
+
 ];
 
 
@@ -93,9 +97,11 @@ export default function BasicEditingGrid() {
 
     const onSubmit = (data) => {
             setIsLoading(true)
+
             if(specificValue){
                 data.eleicao = true
             }
+
         dispatch(handleReportInfo(data, reportType))
             .then((response) => {
                 setIsLoading(false)
@@ -141,8 +147,10 @@ export default function BasicEditingGrid() {
                 value: {
                     cpfCnpj: user.cpfCnpj,
                     permitCode: user.permitCode,
+
                     fullName: user.fullName,
                     userId: user.id
+
                 }
             }));
             const sortedOptions = options.sort((a, b) => {
@@ -505,8 +513,10 @@ export default function BasicEditingGrid() {
                                     rules={{
                                         validate: (value) => {
                                             if (!value) return true;
+
                                             const valorMin = parseFloat(value.split(',')[0].replace('.', ''));
                                             const valorMax = parseFloat(getValues("valorMax").split(',')[0].replace('.', ''));
+
                                             return valorMin <= valorMax || "Valor Mínimo não pode ser maior que o Valor Máximo";
                                         }
                                     }}
@@ -523,9 +533,9 @@ export default function BasicEditingGrid() {
                                             value={field.value}
                                             onChange={(e) => {
                                                 field.onChange(e);
+
                                                 const valorMin = parseFloat(e.target.value.split(',')[0].replace('.', ''));
                                                 const valorMax = parseFloat(getValues("valorMax").split(',')[0].replace('.', ''));
-                                                console.log(valorMin)
 
                                                 if (valorMin <= valorMax) {
                                                     clearErrors("valorMin");
@@ -563,8 +573,10 @@ export default function BasicEditingGrid() {
                                     rules={{
                                         validate: (value) => {
                                             if (!value) return true;
+
                                             const valorMax = parseFloat(value.split(',')[0].replace('.', ''));
                                             const valorMin = parseFloat(getValues("valorMin").split(',')[0].replace('.', ''));
+
                                             return valorMax >= valorMin || "Valor Máximo não pode ser menor que o Valor Mínimo";
                                         }
                                     }}
@@ -580,9 +592,10 @@ export default function BasicEditingGrid() {
                                             value={field.value}
                                             onChange={(e) => {
                                                 field.onChange(e);
+
                                                 const valorMax = parseFloat(e.target.value.split(',')[0].replace('.', ''));
                                                 const valorMin = parseFloat(getValues("valorMin").split(',')[0].replace('.', ''));
-                                                console.log(valorMax)
+
 
                                                 if (valorMax >= valorMin) {
                                                     clearErrors("valorMax");
@@ -666,7 +679,9 @@ export default function BasicEditingGrid() {
                             onClick={handleMenuClick}
                             style={{ marginTop: '20px' }}
                         >
+
                             <svg className="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium muiltr-hgpioi-MuiSvgIcon-root h-[2rem]" focusable="false" aria-hidden="true" viewBox="0 0 24 24" data-testid="SaveAltIcon"><path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"></path></svg> Exportar
+
                         </Button>
                         <Menu
                             id="simple-menu"
