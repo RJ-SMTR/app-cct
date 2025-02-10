@@ -10,7 +10,8 @@ const initialState = {
     synthData: [],
     reportType: '',
     reportList: [],
-    totalSynth: ''
+    totalSynth: '',
+    specificValue: false,
 };
 
 const reportSlice = createSlice({
@@ -29,6 +30,9 @@ const reportSlice = createSlice({
         setTotalSynth: (state, action) => {
             state.totalSynth = action.payload;
         },
+        setSpecificValue: (state,action) => {
+            state.specificValue = action.payload;
+        }
     },
 });
 
@@ -40,7 +44,9 @@ export const {
     reportList,
     setReportList,
     totalSynth,
-    setTotalSynth
+    setTotalSynth,
+    specificValue,
+    setSpecificValue
  } = reportSlice.actions;
 
 export default reportSlice.reducer;
@@ -52,7 +58,12 @@ function handleData(data) {
 
     
     if (data.consorcioName && data.consorcioName.length > 0) {
-            requestData.consorcioNome = data.consorcioName.join(',');
+        if (data.consorcioName.includes('Todos')){
+                requestData.todosConsorcios = true
+            }
+            else {
+                requestData.consorcioNome = data.consorcioName.join(',');
+            } 
     }
 
     if (data.dateRange && data.dateRange.length === 2) {
@@ -62,47 +73,49 @@ function handleData(data) {
 
     
     if (data.name.length > 0 ) {
-     
-            requestData.favorecidoNome = data.name.map(i => i.fullName).toString()
+        const mappedNames = data.name.map(i => i.fullName)
+        if (mappedNames.includes("Todos")){
+            requestData.todosVanzeiros = true
+        }
+        else  {
+            requestData.userIds = data.name.map(i => i.userId).toString()
+        } 
+          
 
     } 
     if (data.status && data.status.length > 0) {
-        let hasPago = false;
-        let hasErro = false;
+        const statusSet = new Set(data.status);
 
-        data.status.forEach(status => {
-            switch (status) {
-                case 'Pago':
-                    hasPago = true;
-                    break;
-                case 'Erro':
-                    hasErro = true;
-                    break;
-                case 'Aguardando Pagamento':
-                    requestData.emProcessamento = true;
-                    break;
+        const hasAllStatuses = statusSet.has('Pago') && statusSet.has('Erro') && statusSet.has('Aguardando Pagamento');
 
+        if (!hasAllStatuses) {
+            data.status.forEach(status => {
+                switch (status) {
+                    case 'Pago':
+                        requestData.pago = true;
+                        break;
+                    case 'Erro':
+                        requestData.erro = true;
+                        break;
+                    case 'Aguardando Pagamento':
+                        requestData.emProcessamento = true;
+                        break;
+                    case 'Todos':
+                        break;
+                    default:
+                        requestData.aPagar = true;
+                        break;
+                }
+            });
 
-                case 'Pagamento Indevido':
-                    requestData.pagamentoIndevido = true;
-                    break;
-
-
-                case 'Todos':
-                    break;
-                default:
-                    requestData.aPagar = true;
-                    break;
-            }
-        });
-
-        if (hasPago && !hasErro) {
-            requestData.pago = true;
-        } else if (hasErro && !hasPago) {
-            requestData.pago = false;
+          
+        }
+        if (data.eleicao) {
+            requestData.eleicao = true
         }
     }
 
+   
     const addIfValid = (key, value) => {
         if (value !== null && value !== '') {
             const unformattedValue = accounting.unformat(value.replace(/\./g, '').replace(',', '.'));
@@ -142,33 +155,30 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
                 const response = await api.request(config);
                 const responseData = response.data;
                 
-                    const mergedData = responseData.reduce((acc, curr) => {
-                        return acc.concat(curr.data);
-                    }, []);
-
-                    const combinedResponse = {
-                        count: mergedData.length,
-                        data: mergedData,
-                        valor: responseData.reduce((sum, curr) => sum + curr.valor, 0),
-                        status: 'Todos'
-                    };
-                if (reportType == 'sintetico' || reportType == 'analitico'){
-
-                        dispatch(handleSynthData(combinedResponse))
+                    // const mergedData = responseData.reduce((acc, curr) => {
+                    //     return acc.concat(curr.data);
+                    // }, []);
+                    
+                    // const combinedResponse = {
+                    //     count: mergedData.length,
+                    //     data: mergedData,
+                    //     valor: responseData.reduce((sum, curr) => sum + curr.valor, 0),
+                    //     status: 'Todos'
+                    // };
+                    if(reportType == 'sintetico'){
+                        dispatch(handleSynthData([]))
                     } else {
 
-                        dispatch(setReportList(combinedResponse));
+                        dispatch(setReportList(responseData));
                     }
-                    resolve(combinedResponse);
+                    resolve(responseData);
              
             } catch (error) {
-                console.error(error);
                 reject(error);
             }
         });
     }
 };
-
 
 export const handleSynthData = (reportData) => async (dispatch) => {
     const total = accounting.formatMoney(reportData.valor, {

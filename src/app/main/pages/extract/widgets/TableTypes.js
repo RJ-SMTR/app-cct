@@ -32,7 +32,7 @@ function TableTypes() {
         <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
             <div className="flex flex-row justify-between">
                 <Typography className="mr-16 text-lg font-medium tracking-tight leading-6 truncate">
-                    {searchingWeek && !searchingDay ? 'Total das Transações da Semana' : 'Transações para o dia'}
+                    {searchingWeek && !searchingDay ? 'Total das Operações da Semana' : 'Transações para o dia'}
                 </Typography>
 
 
@@ -59,7 +59,7 @@ function TableTypes() {
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                            Valor Transação
+                                            Valor Operação
                                         </Typography>
                                     </TableCell>
                                 </TableRow>

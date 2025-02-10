@@ -41,11 +41,11 @@ function SignInPage() {
   function onSubmit({ permitCode, password }) {
     jwtService
       .signInWithPermitCodeAndPasswrod(permitCode, password)
-      .then((user) => {})
+      .then((user) => { })
       .catch((_errors) => {
-          setError('password', {
-            message: 'Senha ou código de permissionário incorretos',
-          });
+        setError('password', {
+          message: 'Senha ou código de permissionário incorretos',
+        });
       });
   }
 
@@ -70,7 +70,6 @@ function SignInPage() {
             </Box>
           )}
 
-         
           <form
             name="loginForm"
             noValidate
@@ -167,8 +166,8 @@ function SignInPage() {
         </svg>
       </Paper>
 
-      <Box className="relative hidden md:flex flex-auto items-center justify-center h-screen  overflow-hidden ">
-        <img src="assets/images/etc/BRT.jpg" className="w-full" alt="BRT" />
+      <Box className="relative hidden md:flex flex-auto items-center justify-center h-screen overflow-hidden max-w-[55vw]">
+        <img src="assets/images/etc/kombi.jpg" className="h-full w-full object-fill" alt="Kombis CCT" />
       </Box>
     </div>
   );

@@ -22,6 +22,8 @@ function UserMenu(props) {
 
   const userMenuClose = () => {
     setUserMenu(null);
+    sessionStorage.removeItem('modalShown');
+
   };
   const fullName = user.fullName ?? ''
   const [first] = fullName?.split(' ');
@@ -78,13 +80,6 @@ function UserMenu(props) {
           </>
         ) : (
           <>
-            <MenuItem component={Link} to="/profile" onClick={userMenuClose} role="button">
-              <ListItemIcon className="min-w-40">
-                <FuseSvgIcon>heroicons-outline:user-circle</FuseSvgIcon>
-              </ListItemIcon>
-              <ListItemText primary="Perfil" />
-            </MenuItem>
-           
             <MenuItem
               component={NavLink}
               to="/sign-out"

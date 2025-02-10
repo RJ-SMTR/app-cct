@@ -9,25 +9,33 @@ import TablePagination from '@mui/material/TablePagination';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
 import MenuItem from '@mui/material/MenuItem';
-import { memo, useContext, useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { useState } from 'react';
-import DateRangePicker from 'rsuite/DateRangePicker';
 
 import Button from '@mui/material/Button';
 import { Box, CircularProgress, Hidden, Skeleton } from '@mui/material';
 import Popover from '@mui/material/Popover';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import { ExtractContext } from 'src/app/hooks/ExtractContext';
 import { makeStyles } from '@mui/styles';
-import { locale } from '../utils/locale';
 
 import { CustomTable } from 'src/app/main/components/TableComponents';
-import { format, parseISO, startOfWeek, endOfWeek, addDays, isAfter, startOfDay, getMonth, getYear, formatISO } from 'date-fns';
-import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz';
+import { format, parseISO,  isAfter, startOfDay, formatISO } from 'date-fns';
+import { utcToZonedTime } from 'date-fns-tz';
 
 import { useDispatch, useSelector } from 'react-redux';
 
-import { getStatements, setPreviousDays, setDateRange, setSearchingWeek, setSearchingDay, setValorAcumuladoLabel, setValorPagoLabel, setLoading, setLoadingWeek, setLoadingPrevious } from 'app/store/extractSlice';
+import { getStatements,
+         setPreviousDays, 
+         setDateRange, 
+         setSearchingWeek, 
+         setSearchingDay, 
+         setValorAcumuladoLabel, 
+         setValorPagoLabel, 
+         setLoading, setLoadingWeek, 
+         setLoadingPrevious, 
+         setOrdemPgto,
+        setMocked } from 'app/store/extractSlice';
+
 import { useNavigate } from 'react-router-dom';
 import { selectUser } from 'app/store/userSlice';
 
@@ -47,20 +55,24 @@ function TableTransactions({ id }) {
         searchingWeek,
         fullReport,
         isLoadingWeek,
-        isLoading
+        isLoading,
+        ordemPgtoId,
+        mocked
     } = useSelector((state) => state.extract);
     const MemoizedCustomTable = memo(CustomTable);
-
-
+ 
+// REMOVER CARD
 
     const [currentWeekStart, setCurrentWeekStart] = useState()
     const [isGreaterThanToday, setIsGreaterThanToday] = useState(false)
     const [filterMenu, setFilterMenu] = useState(null);
     const [page, setPage] = useState(0);
+    const [lastId, setLastId] = useState()
     const [lastDate, setLastDate] = useState([])
     const [rowsPerPage, setRowsPerPage] = useState(8);
-    
     const [selectedDate, setSelectedDate] = useState(null)
+    const [dataOrderDay, setDataOrderDay] = useState('')
+    
 
     const navigate = useNavigate()
     const useStyles = makeStyles(() => ({
@@ -80,8 +92,18 @@ function TableTransactions({ id }) {
                 previousStatementsRef.current = dateRange;
             }
         }
-
     }, [dateRange])
+    const previousOrder = useRef();
+    useEffect(() => {
+        if (searchingWeek || searchingDay) {
+            if (ordemPgtoId !== previousOrder.current) {
+                
+                setLastId(previousOrder.current);
+                previousOrder.current = ordemPgtoId;
+            }
+        }
+
+    }, [ordemPgtoId])
 
     const handleBackPage = (event) => {
         setPage(page - 1)
@@ -91,25 +113,25 @@ function TableTransactions({ id }) {
         setPage(page + 1)
     }
 
-    const handleNextWeek = () => {
-        const nextWeekStart = new Date(currentWeekStart)
-        nextWeekStart.setDate(nextWeekStart.getDate() + 7)
-        setCurrentWeekStart(nextWeekStart)
-        dispatch( setLoading(true))
-        dispatch(setLoadingWeek(true))
-        dispatch(setLoadingPrevious(true))
+    // const handleNextWeek = () => {
+    //     const nextWeekStart = new Date(currentWeekStart)
+    //     nextWeekStart.setDate(nextWeekStart.getDate() + 7)
+    //     setCurrentWeekStart(nextWeekStart)
+    //     dispatch( setLoading(true))
+    //     dispatch(setLoadingWeek(true))
+    //     dispatch(setLoadingPrevious(true))
 
-    }
+    // }
 
 
-    const handlePreviousWeek = () => {
-        const previousWeekStart = new Date(currentWeekStart)
-        previousWeekStart.setDate(previousWeekStart.getDate() - 7)
-        setCurrentWeekStart(previousWeekStart)
-        dispatch(setLoading(true))
-        dispatch(setLoadingWeek(true))
-        dispatch(setLoadingPrevious(true))
-    }
+    // const handlePreviousWeek = () => {
+    //     const previousWeekStart = new Date(currentWeekStart)
+    //     previousWeekStart.setDate(previousWeekStart.getDate() - 7)
+    //     setCurrentWeekStart(previousWeekStart)
+    //     dispatch(setLoading(true))
+    //     dispatch(setLoadingWeek(true))
+    //     dispatch(setLoadingPrevious(true))
+    // }
 
     function isEndDateGreaterThanToday(endDate) {
         const today = new Date();
@@ -139,12 +161,12 @@ function TableTransactions({ id }) {
     }
 
     useEffect(() => {
-        setPreviousDays("lastMonth");
+        setPreviousDays("");
         if (user.role.name.includes("Admin")) {
-            dispatch(getStatements(previousDays, dateRange, searchingDay, searchingWeek, id))
+            dispatch(getStatements(dateRange, searchingDay, searchingWeek, id, ordemPgtoId, mocked))
              
         } else {
-            dispatch(getStatements(previousDays, dateRange, searchingDay, searchingWeek))
+            dispatch(getStatements(dateRange, searchingDay, searchingWeek, ordemPgtoId))
 
         }
 
@@ -172,8 +194,8 @@ function TableTransactions({ id }) {
         dispatch(setLoading(true))
         dispatch(setLoadingWeek(true))
         dispatch(setLoadingPrevious(true))
-        dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Mensal'))
-        dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'))
+        dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Mensal'))
+        dispatch(setValorPagoLabel('Valor - Acumulado Mensal'))
 
     }
 
@@ -185,32 +207,41 @@ function TableTransactions({ id }) {
     }
 
 
-    const handleClickRow = (event) => {
+    const handleClickRow = (idOrder, event) => {
         dispatch(setLoading(true))
         dispatch(setLoadingWeek(true))
-        dispatch(setLoadingPrevious(true))
         const start = event.target.innerText;
         const [day, month, year] = start.split('/');
         const transformedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
         const tz = 'America/Sao_Paulo';
 
+        setDataOrderDay(start)
         if (fullReport) {
-            if (searchingWeek) {
-                dispatch(setSearchingDay(true))
-                dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Diário'));
-                dispatch(setValorPagoLabel('Valor Pago - Acumulado Diário'));
+            // if (searchingWeek && !mocked) {
+            //     dispatch(setMocked(true))
+            //     dispatch(setDateRange([transformedDate, transformedDate]));
+     
+                
+            // } else 
+            if(searchingWeek){
+                dispatch(setValorAcumuladoLabel('Valor Operação - Detalhado'));
+                dispatch(setValorPagoLabel('Valor - Detalhado'));
                 dispatch(setDateRange([transformedDate, transformedDate]));
-            } else {
-                if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Semanal'));
-                if (!searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
-
-                if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Mensal'));
-                if (searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'));
+                dispatch(setOrdemPgto(idOrder))
+                dispatch(setSearchingDay(true))
+                setPage(0)
+            }else  {
+                if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
+                if (!searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Semanal'));
+                if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Mensal'));
+                if (searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Mensal'));
                 const clickedDate = parseISO(transformedDate);
                 const clickedDateToday = utcToZonedTime(clickedDate, tz);
                 setCurrentWeekStart(clickedDateToday);
                 dispatch(setSearchingWeek(true));
                 setPage(0);
+                dispatch(setOrdemPgto(idOrder))
+
             }
         } else {
             navigate('/extrato')
@@ -218,44 +249,55 @@ function TableTransactions({ id }) {
     }
 
     const handleBack = () => {
-        // setSelectedDate(null);
-        dispatch(setLoadingWeek(true))
-        dispatch(setLoadingPrevious(true))
-        dispatch(setLoading(true))
-        if (searchingDay) {
-            dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Semanal'));
-            dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
-            dispatch(setDateRange(lastDate))
-            setPage(0)
-            dispatch(setSearchingDay(false))
+        // if(mocked && !searchingDay){
+        //     dispatch(setMocked(false))
+        //     dispatch(setDateRange(lastDate))
             
+        // } else {
+            setSelectedDate(null);
+            dispatch(setLoadingWeek(true))
+            dispatch(setLoadingPrevious(true))
+            dispatch(setLoading(true))
+            // dispatch(setMocked(false))
+            if (searchingDay) {
+                dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
+                dispatch(setValorPagoLabel('Valor - Acumulado Semanal'));
+                dispatch(setDateRange(lastDate))
+                dispatch(setOrdemPgto(lastId))
+                setPage(0)
+                // dispatch(setMocked(true))
+                dispatch(setSearchingDay(false))
 
-        } else {
-            if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Semanal'));
-            if (!searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Semanal'));
-            if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor Transação - Acumulado Mensal'));
-            if (searchingWeek) dispatch(setValorPagoLabel('Valor Pago - Acumulado Mensal'));
-            setPage(0)
-            dispatch(setSearchingWeek(false))
-            if(selectedDate !== null) {
-                const newDate = formatISO(selectedDate).substring(0, 7)
-                dispatch(setDateRange(newDate))
+
             } else {
-                dispatch(setDateRange([]))
+                if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
+                if (!searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Semanal'));
+                if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Mensal'));
+                if (searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Mensal'));
+                setPage(0)
+                dispatch(setSearchingWeek(false))
 
-            }
-            
-            
+                if (selectedDate !== null) {
+                    const newDate = formatISO(selectedDate).substring(0, 7)
+                    dispatch(setDateRange(newDate))
+                } else {
+                    dispatch(setDateRange([]))
+
+                }
+
+
         }
+       
+        // }
     }
 
-    const { afterToday } = DateRangePicker;
+ 
 
     return (
         <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
             <div className="flex flex-row justify-between">
                 <Typography className="mr-16 text-lg font-medium tracking-tight leading-6 truncate">
-                    {searchingDay ? <p>Catracadas durante o dia</p> : (searchingWeek ? <p>Catracadas da semana</p> : <p>Valores recebidos</p>)}
+                    {searchingDay ? <p>Detalhes da ordem</p> : (searchingWeek ? <p>Valores da semana</p> : <p>Valores recebidos</p>)}
                 </Typography>
 
                 {fullReport ? <> <Hidden smUp >
@@ -338,24 +380,24 @@ function TableTransactions({ id }) {
                             <TableRow>
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        {!searchingWeek ? 'Data' : 'Data Processamento'}
+                                        {searchingDay ? 'Data Transação' : searchingWeek ? 'Data Ordem de Pagamento' : 'Data'}
                                     </Typography>
                                 </TableCell>
-                                {searchingWeek ? <TableCell>
+                                {searchingDay ? <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        Catracadas
+                                        Data Ordem Pagamento
                                     </Typography>
                                 </TableCell> : <></>}
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        Valor Transação
+                                        Valor Total para Pagamento
                                     </Typography>
                                 </TableCell>
-                                <TableCell>
+                                {searchingDay ? <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        Valor para pagamento
+                                        Tipo Operação
                                     </Typography>
-                                </TableCell>
+                                </TableCell> : <></>}
                                 {searchingWeek ? <></> :
                                     <>
                                         <TableCell>
@@ -382,13 +424,14 @@ function TableTransactions({ id }) {
                                         <CircularProgress />
                                     </Box> 
                                 </TableCell>
-                            : statements.length > 0 ?
+                            : statements?.length > 0 ?
                             statements?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
                                 const tz = 'UTC'
-                                const date = parseISO(i.date ?? i.dateTime ?? i.partitionDate);
+                                const date = parseISO(i.data ?? i.dataCaptura ?? i.datetime_processamento);
                                 const zonedDate = utcToZonedTime(date, tz)
                                 const formattedDate = format(zonedDate, 'dd/MM/yyyy');
-                                return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={handleClickRow} />
+                                const idOrdem = searchingWeek ? i.ids : i.ordemPagamentoAgrupadoId
+                                return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={(event) => handleClickRow(idOrdem, event)} lastDate={dataOrderDay}  />
                             }) : 
                                 <TableCell colSpan={4}>
                                     <p>Não há dados para sem exibidos</p>
@@ -398,28 +441,7 @@ function TableTransactions({ id }) {
                     </Table>
                 </TableContainer>
 
-                {searchingWeek && !searchingDay && (
-                    <TablePagination
-                        className={`overflow-visible ${c.root}`}
-                        rowsPerPageOptions={[5]}
-                        component="div"
-                        rowsPerPage={rowsPerPage}
-                        page={page}
-                        labelDisplayedRows={({ from, to, count }) => ``}
-                        onPageChange={handleChangePage}
-                        onRowsPerPageChange={handleChangeRowsPerPage}
-                        ActionsComponent={() => (
-                            <div className="my-4 flex space-x-2">
-                                <Button variant="text" onClick={handlePreviousWeek}>
-                                    &lt; Semana Anterior                                </Button>
-                                <Button disabled={isGreaterThanToday} variant="text" onClick={handleNextWeek}>
-                                    Próxima Semana &gt;
-                                </Button>
-                            </div>
-                        )}
-                    />
-                )}
-                {searchingDay && (
+                {searchingDay || searchingWeek ? 
                     
                     <TablePagination
                         className={`overflow-visible ${c.root}`}
@@ -430,7 +452,7 @@ function TableTransactions({ id }) {
                         onPageChange={handleChangePage}
                         labelRowsPerPage="Linhas por página"
                         labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-                        rowsPerPageOptions={[50, 100, 150]}
+                        rowsPerPageOptions={[10,50, 100, 150]}
                         onRowsPerPageChange={handleChangeRowsPerPage}
                         ActionsComponent={() => (
                             <div className="my-4 flex space-x-2">
@@ -443,7 +465,7 @@ function TableTransactions({ id }) {
                         )}
 
                     />
-                )}
+                : <></>}
             </Box>
         </Paper>
     );

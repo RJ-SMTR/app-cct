@@ -20,7 +20,7 @@ import { format, parseISO } from 'date-fns';
 import { useDispatch, useSelector } from 'react-redux';
 import { CustomProvider, DateRangePicker } from 'rsuite';
 import { useForm, Controller } from 'react-hook-form';
-import { handleReportInfo, setTotalSynth } from 'app/store/reportSlice';
+import { handleReportInfo, setTotalSynth, setSpecificValue } from 'app/store/reportSlice';
 import { getUser } from 'app/store/adminSlice';
 import { NumericFormat } from 'react-number-format';
 import { CSVLink } from 'react-csv';
@@ -52,7 +52,10 @@ const consorcios = [
 ];
 
 
-
+const específicos = [
+    { label: 'Todos' },
+    { label: 'Eleição' },
+];
 
 
 
@@ -63,6 +66,7 @@ export default function BasicEditingGrid() {
     const totalSynth = useSelector(state => state.report.totalSynth)
     const reportType = useSelector(state => state.report.reportType);
     const userList = useSelector(state => state.admin.userList) || []
+    const specificValue = useSelector(state => state.report.specificValue)
     const [isLoading, setIsLoading] = useState(false)
     const [loadingUsers, setLoadingUsers] = useState(false)
     const [userOptions, setUserOptions] = useState([])
@@ -96,6 +100,9 @@ export default function BasicEditingGrid() {
     const onSubmit = (data) => {
         setIsLoading(true)
         dispatch(setTotalSynth(''))
+        if (specificValue) {
+            data.eleicao = true
+        }
         dispatch(handleReportInfo(data, reportType))
             .then((response) => {
                 setIsLoading(false)
@@ -124,6 +131,7 @@ export default function BasicEditingGrid() {
     };
 
     useEffect(() => {
+        dispatch(setSpecificValue(false))
         fetchUsers()
     }, []);
 
@@ -159,7 +167,7 @@ export default function BasicEditingGrid() {
         if(field === 'status'){
             const status = newValue.map(i => i.label)
             setWhichStatus(status)
-        }
+        } 
         setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
     };
 
@@ -180,7 +188,7 @@ export default function BasicEditingGrid() {
         Object.entries(rows).forEach(([consorcio, group]) => {
             group.items.forEach(item => {
                 const row = {
-                    'Data Transação': item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
+                    'Data da Operação': item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
                     'Dt. Efetiva Pgto.': item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
                     'Consórcio': item.consorcio,
                     'Favorecido': item.favorecido,
@@ -203,7 +211,7 @@ export default function BasicEditingGrid() {
         const csvData = [
             ['Status selecionado', '', whichStatus || 'Todos'],
             [],
-            ['Data Transação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência'],
+            ['Data da Operação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência'],
         ];
 
         Object.entries(rows).forEach(([consorcio, group]) => {
@@ -283,7 +291,7 @@ export default function BasicEditingGrid() {
         const data = [
             ["Status selecionado", "", whichStatus || "Todos"],
             [],
-            ["Data Transação", "Dt. Efetiva Pgto.", "Consórcio", "Favorecido", "Valor p/ Pagamento", "Status", "Ocorrência"],
+            ["Data da Operação", "Dt. Efetiva Pgto.", "Consórcio", "Favorecido", "Valor p/ Pagamento", "Status", "Ocorrência"],
         ];
 
         Object.entries(rows).forEach(([consorcio, group]) => {
@@ -392,7 +400,7 @@ export default function BasicEditingGrid() {
             ]);
 
             doc.autoTable({
-                head: [['Data Transação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência']],
+                head: [['Data da Operação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência']],
                 body: tableData,
                 startY: currentY,
                 margin: { left: 7, right: 7 },
@@ -523,6 +531,36 @@ export default function BasicEditingGrid() {
                                         />
                                     )}
                                 />
+                                <Autocomplete
+                                    id="status"
+                                    multiple
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                                    options={específicos}
+                                    getOptionLabel={(option) => option.label}
+                                    filterSelectedOptions
+                                    onChange={(_, newValue) => {
+                                        if (newValue.length === 0) {
+                                            dispatch(setSpecificValue(false));
+                                        } else {
+                                            dispatch(setSpecificValue(true));
+                                        }
+                                    }}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="Selecionar Específicos"
+                                            variant="outlined"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                endAdornment: (
+                                                    <>
+                                                        {params.InputProps.endAdornment}
+                                                    </>
+                                                ),
+                                            }}
+                                        />
+                                    )}
+                                />
                             </Box>
 
                             <Box className="flex items-center gap-10 flex-wrap">
@@ -573,7 +611,7 @@ export default function BasicEditingGrid() {
                                     <span className='absolute text-xs text-red-600'>Campo data obrigatório*</span>
                                 </Box>
                             </Box>
-                            <Box className="flex items-center my-[3.5rem] gap-10 flex-wrap">
+                            <Box className="flex items-center my-20 gap-10 flex-wrap">
                                 <Controller
                                     name="valorMin"
                                     control={control}
@@ -688,6 +726,9 @@ export default function BasicEditingGrid() {
                                     )}
                                 />
                             </Box>
+                            
+
+
                             <Box>
 
                             </Box>
@@ -776,7 +817,7 @@ export default function BasicEditingGrid() {
                                                     </TableRow>
 
                                                     <TableRow>
-                                                        <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Data Transação</TableCell>
+                                                        <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Data da Operação</TableCell>
                                                         <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Dt. Efetiva Pgto.</TableCell>
                                                         <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Consórcio</TableCell>
                                                         <TableCell colSpan={4.5} className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Favorecido</TableCell>

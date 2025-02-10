@@ -6,8 +6,7 @@ import { Box } from '@mui/system';
 import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
 import Table from '../extract/widgets/Table';
-import { getTodayStatements,setDateRange,setFullReport, setSearchingDay, setSearchingWeek, setValorAcumuladoLabel } from 'app/store/extractSlice';
-import { TripsResume } from './widgets/Widgets';
+import {setDateRange,setFullReport, setSearchingDay, setSearchingWeek, setValorAcumuladoLabel } from 'app/store/extractSlice';
 import { useEffect } from 'react';
 
 
@@ -17,15 +16,12 @@ function Home() {
   const user = useSelector(selectUser);
   const fullName = user.fullName ?? 'Admin'
   const [first] = fullName?.split(' ');
-  const todayStatements = useSelector(state => state.extract.todayStatements)
-  const mapInfo = useSelector(state => state.extract.mapInfo)
 
 useEffect(() => {
   dispatch(setFullReport(false))
   dispatch(setSearchingDay(false))
   dispatch(setSearchingWeek(false))
   dispatch(setDateRange([]))
-  dispatch(getTodayStatements())
   dispatch(setValorAcumuladoLabel('Valor acumulado Mensal'))
 }, [])
 
@@ -57,26 +53,7 @@ useEffect(() => {
           </Box>
           <br />
         </div>
-      {/* <div className="p-24 pt-10 " >
-          <Typography className='font-medium text-3xl'>Resumo das Viagens</Typography>
-          <Box className='flex flex-col  justify-around md:justify-start'>
-              <TripsResume mapInfo={mapInfo} statements={todayStatements}/>
-          <Link className='text-white no-underline' to="/extrato">
-          <Button
-            variant="contained"
-            color="secondary"
-            className="w-full z-10 mt-24"
-            aria-label="Register"
-            size="large"
-            role="button"
-          >
-              Ver resumo completo
-          </Button>
-            </Link>
-          </Box>
-
-          <br />
-        </div> */}
+     
     </>
   );
 }

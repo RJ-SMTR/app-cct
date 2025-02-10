@@ -66,7 +66,6 @@ function CardSelection() {
             selectedDate: { ...selectedDate },
             selectedStatus,
         };
-
         if (selectedYear !== null) {
             const selectedYearFormat = dayjs(selectedYear).year();
             dispatch(setSelectedYear(selectedYearFormat));

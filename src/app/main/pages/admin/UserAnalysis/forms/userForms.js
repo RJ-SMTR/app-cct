@@ -216,7 +216,6 @@ export function BankInfo({user}) {
         }
         if (bankCodes.includes(user.bankCode)) {
 
-
             setBankRm(true)
 
         }

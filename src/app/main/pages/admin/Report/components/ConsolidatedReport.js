@@ -27,7 +27,9 @@ import { format } from 'date-fns';
 import { useDispatch, useSelector } from 'react-redux';
 import { DateRangePicker } from 'rsuite';
 import { useForm, Controller } from 'react-hook-form';
-import { handleReportInfo, setReportList } from 'app/store/reportSlice';
+
+import { handleReportInfo, setReportList, setSpecificValue } from 'app/store/reportSlice';
+
 import { getUser } from 'app/store/adminSlice';
 import { NumericFormat } from 'react-number-format';
 import { CSVLink } from 'react-csv';
@@ -57,6 +59,12 @@ const consorcios = [
     { label: 'Transcarioca', value: "Transcarioca" },
     { label: 'VLT', value: "VLT" },
 {label: 'TEC', value: "TEC"}
+
+];
+const específicos = [
+    { label: 'Todos' },
+    { label: 'Eleição' },
+
 ];
 
 
@@ -64,6 +72,7 @@ export default function BasicEditingGrid() {
     const reportType = useSelector(state => state.report.reportType);
     const reportList = useSelector(state => state.report.reportList)
     const userList = useSelector(state => state.admin.userList) || []
+    const specificValue = useSelector(state => state.report.specificValue)
     const [isLoading, setIsLoading] = useState(false)
     const [loadingUsers, setLoadingUsers] = useState(false)
     const [userOptions, setUserOptions] = useState([])
@@ -88,6 +97,11 @@ export default function BasicEditingGrid() {
 
     const onSubmit = (data) => {
             setIsLoading(true)
+
+            if(specificValue){
+                data.eleicao = true
+            }
+
         dispatch(handleReportInfo(data, reportType))
             .then((response) => {
                 setIsLoading(false)
@@ -133,7 +147,10 @@ export default function BasicEditingGrid() {
                 value: {
                     cpfCnpj: user.cpfCnpj,
                     permitCode: user.permitCode,
-                    fullName: user.fullName
+
+                    fullName: user.fullName,
+                    userId: user.id
+
                 }
             }));
             const sortedOptions = options.sort((a, b) => {
@@ -411,6 +428,36 @@ export default function BasicEditingGrid() {
                                         />
                                     )}
                                 />
+                                <Autocomplete
+                                    id="status"
+                                    multiple
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                                    options={específicos}
+                                    getOptionLabel={(option) => option.label}
+                                    filterSelectedOptions
+                                    onChange={(_, newValue) => {
+                                        if (newValue.length === 0) {
+                                            dispatch(setSpecificValue(false));
+                                        } else {
+                                            dispatch(setSpecificValue(true));
+                                        }
+                                    }}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="Selecionar Específicos"
+                                            variant="outlined"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                endAdornment: (
+                                                    <>
+                                                        {params.InputProps.endAdornment}
+                                                    </>
+                                                ),
+                                            }}
+                                        />
+                                    )}
+                                />
                             </Box>
 
                             <Box className="flex items-center gap-10 flex-wrap">
@@ -466,8 +513,10 @@ export default function BasicEditingGrid() {
                                     rules={{
                                         validate: (value) => {
                                             if (!value) return true;
-                                            const valorMin = parseFloat(value.replace(',', '.'));
-                                            const valorMax = parseFloat(getValues("valorMax").replace(',', '.'));
+
+                                            const valorMin = parseFloat(value.split(',')[0].replace('.', ''));
+                                            const valorMax = parseFloat(getValues("valorMax").split(',')[0].replace('.', ''));
+
                                             return valorMin <= valorMax || "Valor Mínimo não pode ser maior que o Valor Máximo";
                                         }
                                     }}
@@ -484,8 +533,9 @@ export default function BasicEditingGrid() {
                                             value={field.value}
                                             onChange={(e) => {
                                                 field.onChange(e);
-                                                const valorMin = parseFloat(e.target.value.replace(',', '.'));
-                                                const valorMax = parseFloat(getValues("valorMax").replace(',', '.'));
+
+                                                const valorMin = parseFloat(e.target.value.split(',')[0].replace('.', ''));
+                                                const valorMax = parseFloat(getValues("valorMax").split(',')[0].replace('.', ''));
 
                                                 if (valorMin <= valorMax) {
                                                     clearErrors("valorMin");
@@ -523,8 +573,10 @@ export default function BasicEditingGrid() {
                                     rules={{
                                         validate: (value) => {
                                             if (!value) return true;
-                                            const valorMax = parseFloat(value.replace(',', '.'));
-                                            const valorMin = parseFloat(getValues("valorMin").replace(',', '.'));
+
+                                            const valorMax = parseFloat(value.split(',')[0].replace('.', ''));
+                                            const valorMin = parseFloat(getValues("valorMin").split(',')[0].replace('.', ''));
+
                                             return valorMax >= valorMin || "Valor Máximo não pode ser menor que o Valor Mínimo";
                                         }
                                     }}
@@ -540,8 +592,10 @@ export default function BasicEditingGrid() {
                                             value={field.value}
                                             onChange={(e) => {
                                                 field.onChange(e);
-                                                const valorMax = parseFloat(e.target.value.replace(',', '.'));
-                                                const valorMin = parseFloat(getValues("valorMin").replace(',', '.'));
+
+                                                const valorMax = parseFloat(e.target.value.split(',')[0].replace('.', ''));
+                                                const valorMin = parseFloat(getValues("valorMin").split(',')[0].replace('.', ''));
+
 
                                                 if (valorMax >= valorMin) {
                                                     clearErrors("valorMax");
@@ -574,6 +628,7 @@ export default function BasicEditingGrid() {
                                     )}
                                 />
                             </Box>
+                         
                             <Box>
                           
                             </Box>
@@ -624,7 +679,9 @@ export default function BasicEditingGrid() {
                             onClick={handleMenuClick}
                             style={{ marginTop: '20px' }}
                         >
-                            <svg class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium muiltr-hgpioi-MuiSvgIcon-root h-[2rem]" focusable="false" aria-hidden="true" viewBox="0 0 24 24" data-testid="SaveAltIcon"><path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"></path></svg> Exportar
+
+                            <svg className="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium muiltr-hgpioi-MuiSvgIcon-root h-[2rem]" focusable="false" aria-hidden="true" viewBox="0 0 24 24" data-testid="SaveAltIcon"><path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"></path></svg> Exportar
+
                         </Button>
                         <Menu
                             id="simple-menu"

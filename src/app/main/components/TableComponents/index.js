@@ -3,7 +3,7 @@ import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
 import { useSelector } from 'react-redux';
-import { useState, useEffect } from 'react';
+// import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -11,48 +11,58 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 
 export function CustomTable(data) {
-  const [dayAmount, setDayAmount] = useState(null)
+  // const [dayAmount, setDayAmount] = useState(null)
   const searchingDay = useSelector(state => state.extract.searchingDay);
   const searchingWeek = useSelector(state => state.extract.searchingWeek);
-  const statements = useSelector(state => state.extract.statements);
-  useEffect(() => {
+  // const statements = useSelector(state => state.extract.statements);
 
-    setDayAmount(parseInt(data.data.transactions) * 4.3);
-  }, [data, searchingDay]);
 
   const formatter = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   });
   const dateUTC = (i) => {
+    // const tz = 'UTC'
+    const parsed = new Date(i)
+    const formattedDate = format(parsed, 'dd/MM/yyyy HH:mm:ss');
+    return formattedDate
+  }
+  const dateUTCMonth = (i) => {
     const tz = 'UTC'
     const parsed = new Date(i)
     const zonedDate = utcToZonedTime(parsed, tz)
-    const formattedDate = format(zonedDate, 'dd/MM/yyyy HH:mm:ss');
+    const formattedDate = format(zonedDate, 'dd/MM/yyyy');
     return formattedDate
   }
   const CustomBadge = (data) => {
     const i = data.data.data
     const getStatus = (i) => {
-
-      return i.status
+      let status = ''
+      switch (i.statusRemessa){
+        case 4:
+          status = 'Pago';
+          break;
+          case 5:
+           status =  'Pendente'
+        default:
+          status ='A pagar';
+      }
+     return status
     }
     return <Badge className={`${data.c?.root}  whitespace-nowrap`}
-      color={i.status === 'Pendente' ? 'error' : i.status === 'Pago' ? 'success' : i.status === 'A pagar' ? 'warning' : 'op'}
-
+      color={i.statusRemessa === 5 ? 'error' : i.statusRemessa === 4 ? 'success' : i.statusRemessa === null ? 'op' : 'warning'}
       badgeContent={getStatus(i)}
     />
   }
   const ErrorBadge = (data) => {
-  
     const i = data.data.data
-    const errorDescription = i.errors.length > 0 ? i.errors.map(error => `${error.message}`).join("\n") : <></>;
+    const errorDescription = i.motivoStatusRemessa ? i.descricaoMotivoStatusRemessa : <></>;
     const getStatus = (i) => {
       return  (
         <span className='underline'> Erro  <InfoOutlinedIcon fontSize='small' /></span>
       )
     }
-    if(i.errors.length > 0){
+    if(i.statusRemessa === 5){
       return (
             
         <Tooltip   title={errorDescription} arrow enterTouchDelay={10} leaveTouchDelay={10000}>
@@ -80,43 +90,44 @@ export function CustomTable(data) {
 
 
   return (
-    data ? <TableRow key={data.data.id} className="hover:bg-gray-100 cursor-pointer">
+    data ? <TableRow key={data.data.ordemPagamentoAgrupadoId} className="hover:bg-gray-100 cursor-pointer">
       <TableCell component="th" scope="row" onClick={searchingDay ? undefined : data.handleClickRow}>
         <Typography className={searchingDay ? "whitespace-nowrap " : "whitespace-nowrap underline"}>
 
-          {searchingDay ? dateUTC(data.data.date) : data.date}
+          {searchingDay ? dateUTC(data.data.datetime_transacao) : searchingWeek ? dateUTCMonth(data.data.dataCaptura) : dateUTCMonth(data.data.data)}
 
         </Typography>
       </TableCell>
 
-      {searchingWeek ?
+      {searchingDay && (
         <TableCell component="th" scope="row">
-          {data.data.count?.toLocaleString()}
-        </TableCell> : <></>}
+          {data.lastDate}
+        </TableCell>
+      )
+      // ULTIMA DATA
+       }
+     
       <TableCell component="th" scope="row">
-        <Typography className="whitespace-nowrap">
-          {searchingDay ? (
-            <>
-              {data.data.transactionType == "Botoeria" ? "R$ 0" : formatter.format(data.data.transactionValue ?? data.data.transactionValueSum)}
-            </>
-          ) : (
-            <>{formatter.format(data.data.amount ?? data.data.transactionValueSum)}</>
-          )}
-        </Typography>
-
-      </TableCell>
-      <TableCell component="th" scope="row">
-        {/* VALOR PAGO */}
+        {/* Valor */}
         {searchingDay ? (
           <>
-            {formatter.format(data.data.paidValue ?? data.data.paidValueSum ?? 0)}
+            {formatter.format(data.data.valor_pagamento ?? 0)}
           </>
         ) : (
-          <>  {formatter.format(data.data.paidAmount ?? data.data.paidValueSum ?? 0)}</>
+            <>  {formatter.format(data.data.valorTotal ?? data.data.valor ?? 0)}</>
         )}
 
 
       </TableCell>
+      {searchingDay && (
+      <TableCell component="th" scope="row">
+        <Typography className="whitespace-nowrap">
+      
+              {data.data.tipo_transacao_smtr}
+    
+        </Typography>
+
+      </TableCell>)}
       {!searchingWeek ? <>
         <TableCell className='status' component="th" scope='row'> <CustomBadge data={data} /> </TableCell>
         <MyTableCell data={data} />
