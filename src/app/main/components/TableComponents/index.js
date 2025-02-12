@@ -42,7 +42,7 @@ export function CustomTable(data) {
         case 3:
           status = 'Pago';
           break;
-          case 5:
+          case 4:
            status =  'Pendente'
         default:
           status ='A pagar';
