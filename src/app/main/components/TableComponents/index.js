@@ -44,6 +44,7 @@ export function CustomTable(data) {
           break;
           case 4:
            status =  'Pendente'
+           break;
         default:
           status ='A pagar';
       }
@@ -62,7 +63,7 @@ export function CustomTable(data) {
         <span className='underline'> Erro  <InfoOutlinedIcon fontSize='small' /></span>
       )
     }
-    if(i.statusRemessa === 5){
+    if(i.statusRemessa === 4){
       return (
             
         <Tooltip   title={errorDescription} arrow enterTouchDelay={10} leaveTouchDelay={10000}>
