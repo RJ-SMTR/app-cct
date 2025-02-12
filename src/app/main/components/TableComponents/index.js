@@ -50,7 +50,7 @@ export function CustomTable(data) {
      return status
     }
     return <Badge className={`${data.c?.root}  whitespace-nowrap`}
-      color={i.statusRemessa === 5 ? 'error' : i.statusRemessa === 3 ? 'success' : i.statusRemessa === null ? 'op' : 'warning'}
+      color={i.statusRemessa === 4 ? 'error' : i.statusRemessa === 3 ? 'success' : i.statusRemessa === null ? 'op' : 'warning'}
       badgeContent={getStatus(i)}
     />
   }
