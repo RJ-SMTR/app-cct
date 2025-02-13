@@ -58,7 +58,7 @@ const consorcios = [
     { label: 'STPL', value: "STPL" },
     { label: 'Transcarioca', value: "Transcarioca" },
     { label: 'VLT', value: "VLT" },
-{label: 'TEC', value: "TEC"}
+    { label: 'TEC', value: "TEC" }
 
 ];
 const específicos = [
@@ -81,6 +81,9 @@ export default function BasicEditingGrid() {
     const [showClearMax, setShowClearMax] = useState(false)
     const [showButton, setShowButton] = useState(false)
     const [whichStatusShow, setWhichStatus] = useState([])
+    const [selected, setSelected] = useState(null)
+
+
 
     const dispatch = useDispatch()
 
@@ -96,20 +99,26 @@ export default function BasicEditingGrid() {
     });
 
     const onSubmit = (data) => {
+        
+        if (data.name.length === 0 && data.consorcioName.length === 0) {
+            dispatch(showMessage({ message: 'Erro na busca, selecione favorecidos ou consórcios.' }))
+        } else {
+
             setIsLoading(true)
 
-            if(specificValue){
+            if (specificValue) {
                 data.eleicao = true
             }
+            dispatch(handleReportInfo(data, reportType))
+                .then((response) => {
+                    setIsLoading(false)
+                })
+                .catch((error) => {
+                    dispatch(showMessage({ message: 'Erro na busca, verifique os campos e tente novamente.' }))
+                    setIsLoading(false)
+                });
+        }
 
-        dispatch(handleReportInfo(data, reportType))
-            .then((response) => {
-                setIsLoading(false)
-            })
-            .catch((error) => {
-               dispatch(showMessage({message: 'Erro na busca, verifique os campos e tente novamente.'}))
-                setIsLoading(false)
-            });
     };
 
     const handleClear = () => {
@@ -136,7 +145,7 @@ export default function BasicEditingGrid() {
     }, []);
 
     useEffect(() => {
-            setIsLoading(false)
+        setIsLoading(false)
     }, [reportList]);
 
     // Handle AutoComplete
@@ -154,27 +163,32 @@ export default function BasicEditingGrid() {
                 }
             }));
             const sortedOptions = options.sort((a, b) => {
-               
-                    return a.value.fullName.localeCompare(b.value.fullName);
-            
+
+                return a.value.fullName.localeCompare(b.value.fullName);
+
 
             });
 
-            setUserOptions([{label: "Todos", value:{fullName: 'Todos'}}, ...sortedOptions]);
+            setUserOptions([{ label: "Todos", value: { fullName: 'Todos' } }, ...sortedOptions]);
         } else {
             setUserOptions([]);
         }
-    }, [ userList]);
+    }, [userList]);
+
+
+
 
     const handleAutocompleteChange = (field, newValue) => {
         if (field === 'status') {
             const status = newValue.map(i => i.label)
             setWhichStatus(status)
         }
-        
+
         setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
     };
- 
+
+
+
     const valueProps = {
         startAdornment: <InputAdornment position='start'>R$</InputAdornment>
     };
@@ -184,6 +198,7 @@ export default function BasicEditingGrid() {
         currency: 'BRL',
     });
 
+
     // Export CSV
     const status = getValues('status')
     const whichStatus = status?.join(',')
@@ -192,26 +207,26 @@ export default function BasicEditingGrid() {
         ? reportList.data?.map(report => ({
             Nome: report.nomefavorecido,
             Valor: formatter.format(report.valor),
-            Status: "",  
+            Status: "",
         }))
         : [];
 
     const valorTotal = {
-                Nome: "Valor Total",
-                Valor: "",
-                Status: formatter.format(reportList?.valor),
-            }
-    
-    const statusRow = {
-        Nome: "Status selecionado", 
+        Nome: "Valor Total",
         Valor: "",
-        Status: whichStatus || "Todos",  
+        Status: formatter.format(reportList?.valor),
+    }
+
+    const statusRow = {
+        Nome: "Status selecionado",
+        Valor: "",
+        Status: whichStatus || "Todos",
     };
 
-    const csvData =[ 
-            statusRow,
-            ...reportListData,
-            valorTotal
+    const csvData = [
+        statusRow,
+        ...reportListData,
+        valorTotal
     ]
     let dateInicio;
     let dateFim;
@@ -226,8 +241,9 @@ export default function BasicEditingGrid() {
         if (dateInicio && dateFim) {
             return `relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.csv`;
         }
-        return `relatorio_${format(new Date(), 'dd-MM-yyyy')}.csv`; 
+        return `relatorio_${format(new Date(), 'dd-MM-yyyy')}.csv`;
     }, [dateInicio, dateFim])
+
 
     // Export PDF
     const exportPDF = () => {
@@ -256,45 +272,45 @@ export default function BasicEditingGrid() {
         const logoImg = 'assets/icons/logoPrefeitura.png';
         const logoH = 15;
         const logoW = 30;
-       
-     
 
-       
+
+
+
         doc.autoTable({
             head: [tableColumn],
             body: tableRows,
-            margin: {left: 14 , right: 14, top: 60},
+            margin: { left: 14, right: 14, top: 60 },
             startY: 60,
             didDrawPage: (data) => {
-               
+
                 doc.addImage(logoImg, 'PNG', 14, 10, logoW, logoH);
 
-               
+
                 const hrYPosition = 30;
                 doc.setLineWidth(0.3);
                 doc.line(14, hrYPosition, 196, hrYPosition);
 
-               
+
                 doc.setFontSize(10);
                 doc.text(`Relatório dos dias: ${format(dateInicio, 'dd/MM/yyyy')} a ${format(dateFim, 'dd/MM/yyyy')}`, 14, 45);
                 doc.text(`Status observado: ${selectedStatus || 'Todos'}`, 14, 50);
 
 
 
-               
-                
+
+
             },
         });
 
         const pageCount = doc.internal.getNumberOfPages();
 
         for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i); 
+            doc.setPage(i);
             doc.setFontSize(10);
 
             const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
             const text = `Página ${currentPage} de ${pageCount}`;
-            const xPos = 14; 
+            const xPos = 14;
             const yPos = doc.internal.pageSize.height - 5;
 
             doc.text(text, xPos, yPos);
@@ -304,7 +320,7 @@ export default function BasicEditingGrid() {
         doc.setFontSize(10);
         doc.text(totalValue, 14, doc.internal.pageSize.height - 10);
 
-       
+
         doc.save(`relatorio_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.pdf`);
     };
 
@@ -319,14 +335,14 @@ export default function BasicEditingGrid() {
             dateFim = selectedDate[1];
         }
         const data = [
-            [ "Status selecionado","", whichStatus || "Todos"],
-            ["Nome", "Valor"], 
+            ["Status selecionado", "", whichStatus || "Todos"],
+            ["Nome", "Valor"],
             ...reportList.data.map(report => [
                 report.nomefavorecido,
                 formatter.format(report.valor),
             ]),
-            ["Valor Total", "",  formatter.format(reportList.valor ?? 0)],
-       
+            ["Valor Total", "", formatter.format(reportList.valor ?? 0)],
+
         ];
 
         const wb = utils.book_new();
@@ -354,8 +370,13 @@ export default function BasicEditingGrid() {
     };
 
     const clearSelect = (button) => {
-        setValue(button, ''); 
+        setValue(button, '');
         setShowButton(false)
+    };
+
+    const handleSelection = (field, newValue) => {
+        setSelected(newValue.length > 0 ? field : null);
+        handleAutocompleteChange(field, newValue);
     };
 
     return (
@@ -367,25 +388,25 @@ export default function BasicEditingGrid() {
                     <Box className="flex items-center py-10 gap-10">
                         <form onSubmit={handleSubmit(onSubmit)}>
                             <Box className="flex gap-10 flex-wrap mb-20">
-                                
+
 
                                 <Autocomplete
                                     id="favorecidos"
                                     multiple
-                                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
                                     getOptionLabel={(option) => option.value.fullName}
                                     filterSelectedOptions
                                     options={userOptions}
-                                    filterOptions={(options, state) => {
-                                       
-                                        return options.filter(option =>
+                                    filterOptions={(options, state) =>
+                                        options.filter((option) =>
                                             option.value?.cpfCnpj?.includes(state.inputValue) ||
                                             option.value?.permitCode?.includes(state.inputValue) ||
                                             option.value?.fullName?.toLowerCase().includes(state.inputValue.toLowerCase())
-                                        );
-                                    }}
+                                        )
+                                    }
                                     loading={loadingUsers}
-                                    onChange={(_, newValue) => handleAutocompleteChange('name', newValue)}
+                                    disabled={selected === 'consorcioName'}
+                                    onChange={(_, newValue) => handleSelection('name', newValue)}
                                     renderInput={(params) => (
                                         <TextField
                                             {...params}
@@ -407,11 +428,12 @@ export default function BasicEditingGrid() {
                                 <Autocomplete
                                     id="consorcio"
                                     multiple
-                                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
                                     getOptionLabel={(option) => option.label}
                                     filterSelectedOptions
                                     options={consorcios}
-                                    onChange={(_, newValue) => handleAutocompleteChange('consorcioName', newValue)}
+                                    disabled={selected === 'name'}
+                                    onChange={(_, newValue) => handleSelection('consorcioName', newValue)}
                                     renderInput={(params) => (
                                         <TextField
                                             {...params}
@@ -419,11 +441,7 @@ export default function BasicEditingGrid() {
                                             variant="outlined"
                                             InputProps={{
                                                 ...params.InputProps,
-                                                endAdornment: (
-                                                    <>
-                                                        {params.InputProps.endAdornment}
-                                                    </>
-                                                ),
+                                                endAdornment: <>{params.InputProps.endAdornment}</>,
                                             }}
                                         />
                                     )}
@@ -485,7 +503,7 @@ export default function BasicEditingGrid() {
                                         />
                                     )}
                                 />
-                            <Box>
+                                <Box>
                                     <Controller
                                         name="dateRange"
                                         control={control}
@@ -502,9 +520,9 @@ export default function BasicEditingGrid() {
                                                 className="custom-date-range-picker"
                                             />)}
                                     />
-                                    <br/>
+                                    <br />
                                     <span className='absolute text-xs text-red-600'>Campo data obrigatório*</span>
-                            </Box>
+                                </Box>
                             </Box>
                             <Box className="flex items-center my-[3.5rem] gap-10 flex-wrap">
                                 <Controller
@@ -628,9 +646,9 @@ export default function BasicEditingGrid() {
                                     )}
                                 />
                             </Box>
-                         
+
                             <Box>
-                          
+
                             </Box>
                             {whichStatusShow.includes("A pagar") && (
                                 <span className="text-sm text-red-600">
@@ -702,7 +720,7 @@ export default function BasicEditingGrid() {
                             data={csvData}
                             filename={csvFilename}
                             className="hidden"
-                        
+
                         />
                     </header>
 
@@ -729,13 +747,13 @@ export default function BasicEditingGrid() {
                                         </TableRow>
                                     )
                                 ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={5}>
-                                                <Box className="flex justify-center items-center m-10">
-                                                    <CircularProgress />
-                                                </Box>
-                                            </TableCell>
-                                        </TableRow>
+                                    <TableRow>
+                                        <TableCell colSpan={5}>
+                                            <Box className="flex justify-center items-center m-10">
+                                                <CircularProgress />
+                                            </Box>
+                                        </TableCell>
+                                    </TableRow>
                                 )}
                                 <TableRow key={Math.random()}>
                                     <TableCell className='font-bold'>Valor Total: </TableCell>
