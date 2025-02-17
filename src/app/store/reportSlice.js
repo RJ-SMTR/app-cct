@@ -139,12 +139,12 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
         return new Promise(async (resolve, reject) => {
             
             const requestData = handleData(data);
-            const reportTypeUrl = reportType;
+            const reportTypeUrl = reportType === 'sintetico' ? '/cnab/relatorio/sintetico' : jwtServiceConfig.report + `/${reportType}`;
 
             let config = {
                 method: 'get',
                 maxBodyLength: Infinity,
-                url: jwtServiceConfig.report + `/${reportTypeUrl}`,
+                url: reportTypeUrl,
                 headers: {
                     "Authorization": `Bearer ${token}`
                 },
@@ -155,18 +155,18 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
                 const response = await api.request(config);
                 const responseData = response.data;
                 
-                    // const mergedData = responseData.reduce((acc, curr) => {
-                    //     return acc.concat(curr.data);
-                    // }, []);
+                    const mergedData = responseData.reduce((acc, curr) => {
+                        return acc.concat(curr.data);
+                    }, []);
                     
-                    // const combinedResponse = {
-                    //     count: mergedData.length,
-                    //     data: mergedData,
-                    //     valor: responseData.reduce((sum, curr) => sum + curr.valor, 0),
-                    //     status: 'Todos'
-                    // };
+                    const combinedResponse = {
+                        count: mergedData.length,
+                        data: mergedData,
+                        valor: responseData.reduce((sum, curr) => sum + curr.valor, 0),
+                        status: 'Todos'
+                    };
                     if(reportType == 'sintetico'){
-                        dispatch(handleSynthData([]))
+                        dispatch(handleSynthData(combinedResponse))
                     } else {
 
                         dispatch(setReportList(responseData));
