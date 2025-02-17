@@ -27,7 +27,9 @@ import { format } from 'date-fns';
 import { useDispatch, useSelector } from 'react-redux';
 import { DateRangePicker } from 'rsuite';
 import { useForm, Controller } from 'react-hook-form';
+
 import { handleReportInfo, setReportList, setSpecificValue } from 'app/store/reportSlice';
+
 import { getUser } from 'app/store/adminSlice';
 import { NumericFormat } from 'react-number-format';
 import { CSVLink } from 'react-csv';
@@ -46,21 +48,11 @@ const consorciosStatus = [
     { label: 'Aguardando Pagamento' },
     { label: 'Erro' },
 ];
-const consorcios = [
-    { label: 'Todos', value: "Todos" },
-    { label: 'Internorte', value: "Internorte" },
-    { label: 'Intersul', value: "Intersul" },
-    { label: 'MobiRio', value: "MobiRio" },
-    { label: 'Santa Cruz', value: "Santa Cruz" },
-    { label: 'STPC', value: "STPC" },
-    { label: 'STPL', value: "STPL" },
-    { label: 'Transcarioca', value: "Transcarioca" },
-    { label: 'VLT', value: "VLT" },
-{label: 'TEC', value: "TEC"}
-];
+
 const específicos = [
     { label: 'Todos' },
     { label: 'Eleição' },
+
 ];
 
 
@@ -77,6 +69,21 @@ export default function BasicEditingGrid() {
     const [showClearMax, setShowClearMax] = useState(false)
     const [showButton, setShowButton] = useState(false)
     const [whichStatusShow, setWhichStatus] = useState([])
+    const [selected, setSelected] = useState(null)
+
+    const consorcios = [
+        { label: 'Todos', value: "Todos" },
+        { label: 'Internorte', value: "Internorte" },
+        { label: 'Intersul', value: "Intersul" },
+        { label: 'MobiRio', value: "MobiRio" },
+        { label: 'Santa Cruz', value: "Santa Cruz" },
+        { label: 'STPC', value: "STPC", disabled: selected === 'name' ? true : false },
+        { label: 'STPL', value: "STPL", disabled: selected === 'name' ? true : false },
+        { label: 'Transcarioca', value: "Transcarioca" },
+        { label: 'VLT', value: "VLT" },
+        { label: 'TEC', value: "TEC", disabled: selected === 'name' ? true : false }
+
+    ];
 
     const dispatch = useDispatch()
 
@@ -92,18 +99,26 @@ export default function BasicEditingGrid() {
     });
 
     const onSubmit = (data) => {
+
+        if (data.name.length === 0 && data.consorcioName.length === 0) {
+            dispatch(showMessage({ message: 'Erro na busca, selecione favorecidos ou consórcios.' }))
+        } else {
+
             setIsLoading(true)
-            if(specificValue){
+
+            if (specificValue) {
                 data.eleicao = true
             }
-        dispatch(handleReportInfo(data, reportType))
-            .then((response) => {
-                setIsLoading(false)
-            })
-            .catch((error) => {
-               dispatch(showMessage({message: 'Erro na busca, verifique os campos e tente novamente.'}))
-                setIsLoading(false)
-            });
+            dispatch(handleReportInfo(data, reportType))
+                .then((response) => {
+                    setIsLoading(false)
+                })
+                .catch((error) => {
+                    dispatch(showMessage({ message: 'Erro na busca, verifique os campos e tente novamente.' }))
+                    setIsLoading(false)
+                });
+        }
+
     };
 
     const handleClear = () => {
@@ -130,7 +145,7 @@ export default function BasicEditingGrid() {
     }, []);
 
     useEffect(() => {
-            setIsLoading(false)
+        setIsLoading(false)
     }, [reportList]);
 
     // Handle AutoComplete
@@ -141,14 +156,16 @@ export default function BasicEditingGrid() {
                 value: {
                     cpfCnpj: user.cpfCnpj,
                     permitCode: user.permitCode,
+
                     fullName: user.fullName,
                     userId: user.id
+
                 }
             }));
             const sortedOptions = options.sort((a, b) => {
-               
-                    return a.value.fullName.localeCompare(b.value.fullName);
-            
+
+                return a.value.fullName.localeCompare(b.value.fullName);
+
 
             });
 
@@ -350,6 +367,11 @@ export default function BasicEditingGrid() {
         setShowButton(false)
     };
 
+    const handleSelection = (field, newValue) => {
+        setSelected(newValue.length > 0 ? field : null);
+        handleAutocompleteChange(field, newValue);
+    };
+
     return (
         <>
             <Paper>
@@ -364,20 +386,19 @@ export default function BasicEditingGrid() {
                                 <Autocomplete
                                     id="favorecidos"
                                     multiple
-                                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
                                     getOptionLabel={(option) => option.value.fullName}
                                     filterSelectedOptions
                                     options={userOptions}
-                                    filterOptions={(options, state) => {
-                                       
-                                        return options.filter(option =>
+                                    filterOptions={(options, state) =>
+                                        options.filter((option) =>
                                             option.value?.cpfCnpj?.includes(state.inputValue) ||
                                             option.value?.permitCode?.includes(state.inputValue) ||
                                             option.value?.fullName?.toLowerCase().includes(state.inputValue.toLowerCase())
-                                        );
-                                    }}
+                                        )
+                                    }
                                     loading={loadingUsers}
-                                    onChange={(_, newValue) => handleAutocompleteChange('name', newValue)}
+                                    onChange={(_, newValue) => handleSelection('name', newValue)}
                                     renderInput={(params) => (
                                         <TextField
                                             {...params}
@@ -399,11 +420,12 @@ export default function BasicEditingGrid() {
                                 <Autocomplete
                                     id="consorcio"
                                     multiple
-                                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
                                     getOptionLabel={(option) => option.label}
                                     filterSelectedOptions
                                     options={consorcios}
-                                    onChange={(_, newValue) => handleAutocompleteChange('consorcioName', newValue)}
+                                    getOptionDisabled={(option) => option.disabled}
+                                    onChange={(_, newValue) => handleSelection('consorcioName', newValue)}
                                     renderInput={(params) => (
                                         <TextField
                                             {...params}
@@ -411,11 +433,7 @@ export default function BasicEditingGrid() {
                                             variant="outlined"
                                             InputProps={{
                                                 ...params.InputProps,
-                                                endAdornment: (
-                                                    <>
-                                                        {params.InputProps.endAdornment}
-                                                    </>
-                                                ),
+                                                endAdornment: <>{params.InputProps.endAdornment}</>,
                                             }}
                                         />
                                     )}
@@ -477,7 +495,7 @@ export default function BasicEditingGrid() {
                                         />
                                     )}
                                 />
-                            <Box>
+                                <Box>
                                     <Controller
                                         name="dateRange"
                                         control={control}
@@ -494,9 +512,9 @@ export default function BasicEditingGrid() {
                                                 className="custom-date-range-picker"
                                             />)}
                                     />
-                                    <br/>
+                                    <br />
                                     <span className='absolute text-xs text-red-600'>Campo data obrigatório*</span>
-                            </Box>
+                                </Box>
                             </Box>
                             <Box className="flex items-center my-[3.5rem] gap-10 flex-wrap">
                                 <Controller
@@ -505,8 +523,10 @@ export default function BasicEditingGrid() {
                                     rules={{
                                         validate: (value) => {
                                             if (!value) return true;
+
                                             const valorMin = parseFloat(value.split(',')[0].replace('.', ''));
                                             const valorMax = parseFloat(getValues("valorMax").split(',')[0].replace('.', ''));
+
                                             return valorMin <= valorMax || "Valor Mínimo não pode ser maior que o Valor Máximo";
                                         }
                                     }}
@@ -523,9 +543,9 @@ export default function BasicEditingGrid() {
                                             value={field.value}
                                             onChange={(e) => {
                                                 field.onChange(e);
+
                                                 const valorMin = parseFloat(e.target.value.split(',')[0].replace('.', ''));
                                                 const valorMax = parseFloat(getValues("valorMax").split(',')[0].replace('.', ''));
-                                                console.log(valorMin)
 
                                                 if (valorMin <= valorMax) {
                                                     clearErrors("valorMin");
@@ -563,8 +583,10 @@ export default function BasicEditingGrid() {
                                     rules={{
                                         validate: (value) => {
                                             if (!value) return true;
+
                                             const valorMax = parseFloat(value.split(',')[0].replace('.', ''));
                                             const valorMin = parseFloat(getValues("valorMin").split(',')[0].replace('.', ''));
+
                                             return valorMax >= valorMin || "Valor Máximo não pode ser menor que o Valor Mínimo";
                                         }
                                     }}
@@ -580,9 +602,10 @@ export default function BasicEditingGrid() {
                                             value={field.value}
                                             onChange={(e) => {
                                                 field.onChange(e);
+
                                                 const valorMax = parseFloat(e.target.value.split(',')[0].replace('.', ''));
                                                 const valorMin = parseFloat(getValues("valorMin").split(',')[0].replace('.', ''));
-                                                console.log(valorMax)
+
 
                                                 if (valorMax >= valorMin) {
                                                     clearErrors("valorMax");
@@ -615,13 +638,15 @@ export default function BasicEditingGrid() {
                                     )}
                                 />
                             </Box>
-                         
+
                             <Box>
-                          
+
                             </Box>
                             {whichStatusShow.includes("A pagar") && (
                                 <span className="text-sm text-red-600">
+
                                     Atenção: Para o status "a pagar", a data escolhida deve ser referente a Data Ordem de Pagamento (sexta a quinta-feira).
+
                                 </span>
                             )}
                             <Box>
@@ -666,7 +691,9 @@ export default function BasicEditingGrid() {
                             onClick={handleMenuClick}
                             style={{ marginTop: '20px' }}
                         >
+
                             <svg className="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium muiltr-hgpioi-MuiSvgIcon-root h-[2rem]" focusable="false" aria-hidden="true" viewBox="0 0 24 24" data-testid="SaveAltIcon"><path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"></path></svg> Exportar
+
                         </Button>
                         <Menu
                             id="simple-menu"
@@ -685,7 +712,7 @@ export default function BasicEditingGrid() {
                             data={csvData}
                             filename={csvFilename}
                             className="hidden"
-                        
+
                         />
                     </header>
 
@@ -712,13 +739,13 @@ export default function BasicEditingGrid() {
                                         </TableRow>
                                     )
                                 ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={5}>
-                                                <Box className="flex justify-center items-center m-10">
-                                                    <CircularProgress />
-                                                </Box>
-                                            </TableCell>
-                                        </TableRow>
+                                    <TableRow>
+                                        <TableCell colSpan={5}>
+                                            <Box className="flex justify-center items-center m-10">
+                                                <CircularProgress />
+                                            </Box>
+                                        </TableCell>
+                                    </TableRow>
                                 )}
                                 <TableRow key={Math.random()}>
                                     <TableCell className='font-bold'>Valor Total: </TableCell>
