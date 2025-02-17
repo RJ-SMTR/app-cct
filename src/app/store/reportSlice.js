@@ -154,18 +154,18 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
             try {
                 const response = await api.request(config);
                 const responseData = response.data;
-                
-                    const mergedData = responseData.reduce((acc, curr) => {
-                        return acc.concat(curr.data);
-                    }, []);
-                    
-                    const combinedResponse = {
-                        count: mergedData.length,
-                        data: mergedData,
-                        valor: responseData.reduce((sum, curr) => sum + curr.valor, 0),
-                        status: 'Todos'
-                    };
+              
                     if(reportType == 'sintetico'){
+                        const mergedData = responseData.reduce((acc, curr) => {
+                            return acc.concat(curr.data);
+                        }, []);
+
+                        const combinedResponse = {
+                            count: mergedData.length,
+                            data: mergedData,
+                            valor: responseData.reduce((sum, curr) => sum + curr.valor, 0),
+                            status: 'Todos'
+                        };
                         dispatch(handleSynthData(combinedResponse))
                     } else {
 
