@@ -38,18 +38,6 @@ const consorciosStatus = [
     { label: 'Aguardando Pagamento' },
     { label: 'Erro' },
 ];
-const consorcios = [
-    { label: 'Todos', value: "Todos" },
-    { label: 'Internorte', value: "Internorte" },
-    { label: 'Intersul', value: "Intersul" },
-    { label: 'MobiRio', value: "MobiRio" },
-    { label: 'Santa Cruz', value: "Santa Cruz" },
-    { label: 'STPC', value: "STPC" },
-    { label: 'STPL', value: "STPL" },
-    { label: 'Transcarioca', value: "Transcarioca" },
-    { label: 'VLT', value: "VLT" },
-{label: 'TEC', value: "TEC"}
-];
 
 
 const específicos = [
@@ -74,14 +62,27 @@ export default function BasicEditingGrid() {
     const [showClearMax, setShowClearMax] = useState(false)
     const [rows, setRows] = useState([])
     const [anchorEl, setAnchorEl] = useState(null);
-    const [whichStatusShow, setWhichStatus] =  useState([])
+    const [whichStatusShow, setWhichStatus] = useState([])
+    const [selected, setSelected] = useState(null)
 
 
-  useEffect(() => {
-    setRows(synthData)
-  }, [synthData])
-    
+    useEffect(() => {
+        setRows(synthData)
+    }, [synthData])
 
+    const consorcios = [
+        { label: 'Todos', value: "Todos" },
+        { label: 'Internorte', value: "Internorte" },
+        { label: 'Intersul', value: "Intersul" },
+        { label: 'MobiRio', value: "MobiRio" },
+        { label: 'Santa Cruz', value: "Santa Cruz" },
+        { label: 'STPC', value: "STPC", disabled: selected === 'name' ? true : false },
+        { label: 'STPL', value: "STPL", disabled: selected === 'name' ? true : false },
+        { label: 'Transcarioca', value: "Transcarioca" },
+        { label: 'VLT', value: "VLT" },
+        { label: 'TEC', value: "TEC", disabled: selected === 'name' ? true : false }
+
+    ];
 
     const dispatch = useDispatch()
 
@@ -98,19 +99,26 @@ export default function BasicEditingGrid() {
     });
 
     const onSubmit = (data) => {
-        setIsLoading(true)
-        dispatch(setTotalSynth(''))
-        if (specificValue) {
-            data.eleicao = true
+        if (data.name.length === 0 && data.consorcioName.length === 0) {
+            dispatch(showMessage({ message: 'Erro na busca, selecione favorecidos ou consórcios.' }))
+        } else {
+            dispatch(setTotalSynth(''))
+
+            setIsLoading(true)
+
+            if (specificValue) {
+                data.eleicao = true
+            }
+            dispatch(handleReportInfo(data, reportType))
+                .then((response) => {
+                    setIsLoading(false)
+                })
+                .catch((error) => {
+                    dispatch(showMessage({ message: 'Erro na busca, verifique os campos e tente novamente.' }))
+                    setIsLoading(false)
+                });
         }
-        dispatch(handleReportInfo(data, reportType))
-            .then((response) => {
-                setIsLoading(false)
-            })
-            .catch((error) => {
-                dispatch(showMessage({ message: 'Erro na busca, verifique os campos e tente novamente.' }))
-                setIsLoading(false)
-            });
+
     };
     const handleClear = () => {
         setValue('name', [])
@@ -136,7 +144,7 @@ export default function BasicEditingGrid() {
     }, []);
 
     useEffect(() => {
-            setIsLoading(false)
+        setIsLoading(false)
     }, [rows]);
 
     useEffect(() => {
@@ -164,10 +172,10 @@ export default function BasicEditingGrid() {
 
     const handleAutocompleteChange = (field, newValue) => {
 
-        if(field === 'status'){
+        if (field === 'status') {
             const status = newValue.map(i => i.label)
             setWhichStatus(status)
-        } 
+        }
         setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
     };
 
@@ -181,7 +189,7 @@ export default function BasicEditingGrid() {
     });
 
 
-  
+
     const prepareCSVData = (rows) => {
         const csvData = [];
 
@@ -252,12 +260,12 @@ export default function BasicEditingGrid() {
         let dateInicio;
         let dateFim;
         const selectedDate = getValues('dateRange');
-    
-        if(selectedDate !==null){
+
+        if (selectedDate !== null) {
             dateInicio = selectedDate[0];
-             dateFim = selectedDate[1];
+            dateFim = selectedDate[1];
         }
-       
+
         const csvFilename = useMemo(() => {
             if (dateInicio && dateFim) {
                 return `relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.csv`;
@@ -267,12 +275,12 @@ export default function BasicEditingGrid() {
 
         return (
             <CSVLink data={csvData} filename={csvFilename}>
-            CSV
+                CSV
             </CSVLink>
         );
     };
 
-   
+
 
 
     // Export XLSX
@@ -379,7 +387,7 @@ export default function BasicEditingGrid() {
         Object.entries(rows).forEach(([consorcio, group], index) => {
             if (consorcio !== previousConsorcio && index > 0) {
                 if (currentY + 10 + (group.items.length * 10) > pageHeight - 30) {
-                    startNewPage(); 
+                    startNewPage();
                 }
             }
 
@@ -387,7 +395,7 @@ export default function BasicEditingGrid() {
 
             doc.setFontSize(10);
             doc.text(`Consórcio: ${consorcio}`, 7, currentY);
-            currentY += 10; 
+            currentY += 10;
 
             const tableData = group.items.map(item => [
                 item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
@@ -461,7 +469,13 @@ export default function BasicEditingGrid() {
     const clearSelect = (button) => {
         setValue(button, '');
     };
-  
+
+    const handleSelection = (field, newValue) => {
+        setSelected(newValue.length > 0 ? field : null);
+        handleAutocompleteChange(field, newValue);
+    };
+
+
     return (
         <>
             <Paper>
@@ -475,20 +489,19 @@ export default function BasicEditingGrid() {
                                 <Autocomplete
                                     id="favorecidos"
                                     multiple
-                                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
                                     getOptionLabel={(option) => option.value.fullName}
                                     filterSelectedOptions
                                     options={userOptions}
-                                    filterOptions={(options, state) => {
-
-                                        return options.filter(option =>
+                                    filterOptions={(options, state) =>
+                                        options.filter((option) =>
                                             option.value?.cpfCnpj?.includes(state.inputValue) ||
                                             option.value?.permitCode?.includes(state.inputValue) ||
                                             option.value?.fullName?.toLowerCase().includes(state.inputValue.toLowerCase())
-                                        );
-                                    }}
+                                        )
+                                    }
                                     loading={loadingUsers}
-                                    onChange={(_, newValue) => handleAutocompleteChange('name', newValue)}
+                                    onChange={(_, newValue) => handleSelection('name', newValue)}
                                     renderInput={(params) => (
                                         <TextField
                                             {...params}
@@ -510,15 +523,42 @@ export default function BasicEditingGrid() {
                                 <Autocomplete
                                     id="consorcio"
                                     multiple
-                                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
                                     getOptionLabel={(option) => option.label}
                                     filterSelectedOptions
                                     options={consorcios}
-                                    onChange={(_, newValue) => handleAutocompleteChange('consorcioName', newValue)}
+                                    getOptionDisabled={(option) => option.disabled}
+                                    onChange={(_, newValue) => handleSelection('consorcioName', newValue)}
                                     renderInput={(params) => (
                                         <TextField
                                             {...params}
                                             label="Selecionar Consórcios"
+                                            variant="outlined"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                endAdornment: <>{params.InputProps.endAdornment}</>,
+                                            }}
+                                        />
+                                    )}
+                                />
+                                <Autocomplete
+                                    id="status"
+                                    multiple
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                                    options={específicos}
+                                    getOptionLabel={(option) => option.label}
+                                    filterSelectedOptions
+                                    onChange={(_, newValue) => {
+                                        if (newValue.length === 0) {
+                                            dispatch(setSpecificValue(false));
+                                        } else {
+                                            dispatch(setSpecificValue(true));
+                                        }
+                                    }}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="Selecionar Específicos"
                                             variant="outlined"
                                             InputProps={{
                                                 ...params.InputProps,
@@ -617,7 +657,7 @@ export default function BasicEditingGrid() {
                                     control={control}
                                     rules={{
                                         validate: (value) => {
-                                            if (!value) return true; 
+                                            if (!value) return true;
                                             const valorMin = parseFloat(value.replace(',', '.'));
                                             const valorMax = parseFloat(getValues("valorMax").replace(',', '.'));
                                             return valorMin <= valorMax || "Valor Mínimo não pode ser maior que o Valor Máximo";
@@ -650,11 +690,11 @@ export default function BasicEditingGrid() {
                                             helperText={error ? error.message : null}
                                             onMouseEnter={() => {
                                                 if (field.value) setShowClearMin(true);
-                                                
+
                                             }}
                                             onMouseLeave={() => setShowClearMin(false)}
                                             FormHelperTextProps={{
-                                                sx: { color: 'red', fontSize: '1rem', position: 'absolute', bottom: '-3.5rem' }  
+                                                sx: { color: 'red', fontSize: '1rem', position: 'absolute', bottom: '-3.5rem' }
                                             }}
                                             InputProps={{
                                                 endAdornment: showClearMin && field.value && (
@@ -674,7 +714,7 @@ export default function BasicEditingGrid() {
                                     control={control}
                                     rules={{
                                         validate: (value) => {
-                                            if (!value) return true; 
+                                            if (!value) return true;
                                             const valorMax = parseFloat(value.replace(',', '.'));
                                             const valorMin = parseFloat(getValues("valorMin").replace(',', '.'));
                                             return valorMax >= valorMin || "Valor Máximo não pode ser menor que o Valor Mínimo";
@@ -699,7 +739,7 @@ export default function BasicEditingGrid() {
                                                     clearErrors("valorMax");
                                                     clearErrors("valorMin");
                                                 } else {
-                                                    trigger("valorMin"); 
+                                                    trigger("valorMin");
                                                 }
                                             }}
                                             onMouseEnter={() => {
@@ -709,7 +749,7 @@ export default function BasicEditingGrid() {
                                             error={!!error}
                                             helperText={error ? error.message : null}
                                             FormHelperTextProps={{
-                                                sx: { color: 'red', fontSize: '1rem', position: 'absolute', bottom: '-3.5rem' }  
+                                                sx: { color: 'red', fontSize: '1rem', position: 'absolute', bottom: '-3.5rem' }
                                             }}
                                             InputProps={{
                                                 endAdornment: showClearMax && field.value && (
@@ -726,17 +766,19 @@ export default function BasicEditingGrid() {
                                     )}
                                 />
                             </Box>
-                            
+
 
 
                             <Box>
 
                             </Box>
-                          {whichStatusShow.includes("A pagar")  && (
+                            {whichStatusShow.includes("A pagar") && (
                                 <span className="text-sm text-red-600">
+
                                     Atenção: Para o status "a pagar", a data escolhida deve ser referente a Data Ordem de Pagamento (sexta a quinta-feira).
+
                                 </span>
-                            )} 
+                            )}
                             <Box>
                                 <Button
                                     variant="contained"
@@ -789,7 +831,7 @@ export default function BasicEditingGrid() {
                         >
                             <MenuItem>
                                 <CSVExportButton rows={rows} />
-                                </MenuItem>
+                            </MenuItem>
                             <MenuItem onClick={() => exportToXLSX(rows)}>XLSX</MenuItem>
                             <MenuItem onClick={() => exportToPDF(rows)}>PDF</MenuItem>
 
@@ -798,7 +840,7 @@ export default function BasicEditingGrid() {
                     <div style={{ height: '65vh', width: '100%' }} className='overflow-scroll'>
                         <Table dense table stickyHeader sx={{ tableLayout: 'fixed', width: '100%' }}>
 
-                         
+
                             <TableBody>
                                 {!isLoading ? (
                                     Object.entries(rows).length > 0 ? (
@@ -884,11 +926,11 @@ export default function BasicEditingGrid() {
                                                             Total {consorcio}:
                                                         </p>
                                                         <p className="font-bold">
-                                                          {totalConsorcio}
+                                                            {totalConsorcio}
                                                         </p>
                                                     </Box>
 
-                                                 
+
 
                                                 </React.Fragment>
                                             );
