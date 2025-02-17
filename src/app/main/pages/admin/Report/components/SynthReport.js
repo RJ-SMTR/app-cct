@@ -38,18 +38,6 @@ const consorciosStatus = [
     { label: 'Aguardando Pagamento' },
     { label: 'Erro' },
 ];
-const consorcios = [
-    { label: 'Todos', value: "Todos" },
-    { label: 'Internorte', value: "Internorte" },
-    { label: 'Intersul', value: "Intersul" },
-    { label: 'MobiRio', value: "MobiRio" },
-    { label: 'Santa Cruz', value: "Santa Cruz" },
-    { label: 'STPC', value: "STPC" },
-    { label: 'STPL', value: "STPL" },
-    { label: 'Transcarioca', value: "Transcarioca" },
-    { label: 'VLT', value: "VLT" },
-    { label: 'TEC', value: "TEC" }
-];
 
 
 const específicos = [
@@ -82,7 +70,19 @@ export default function BasicEditingGrid() {
         setRows(synthData)
     }, [synthData])
 
+    const consorcios = [
+        { label: 'Todos', value: "Todos" },
+        { label: 'Internorte', value: "Internorte" },
+        { label: 'Intersul', value: "Intersul" },
+        { label: 'MobiRio', value: "MobiRio" },
+        { label: 'Santa Cruz', value: "Santa Cruz" },
+        { label: 'STPC', value: "STPC", disabled: selected === 'name' ? true : false },
+        { label: 'STPL', value: "STPL", disabled: selected === 'name' ? true : false },
+        { label: 'Transcarioca', value: "Transcarioca" },
+        { label: 'VLT', value: "VLT" },
+        { label: 'TEC', value: "TEC", disabled: selected === 'name' ? true : false }
 
+    ];
 
     const dispatch = useDispatch()
 
@@ -501,7 +501,6 @@ export default function BasicEditingGrid() {
                                         )
                                     }
                                     loading={loadingUsers}
-                                    disabled={selected === 'consorcioName'}
                                     onChange={(_, newValue) => handleSelection('name', newValue)}
                                     renderInput={(params) => (
                                         <TextField
@@ -528,7 +527,7 @@ export default function BasicEditingGrid() {
                                     getOptionLabel={(option) => option.label}
                                     filterSelectedOptions
                                     options={consorcios}
-                                    disabled={selected === 'name'}
+                                    getOptionDisabled={(option) => option.disabled} 
                                     onChange={(_, newValue) => handleSelection('consorcioName', newValue)}
                                     renderInput={(params) => (
                                         <TextField
