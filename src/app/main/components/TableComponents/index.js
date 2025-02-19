@@ -52,6 +52,7 @@ export function CustomTable(data) {
     }
     return <Badge className={`${data.c?.root}  whitespace-nowrap`}
       color={i.statusRemessa === 4 ? 'error' : i.statusRemessa === 3 ? 'success' : i.statusRemessa === null ? 'op' : 'warning'}
+
       badgeContent={getStatus(i)}
     />
   }
@@ -64,6 +65,7 @@ export function CustomTable(data) {
       )
     }
     if(i.statusRemessa === 4){
+
       return (
             
         <Tooltip   title={errorDescription} arrow enterTouchDelay={10} leaveTouchDelay={10000}>
