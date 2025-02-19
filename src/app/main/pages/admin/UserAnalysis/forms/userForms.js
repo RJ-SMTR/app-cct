@@ -10,6 +10,7 @@ import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { api } from "app/configs/api/api";
 import JwtService from "src/app/auth/services/jwtService";
+import { format, parseISO } from "date-fns";
 
 
 
@@ -281,6 +282,7 @@ export function BankInfo({user}) {
                     </Box>
 
                 </form>
+                <p className="text-red">Última atualização: {format(parseISO(user?.updatedAt), 'dd/MM/yyyy HH:mm:ss')}</p>
             </Card>
         </>
     )
