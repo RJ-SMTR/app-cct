@@ -217,19 +217,11 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
 
     const requestData = searchingDay ? {ordemPagamentoIds: idOrdem}  : searchingWeek  ?  null : handleRequestData(null, dateRange, searchingDay, searchingWeek);
     let apiRoute = ''
-    if(!userId){
-        apiRoute = searchingWeek && searchingDay
-            ? jwtServiceConfig.revenuesDay
-            : searchingWeek 
-                ? jwtServiceConfig.revenuesUn
-                : jwtServiceConfig.odpMensal
-    } else {
         apiRoute = searchingWeek && searchingDay 
             ? jwtServiceConfig.odpDiario + `/?userId=${userId}` 
         : searchingWeek  
                 ? jwtServiceConfig.odpSemanal + `/${idOrdem}?userId=${userId}`
         : jwtServiceConfig.odpMensal + `?userId=${userId}`;
-    }
     const method = 'get';
     const token = window.localStorage.getItem('jwt_access_token');
 

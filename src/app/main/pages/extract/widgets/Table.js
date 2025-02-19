@@ -168,7 +168,7 @@ function TableTransactions({ id }) {
             dispatch(getStatements(dateRange, searchingDay, searchingWeek, id, ordemPgtoId, mocked))
              
         } else {
-            dispatch(getStatements(dateRange, searchingDay, searchingWeek, ordemPgtoId))
+            dispatch(getStatements(dateRange, searchingDay, searchingWeek,id, ordemPgtoId))
 
         }
 
