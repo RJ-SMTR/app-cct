@@ -36,6 +36,8 @@ import { getStatements,
          setOrdemPgto,
         setMocked } from 'app/store/extractSlice';
 
+import { showMessage } from 'app/store/fuse/messageSlice';
+
 import { useNavigate } from 'react-router-dom';
 import { selectUser } from 'app/store/userSlice';
 
@@ -166,7 +168,7 @@ function TableTransactions({ id }) {
             dispatch(getStatements(dateRange, searchingDay, searchingWeek, id, ordemPgtoId, mocked))
              
         } else {
-            dispatch(getStatements(dateRange, searchingDay, searchingWeek, ordemPgtoId))
+            dispatch(getStatements(dateRange, searchingDay, searchingWeek,id, ordemPgtoId))
 
         }
 
@@ -208,44 +210,49 @@ function TableTransactions({ id }) {
 
 
     const handleClickRow = (idOrder, event) => {
-        dispatch(setLoading(true))
-        dispatch(setLoadingWeek(true))
-        const start = event.target.innerText;
-        const [day, month, year] = start.split('/');
-        const transformedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-        const tz = 'America/Sao_Paulo';
-
-        setDataOrderDay(start)
-        if (fullReport) {
-            // if (searchingWeek && !mocked) {
-            //     dispatch(setMocked(true))
-            //     dispatch(setDateRange([transformedDate, transformedDate]));
-     
-                
-            // } else 
-            if(searchingWeek){
-                dispatch(setValorAcumuladoLabel('Valor Operação - Detalhado'));
-                dispatch(setValorPagoLabel('Valor - Detalhado'));
-                dispatch(setDateRange([transformedDate, transformedDate]));
-                dispatch(setOrdemPgto(idOrder))
-                dispatch(setSearchingDay(true))
-                setPage(0)
-            }else  {
-                if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
-                if (!searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Semanal'));
-                if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Mensal'));
-                if (searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Mensal'));
-                const clickedDate = parseISO(transformedDate);
-                const clickedDateToday = utcToZonedTime(clickedDate, tz);
-                setCurrentWeekStart(clickedDateToday);
-                dispatch(setSearchingWeek(true));
-                setPage(0);
-                dispatch(setOrdemPgto(idOrder))
-
-            }
+        if(idOrder === null){
+ dispatch(showMessage({ message: 'Não há valores para serem apresentados.' }))
         } else {
-            navigate('/extrato')
+            dispatch(setLoading(true))
+            dispatch(setLoadingWeek(true))
+            const start = event.target.innerText;
+            const [day, month, year] = start.split('/');
+            const transformedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            const tz = 'America/Sao_Paulo';
+
+            setDataOrderDay(start)
+            if (fullReport) {
+                // if (searchingWeek && !mocked) {
+                //     dispatch(setMocked(true))
+                //     dispatch(setDateRange([transformedDate, transformedDate]));
+
+
+                // } else 
+                if (searchingWeek) {
+                    dispatch(setValorAcumuladoLabel('Valor Operação - Detalhado'));
+                    dispatch(setValorPagoLabel('Valor - Detalhado'));
+                    dispatch(setDateRange([transformedDate, transformedDate]));
+                    dispatch(setOrdemPgto(idOrder))
+                    dispatch(setSearchingDay(true))
+                    setPage(0)
+                } else {
+                    if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
+                    if (!searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Semanal'));
+                    if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Mensal'));
+                    if (searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Mensal'));
+                    const clickedDate = parseISO(transformedDate);
+                    const clickedDateToday = utcToZonedTime(clickedDate, tz);
+                    setCurrentWeekStart(clickedDateToday);
+                    dispatch(setSearchingWeek(true));
+                    setPage(0);
+                    dispatch(setOrdemPgto(idOrder))
+
+                }
+            } else {
+                navigate('/extrato')
+            }
         }
+     
     }
 
     const handleBack = () => {
