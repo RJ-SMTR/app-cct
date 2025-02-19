@@ -98,7 +98,7 @@ export default function BasicEditingGrid() {
         }
     });
 
- const onSubmit = (data) => {
+    const onSubmit = (data) => {
         if (data.name.length === 0 && data.consorcioName.length === 0) {
             dispatch(showMessage({ message: 'Erro na busca, selecione favorecidos ou consórcios.' }))
         } else {
@@ -527,7 +527,7 @@ export default function BasicEditingGrid() {
                                     getOptionLabel={(option) => option.label}
                                     filterSelectedOptions
                                     options={consorcios}
-                                    getOptionDisabled={(option) => option.disabled} 
+                                    getOptionDisabled={(option) => option.disabled}
                                     onChange={(_, newValue) => handleSelection('consorcioName', newValue)}
                                     renderInput={(params) => (
                                         <TextField

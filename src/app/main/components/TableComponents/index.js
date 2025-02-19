@@ -39,18 +39,20 @@ export function CustomTable(data) {
     const getStatus = (i) => {
       let status = ''
       switch (i.statusRemessa){
-        case 4:
+        case 3:
           status = 'Pago';
           break;
-          case 5:
+          case 4:
            status =  'Pendente'
+           break;
         default:
           status ='A pagar';
       }
      return status
     }
     return <Badge className={`${data.c?.root}  whitespace-nowrap`}
-      color={i.statusRemessa === 5 ? 'error' : i.statusRemessa === 4 ? 'success' : i.statusRemessa === null ? 'op' : 'warning'}
+      color={i.statusRemessa === 4 ? 'error' : i.statusRemessa === 3 ? 'success' : i.statusRemessa === null ? 'op' : 'warning'}
+
       badgeContent={getStatus(i)}
     />
   }
@@ -62,7 +64,8 @@ export function CustomTable(data) {
         <span className='underline'> Erro  <InfoOutlinedIcon fontSize='small' /></span>
       )
     }
-    if(i.statusRemessa === 5){
+    if(i.statusRemessa === 4){
+
       return (
             
         <Tooltip   title={errorDescription} arrow enterTouchDelay={10} leaveTouchDelay={10000}>

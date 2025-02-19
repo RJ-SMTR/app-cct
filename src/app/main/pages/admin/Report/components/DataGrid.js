@@ -637,9 +637,7 @@ export default function BasicEditingGrid() {
                             </Box>
                             {whichStatusShow.includes("A pagar") && (
                                 <span className="text-sm text-red-600">
-
                                     Atenção: Para o status "a pagar", a data escolhida deve ser referente a Data Ordem de Pagamento (sexta a quinta-feira).
-
                                 </span>
                             )}
                             <Box>

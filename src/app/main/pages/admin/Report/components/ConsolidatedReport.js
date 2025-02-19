@@ -77,7 +77,7 @@ export default function BasicEditingGrid() {
         { label: 'Intersul', value: "Intersul" },
         { label: 'MobiRio', value: "MobiRio" },
         { label: 'Santa Cruz', value: "Santa Cruz" },
-        { label: 'STPC', value: "STPC",disabled: selected === 'name' ? true : false },
+        { label: 'STPC', value: "STPC", disabled: selected === 'name' ? true : false },
         { label: 'STPL', value: "STPL", disabled: selected === 'name' ? true : false },
         { label: 'Transcarioca', value: "Transcarioca" },
         { label: 'VLT', value: "VLT" },
@@ -99,7 +99,7 @@ export default function BasicEditingGrid() {
     });
 
     const onSubmit = (data) => {
-        
+
         if (data.name.length === 0 && data.consorcioName.length === 0) {
             dispatch(showMessage({ message: 'Erro na busca, selecione favorecidos ou consórcios.' }))
         } else {
@@ -169,26 +169,21 @@ export default function BasicEditingGrid() {
 
             });
 
-            setUserOptions([{ label: "Todos", value: { fullName: 'Todos' } }, ...sortedOptions]);
+            setUserOptions([{label: "Todos", value:{fullName: 'Todos'}}, ...sortedOptions]);
         } else {
             setUserOptions([]);
         }
-    }, [userList]);
-
-
-
+    }, [ userList]);
 
     const handleAutocompleteChange = (field, newValue) => {
         if (field === 'status') {
             const status = newValue.map(i => i.label)
             setWhichStatus(status)
         }
-
+        
         setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
     };
-
-
-
+ 
     const valueProps = {
         startAdornment: <InputAdornment position='start'>R$</InputAdornment>
     };
@@ -198,7 +193,6 @@ export default function BasicEditingGrid() {
         currency: 'BRL',
     });
 
-
     // Export CSV
     const status = getValues('status')
     const whichStatus = status?.join(',')
@@ -207,26 +201,26 @@ export default function BasicEditingGrid() {
         ? reportList.data?.map(report => ({
             Nome: report.nomefavorecido,
             Valor: formatter.format(report.valor),
-            Status: "",
+            Status: "",  
         }))
         : [];
 
     const valorTotal = {
-        Nome: "Valor Total",
-        Valor: "",
-        Status: formatter.format(reportList?.valor),
-    }
-
+                Nome: "Valor Total",
+                Valor: "",
+                Status: formatter.format(reportList?.valor),
+            }
+    
     const statusRow = {
-        Nome: "Status selecionado",
+        Nome: "Status selecionado", 
         Valor: "",
-        Status: whichStatus || "Todos",
+        Status: whichStatus || "Todos",  
     };
 
-    const csvData = [
-        statusRow,
-        ...reportListData,
-        valorTotal
+    const csvData =[ 
+            statusRow,
+            ...reportListData,
+            valorTotal
     ]
     let dateInicio;
     let dateFim;
@@ -241,9 +235,8 @@ export default function BasicEditingGrid() {
         if (dateInicio && dateFim) {
             return `relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.csv`;
         }
-        return `relatorio_${format(new Date(), 'dd-MM-yyyy')}.csv`;
+        return `relatorio_${format(new Date(), 'dd-MM-yyyy')}.csv`; 
     }, [dateInicio, dateFim])
-
 
     // Export PDF
     const exportPDF = () => {
@@ -272,45 +265,45 @@ export default function BasicEditingGrid() {
         const logoImg = 'assets/icons/logoPrefeitura.png';
         const logoH = 15;
         const logoW = 30;
+       
+     
 
-
-
-
+       
         doc.autoTable({
             head: [tableColumn],
             body: tableRows,
-            margin: { left: 14, right: 14, top: 60 },
+            margin: {left: 14 , right: 14, top: 60},
             startY: 60,
             didDrawPage: (data) => {
-
+               
                 doc.addImage(logoImg, 'PNG', 14, 10, logoW, logoH);
 
-
+               
                 const hrYPosition = 30;
                 doc.setLineWidth(0.3);
                 doc.line(14, hrYPosition, 196, hrYPosition);
 
-
+               
                 doc.setFontSize(10);
                 doc.text(`Relatório dos dias: ${format(dateInicio, 'dd/MM/yyyy')} a ${format(dateFim, 'dd/MM/yyyy')}`, 14, 45);
                 doc.text(`Status observado: ${selectedStatus || 'Todos'}`, 14, 50);
 
 
 
-
-
+               
+                
             },
         });
 
         const pageCount = doc.internal.getNumberOfPages();
 
         for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
+            doc.setPage(i); 
             doc.setFontSize(10);
 
             const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
             const text = `Página ${currentPage} de ${pageCount}`;
-            const xPos = 14;
+            const xPos = 14; 
             const yPos = doc.internal.pageSize.height - 5;
 
             doc.text(text, xPos, yPos);
@@ -320,7 +313,7 @@ export default function BasicEditingGrid() {
         doc.setFontSize(10);
         doc.text(totalValue, 14, doc.internal.pageSize.height - 10);
 
-
+       
         doc.save(`relatorio_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.pdf`);
     };
 
@@ -335,14 +328,14 @@ export default function BasicEditingGrid() {
             dateFim = selectedDate[1];
         }
         const data = [
-            ["Status selecionado", "", whichStatus || "Todos"],
-            ["Nome", "Valor"],
+            [ "Status selecionado","", whichStatus || "Todos"],
+            ["Nome", "Valor"], 
             ...reportList.data.map(report => [
                 report.nomefavorecido,
                 formatter.format(report.valor),
             ]),
-            ["Valor Total", "", formatter.format(reportList.valor ?? 0)],
-
+            ["Valor Total", "",  formatter.format(reportList.valor ?? 0)],
+       
         ];
 
         const wb = utils.book_new();
@@ -370,7 +363,7 @@ export default function BasicEditingGrid() {
     };
 
     const clearSelect = (button) => {
-        setValue(button, '');
+        setValue(button, ''); 
         setShowButton(false)
     };
 
@@ -388,7 +381,7 @@ export default function BasicEditingGrid() {
                     <Box className="flex items-center py-10 gap-10">
                         <form onSubmit={handleSubmit(onSubmit)}>
                             <Box className="flex gap-10 flex-wrap mb-20">
-
+                                
 
                                 <Autocomplete
                                     id="favorecidos"
@@ -431,7 +424,7 @@ export default function BasicEditingGrid() {
                                     getOptionLabel={(option) => option.label}
                                     filterSelectedOptions
                                     options={consorcios}
-                                    getOptionDisabled={(option) => option.disabled} 
+                                    getOptionDisabled={(option) => option.disabled}
                                     onChange={(_, newValue) => handleSelection('consorcioName', newValue)}
                                     renderInput={(params) => (
                                         <TextField

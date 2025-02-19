@@ -4,7 +4,6 @@ import { Box } from '@mui/system';
 import { TableUsers } from './components/Table';
 import { useDispatch } from 'react-redux';
 import { getUser, getInfo } from 'app/store/adminSlice';
-
 import {
     setSearchingWeek,
     setSearchingDay,
@@ -13,7 +12,6 @@ import {
     setValorAcumuladoLabel,
     setValorPagoLabel
 } from 'app/store/extractSlice';
-
 import { setReportList } from 'app/store/reportSlice';
 import { Modal } from '@mui/material';
 
