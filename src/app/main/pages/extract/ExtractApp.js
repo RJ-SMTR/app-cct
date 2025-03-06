@@ -86,7 +86,7 @@ function ExtractApp() {
           <Typography id="modal-modal-title" variant="h6" component="h3">
            Comunicado:
           </Typography>
-          <p>As informações anteriores ao dia 31/01/24 estão temporariamente indisponíveis.
+          <p>As informações anteriores ao dia 31/12/24 estão temporariamente indisponíveis.
             Qualquer dúvida, por favor, contacte o suporte!</p>
          
         </Box>
