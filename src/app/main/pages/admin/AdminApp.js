@@ -64,7 +64,7 @@ function AdminApp() {
                 </Box>
                 <br />
             </div>
-            <Modal
+            {/* <Modal
                 open={modal}
                 onClose={handleClose}
                 aria-labelledby="modal-modal-title"
@@ -78,7 +78,7 @@ function AdminApp() {
                         Qualquer dúvida, por favor, contacte o suporte!</p>
 
                 </Box>
-            </Modal>
+            </Modal> */}
         </>
     );
 }
