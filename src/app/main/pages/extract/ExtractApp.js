@@ -76,7 +76,7 @@ function ExtractApp() {
 
         <br />
       </div>
-      <Modal
+      {/* <Modal
         open={modal}
         onClose={handleClose}
         aria-labelledby="modal-modal-title"
@@ -90,7 +90,7 @@ function ExtractApp() {
             Qualquer dúvida, por favor, contacte o suporte!</p>
          
         </Box>
-      </Modal>
+      </Modal> */}
     </>
   );
 }
