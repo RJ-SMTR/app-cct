@@ -15,7 +15,11 @@ import {
 	InputAdornment,
 	Menu,
 	IconButton,
+	List,
+	ListItem,
 } from "@mui/material";
+
+import Popover from '@mui/material/Popover';
 import { format } from "date-fns";
 import { useDispatch, useSelector } from "react-redux";
 import { DateRangePicker } from "rsuite";
@@ -34,14 +38,12 @@ import { utils, writeFile as writeFileXLSX } from "xlsx";
 
 const consorciosStatus = [
 	{ label: "Todos" },
-	{ label: "A pagar" },
 	{ label: "Pago" },
-	{ label: "Aguardando Pagamento" },
 	{ label: "Erro" },
 ];
 
 const erroStatus = [
-	{ label: "Pago" },
+	{ label: "Todos" },
 	{ label: "Estorno" },
 	{ label: "Rejeitado" },
 ];
@@ -60,7 +62,8 @@ export default function BasicEditingGrid() {
 	const [showButton, setShowButton] = useState(false);
 	const [whichStatusShow, setWhichStatus] = useState([]);
 	const [selected, setSelected] = useState(null);
-	const [selectedStatus, setSelectedStatus] = useState([]);
+	const [showErroStatus, setShowErroStatus] = useState(false);
+	const [selectedErroStatus, setSelectedErroStatus] = useState(null);
 
 	const consorcios = [
 		{ label: "Todos", value: "Todos" },
@@ -90,6 +93,10 @@ export default function BasicEditingGrid() {
 		});
 
 	const onSubmit = (data) => {
+		console.log('Original form data:', data);
+		console.log('Current whichStatusShow:', whichStatusShow);
+		console.log('Current selectedErroStatus:', selectedErroStatus);
+
 		if (data.name.length === 0 && data.consorcioName.length === 0) {
 			dispatch(
 				showMessage({
@@ -99,14 +106,44 @@ export default function BasicEditingGrid() {
 		} else {
 			setIsLoading(true);
 
-			if (specificValue) {
-				data.eleicao = true;
+			const requestData = { ...data };
+			console.log('Initial requestData:', requestData);
+
+			// Handle error status
+			if (whichStatusShow.includes("Erro") && selectedErroStatus) {
+				console.log('Processing Erro status...');
+				
+				// Remove "Erro" from status array but keep other statuses if any
+				requestData.status = requestData.status.filter(status => status !== "Erro");
+				
+				// Add the specific error status to the status array
+				if (selectedErroStatus.label === "Todos") {
+					requestData.status = [...requestData.status, "Erro"];
+					requestData.erro = true;
+				} else if (selectedErroStatus.label === "Estorno") {
+					requestData.status = [...requestData.status, "Estorno"];
+					requestData.estorno = true;
+				} else if (selectedErroStatus.label === "Rejeitado") {
+					requestData.status = [...requestData.status, "Rejeitado"];
+					requestData.rejeitado = true;
+				}
+
+				console.log('Status after processing:', requestData.status);
 			}
-			dispatch(handleReportInfo(data, reportType))
+
+			if (specificValue) {
+				requestData.eleicao = true;
+			}
+
+			console.log('Final requestData being sent:', requestData);
+
+			dispatch(handleReportInfo(requestData, reportType))
 				.then((response) => {
+					console.log('API response:', response);
 					setIsLoading(false);
 				})
 				.catch((error) => {
+					console.error('API error:', error);
 					dispatch(
 						showMessage({
 							message: "Erro na busca, verifique os campos e tente novamente.",
@@ -117,18 +154,8 @@ export default function BasicEditingGrid() {
 		}
 	};
 
-	const handleMouseEnter = (event, option) => {
-		if (option.label === "Erro") {
-			setAnchorEl(event.currentTarget);
-		}
-	};
-
-	const handleMouseLeave = () => {
-		setAnchorEl(null);
-	};
-
 	const handleClear = () => {
-		// reset()
+		console.log('Clearing all fields...');
 		dispatch(setReportList([]));
 		setValue("name", []);
 		setValue("dateRange", []);
@@ -136,6 +163,11 @@ export default function BasicEditingGrid() {
 		setValue("valorMin", "");
 		setValue("consorcioName", []);
 		setValue("status", []);
+		setValue("erroStatus", null);
+		setSelectedErroStatus(null);
+		setShowErroStatus(false);
+		setWhichStatus([]);
+		console.log('Form values after clear:', getValues());
 
 		for (const button of document.querySelectorAll(
 			".MuiAutocomplete-clearIndicator",
@@ -185,15 +217,29 @@ export default function BasicEditingGrid() {
 	}, [userList]);
 
 	const handleAutocompleteChange = (field, newValue) => {
+		console.log('handleAutocompleteChange called with:', { field, newValue });
+		
 		if (field === "status") {
 			const status = newValue.map((i) => i.label);
+			console.log('Status selected:', status);
 			setWhichStatus(status);
+			
+			const hasErro = status.includes("Erro");
+			console.log('Has Erro status:', hasErro);
+			setShowErroStatus(hasErro);
+			
+			if (!hasErro) {
+				console.log('Clearing erro status because Erro was unselected');
+				setSelectedErroStatus(null);
+				setValue("erroStatus", []);
+			}
 		}
 
 		setValue(
 			field,
 			newValue ? newValue.map((item) => item.value ?? item.label) : [],
 		);
+		console.log('Form values after change:', getValues());
 	};
 
 	const valueProps = {
@@ -212,9 +258,11 @@ export default function BasicEditingGrid() {
 	const reportListData =
 		reportList.count > 0
 			? reportList.data?.map((report) => ({
-					Nome: report.nomefavorecido,
+					Nome: report.nomes,
+					'CPF/CNPJ': report.cpfCnpj,
+					Consórcio: report.consorcio,
 					Valor: formatter.format(report.valor),
-					Status: "",
+					Status: report.status,
 				}))
 			: [];
 
@@ -250,13 +298,16 @@ export default function BasicEditingGrid() {
 	// Export PDF
 	const exportPDF = () => {
 		const doc = new jsPDF();
-		const tableColumn = ["Nome", "Valor"];
+		const tableColumn = ["Nome", "CPF/CNPJ", "Consórcio", "Valor", "Status"];
 		const tableRows = [];
 
 		for (const report of reportList.data) {
 			const reportData = [
-				report.nomefavorecido,
+				report.nomes,
+				report.cpfCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'),
+				report.consorcio,
 				formatter.format(report.valor),
+				report.status
 			];
 			tableRows.push(reportData);
 		}
@@ -331,13 +382,16 @@ export default function BasicEditingGrid() {
 			dateFim = selectedDate[1];
 		}
 		const data = [
-			["Status selecionado", "", whichStatus || "Todos"],
-			["Nome", "Valor"],
+			["Status selecionado", "", "", "", whichStatus || "Todos"],
+			["Nome", "CPF/CNPJ", "Consórcio", "Valor", "Status"],
 			...reportList.data.map((report) => [
-				report.nomefavorecido,
+				report.nomes,
+				report.cpfCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'),
+				report.consorcio,
 				formatter.format(report.valor),
+				report.status
 			]),
-			["Valor Total", "", formatter.format(reportList.valor ?? 0)],
+			["Valor Total", "", "", formatter.format(reportList.valor ?? 0), ""],
 		];
 
 		const wb = utils.book_new();
@@ -457,15 +511,6 @@ export default function BasicEditingGrid() {
 									onChange={(_, newValue) =>
 										handleAutocompleteChange("status", newValue)
 									}
-									renderOption={(props, option) => (
-										<li
-											{...props}
-											onMouseEnter={(event) => handleMouseEnter(event, option)}
-											onMouseLeave={handleMouseLeave}
-										>
-											{option.label}
-										</li>
-									)}
 									renderInput={(params) => (
 										<TextField
 											{...params}
@@ -474,19 +519,28 @@ export default function BasicEditingGrid() {
 										/>
 									)}
 								/>
-								<Popover
-									open={Boolean(anchorEl)}
-									anchorEl={anchorEl}
-									onClose={handleMouseLeave}
-									anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-									transformOrigin={{ vertical: "top", horizontal: "left" }}
-								>
-									<List>
-										{erroStatus.map((status, index) => (
-											<ListItem key={index}>{status.label}</ListItem>
-										))}
-									</List>
-								</Popover>
+								{showErroStatus && (
+									<Autocomplete
+										id="erroStatus"
+										className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+										options={erroStatus}
+										getOptionLabel={(option) => option.label}
+										value={selectedErroStatus}
+										onChange={(_, newValue) => {
+											console.log('Erro status selected:', newValue);
+											setSelectedErroStatus(newValue);
+											setValue("erroStatus", newValue ? newValue.label : null);
+											console.log('Form values after erro status change:', getValues());
+										}}
+										renderInput={(params) => (
+											<TextField
+												{...params}
+												label="Tipo de Erro"
+												variant="outlined"
+											/>
+										)}
+									/>
+								)}
 								<Box>
 									<Controller
 										name="dateRange"
@@ -761,7 +815,10 @@ export default function BasicEditingGrid() {
 							<TableHead className="items-center mb-4">
 								<TableRow>
 									<TableCell>Nome</TableCell>
+									<TableCell>CPF/CNPJ</TableCell>
+									<TableCell>Consórcio</TableCell>
 									<TableCell>Valor</TableCell>
+									<TableCell>Status</TableCell>
 								</TableRow>
 							</TableHead>
 							<TableBody>
@@ -769,13 +826,30 @@ export default function BasicEditingGrid() {
 									reportList.count > 0 ? (
 										reportList.data?.map((report, index) => (
 											<TableRow key={index}>
-												<TableCell>{report.nomefavorecido}</TableCell>
+												<TableCell>{report.nomes}</TableCell>
+												<TableCell>
+													{report.cpfCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')}
+												</TableCell>
+												<TableCell>{report.consorcio}</TableCell>
 												<TableCell>{formatter.format(report.valor)}</TableCell>
+												<TableCell>
+													<span
+														className={`px-2 py-1 rounded-full text-sm ${
+															report.status === 'Pago'
+																? 'bg-green-100 text-green-800'
+																: report.status === 'Erro'
+																? 'bg-red-100 text-red-800'
+																: 'bg-gray-100 text-gray-800'
+														}`}
+													>
+														{report.status}
+													</span>
+												</TableCell>
 											</TableRow>
 										))
 									) : (
 										<TableRow>
-											<TableCell colSpan={2}>
+											<TableCell colSpan={5}>
 												Não há dados para serem exibidos
 											</TableCell>
 										</TableRow>
@@ -790,11 +864,13 @@ export default function BasicEditingGrid() {
 									</TableRow>
 								)}
 								<TableRow key={Math.random()}>
-									<TableCell className="font-bold">Valor Total: </TableCell>
+									<TableCell colSpan={3} className="font-bold text-right">
+										Valor Total:
+									</TableCell>
 									<TableCell className="font-bold">
-										{" "}
 										{formatter.format(reportList.valor ?? 0)}
 									</TableCell>
+									<TableCell /> {/* Empty cell for status column alignment */}
 								</TableRow>
 							</TableBody>
 						</Table>

@@ -56,7 +56,6 @@ function handleData(data) {
     let requestData = {};
 
 
-    
     if (data.consorcioName && data.consorcioName.length > 0) {
         if (data.consorcioName.includes('Todos')){
                 requestData.todosConsorcios = true
@@ -99,6 +98,12 @@ function handleData(data) {
                         break;
                     case 'Aguardando Pagamento':
                         requestData.emProcessamento = true;
+                        break;
+                    case 'Estorno':
+                        requestData.estorno = true;
+                        break;
+                    case 'Rejeitado':
+                        requestData.rejeitado = true;
                         break;
                     case 'Todos':
                         break;
