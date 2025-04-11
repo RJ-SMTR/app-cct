@@ -93,10 +93,6 @@ export default function BasicEditingGrid() {
 		});
 
 	const onSubmit = (data) => {
-		console.log('Original form data:', data);
-		console.log('Current whichStatusShow:', whichStatusShow);
-		console.log('Current selectedErroStatus:', selectedErroStatus);
-
 		if (data.name.length === 0 && data.consorcioName.length === 0) {
 			dispatch(
 				showMessage({
@@ -107,16 +103,10 @@ export default function BasicEditingGrid() {
 			setIsLoading(true);
 
 			const requestData = { ...data };
-			console.log('Initial requestData:', requestData);
 
-			// Handle error status
 			if (whichStatusShow.includes("Erro") && selectedErroStatus) {
-				console.log('Processing Erro status...');
-				
-				// Remove "Erro" from status array but keep other statuses if any
 				requestData.status = requestData.status.filter(status => status !== "Erro");
 				
-				// Add the specific error status to the status array
 				if (selectedErroStatus.label === "Todos") {
 					requestData.status = [...requestData.status, "Erro"];
 					requestData.erro = true;
@@ -127,23 +117,17 @@ export default function BasicEditingGrid() {
 					requestData.status = [...requestData.status, "Rejeitado"];
 					requestData.rejeitado = true;
 				}
-
-				console.log('Status after processing:', requestData.status);
 			}
 
 			if (specificValue) {
 				requestData.eleicao = true;
 			}
 
-			console.log('Final requestData being sent:', requestData);
-
 			dispatch(handleReportInfo(requestData, reportType))
 				.then((response) => {
-					console.log('API response:', response);
 					setIsLoading(false);
 				})
 				.catch((error) => {
-					console.error('API error:', error);
 					dispatch(
 						showMessage({
 							message: "Erro na busca, verifique os campos e tente novamente.",
@@ -155,7 +139,6 @@ export default function BasicEditingGrid() {
 	};
 
 	const handleClear = () => {
-		console.log('Clearing all fields...');
 		dispatch(setReportList([]));
 		setValue("name", []);
 		setValue("dateRange", []);
@@ -167,7 +150,6 @@ export default function BasicEditingGrid() {
 		setSelectedErroStatus(null);
 		setShowErroStatus(false);
 		setWhichStatus([]);
-		console.log('Form values after clear:', getValues());
 
 		for (const button of document.querySelectorAll(
 			".MuiAutocomplete-clearIndicator",
@@ -217,19 +199,14 @@ export default function BasicEditingGrid() {
 	}, [userList]);
 
 	const handleAutocompleteChange = (field, newValue) => {
-		console.log('handleAutocompleteChange called with:', { field, newValue });
-		
 		if (field === "status") {
 			const status = newValue.map((i) => i.label);
-			console.log('Status selected:', status);
 			setWhichStatus(status);
 			
 			const hasErro = status.includes("Erro");
-			console.log('Has Erro status:', hasErro);
 			setShowErroStatus(hasErro);
 			
 			if (!hasErro) {
-				console.log('Clearing erro status because Erro was unselected');
 				setSelectedErroStatus(null);
 				setValue("erroStatus", []);
 			}
@@ -239,7 +216,6 @@ export default function BasicEditingGrid() {
 			field,
 			newValue ? newValue.map((item) => item.value ?? item.label) : [],
 		);
-		console.log('Form values after change:', getValues());
 	};
 
 	const valueProps = {
@@ -527,10 +503,8 @@ export default function BasicEditingGrid() {
 										getOptionLabel={(option) => option.label}
 										value={selectedErroStatus}
 										onChange={(_, newValue) => {
-											console.log('Erro status selected:', newValue);
 											setSelectedErroStatus(newValue);
 											setValue("erroStatus", newValue ? newValue.label : null);
-											console.log('Form values after erro status change:', getValues());
 										}}
 										renderInput={(params) => (
 											<TextField
