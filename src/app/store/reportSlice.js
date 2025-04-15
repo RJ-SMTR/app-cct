@@ -144,6 +144,7 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
         return new Promise(async (resolve, reject) => {
             
             const requestData = handleData(data);
+            reportType = reportType === 'pago e pendente' ? 'pay-and-pending' : reportType;
             const reportTypeUrl = reportType === 'sintetico' ? '/cnab/relatorio/sintetico' : jwtServiceConfig.report + `/${reportType}`;
 
             let config = {

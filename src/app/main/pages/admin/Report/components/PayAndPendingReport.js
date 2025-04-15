@@ -15,11 +15,9 @@ import {
 	InputAdornment,
 	Menu,
 	IconButton,
-	List,
-	ListItem,
+
 } from "@mui/material";
 
-import Popover from '@mui/material/Popover';
 import { format } from "date-fns";
 import { useDispatch, useSelector } from "react-redux";
 import { DateRangePicker } from "rsuite";
@@ -788,6 +786,7 @@ export default function BasicEditingGrid() {
 						<Table size="small">
 							<TableHead className="items-center mb-4">
 								<TableRow>
+									<TableCell>Data Pagamento</TableCell>
 									<TableCell>Nome</TableCell>
 									<TableCell>CPF/CNPJ</TableCell>
 									<TableCell>Consórcio</TableCell>
@@ -800,6 +799,7 @@ export default function BasicEditingGrid() {
 									reportList.count > 0 ? (
 										reportList.data?.map((report, index) => (
 											<TableRow key={index}>
+												<TableCell>{report.dataPagamento}</TableCell>
 												<TableCell>{report.nomes}</TableCell>
 												<TableCell>
 													{report.cpfCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')}
@@ -808,12 +808,10 @@ export default function BasicEditingGrid() {
 												<TableCell>{formatter.format(report.valor)}</TableCell>
 												<TableCell>
 													<span
-														className={`px-2 py-1 rounded-full text-sm ${
+														className={`px-8 py-4 rounded-full text-sm ${
 															report.status === 'Pago'
 																? 'bg-green-100 text-green-800'
-																: report.status === 'Erro'
-																? 'bg-red-100 text-red-800'
-																: 'bg-gray-100 text-gray-800'
+																: 'bg-red-100 text-red-800'
 														}`}
 													>
 														{report.status}
