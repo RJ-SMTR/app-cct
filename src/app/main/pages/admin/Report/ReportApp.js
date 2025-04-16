@@ -13,12 +13,17 @@ import SynthReport from "./components/SynthReport";
 import ConsolidatedReport from "./components/ConsolidatedReport";
 import PayAndPendingReport from "./components/PayAndPendingReport";
 import { useDispatch } from "react-redux";
+<<<<<<< HEAD
 import {
 	setReportList,
 	setReportType,
 	setSynthData,
 	setTotalSynth,
 } from "app/store/reportSlice";
+=======
+import { setReportList, setReportType, setSynthData, setTotalSynth } from "app/store/reportSlice";
+
+>>>>>>> origin/develop
 
 function ReportApp() {
 	const dispatch = useDispatch();
