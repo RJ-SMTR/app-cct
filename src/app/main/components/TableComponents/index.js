@@ -65,7 +65,6 @@ export function CustomTable(data) {
       )
     }
     if(i.statusRemessa === 4){
-
       return (
             
         <Tooltip   title={errorDescription} arrow enterTouchDelay={10} leaveTouchDelay={10000}>

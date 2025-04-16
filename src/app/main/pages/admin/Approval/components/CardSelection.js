@@ -81,7 +81,6 @@ function CardSelection() {
             });
 
         // dispatch(handleAuthValue(searchParams))
-
     };
 
     return (
