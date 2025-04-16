@@ -4,6 +4,7 @@ import { api } from 'app/configs/api/api';
 import accounting from 'accounting';
 import dayjs from 'dayjs';
 import JwtService from '../auth/services/jwtService';
+import { JwtService } from '../auth/services/jwtService';
 
 
 const initialState = {
