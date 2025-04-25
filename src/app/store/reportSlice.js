@@ -99,12 +99,15 @@ function handleData(data) {
                     case 'Aguardando Pagamento':
                         requestData.emProcessamento = true;
                         break;
+
                     case 'Estorno':
                         requestData.estorno = true;
                         break;
+                    
                     case 'Rejeitado':
                         requestData.rejeitado = true;
                         break;
+
                     case 'Todos':
                         break;
                     default:
@@ -144,7 +147,9 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
         return new Promise(async (resolve, reject) => {
             
             const requestData = handleData(data);
+
             reportType = reportType === 'pago e pendente' ? 'pay-and-pending' : reportType;
+
             const reportTypeUrl = reportType === 'sintetico' ? '/cnab/relatorio/sintetico' : jwtServiceConfig.report + `/${reportType}`;
 
             let config = {
