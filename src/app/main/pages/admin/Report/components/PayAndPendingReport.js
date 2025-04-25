@@ -15,7 +15,7 @@ import {
 	InputAdornment,
 	Menu,
 	IconButton,
-
+	TableFooter
 } from "@mui/material";
 
 import { format } from "date-fns";
@@ -784,68 +784,77 @@ export default function BasicEditingGrid() {
 						className="overflow-scroll"
 					>
 						<Table size="small">
-							<TableHead className="items-center mb-4">
-								<TableRow>
-									<TableCell>Data Pagamento</TableCell>
-									<TableCell>Nome</TableCell>
-									<TableCell>CPF/CNPJ</TableCell>
-									<TableCell>Consórcio</TableCell>
-									<TableCell>Valor</TableCell>
-									<TableCell>Status</TableCell>
-								</TableRow>
-							</TableHead>
-							<TableBody>
-								{!isLoading ? (
-									reportList.count > 0 ? (
-										reportList.data?.map((report, index) => (
-											<TableRow key={index}>
-												<TableCell>{report.dataPagamento}</TableCell>
-												<TableCell>{report.nomes}</TableCell>
-												<TableCell>
-													{report.cpfCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')}
-												</TableCell>
-												<TableCell>{report.consorcio}</TableCell>
-												<TableCell>{formatter.format(report.valor)}</TableCell>
-												<TableCell>
-													<span
-														className={`px-8 py-4 rounded-full text-sm ${
-															report.status === 'Pago'
-																? 'bg-green-100 text-green-800'
-																: 'bg-red-100 text-red-800'
-														}`}
-													>
-														{report.status}
-													</span>
-												</TableCell>
-											</TableRow>
-										))
-									) : (
-										<TableRow>
-											<TableCell colSpan={5}>
-												Não há dados para serem exibidos
+						<TableHead>
+							<TableRow className="sticky top-0 bg-white z-10">
+								<TableCell className="font-semibold">Data Pagamento</TableCell>
+								<TableCell className="font-semibold">Nome</TableCell>
+								<TableCell className="font-semibold">CPF/CNPJ</TableCell>
+								<TableCell className="font-semibold">Consórcio</TableCell>
+								<TableCell className="font-semibold">Valor</TableCell>
+								<TableCell className="font-semibold">Status</TableCell>
+							</TableRow>
+						</TableHead>
+
+						<TableBody>
+							{!isLoading ? (
+								reportList.count > 0 ? (
+									reportList.data?.map((report, index) => (
+										<TableRow key={index} className="hover:bg-gray-50">
+											<TableCell>{report.dataPagamento}</TableCell>
+											<TableCell>{report.nomes}</TableCell>
+											<TableCell>
+												{report.cpfCnpj.replace(
+													/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
+													"$1.$2.$3/$4-$5"
+												)}
+											</TableCell>
+											<TableCell>{report.consorcio}</TableCell>
+											<TableCell>{formatter.format(report.valor)}</TableCell>
+											<TableCell>
+												<span
+													className={`px-3 py-1 rounded-full text-sm ${
+														report.status === "Pago"
+															? "bg-green-100 text-green-800"
+															: "bg-red-100 text-red-800"
+													}`}
+												>
+													{report.status}
+												</span>
 											</TableCell>
 										</TableRow>
-									)
+									))
 								) : (
 									<TableRow>
-										<TableCell colSpan={5}>
-											<Box className="flex justify-center items-center m-10">
-												<CircularProgress />
-											</Box>
+										<TableCell colSpan={6} className="text-center py-4">
+											Não há dados para serem exibidos
 										</TableCell>
 									</TableRow>
-								)}
-								<TableRow key={Math.random()}>
-									<TableCell colSpan={3} className="font-bold text-right">
-										Valor Total:
+								)
+							) : (
+								<TableRow>
+									<TableCell colSpan={6}>
+										<Box className="flex justify-center items-center m-10">
+											<CircularProgress />
+										</Box>
 									</TableCell>
-									<TableCell className="font-bold">
-										{formatter.format(reportList.valor ?? 0)}
-									</TableCell>
-									<TableCell /> {/* Empty cell for status column alignment */}
 								</TableRow>
-							</TableBody>
-						</Table>
+							)}
+						</TableBody>
+
+						<TableFooter>
+							<TableRow className="sticky  bottom-0 bg-white z-10">
+								<TableCell />
+								<TableCell colSpan={3} className="text-right font-bold text-black text-base">
+									Valor Total:
+								</TableCell>
+								<TableCell className="font-bold text-black text-base">
+									{formatter.format(reportList.valor ?? 0)}
+								</TableCell>
+								<TableCell />
+							</TableRow>
+						</TableFooter>
+					</Table>
+
 					</div>
 				</Box>
 			</Paper>
