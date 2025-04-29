@@ -73,7 +73,7 @@ function TriggerApp() {
                                 E-mails sendo enviados com sucesso.
                             </Typography> : <></>}
                             {error ? <Typography className='text-red-500'>
-                          Houve um erro. Por favor tente novamente, se nada ocorrer contate o <Link className='underline' to="https://secretariamunicipaldetransportes.movidesk.com/form/6594/" >suporte</Link>
+                          Houve um erro. Por favor tente novamente, se nada ocorrer contate o <Link className='underline' to="https://transportes.prefeitura.rio/atendimentodigital/" >suporte</Link>
                             </Typography> : <></>}
                       <button type="button" onClick={() => sendEmail(sendEmailValue)} className={`rounded p-3 uppercase text-white h-[27px] min-h-[27px] font-medium px-10 mt-10 ${messageSent ? 'bg-[#0DB1E3]' : 'bg-red-500'}`} >{ messageSent ? 'Enviar e-mails' : 'Parar de enviar'}</button>
                   </Paper>
