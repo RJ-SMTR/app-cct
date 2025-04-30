@@ -795,7 +795,7 @@ export default function BasicEditingGrid() {
 							</TableRow>
 						</TableHead>
 
-						<TableBody>
+						<TableBody className="overflow-scroll">
 							{!isLoading ? (
 								reportList.count > 0 ? (
 									reportList.data?.map((report, index) => (
@@ -812,10 +812,12 @@ export default function BasicEditingGrid() {
 											<TableCell>{formatter.format(report.valor)}</TableCell>
 											<TableCell>
 												<span
-													className={`px-3 py-1 rounded-full text-sm ${
+													className={`px-3 text-white py-1 rounded-full text-sm ${
 														report.status === "Pago"
-															? "bg-green-100 text-green-800"
-															: "bg-red-100 text-red-800"
+															? " bg-green-800 "
+															: report.status === "Estorno"
+															? " bg-yellow-800 "
+															: "  bg-red-800 "
 													}`}
 												>
 													{report.status}
@@ -841,20 +843,29 @@ export default function BasicEditingGrid() {
 							)}
 						</TableBody>
 
-						<TableFooter>
-							<TableRow className="sticky  bottom-0 bg-white z-10">
-								<TableCell />
-								<TableCell colSpan={3} className="text-right font-bold text-black text-base">
-									Valor Total:
-								</TableCell>
-								<TableCell className="font-bold text-black text-base">
-									{formatter.format(reportList.valor ?? 0)}
-								</TableCell>
-								<TableCell />
-							</TableRow>
-						</TableFooter>
-					</Table>
+						<TableFooter className="sticky bottom-0 bg-white z-10">
 
+
+								<TableRow></TableRow>
+							{(reportList.valorPago > 0 || reportList.valorEstornado > 0 || reportList.valorRejeitado > 0 || reportList.valor > 0) && (
+								<TableRow>
+									<TableCell />
+									<TableCell colSpan={4} className="text-right font-bold text-black text-base pt-16">
+										{[
+											reportList.valorPago > 0 && `Pago: ${formatter.format(reportList.valorPago)}`,
+											reportList.valorEstornado > 0 && `Estornado: ${formatter.format(reportList.valorEstornado)}`,
+											reportList.valorRejeitado > 0 && `Rejeitado: ${formatter.format(reportList.valorRejeitado)}`,
+											reportList.valor > 0 && `Total: ${formatter.format(reportList.valor)}`
+										]
+											.filter(Boolean)
+											.join("    |    ") 
+										}
+									</TableCell>
+									<TableCell />
+								</TableRow>
+							)}
+					</TableFooter>
+					</Table>
 					</div>
 				</Box>
 			</Paper>
