@@ -852,10 +852,10 @@ export default function BasicEditingGrid() {
 									<TableCell />
 									<TableCell colSpan={4} className="text-right font-bold text-black text-base pt-16">
 										{[
-											reportList.valorPago > 0 && `Pago: ${formatter.format(reportList.valorPago)}`,
-											reportList.valorEstornado > 0 && `Estornado: ${formatter.format(reportList.valorEstornado)}`,
-											reportList.valorRejeitado > 0 && `Rejeitado: ${formatter.format(reportList.valorRejeitado)}`,
-											reportList.valor > 0 && `Total: ${formatter.format(reportList.valor)}`
+											reportList.valorPago > 0 && `Total Pago: ${formatter.format(reportList.valorPago)}`,
+											reportList.valorEstornado > 0 && `Total Estornado: ${formatter.format(reportList.valorEstornado)}`,
+											reportList.valorRejeitado > 0 && `Total Rejeitado: ${formatter.format(reportList.valorRejeitado)}`,
+											reportList.valor > 0 && `Total Geral: ${formatter.format(reportList.valor)}`
 										]
 											.filter(Boolean)
 											.join("    |    ") 
