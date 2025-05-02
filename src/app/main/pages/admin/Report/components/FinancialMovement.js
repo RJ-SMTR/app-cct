@@ -94,7 +94,7 @@ export default function BasicEditingGrid() {
 		if (data.name.length === 0 && data.consorcioName.length === 0) {
 			dispatch(
 				showMessage({
-					message: "Erro na busca, selecione favorecidos ou consórcios.",
+					message: "Erro na busca, selecione favorecidos ou consórcios | modais.",
 				}),
 			);
 		} else {
@@ -463,7 +463,7 @@ export default function BasicEditingGrid() {
 									renderInput={(params) => (
 										<TextField
 											{...params}
-											label="Selecionar Consórcios"
+											label="Selecionar Consórcios | Modais"
 											variant="outlined"
 											InputProps={{
 												...params.InputProps,
@@ -789,7 +789,7 @@ export default function BasicEditingGrid() {
 								<TableCell className="font-semibold">Data Pagamento</TableCell>
 								<TableCell className="font-semibold">Nome</TableCell>
 								<TableCell className="font-semibold">CPF/CNPJ</TableCell>
-								<TableCell className="font-semibold">Consórcio</TableCell>
+								<TableCell className="font-semibold">Consórcios | Modais</TableCell>
 								<TableCell className="font-semibold">Valor</TableCell>
 								<TableCell className="font-semibold">Status</TableCell>
 							</TableRow>
@@ -853,7 +853,7 @@ export default function BasicEditingGrid() {
 									<TableCell colSpan={4} className="text-right font-bold text-black text-base pt-16">
 										{[
 											reportList.valorPago > 0 && `Total Pago: ${formatter.format(reportList.valorPago)}`,
-											reportList.valorEstornado > 0 && `Total Estornado: ${formatter.format(reportList.valorEstornado)}`,
+											reportList.valorEstornado > 0 && `Total Estorno: ${formatter.format(reportList.valorEstornado)}`,
 											reportList.valorRejeitado > 0 && `Total Rejeitado: ${formatter.format(reportList.valorRejeitado)}`,
 											reportList.valor > 0 && `Total Geral: ${formatter.format(reportList.valor)}`
 										]
