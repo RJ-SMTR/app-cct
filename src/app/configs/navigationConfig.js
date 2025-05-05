@@ -39,7 +39,7 @@ const navigationConfig = [
     type: 'item',
     icon: 'material-outline:contact_support',
     target: '_blank',
-    url: 'https://secretariamunicipaldetransportes.movidesk.com/form/6594/',
+    url: 'https://transportes.prefeitura.rio/atendimentodigital/',
   },
 ];
 
