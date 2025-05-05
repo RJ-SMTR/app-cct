@@ -62,6 +62,9 @@ export default function BasicEditingGrid() {
 	const [selected, setSelected] = useState(null);
 	const [showErroStatus, setShowErroStatus] = useState(false);
 	const [selectedErroStatus, setSelectedErroStatus] = useState(null);
+	const [selectedConsorcios, setSelectedConsorcios] = useState([]);
+
+
 
 	const consorcios = [
 		{ label: "Todos", value: "Todos" },
@@ -240,6 +243,32 @@ export default function BasicEditingGrid() {
 				}))
 			: [];
 
+	const valorPago = {
+  Nome: "Total Pago",
+  Valor: "",
+  Status: reportList.valorPago > 0 ? formatter.format(reportList.valorPago) : "",
+};
+
+const valorEstornado = {
+  Nome: "Total Estorno",
+  Valor: "",
+  Status: reportList.valorEstornado > 0 ? formatter.format(reportList.valorEstornado) : "",
+};
+
+const valorRejeitado = {
+  Nome: "Total Rejeitado",
+  Valor: "",
+  Status: reportList.valorRejeitado > 0 ? formatter.format(reportList.valorRejeitado) : "",
+};
+
+const valorTotal = {
+  Nome: "Valor Total",
+  Valor: "",
+  Status: formatter.format(reportList?.valor ?? 0),
+};
+
+
+
 	const valorTotal = {
 		Nome: "Valor Total",
 		Valor: "",
@@ -252,6 +281,15 @@ export default function BasicEditingGrid() {
 		Status: whichStatus || "Todos",
 	};
 
+  const csvData = [
+    statusRow,
+    ...reportListData,
+    ...(reportList.valorPago > 0 ? [valorPago] : []),
+    ...(reportList.valorEstornado > 0 ? [valorEstornado] : []),
+    ...(reportList.valorRejeitado > 0 ? [valorRejeitado] : []),
+    valorTotal,
+  ];
+  
 	const csvData = [statusRow, ...reportListData, valorTotal];
 	let dateInicio;
 	let dateFim;
@@ -270,6 +308,96 @@ export default function BasicEditingGrid() {
 	}, [dateInicio, dateFim]);
 
 	// Export PDF
+    const exportPDF = () => {
+      const doc = new jsPDF();
+      const tableColumn = ["Nome", "CPF/CNPJ", "Consórcio", "Valor", "Status"];
+      const tableRows = [];
+
+      for (const report of reportList.data) {
+        const reportData = [
+          report.nomes,
+          report.cpfCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'),
+          report.consorcio,
+          formatter.format(report.valor),
+          report.status
+        ];
+        tableRows.push(reportData);
+      }
+
+      let dateInicio;
+      let dateFim;
+      const selectedDate = getValues("dateRange");
+      if (selectedDate !== null) {
+        dateInicio = selectedDate[0];
+        dateFim = selectedDate[1];
+      }
+
+      const status = getValues("status");
+      const selectedStatus = status.join(",");
+
+      const logoImg = "assets/icons/logoPrefeitura.png";
+      const logoH = 15;
+      const logoW = 30;
+
+      doc.autoTable({
+        head: [tableColumn],
+        body: tableRows,
+        margin: { left: 14, right: 14, top: 60 },
+        startY: 60,
+        didDrawPage: () => {
+          doc.addImage(logoImg, "PNG", 14, 10, logoW, logoH);
+
+          const hrYPosition = 30;
+          doc.setLineWidth(0.3);
+          doc.line(14, hrYPosition, 196, hrYPosition);
+
+          doc.setFontSize(10);
+          doc.text(
+            `Relatório dos dias: ${format(dateInicio, "dd/MM/yyyy")} a ${format(dateFim, "dd/MM/yyyy")}`,
+            14,
+            45,
+          );
+          doc.text(`Status observado: ${selectedStatus || "Todos"}`, 14, 50);
+        },
+      });
+
+      const pageHeight = doc.internal.pageSize.height;
+      const bottomMargin = 40;
+      let yPosition = pageHeight - bottomMargin;
+
+      doc.setFontSize(10);
+
+      if (reportList.valorPago > 0) {
+        doc.text(`Total Pago: ${formatter.format(reportList.valorPago)}`, 14, yPosition);
+        yPosition += 5;
+      }
+
+      if (reportList.valorEstornado > 0) {
+        doc.text(`Total Estorno: ${formatter.format(reportList.valorEstornado)}`, 14, yPosition);
+        yPosition += 5;
+      }
+
+      if (reportList.valorRejeitado > 0) {
+        doc.text(`Total Rejeitado: ${formatter.format(reportList.valorRejeitado)}`, 14, yPosition);
+        yPosition += 5;
+      }
+
+      doc.text(`Valor total: ${formatter.format(reportList.valor ?? 0)}`, 14, yPosition);
+
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(10);
+        const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
+        const text = `Página ${currentPage} de ${pageCount}`;
+        doc.text(text, 14, doc.internal.pageSize.height - 5);
+      }
+
+      doc.save(
+        `relatorio_${format(dateInicio, "dd/MM/yyyy")}_${format(dateFim, "dd/MM/yyyy")}.pdf`,
+      );
+    };
+
 	const exportPDF = () => {
 		const doc = new jsPDF();
 		const tableColumn = ["Nome", "CPF/CNPJ", "Consórcio", "Valor", "Status"];
@@ -365,6 +493,17 @@ export default function BasicEditingGrid() {
 				formatter.format(report.valor),
 				report.status
 			]),
+    ...(reportList.valorPago > 0
+      ? [["Total Pago:", "", "", ` ${formatter.format(reportList.valorPago)}`, ""]]
+      : []),
+    ...(reportList.valorEstornado > 0
+      ? [["Total Estorno:", "", "", ` ${formatter.format(reportList.valorEstornado)}`, ""]]
+      : []),
+    ...(reportList.valorRejeitado > 0
+      ? [["Total Rejeitado:", "", "", ` ${formatter.format(reportList.valorRejeitado)}`, ""]]
+      : []),
+		["Valor Total", "", "", formatter.format(reportList.valor ?? 0), ""],
+
 			["Valor Total", "", "", formatter.format(reportList.valor ?? 0), ""],
 		];
 
@@ -396,6 +535,11 @@ export default function BasicEditingGrid() {
 		setShowButton(false);
 	};
 
+const handleSelection = (field, newValue) => {
+	setSelected(newValue.length > 0 ? field : null);
+	setSelectedConsorcios(newValue); 
+	handleAutocompleteChange(field, newValue); 
+};
 	const handleSelection = (field, newValue) => {
 		setSelected(newValue.length > 0 ? field : null);
 		handleAutocompleteChange(field, newValue);
@@ -456,6 +600,10 @@ export default function BasicEditingGrid() {
 									getOptionLabel={(option) => option.label}
 									filterSelectedOptions
 									options={consorcios}
+									value={selectedConsorcios} 
+									getOptionDisabled={(option) => option.disabled}
+									isOptionEqualToValue={(option, value) => option.value === value.value} 
+									onChange={(_, newValue) => handleSelection("consorcioName", newValue)}
 									getOptionDisabled={(option) => option.disabled}
 									onChange={(_, newValue) =>
 										handleSelection("consorcioName", newValue)
@@ -871,4 +1019,5 @@ export default function BasicEditingGrid() {
 			</Paper>
 		</>
 	);
+}
 }
