@@ -6,6 +6,7 @@ import Logo from '../../../../shared-components/Logo';
 import NavbarToggleButton from '../../../../shared-components/NavbarToggleButton';
 import UserNavbarHeader from '../../../../shared-components/UserNavbarHeader';
 import Navigation from '../../../../shared-components/Navigation';
+import { Box } from '@mui/material';
 
 const Root = styled('div')(({ theme }) => ({
   backgroundColor: theme.palette.background.default,
@@ -34,11 +35,14 @@ const StyledContent = styled(FuseScrollbars)(({ theme }) => ({
 
 function NavbarStyle1Content(props) {
   return (
-    <Root className={clsx('flex flex-auto flex-col overflow-hidden h-full', props.className)}>
+    <Root className={clsx('flex flex-auto flex-col overflow-hidden h-full bg-black', props.className)}>
       <div className="flex flex-row items-center shrink-0 h-48 md:h-72 px-20">
         <div className="flex flex-1 mx-4">
           <Logo />
         </div>
+        <Box className="mt-10 bg-red-500 uppercase text-white text-center p-10 rounded-4 text-sm">
+          Homologação
+        </Box>
 
         <NavbarToggleButton className="w-40 h-40 p-0" />
       </div>

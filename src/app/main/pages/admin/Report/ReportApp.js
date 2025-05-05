@@ -8,12 +8,18 @@ import {
 	Select,
 } from "@mui/material";
 import { useState, useEffect } from "react";
-import DataGridInfos from './components/DataGrid';
-import SynthReport from './components/SynthReport';
-import ConsolidatedReport from './components/ConsolidatedReport';
+import DataGridInfos from "./components/DataGrid";
+import SynthReport from "./components/SynthReport";
+import ConsolidatedReport from "./components/ConsolidatedReport";
+import FinancialMovement from "././components/FinancialMovement"
 import { useDispatch } from "react-redux";
-import { setReportList, setReportType, setSynthData, setTotalSynth } from "app/store/reportSlice";
 
+import {
+	setReportList,
+	setReportType,
+	setSynthData,
+	setTotalSynth,
+} from "app/store/reportSlice";
 
 function ReportApp() {
 	const dispatch = useDispatch();
@@ -56,14 +62,15 @@ function ReportApp() {
 					</FormControl>
 				</Card>
 
-                <Box>
-                        {selectedReport === 'analitico' && <DataGridInfos />}
-                        {selectedReport === 'sintetico' && <SynthReport />}
-                        {selectedReport === 'consolidado' && <ConsolidatedReport />}
-                </Box>
-            </div>
-        </>
-    );
+				<Box>
+					{selectedReport === "analitico" && <DataGridInfos />}
+					{selectedReport === "consolidado" && <ConsolidatedReport />}
+					{selectedReport === "sintetico" && <SynthReport />}
+					{selectedReport === "Movimentação Financeira" && <FinancialMovement />}
+				</Box>
+			</div>
+		</>
+	);
 }
 
 export default ReportApp;
