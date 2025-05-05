@@ -54,9 +54,9 @@ function ReportApp() {
 							label="Selecionar Relatório"
 							onChange={handleSelectChange}
 						>
-							<MenuItem value="analitico">Relatório Analítico</MenuItem>
+							<MenuItem value="analitico" className="Mui-disabled">Relatório Analítico</MenuItem>
 							<MenuItem value="consolidado">Relatório Consolidado</MenuItem>
-							<MenuItem value="sintetico">Relatório Sintético</MenuItem>
+							<MenuItem value="sintetico" className="Mui-disabled">Relatório Sintético</MenuItem>
 							<MenuItem value="Movimentação Financeira">Relatório Movimentação Financeira</MenuItem>
 						</Select>
 					</FormControl>
