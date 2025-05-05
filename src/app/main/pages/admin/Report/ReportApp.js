@@ -11,8 +11,9 @@ import { useState, useEffect } from "react";
 import DataGridInfos from "./components/DataGrid";
 import SynthReport from "./components/SynthReport";
 import ConsolidatedReport from "./components/ConsolidatedReport";
-import DetailedReport from "./components/DetailedReport";
+import FinancialMovement from "././components/FinancialMovement"
 import { useDispatch } from "react-redux";
+
 import {
 	setReportList,
 	setReportType,
@@ -63,9 +64,9 @@ function ReportApp() {
 
 				<Box>
 					{selectedReport === "analitico" && <DataGridInfos />}
-					{selectedReport === "sintetico" && <SynthReport />}
 					{selectedReport === "consolidado" && <ConsolidatedReport />}
-					{selectedReport === "detalhado" && <DetailedReport />}
+					{selectedReport === "sintetico" && <SynthReport />}
+					{selectedReport === "Movimentação Financeira" && <FinancialMovement />}
 				</Box>
 			</div>
 		</>

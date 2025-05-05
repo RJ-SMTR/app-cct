@@ -269,6 +269,11 @@ const valorTotal = {
 
 
 
+	const valorTotal = {
+		Nome: "Valor Total",
+		Valor: "",
+		Status: formatter.format(reportList?.valor),
+	};
 
 	const statusRow = {
 		Nome: "Status selecionado",
@@ -284,6 +289,8 @@ const valorTotal = {
     ...(reportList.valorRejeitado > 0 ? [valorRejeitado] : []),
     valorTotal,
   ];
+  
+	const csvData = [statusRow, ...reportListData, valorTotal];
 	let dateInicio;
 	let dateFim;
 	const selectedDate = getValues("dateRange");
@@ -391,6 +398,80 @@ const valorTotal = {
       );
     };
 
+	const exportPDF = () => {
+		const doc = new jsPDF();
+		const tableColumn = ["Nome", "CPF/CNPJ", "Consórcio", "Valor", "Status"];
+		const tableRows = [];
+
+		for (const report of reportList.data) {
+			const reportData = [
+				report.nomes,
+				report.cpfCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'),
+				report.consorcio,
+				formatter.format(report.valor),
+				report.status
+			];
+			tableRows.push(reportData);
+		}
+		let dateInicio;
+		let dateFim;
+		const selectedDate = getValues("dateRange");
+
+		if (selectedDate !== null) {
+			dateInicio = selectedDate[0];
+			dateFim = selectedDate[1];
+		}
+		const status = getValues("status");
+		const selectedStatus = status.join(",");
+
+		const logoImg = "assets/icons/logoPrefeitura.png";
+		const logoH = 15;
+		const logoW = 30;
+
+		doc.autoTable({
+			head: [tableColumn],
+			body: tableRows,
+			margin: { left: 14, right: 14, top: 60 },
+			startY: 60,
+			didDrawPage: (data) => {
+				doc.addImage(logoImg, "PNG", 14, 10, logoW, logoH);
+
+				const hrYPosition = 30;
+				doc.setLineWidth(0.3);
+				doc.line(14, hrYPosition, 196, hrYPosition);
+
+				doc.setFontSize(10);
+				doc.text(
+					`Relatório dos dias: ${format(dateInicio, "dd/MM/yyyy")} a ${format(dateFim, "dd/MM/yyyy")}`,
+					14,
+					45,
+				);
+				doc.text(`Status observado: ${selectedStatus || "Todos"}`, 14, 50);
+			},
+		});
+
+		const pageCount = doc.internal.getNumberOfPages();
+
+		for (let i = 1; i <= pageCount; i++) {
+			doc.setPage(i);
+			doc.setFontSize(10);
+
+			const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
+			const text = `Página ${currentPage} de ${pageCount}`;
+			const xPos = 14;
+			const yPos = doc.internal.pageSize.height - 5;
+
+			doc.text(text, xPos, yPos);
+		}
+
+		const totalValue = `Valor total: ${formatter.format(reportList.valor ?? 0)}`;
+		doc.setFontSize(10);
+		doc.text(totalValue, 14, doc.internal.pageSize.height - 10);
+
+		doc.save(
+			`relatorio_${format(dateInicio, "dd/MM/yyyy")}_${format(dateFim, "dd/MM/yyyy")}.pdf`,
+		);
+	};
 
 	// Export XLSX
 	const exportXLSX = () => {
@@ -422,6 +503,8 @@ const valorTotal = {
       ? [["Total Rejeitado:", "", "", ` ${formatter.format(reportList.valorRejeitado)}`, ""]]
       : []),
 		["Valor Total", "", "", formatter.format(reportList.valor ?? 0), ""],
+
+			["Valor Total", "", "", formatter.format(reportList.valor ?? 0), ""],
 		];
 
 		const wb = utils.book_new();
@@ -457,6 +540,10 @@ const handleSelection = (field, newValue) => {
 	setSelectedConsorcios(newValue); 
 	handleAutocompleteChange(field, newValue); 
 };
+	const handleSelection = (field, newValue) => {
+		setSelected(newValue.length > 0 ? field : null);
+		handleAutocompleteChange(field, newValue);
+	};
 
 	return (
 		<>
@@ -517,6 +604,10 @@ const handleSelection = (field, newValue) => {
 									getOptionDisabled={(option) => option.disabled}
 									isOptionEqualToValue={(option, value) => option.value === value.value} 
 									onChange={(_, newValue) => handleSelection("consorcioName", newValue)}
+									getOptionDisabled={(option) => option.disabled}
+									onChange={(_, newValue) =>
+										handleSelection("consorcioName", newValue)
+									}
 									renderInput={(params) => (
 										<TextField
 											{...params}
@@ -928,4 +1019,5 @@ const handleSelection = (field, newValue) => {
 			</Paper>
 		</>
 	);
+}
 }
