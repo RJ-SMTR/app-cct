@@ -62,6 +62,9 @@ export default function BasicEditingGrid() {
 	const [selected, setSelected] = useState(null);
 	const [showErroStatus, setShowErroStatus] = useState(false);
 	const [selectedErroStatus, setSelectedErroStatus] = useState(null);
+	const [selectedConsorcios, setSelectedConsorcios] = useState([]);
+
+
 
 	const consorcios = [
 		{ label: "Todos", value: "Todos" },
@@ -449,10 +452,11 @@ const valorTotal = {
 		setShowButton(false);
 	};
 
-	const handleSelection = (field, newValue) => {
-		setSelected(newValue.length > 0 ? field : null);
-		handleAutocompleteChange(field, newValue);
-	};
+const handleSelection = (field, newValue) => {
+	setSelected(newValue.length > 0 ? field : null);
+	setSelectedConsorcios(newValue); 
+	handleAutocompleteChange(field, newValue); 
+};
 
 	return (
 		<>
@@ -509,10 +513,10 @@ const valorTotal = {
 									getOptionLabel={(option) => option.label}
 									filterSelectedOptions
 									options={consorcios}
+									value={selectedConsorcios} 
 									getOptionDisabled={(option) => option.disabled}
-									onChange={(_, newValue) =>
-										handleSelection("consorcioName", newValue)
-									}
+									isOptionEqualToValue={(option, value) => option.value === value.value} 
+									onChange={(_, newValue) => handleSelection("consorcioName", newValue)}
 									renderInput={(params) => (
 										<TextField
 											{...params}

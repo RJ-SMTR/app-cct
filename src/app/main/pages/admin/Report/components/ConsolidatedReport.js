@@ -70,6 +70,8 @@ export default function BasicEditingGrid() {
     const [showButton, setShowButton] = useState(false)
     const [whichStatusShow, setWhichStatus] = useState([])
     const [selected, setSelected] = useState(null)
+const [selectedConsorcios, setSelectedConsorcios] = useState([]);
+
 
     const consorcios = [
         { label: 'Todos', value: "Todos" },
@@ -369,6 +371,7 @@ export default function BasicEditingGrid() {
 
     const handleSelection = (field, newValue) => {
         setSelected(newValue.length > 0 ? field : null);
+	    setSelectedConsorcios(newValue);
         handleAutocompleteChange(field, newValue);
     };
 
@@ -424,7 +427,9 @@ export default function BasicEditingGrid() {
                                     getOptionLabel={(option) => option.label}
                                     filterSelectedOptions
                                     options={consorcios}
+                                    value={selectedConsorcios} 
                                     getOptionDisabled={(option) => option.disabled}
+                                    isOptionEqualToValue={(option, value) => option.value === value.value} 
                                     onChange={(_, newValue) => handleSelection('consorcioName', newValue)}
                                     renderInput={(params) => (
                                         <TextField
@@ -438,6 +443,7 @@ export default function BasicEditingGrid() {
                                         />
                                     )}
                                 />
+
                                 <Autocomplete
                                     id="status"
                                     multiple
