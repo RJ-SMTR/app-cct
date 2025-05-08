@@ -11,7 +11,8 @@ import { useState, useEffect } from "react";
 import DataGridInfos from "./components/DataGrid";
 import SynthReport from "./components/SynthReport";
 import ConsolidatedReport from "./components/ConsolidatedReport";
-import FinancialMovement from "././components/FinancialMovement"
+import FinancialMovement from "././components/FinancialMovement";
+import VanzeiroReport from "././components/VanzeiroReport";
 import { useDispatch } from "react-redux";
 
 import {
@@ -58,6 +59,7 @@ function ReportApp() {
 							<MenuItem value="consolidado">Relatório Consolidado</MenuItem>
 							<MenuItem value="sintetico">Relatório Sintético</MenuItem>
 							<MenuItem value="Movimentação Financeira">Relatório Movimentação Financeira</MenuItem>
+							<MenuItem value="Vanzeiro">Relatório Vanzeiro</MenuItem>
 						</Select>
 					</FormControl>
 				</Card>
@@ -67,6 +69,7 @@ function ReportApp() {
 					{selectedReport === "consolidado" && <ConsolidatedReport />}
 					{selectedReport === "sintetico" && <SynthReport />}
 					{selectedReport === "Movimentação Financeira" && <FinancialMovement />}
+					{selectedReport === "Vanzeiro" && <VanzeiroReport />}
 				</Box>
 			</div>
 		</>
