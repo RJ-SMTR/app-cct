@@ -24,6 +24,7 @@ import FinanEditConfig from '../main/pages/admin/FinanRelease/FinanEdit/FinanEdi
 import StatementsConfig from '../main/pages/admin/Statements/StatementsConfig';
 import ReportConfig from '../main/pages/admin/Report/ReportConfig';
 import ReportReleaseConfig from '../main/pages/admin/ReportRelease/ReportReleaseConfig';
+import ReportVanzeiroConfig from '../main/pages/reportVanzeiro/ReportVanzeiroConfig';
 const routeConfigs = [
   // HomeConifg,
   SignOutConfig,
@@ -46,7 +47,8 @@ const routeConfigs = [
   FinanEditConfig,
   StatementsConfig,
   ReportConfig,
-  ReportReleaseConfig
+  ReportReleaseConfig,
+  ReportVanzeiroConfig
 ];
 
 const routes = [
