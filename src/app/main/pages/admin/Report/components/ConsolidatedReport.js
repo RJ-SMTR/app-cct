@@ -70,6 +70,8 @@ export default function BasicEditingGrid() {
     const [showButton, setShowButton] = useState(false)
     const [whichStatusShow, setWhichStatus] = useState([])
     const [selected, setSelected] = useState(null)
+const [selectedConsorcios, setSelectedConsorcios] = useState([]);
+
 
     const consorcios = [
         { label: 'Todos', value: "Todos" },
@@ -100,7 +102,10 @@ export default function BasicEditingGrid() {
 
     const onSubmit = (data) => {
 
-        if (data.name.length === 0 && data.consorcioName.length === 0) {
+       if (
+            (!data.status || data.status.length === 0) ||
+            (data.name.length === 0 && data.consorcioName.length === 0)
+        ) {
             dispatch(showMessage({ message: 'Erro na busca, selecione favorecidos ou consórcios.' }))
         } else {
 
@@ -369,6 +374,7 @@ export default function BasicEditingGrid() {
 
     const handleSelection = (field, newValue) => {
         setSelected(newValue.length > 0 ? field : null);
+	    setSelectedConsorcios(newValue);
         handleAutocompleteChange(field, newValue);
     };
 
@@ -424,7 +430,9 @@ export default function BasicEditingGrid() {
                                     getOptionLabel={(option) => option.label}
                                     filterSelectedOptions
                                     options={consorcios}
+                                    value={selectedConsorcios} 
                                     getOptionDisabled={(option) => option.disabled}
+                                    isOptionEqualToValue={(option, value) => option.value === value.value} 
                                     onChange={(_, newValue) => handleSelection('consorcioName', newValue)}
                                     renderInput={(params) => (
                                         <TextField
@@ -438,6 +446,7 @@ export default function BasicEditingGrid() {
                                         />
                                     )}
                                 />
+
                                 <Autocomplete
                                     id="status"
                                     multiple
@@ -471,30 +480,35 @@ export default function BasicEditingGrid() {
                             </Box>
 
                             <Box className="flex items-center gap-10 flex-wrap">
-                                <Autocomplete
-                                    id="status"
-                                    multiple
-                                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
-                                    getOptionLabel={(option) => option.label}
-                                    filterSelectedOptions
-                                    options={consorciosStatus}
-                                    onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
-                                    renderInput={(params) => (
-                                        <TextField
+                                <Box>
+
+                                    <Autocomplete
+                                        id="status"
+                                        multiple
+                                        className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
+                                        getOptionLabel={(option) => option.label}
+                                        filterSelectedOptions
+                                        options={consorciosStatus}
+                                        onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
+                                        renderInput={(params) => (
+                                            <TextField
                                             {...params}
                                             label="Selecionar Status"
                                             variant="outlined"
-                                            InputProps={{
-                                                ...params.InputProps,
-                                                endAdornment: (
-                                                    <>
-                                                        {params.InputProps.endAdornment}
-                                                    </>
-                                                ),
-                                            }}
-                                        />
-                                    )}
-                                />
+                                                InputProps={{
+                                                    ...params.InputProps,
+                                                    endAdornment: (
+                                                        <>
+                                                            {params.InputProps.endAdornment}
+                                                        </>
+                                                    ),
+                                                }}
+                                                />
+                                            )}
+                                            
+                                            />
+                                    <span className='absolute text-xs text-red-600'>Campo data obrigatório*</span>
+                                 </Box>
                                 <Box>
                                     <Controller
                                         name="dateRange"
