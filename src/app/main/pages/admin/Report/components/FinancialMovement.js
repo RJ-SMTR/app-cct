@@ -62,6 +62,9 @@ export default function BasicEditingGrid() {
 	const [selected, setSelected] = useState(null);
 	const [showErroStatus, setShowErroStatus] = useState(false);
 	const [selectedErroStatus, setSelectedErroStatus] = useState(null);
+	const [selectedConsorcios, setSelectedConsorcios] = useState([]);
+
+
 
 	const consorcios = [
 		{ label: "Todos", value: "Todos" },
@@ -76,6 +79,12 @@ export default function BasicEditingGrid() {
 		{ label: "TEC", value: "TEC", disabled: selected === "name" },
 	];
 
+const especificos = [
+    { label: 'Todos' },
+    { label: 'Eleição' },
+
+];
+
 	const dispatch = useDispatch();
 
 	const { handleSubmit, setValue, control, getValues, trigger, clearErrors } =
@@ -86,12 +95,13 @@ export default function BasicEditingGrid() {
 				valorMax: "",
 				valorMin: "",
 				consorcioName: [],
+				especificos:[],
 				status: [],
 			},
 		});
 
 	const onSubmit = (data) => {
-		if (data.name.length === 0 && data.consorcioName.length === 0) {
+		if (data.name.length === 0 && data.consorcioName.length === 0 || (erroStatus.length === 0)) {
 			dispatch(
 				showMessage({
 					message: "Erro na busca, selecione favorecidos ou consórcios | modais.",
@@ -117,8 +127,9 @@ export default function BasicEditingGrid() {
 				}
 			}
 
-			if (specificValue) {
-				requestData.eleicao = true;
+
+			if(requestData.especificos[0] =="Eleição"){
+				requestData.eleicao = true
 			}
 
 			dispatch(handleReportInfo(requestData, reportType))
@@ -449,10 +460,11 @@ const valorTotal = {
 		setShowButton(false);
 	};
 
-	const handleSelection = (field, newValue) => {
-		setSelected(newValue.length > 0 ? field : null);
-		handleAutocompleteChange(field, newValue);
-	};
+const handleSelection = (field, newValue) => {
+	setSelected(newValue.length > 0 ? field : null);
+	setSelectedConsorcios(newValue); 
+	handleAutocompleteChange(field, newValue); 
+};
 
 	return (
 		<>
@@ -509,10 +521,10 @@ const valorTotal = {
 									getOptionLabel={(option) => option.label}
 									filterSelectedOptions
 									options={consorcios}
+									value={selectedConsorcios} 
 									getOptionDisabled={(option) => option.disabled}
-									onChange={(_, newValue) =>
-										handleSelection("consorcioName", newValue)
-									}
+									isOptionEqualToValue={(option, value) => option.value === value.value} 
+									onChange={(_, newValue) => handleSelection("consorcioName", newValue)}
 									renderInput={(params) => (
 										<TextField
 											{...params}
@@ -525,6 +537,32 @@ const valorTotal = {
 										/>
 									)}
 								/>
+								<Autocomplete
+									id="especificos"
+									multiple
+									className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+									options={especificos}
+									getOptionLabel={(option) => option.label}
+									filterSelectedOptions
+									onChange={(_, newValue) =>
+										handleAutocompleteChange("especificos", newValue)
+									}
+									renderInput={(params) => (
+											<TextField
+													{...params}
+													label="Selecionar Específicos"
+													variant="outlined"
+													InputProps={{
+															...params.InputProps,
+															endAdornment: (
+																	<>
+																			{params.InputProps.endAdornment}
+																	</>
+															),
+													}}
+											/>
+									)}
+							/>
 							</Box>
 
 							<Box className="flex items-center gap-10 flex-wrap">
