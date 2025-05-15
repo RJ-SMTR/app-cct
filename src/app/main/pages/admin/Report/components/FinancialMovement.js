@@ -255,25 +255,31 @@ const especificos = [
   Nome: "Total Pago",
   Valor: "",
   Status: reportList.valorPago > 0 ? formatter.format(reportList.valorPago) : "",
-};
+	};
 
-const valorEstornado = {
-  Nome: "Total Estorno",
-  Valor: "",
-  Status: reportList.valorEstornado > 0 ? formatter.format(reportList.valorEstornado) : "",
-};
+	const valorEstornado = {
+		Nome: "Total Estorno",
+		Valor: "",
+		Status: reportList.valorEstornado > 0 ? formatter.format(reportList.valorEstornado) : "",
+	};
 
-const valorRejeitado = {
-  Nome: "Total Rejeitado",
-  Valor: "",
-  Status: reportList.valorRejeitado > 0 ? formatter.format(reportList.valorRejeitado) : "",
-};
+	const valorRejeitado = {
+		Nome: "Total Rejeitado",
+		Valor: "",
+		Status: reportList.valorRejeitado > 0 ? formatter.format(reportList.valorRejeitado) : "",
+	};
 
-const valorTotal = {
-  Nome: "Valor Total",
-  Valor: "",
-  Status: formatter.format(reportList?.valor ?? 0),
-};
+	const valorAguardandoPagamento = {
+		Nome: "Total Aguardando Pagamento",
+		Valor: "",
+		Status: reportList.valorAguardandoPagamento > 0 ? formatter.format(reportList.valorAguardandoPagamento) : "",
+	};
+
+	const valorTotal = {
+		Nome: "Valor Total",
+		Valor: "",
+		Status: formatter.format(reportList?.valor ?? 0),
+	};
 
 
 
@@ -290,6 +296,7 @@ const valorTotal = {
     ...(reportList.valorPago > 0 ? [valorPago] : []),
     ...(reportList.valorEstornado > 0 ? [valorEstornado] : []),
     ...(reportList.valorRejeitado > 0 ? [valorRejeitado] : []),
+    ...(reportList.valorAguardandoPagamento> 0 ? [valorAguardandoPagamento] : []),
     valorTotal,
   ];
 	let dateInicio;
@@ -383,6 +390,11 @@ const valorTotal = {
         yPosition += 5;
       }
 
+			if (reportList.valorAguardandoPagamento> 0) {
+        doc.text(`Total Aguardando Pagamento: ${formatter.format(reportList.valorAguardandoPagamento)}`, 14, yPosition);
+        yPosition += 5;
+      }
+
       doc.text(`Valor total: ${formatter.format(reportList.valor ?? 0)}`, 14, yPosition);
 
       const pageCount = doc.internal.getNumberOfPages();
@@ -428,6 +440,9 @@ const valorTotal = {
       : []),
     ...(reportList.valorRejeitado > 0
       ? [["Total Rejeitado:", "", "", ` ${formatter.format(reportList.valorRejeitado)}`, ""]]
+      : []),
+  ...(reportList.valorAguardandoPagamento> 0
+      ? [["Total Aguardando Pagamento:", "", "", ` ${formatter.format(reportList.valorAguardandoPagamento)}`, ""]]
       : []),
 		["Valor Total", "", "", formatter.format(reportList.valor ?? 0), ""],
 		];
@@ -905,15 +920,17 @@ const handleSelection = (field, newValue) => {
 												<span
 													className={`px-3 text-white py-1 rounded-full text-sm ${
 														report.status === "Pago"
-															? " bg-green-800 "
+															? "bg-green-800"
 															: report.status === "Estorno"
-															? " bg-yellow-800 "
-															: "  bg-red-800 "
+															? "bg-yellow-800"
+															: report.status === "Aguardando Pagamento"
+															? "bg-gray-500"
+															: "bg-red-800"
 													}`}
 												>
 													{report.status}
 												</span>
-											</TableCell>
+										</TableCell>
 										</TableRow>
 									))
 								) : (
@@ -946,6 +963,7 @@ const handleSelection = (field, newValue) => {
 											reportList.valorPago > 0 && `Total Pago: ${formatter.format(reportList.valorPago)}`,
 											reportList.valorEstornado > 0 && `Total Estorno: ${formatter.format(reportList.valorEstornado)}`,
 											reportList.valorRejeitado > 0 && `Total Rejeitado: ${formatter.format(reportList.valorRejeitado)}`,
+											reportList.valorAguardandoPagamento > 0 && `Total Aguardando Pagamento: ${formatter.format(reportList.valorAguardandoPagamento)}`,
 											reportList.valor > 0 && `Total Geral: ${formatter.format(reportList.valor)}`
 										]
 											.filter(Boolean)
