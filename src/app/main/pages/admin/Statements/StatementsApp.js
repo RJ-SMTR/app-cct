@@ -1,30 +1,72 @@
-import { Box, Paper } from "@mui/material";
+import {
+    Box,
+    Paper,
+    Card,
+    FormControl,
+    InputLabel,
+    MenuItem,
+    Select,
+} from "@mui/material";
 import DataGridStatements from "../Approval/components/DataGridStatements"
 import DataGridStatementsCB from "../Approval/components/DataGridStatementsCB"
 import { useSelector } from "react-redux";
 import CardBalance from "../Approval/components/CardBalance";
+import { useState } from "react";
 
 function StatementsApp() {
-    const listTransactions = useSelector(state => state.release.listTransactions)
+    const [selectBalance, setSelectedBalance] = useState("");
+
+
+        const handleSelectChange = (event) => {
+            setSelectedBalance(event.target.value);
+        };
 
   return (
       <>
+
           <div className="p-24 pt-10">
-              <Box className='flex flex-col md:flex-row mt-24  spacing-x-2'>
+                            <Card className="w-full p-24 relative mt-32">
+                                <header className="flex justify-between items-center">
+                                    <h3 className="font-semibold mb-24">Seleção de Conta</h3>
+                                </header>
+              <FormControl style={{ minWidth: "20rem" }}>
+                  <InputLabel id="report-select-label">
+                      Selecionar Conta
+                  </InputLabel>
+                  <Select
+                      labelId="report-select-label"
+                      id="report-select"
+                      value={selectBalance}
+                      label="Selecionar Relatório"
+                      onChange={handleSelectChange}
+                  >
+                      <MenuItem value="cett">Extrato CETT</MenuItem>
+                      <MenuItem value="cb">Extrato CB</MenuItem>
+                    
+                  </Select>
+              </FormControl>
+              </Card>
+              {/* <Box className='flex flex-col md:flex-row mt-24  spacing-x-2'>
                   <CardBalance type={"Saldo Total das Contas"} amount={100000000} />
                  <CardBalance type={"Saldo do Período - CETT"} amount={109000} /> 
                  <CardBalance type={"Saldo do Período - CB"} amount={109000} /> 
-              </Box>
+              </Box> */}
                <Box>
                   <Paper>
-                      <DataGridStatements data={listTransactions} />
+                      {selectBalance === "cett" && <DataGridStatements />}
+                      {selectBalance === "cb" && <DataGridStatementsCB />}
                   </Paper>
               </Box> 
-               <Box>
+               {/* <Box>
                   <Paper>
-                      <DataGridStatementsCB data={listTransactions} />
+                      <DataGridStatements />
                   </Paper>
-              </Box> 
+              </Box>  */}
+               {/* <Box>
+                  <Paper>
+                      <DataGridStatementsCB />
+                  </Paper>
+              </Box>  */}
           </div>
       </>
   )

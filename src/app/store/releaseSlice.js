@@ -12,6 +12,9 @@ import { format } from 'date-fns';
 const initialState = {
     selectedPeriod: false,
     listTransactions: [],
+    listCett: [],
+    listCB: [],
+    // listTransactions: [],
     selectedDate: {
         mes: '',
         periodo: ''
@@ -32,6 +35,12 @@ const stepSlice = createSlice({
         setListTransactions: (state, action) => {
             state.listTransactions = action.payload;
         },
+        setListCett: (state, action) => {
+            state.listCett = action.payload;
+        },
+        setListCB: (state, action) => {
+            state.listCB = action.payload;
+        },
         setSelectedDate: (state, action) => {
             state.selectedDate = action.payload;
         },
@@ -50,8 +59,11 @@ const stepSlice = createSlice({
     },
 });
 
-export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTransactions, selectDate, setSelectedDate, authValue, setAuthValue, setSelectedStatus, selectedStatus, setSelectedYear, selectedYear, clientesFavorecidos, setClientesFavorecidos } = stepSlice.actions;
+export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTransactions, selectDate, setSelectedDate, authValue, setAuthValue, setSelectedStatus, selectedStatus, setSelectedYear, selectedYear, clientesFavorecidos, setClientesFavorecidos, listCett, setListCett, listCB, setListCB } = stepSlice.actions;
 export default stepSlice.reducer;
+
+
+
 
 export const getData = (data) => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
@@ -309,6 +321,40 @@ export const handleAuthRelease = (selectedDate,selectedStatus, id, password) => 
             .catch((error) => {
                 reject(error)
             })
+
+    })
+}
+
+
+export const handleExtract = (data) => (dispatch) => {
+    const token = window.localStorage.getItem('jwt_access_token');
+        data.dataInicio = dayjs(data.dataInicio).format('YYYY-MM-DD');
+            data.dataFim = dayjs(data.dataFim).format('YYYY-MM-DD');
+    
+    return new Promise(async (resolve, reject) => {
+        
+        let config = {
+            method: 'get',
+            maxBodyLength: Infinity,
+            url: jwtServiceConfig.extrato,
+            headers: {
+                "Authorization": `Bearer ${token}`
+            },
+            params: data
+        };
+        try{
+            const response = await api.request(config);
+            if(data.conta === 'cett'){
+                dispatch(setListCett(response))
+            }
+            if(data.conta === 'cb'){
+                dispatch(setListCB(response))
+            }
+            resolve(response)
+        } catch(error) {
+            reject((error))
+        }
+
 
     })
 }
