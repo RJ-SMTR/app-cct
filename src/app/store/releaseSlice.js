@@ -22,7 +22,11 @@ const initialState = {
     authValue: '',
     selectedStatus: null,
     selectedYear: '',
-    clientesFavorecidos: []
+    clientesFavorecidos: [],
+    accountBalance: {
+        cb: null,
+        cett: null
+    }
 };
 
 const stepSlice = createSlice({
@@ -56,10 +60,17 @@ const stepSlice = createSlice({
         setClientesFavorecidos: (state, action) => {
             state.clientesFavorecidos = action.payload;
         },
+        setAccountBalance: (state, action) => {
+            const { key, value } = action.payload;
+            state.accountBalance = {
+                ...state.accountBalance,
+                [key]: value,
+            };
+          },
     },
 });
 
-export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTransactions, selectDate, setSelectedDate, authValue, setAuthValue, setSelectedStatus, selectedStatus, setSelectedYear, selectedYear, clientesFavorecidos, setClientesFavorecidos, listCett, setListCett, listCB, setListCB } = stepSlice.actions;
+export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTransactions, selectDate, setSelectedDate, authValue, setAuthValue, setSelectedStatus, selectedStatus, setSelectedYear, selectedYear, clientesFavorecidos, setClientesFavorecidos, listCett, setListCett, listCB, setListCB, setAccountBalance, accountBalance } = stepSlice.actions;
 export default stepSlice.reducer;
 
 
@@ -346,9 +357,11 @@ export const handleExtract = (data) => (dispatch) => {
             const response = await api.request(config);
             if(data.conta === 'cett'){
                 dispatch(setListCett(response))
+                dispatch(setAccountBalance({ key: 'cett', value: response.data.saldoConta }));
             }
             if(data.conta === 'cb'){
                 dispatch(setListCB(response))
+                dispatch(setAccountBalance({ key: 'cb', value: response.data.saldoConta }));
             }
             resolve(response)
         } catch(error) {

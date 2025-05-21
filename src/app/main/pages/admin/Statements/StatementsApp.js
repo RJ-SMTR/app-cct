@@ -9,54 +9,30 @@ import {
 } from "@mui/material";
 import DataGridStatements from "../Approval/components/DataGridStatements"
 import DataGridStatementsCB from "../Approval/components/DataGridStatementsCB"
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import CardBalance from "../Approval/components/CardBalance";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { setAccountBalance } from "app/store/releaseSlice";
 
 function StatementsApp() {
-    const [selectBalance, setSelectedBalance] = useState("");
+    const dispatch = useDispatch()
+    const accountBalance = useSelector(state => state.release.accountBalance)
 
-
-        const handleSelectChange = (event) => {
-            setSelectedBalance(event.target.value);
-        };
+    useEffect(() => {
+        dispatch(setAccountBalance({ key: 'cett', value: null }));
+        dispatch(setAccountBalance({ key: 'cb', value: null }));
+    }, [])
 
   return (
       <>
 
           <div className="p-24 pt-10">
-                            {/* <Card className="w-full p-24 relative mt-32">
-                                <header className="flex justify-between items-center">
-                                    <h3 className="font-semibold mb-24">Seleção de Conta</h3>
-                                </header>
-              <FormControl style={{ minWidth: "20rem" }}>
-                  <InputLabel id="report-select-label">
-                      Selecionar Conta
-                  </InputLabel>
-                  <Select
-                      labelId="report-select-label"
-                      id="report-select"
-                      value={selectBalance}
-                      label="Selecionar Relatório"
-                      onChange={handleSelectChange}
-                  >
-                      <MenuItem value="cett">Extrato CETT</MenuItem>
-                      <MenuItem value="cb">Extrato CB</MenuItem>
-                    
-                  </Select>
-              </FormControl>
-              </Card> */}
+                        
               <Box className='flex flex-col md:flex-row mt-24  spacing-x-2'>
                   <CardBalance type={"Saldo Total das Contas"} amount={100000000} />
-                 <CardBalance type={"Saldo do Período - CETT"} amount={109000} /> 
-                 <CardBalance type={"Saldo do Período - CB"} amount={109000} /> 
+                 <CardBalance type={"Saldo do Período - CETT"} amount={accountBalance?.cett} /> 
+                 <CardBalance type={"Saldo do Período - CB"} amount={accountBalance?.cb} /> 
               </Box>
-               {/* <Box>
-                  <Paper>
-                      {selectBalance === "cett" && <DataGridStatements />}
-                      {selectBalance === "cb" && <DataGridStatementsCB />}
-                  </Paper>
-              </Box>  */}
                <Box>
                   <Paper>
                       <DataGridStatements />

@@ -12,7 +12,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ptBR as dateFnsPtBR } from 'date-fns/locale';
 
 import { LocalizationProvider } from '@mui/x-date-pickers';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { handleExtract } from 'app/store/releaseSlice';
 import { format } from 'date-fns';
 
@@ -23,7 +23,7 @@ export default function BasicEditingGrid(props) {
     const dispatch = useDispatch()
     const [rowModesModel, setRowModesModel] = useState({});
 
-    const [initialRows, setInitialRows] = useState(false)
+    const [isLoading, setIsLoading] = useState(false);
 
     const [sumTotal, setSumTotal] = useState()
     const [rows, setRows] = useState([])
@@ -31,6 +31,7 @@ export default function BasicEditingGrid(props) {
     const [dateRange, setDateRange] = useState([]);
     const [tipo, setTipo] = useState([]);
     const [operacao, setOperacao] = useState([]);
+    const accountBalance = useSelector(state => state.release.accountBalance)
     
 
     const formatToBRL = (value) => {
@@ -58,7 +59,7 @@ export default function BasicEditingGrid(props) {
             operacao,
         }))
             .then((response) => {
-                const rowsWithId = response.data.map((item, index) => ({
+                const rowsWithId = response.data.extrato.map((item, index) => ({
                     id: `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 5)}`,
                     data: format(new Date(item.dataLancamento), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }),
                     //    data: item.dataLancamento,
@@ -68,6 +69,8 @@ export default function BasicEditingGrid(props) {
 
                 }));
                 setRows(rowsWithId);
+            }).finally(() => {
+                setIsLoading(false);
             });
     };
 
@@ -162,15 +165,19 @@ export default function BasicEditingGrid(props) {
     return (
         <>
             <Box className="w-full md:mx-9 p-24 relative mt-32">
-                <header className="flex justify-between items-center">
+                <header className="mb-24">
                     <h4 className="font-semibold mb-24">
                         Conta de Estabilização Tarifária dos Transportes
                     </h4>
+                    <p>
+                        Saldo da conta: {formatToBRL(accountBalance.cb)}
+                    </p>
                 </header>
                 <div style={{ height: 500, width: '100%' }}>
                     <DataGrid
                         localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
                         rows={rows}
+                        loading={isLoading}
                         columns={columns}
                         slots={{ toolbar: CustomToolbar }}
                         editMode="row"
