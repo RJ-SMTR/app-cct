@@ -25,7 +25,7 @@ function StatementsApp() {
       <>
 
           <div className="p-24 pt-10">
-                            <Card className="w-full p-24 relative mt-32">
+                            {/* <Card className="w-full p-24 relative mt-32">
                                 <header className="flex justify-between items-center">
                                     <h3 className="font-semibold mb-24">Seleção de Conta</h3>
                                 </header>
@@ -45,28 +45,28 @@ function StatementsApp() {
                     
                   </Select>
               </FormControl>
-              </Card>
-              {/* <Box className='flex flex-col md:flex-row mt-24  spacing-x-2'>
+              </Card> */}
+              <Box className='flex flex-col md:flex-row mt-24  spacing-x-2'>
                   <CardBalance type={"Saldo Total das Contas"} amount={100000000} />
                  <CardBalance type={"Saldo do Período - CETT"} amount={109000} /> 
                  <CardBalance type={"Saldo do Período - CB"} amount={109000} /> 
-              </Box> */}
-               <Box>
+              </Box>
+               {/* <Box>
                   <Paper>
                       {selectBalance === "cett" && <DataGridStatements />}
                       {selectBalance === "cb" && <DataGridStatementsCB />}
                   </Paper>
-              </Box> 
-               {/* <Box>
+              </Box>  */}
+               <Box>
                   <Paper>
                       <DataGridStatements />
                   </Paper>
-              </Box>  */}
-               {/* <Box>
+              </Box> 
+                <Box>
                   <Paper>
                       <DataGridStatementsCB />
                   </Paper>
-              </Box>  */}
+              </Box> 
           </div>
       </>
   )

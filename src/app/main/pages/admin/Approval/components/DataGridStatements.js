@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { DataGrid, ptBR, GridCsvExportMenuItem, GridToolbarContainer, GridToolbarExportContainer, } from '@mui/x-data-grid';
-import { Box, MenuItem, Select, InputLabel, FormControl, Button } from '@mui/material';
+import { Box, TextField, Select, InputLabel, FormControl, Button, Autocomplete } from '@mui/material';
 
 import accounting from 'accounting';
 
@@ -29,8 +29,9 @@ export default function BasicEditingGrid(props) {
     const [rows, setRows] = useState([])
 
     const [dateRange, setDateRange] = useState([]);
-    const [tipo, setTipo] = useState('');
-    const [operacao, setOperacao] = useState('');
+    const [tipo, setTipo] = useState([]);
+    const [operacao, setOperacao] = useState([]);
+    
 
     const formatToBRL = (value) => {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -89,8 +90,26 @@ export default function BasicEditingGrid(props) {
         );
     }
     function CustomToolbar(props) {
+        const tipoOptions = [
+            { label: 'Saída', value: 'D' },
+            { label: 'Entrada', value: 'C' },
+        ];
+
+        const operacaoOptions = [
+            { label: 'APL AUTOM', value: 'APL AUTOM' },
+            { label: 'APL FUNDO', value: 'APL FUNDO' },
+            { label: 'CRED.AUTOR', value: 'CRED.AUTOR' },
+            { label: 'CRED TED', value: 'CRED TED' },
+            { label: 'CRED PIX', value: 'CRED PIX' },
+            { label: 'DEB.AUTOR.', value: 'DEB.AUTOR.' },
+            { label: 'EST PG FOR', value: 'EST PG FOR' },
+            { label: 'PAG FORNEC', value: 'PAG FORNEC' },
+            { label: 'RESG AUTOM', value: 'RESG AUTOM' },
+            { label: 'RSG FUNDO', value: 'RSG FUNDO' },
+            { label: 'MANUT CTA', value: 'MANUT CTA' },
+        ];
         return (
-            <GridToolbarContainer className="flex-col sm:flex-row w-full flex-wrap items-center gap-4 mb-4 justify-between" {...props}>
+            <GridToolbarContainer className="flex-col sm:flex-row w-full  items-center gap-4 mb-4 justify-between" {...props}>
                 <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={dateFnsPtBR}>
                     <DateRangePicker
                         value={dateRange}
@@ -105,31 +124,28 @@ export default function BasicEditingGrid(props) {
                         className="custom-date-range-picker sm:w-[22%] w-full"
                     />
                 </LocalizationProvider>
-                <FormControl className="min-w-[180px] sm:w-[22%] w-full">
-                    <InputLabel id="select-periodo">Tipo</InputLabel>
-                    <Select
-                        labelId="select-periodo"
-                        value={tipo}
-                        label="Tipo"
-                        onChange={(e) => setTipo(e.target.value)}
-                    >
-                        <MenuItem value="débito">Débito</MenuItem>
-                        <MenuItem value="crédito">Crédito</MenuItem>
-                    </Select>
-                </FormControl>
+                <Autocomplete
+                    options={tipoOptions}
+                    getOptionLabel={(option) => option.label}
+                    value={tipoOptions.find(opt => opt.value === tipo) || null}
+                    onChange={(e, newValue) => setTipo(newValue?.value || '')}
+                    renderInput={(params) => (
+                        <TextField {...params} label="Tipo" />
+                    )}
+                    className="min-w-[180px] sm:w-[22%] w-full"
+                />
+                <Autocomplete
+                    multiple
+                    options={operacaoOptions}
+                    getOptionLabel={(option) => option.label}
+                    value={operacaoOptions.filter((opt) => operacao.includes(opt.value))}
+                    onChange={(e, newValues) => setOperacao(newValues.map(val => val.value))}
+                    renderInput={(params) => (
+                        <TextField {...params} label="Operação" />
+                    )}
+                    className="min-w-[22%] sm:w-auto w-full"
+                />
 
-                <FormControl className="min-w-[180px] sm:w-[22%] w-full">
-                    <InputLabel id="select-operacao">Operação</InputLabel>
-                    <Select
-                        labelId="select-operacao"
-                        value={operacao}
-                        label="Operação"
-                        onChange={(e) => setOperacao(e.target.value)}
-                    >
-                        <MenuItem value="entrada">Entrada</MenuItem>
-                        <MenuItem value="saida">Saída</MenuItem>
-                    </Select>
-                </FormControl>
                 <Button
                     variant="contained"
                     color="secondary"
@@ -165,7 +181,7 @@ export default function BasicEditingGrid(props) {
                     />
                 </div>
                 <Box>
-                    Valor Total:  R$ {sumTotal}
+                    Total movimentado:  R$ {sumTotal}
                 </Box>
             </Box>
 

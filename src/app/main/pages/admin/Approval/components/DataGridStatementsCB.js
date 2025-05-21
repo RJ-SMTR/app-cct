@@ -1,6 +1,6 @@
 import {  useEffect, useState } from 'react';
 import { DataGrid,ptBR, GridCsvExportMenuItem, GridToolbarContainer, GridToolbarExportContainer, } from '@mui/x-data-grid';
-import { Box, MenuItem, Select, InputLabel, FormControl, Button } from '@mui/material';
+import { Box, Autocomplete, TextField, InputLabel, FormControl, Button } from '@mui/material';
 
 import accounting from 'accounting';
 
@@ -88,60 +88,76 @@ export default function BasicEditingGrid(props) {
     }
 
     function CustomToolbar(props) {
-        return (
-            <GridToolbarContainer className="flex-col sm:flex-row w-full flex-wrap items-center gap-4 mb-4 justify-between" {...props}>
-                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={dateFnsPtBR}>
-                    <DateRangePicker
-                        value={dateRange}
-                        onChange={(range) => setDateRange(range)}
-                        id="custom-date-input"
-                        showOneCalendar
-                        showHeader={false}
-                        placement="auto"
-                        placeholder="Selecionar Data"
-                        format="dd/MM/yy"
-                        character=" - "
-                        className="custom-date-range-picker sm:w-[22%] w-full"
-                    />
-                </LocalizationProvider>
-                <FormControl className="min-w-[180px] sm:w-[22%] w-full">
-                    <InputLabel id="select-periodo">Tipo</InputLabel>
-                    <Select
-                        labelId="select-periodo"
-                        value={tipo}
-                        label="Tipo"
-                        onChange={(e) => setTipo(e.target.value)}
-                    >
-                        <MenuItem value="débito">Débito</MenuItem>
-                        <MenuItem value="crédito">Crédito</MenuItem>
-                    </Select>
-                </FormControl>
-
-                <FormControl className="min-w-[180px] sm:w-[22%] w-full">
-                    <InputLabel id="select-operacao">Operação</InputLabel>
-                    <Select
-                        labelId="select-operacao"
-                        value={operacao}
-                        label="Operação"
-                        onChange={(e) => setOperacao(e.target.value)}
-                    >
-                        <MenuItem value="entrada">Entrada</MenuItem>
-                        <MenuItem value="saida">Saída</MenuItem>
-                    </Select>
-                </FormControl>
-                <Button
-                    variant="contained"
-                    color="secondary"
-                    className='w-full sm:w-auto'
-                    onClick={handleSearch}
-                >
-                    Pesquisar
-                </Button>
-                <CustomExportButton />
-
-            </GridToolbarContainer>
-        );
-    }
+         const tipoOptions = [
+             { label: 'Saída', value: 'D' },
+             { label: 'Entrada', value: 'C' },
+         ];
+ 
+         const operacaoOptions = [
+             { label: 'APL AUTOM', value: 'APL AUTOM' },
+             { label: 'APL FUNDO', value: 'APL FUNDO' },
+             { label: 'CRED.AUTOR', value: 'CRED.AUTOR' },
+             { label: 'CRED TED', value: 'CRED TED' },
+             { label: 'CRED PIX', value: 'CRED PIX' },
+             { label: 'DEB.AUTOR.', value: 'DEB.AUTOR.' },
+             { label: 'EST PG FOR', value: 'EST PG FOR' },
+             { label: 'PAG FORNEC', value: 'PAG FORNEC' },
+             { label: 'RESG AUTOM', value: 'RESG AUTOM' },
+             { label: 'RSG FUNDO', value: 'RSG FUNDO' },
+             { label: 'MANUT CTA', value: 'MANUT CTA' },
+         ];
+     
+         return (
+             <GridToolbarContainer className="flex-col sm:flex-row w-full  items-center gap-4 mb-4 justify-between" {...props}>
+                 <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={dateFnsPtBR}>
+                     <DateRangePicker
+                         value={dateRange}
+                         onChange={(range) => setDateRange(range)}
+                         id="custom-date-input"
+                         showOneCalendar
+                         showHeader={false}
+                         placement="auto"
+                         placeholder="Selecionar Data"
+                         format="dd/MM/yy"
+                         character=" - "
+                         className="custom-date-range-picker sm:w-[22%] w-full"
+                     />
+                 </LocalizationProvider>
+                 <Autocomplete
+                     options={tipoOptions}
+                     getOptionLabel={(option) => option.label}
+                     value={tipoOptions.find(opt => opt.value === tipo) || null}
+                     onChange={(e, newValue) => setTipo(newValue?.value || '')}
+                     renderInput={(params) => (
+                         <TextField {...params} label="Tipo" />
+                     )}
+                     className="min-w-[180px] sm:w-[22%] w-full"
+                 />
+                 <Autocomplete
+                     multiple
+                     options={operacaoOptions}
+                     getOptionLabel={(option) => option.label}
+                     value={operacaoOptions.filter((opt) => operacao.includes(opt.value))}
+                     onChange={(e, newValues) => setOperacao(newValues.map(val => val.value))}
+                     renderInput={(params) => (
+                         <TextField {...params} label="Operação" />
+                     )}
+                     className="min-w-[22%] sm:w-auto w-full"
+                 />
+ 
+                 <Button
+                     variant="contained"
+                     color="secondary"
+                     className='w-full sm:w-auto'
+                     onClick={handleSearch}
+                 >
+                     Pesquisar
+                 </Button>
+                 <CustomExportButton />
+ 
+             </GridToolbarContainer>
+         );
+     }
 
     return (
         <>
@@ -165,7 +181,7 @@ export default function BasicEditingGrid(props) {
                     />
                 </div>
                 <Box>
-                    Valor Total:  R$ {sumTotal}
+                    Total movimentado:  R$ {sumTotal}
                 </Box>
             </Box>
  
