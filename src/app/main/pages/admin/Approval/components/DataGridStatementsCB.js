@@ -20,6 +20,7 @@ import ExportButton from './ExportButton';
 
 
 
+
 export default function BasicEditingGrid(props) {
     const dispatch = useDispatch()
     const [rowModesModel, setRowModesModel] = useState({});
@@ -103,6 +104,7 @@ export default function BasicEditingGrid(props) {
             field: 'operacao', headerName: 'Operação', width: 200, editable: false,
         },
         {
+
             field: 'valor',
             headerName: 'Valor',
             width: 200,
@@ -181,6 +183,7 @@ export default function BasicEditingGrid(props) {
                  >
                      Pesquisar
                  </Button>
+
                  <ExportButton data={{ rows, dateRange, sumTotal, sumTotalEntry, sumTotalExit }} />
 
              </GridToolbarContainer>

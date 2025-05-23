@@ -100,7 +100,7 @@ export default function BasicEditingGrid(props) {
                 setIsLoading(false);
             });
     };
-   
+
 
     const columns = [
         { field: 'data', headerName: 'Data', width: 300, editable: false },
@@ -109,6 +109,7 @@ export default function BasicEditingGrid(props) {
             field: 'operacao', headerName: 'Operação', width: 200, editable: false,
         },
         {
+
             field: 'valor',
             headerName: 'Valor',
             width: 200,
