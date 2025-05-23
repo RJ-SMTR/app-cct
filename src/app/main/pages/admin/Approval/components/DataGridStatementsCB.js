@@ -15,6 +15,8 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { useDispatch, useSelector } from 'react-redux';
 import { handleExtract } from 'app/store/releaseSlice';
 import { format } from 'date-fns';
+import ExportButton from './ExportButton';
+
 
 
 
@@ -102,6 +104,7 @@ export default function BasicEditingGrid(props) {
             field: 'operacao', headerName: 'Operação', width: 200, editable: false,
         },
         {
+
             field: 'valor',
             headerName: 'Valor',
             width: 200,
@@ -112,15 +115,7 @@ export default function BasicEditingGrid(props) {
             )
         },
     ];
-    const csvOptions = { delimiter: ';' };
 
-    function CustomExportButton(props) {
-        return (
-            <GridToolbarExportContainer {...props}>
-                <GridCsvExportMenuItem options={csvOptions} />
-            </GridToolbarExportContainer>
-        );
-    }
 
     function CustomToolbar(props) {
          const tipoOptions = [
@@ -188,8 +183,9 @@ export default function BasicEditingGrid(props) {
                  >
                      Pesquisar
                  </Button>
-                 <CustomExportButton />
- 
+
+                 <ExportButton data={{ rows, dateRange, sumTotal, sumTotalEntry, sumTotalExit }} />
+
              </GridToolbarContainer>
          );
      }
