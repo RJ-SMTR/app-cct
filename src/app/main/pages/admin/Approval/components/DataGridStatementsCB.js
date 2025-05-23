@@ -109,7 +109,7 @@ export default function BasicEditingGrid(props) {
             headerName: 'Valor',
             width: 200,
             renderCell: (params) => (
-                <span className={params.row.tipo === 'Saída' ? 'text-red' : ''}>
+                <span className={params.row.tipo === 'Saída' ? 'text-red ml-[-10px]' : ''}>
                     {params.value}
                 </span>
             )
