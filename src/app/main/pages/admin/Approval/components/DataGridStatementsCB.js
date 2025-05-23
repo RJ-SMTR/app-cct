@@ -1,12 +1,12 @@
-import {  useEffect, useState } from 'react';
-import { DataGrid,ptBR, GridCsvExportMenuItem, GridToolbarContainer, GridToolbarExportContainer, } from '@mui/x-data-grid';
+import { useEffect, useState } from 'react';
+import { DataGrid, ptBR, GridCsvExportMenuItem, GridToolbarContainer, GridToolbarExportContainer, } from '@mui/x-data-grid';
 import { Box, Autocomplete, TextField, InputLabel, FormControl, Button, CircularProgress } from '@mui/material';
 
 import accounting from 'accounting';
 
 import {
     DateRangePicker
-} from 'rsuite'; 
+} from 'rsuite';
 import 'rsuite/dist/rsuite.min.css';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ptBR as dateFnsPtBR } from 'date-fns/locale';
@@ -15,6 +15,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { useDispatch, useSelector } from 'react-redux';
 import { handleExtract } from 'app/store/releaseSlice';
 import { format } from 'date-fns';
+import ExportButton from './ExportButton';
 
 
 
@@ -22,7 +23,7 @@ import { format } from 'date-fns';
 export default function BasicEditingGrid(props) {
     const dispatch = useDispatch()
     const [rowModesModel, setRowModesModel] = useState({});
- 
+
     const [isLoading, setIsLoading] = useState(false);
 
     const [sumTotal, setSumTotal] = useState()
@@ -40,26 +41,26 @@ export default function BasicEditingGrid(props) {
     };
 
     const formattedValue = (sum) => {
-       return accounting.formatMoney(sum, {
+        return accounting.formatMoney(sum, {
             symbol: "",
             decimal: ",",
             thousand: ".",
             precision: 2
         });
-    
-    } 
+
+    }
 
     function getRemovedElements(arr, prop, value) {
         return arr.filter(item => item && item[prop] === value);
     }
-    
+
     const type = (type, valor) => {
-            if (type === 'Saída') {
-                return `- ${formatToBRL(valor)}`
-            }
-            return formatToBRL(valor)
-        
-    }    
+        if (type === 'Saída') {
+            return `- ${formatToBRL(valor)}`
+        }
+        return formatToBRL(valor)
+
+    }
 
     const handleSearch = () => {
         setIsLoading(true);
@@ -73,7 +74,7 @@ export default function BasicEditingGrid(props) {
             .then((response) => {
                 const rowsWithId = response.data.extrato.map((item, index) => ({
                     id: `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 5)}`,
-                   data: format(new Date(item.dataLancamento), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }),
+                    data: format(new Date(item.dataLancamento), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }),
                     valor: type(item.tipo, item.valor),
                     tipo: item.tipo,
                     operacao: item.operacao
@@ -88,10 +89,10 @@ export default function BasicEditingGrid(props) {
                 const entry = getRemovedElements(rowsWithId, 'tipo', 'Entrada')
                 const sumEntry = entry.reduce((accumulator, item) => accumulator + accounting.unformat(item.valor.replace(/\./g, '').replace('.', ','), ','), 0);
                 setSumTotalEntry(formattedValue(sumEntry))
-        })
-        .finally(() => {
-        setIsLoading(false);
-    });
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
 
     };
 
@@ -112,87 +113,79 @@ export default function BasicEditingGrid(props) {
             )
         },
     ];
-    const csvOptions = { delimiter: ';' };
 
-    function CustomExportButton(props) {
-        return (
-            <GridToolbarExportContainer {...props}>
-                <GridCsvExportMenuItem options={csvOptions} />
-            </GridToolbarExportContainer>
-        );
-    }
 
     function CustomToolbar(props) {
-         const tipoOptions = [
-             { label: 'Saída', value: 'D' },
-             { label: 'Entrada', value: 'C' },
-         ];
- 
-         const operacaoOptions = [
-             { label: 'APL AUTOM', value: 'APL AUTOM' },
-             { label: 'APL FUNDO', value: 'APL FUNDO' },
-             { label: 'CRED.AUTOR', value: 'CRED.AUTOR' },
-             { label: 'CRED TED', value: 'CRED TED' },
-             { label: 'CRED PIX', value: 'CRED PIX' },
-             { label: 'DEB.AUTOR.', value: 'DEB.AUTOR.' },
-             { label: 'EST PG FOR', value: 'EST PG FOR' },
-             { label: 'PAG FORNEC', value: 'PAG FORNEC' },
-             { label: 'RESG AUTOM', value: 'RESG AUTOM' },
-             { label: 'RSG FUNDO', value: 'RSG FUNDO' },
-             { label: 'MANUT CTA', value: 'MANUT CTA' },
-         ];
-     
-         return (
-             <GridToolbarContainer className="flex-col sm:flex-row w-full  items-center gap-4 mb-4 justify-between" {...props}>
-                 <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={dateFnsPtBR}>
-                     <DateRangePicker
-                         value={dateRange}
-                         onChange={(range) => setDateRange(range)}
-                         id="custom-date-input"
-                         showOneCalendar
-                         showHeader={false}
-                         placement="auto"
-                         placeholder="Selecionar Data"
-                         format="dd/MM/yy"
-                         character=" - "
-                         className="custom-date-range-picker sm:w-[22%] w-full"
-                     />
-                 </LocalizationProvider>
-                 <Autocomplete
-                     options={tipoOptions}
-                     getOptionLabel={(option) => option.label}
-                     value={tipoOptions.find(opt => opt.value === tipo) || null}
-                     onChange={(e, newValue) => setTipo(newValue?.value || '')}
-                     renderInput={(params) => (
-                         <TextField {...params} label="Tipo" />
-                     )}
-                     className="min-w-[180px] sm:w-[22%] w-full"
-                 />
-                 <Autocomplete
-                     multiple
-                     options={operacaoOptions}
-                     getOptionLabel={(option) => option.label}
-                     value={operacaoOptions.filter((opt) => operacao.includes(opt.value))}
-                     onChange={(e, newValues) => setOperacao(newValues.map(val => val.value))}
-                     renderInput={(params) => (
-                         <TextField {...params} label="Operação" />
-                     )}
-                     className="min-w-[22%] sm:w-auto w-full"
-                 />
- 
-                 <Button
-                     variant="contained"
-                     color="secondary"
-                     className='w-full sm:w-auto'
-                     onClick={handleSearch}
-                 >
-                     Pesquisar
-                 </Button>
-                 <CustomExportButton />
- 
-             </GridToolbarContainer>
-         );
-     }
+        const tipoOptions = [
+            { label: 'Saída', value: 'D' },
+            { label: 'Entrada', value: 'C' },
+        ];
+
+        const operacaoOptions = [
+            { label: 'APL AUTOM', value: 'APL AUTOM' },
+            { label: 'APL FUNDO', value: 'APL FUNDO' },
+            { label: 'CRED.AUTOR', value: 'CRED.AUTOR' },
+            { label: 'CRED TED', value: 'CRED TED' },
+            { label: 'CRED PIX', value: 'CRED PIX' },
+            { label: 'DEB.AUTOR.', value: 'DEB.AUTOR.' },
+            { label: 'EST PG FOR', value: 'EST PG FOR' },
+            { label: 'PAG FORNEC', value: 'PAG FORNEC' },
+            { label: 'RESG AUTOM', value: 'RESG AUTOM' },
+            { label: 'RSG FUNDO', value: 'RSG FUNDO' },
+            { label: 'MANUT CTA', value: 'MANUT CTA' },
+        ];
+
+        return (
+            <GridToolbarContainer className="flex-col sm:flex-row w-full  items-center gap-4 mb-4 justify-between" {...props}>
+                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={dateFnsPtBR}>
+                    <DateRangePicker
+                        value={dateRange}
+                        onChange={(range) => setDateRange(range)}
+                        id="custom-date-input"
+                        showOneCalendar
+                        showHeader={false}
+                        placement="auto"
+                        placeholder="Selecionar Data"
+                        format="dd/MM/yy"
+                        character=" - "
+                        className="custom-date-range-picker sm:w-[22%] w-full"
+                    />
+                </LocalizationProvider>
+                <Autocomplete
+                    options={tipoOptions}
+                    getOptionLabel={(option) => option.label}
+                    value={tipoOptions.find(opt => opt.value === tipo) || null}
+                    onChange={(e, newValue) => setTipo(newValue?.value || '')}
+                    renderInput={(params) => (
+                        <TextField {...params} label="Tipo" />
+                    )}
+                    className="min-w-[180px] sm:w-[22%] w-full"
+                />
+                <Autocomplete
+                    multiple
+                    options={operacaoOptions}
+                    getOptionLabel={(option) => option.label}
+                    value={operacaoOptions.filter((opt) => operacao.includes(opt.value))}
+                    onChange={(e, newValues) => setOperacao(newValues.map(val => val.value))}
+                    renderInput={(params) => (
+                        <TextField {...params} label="Operação" />
+                    )}
+                    className="min-w-[22%] sm:w-auto w-full"
+                />
+
+                <Button
+                    variant="contained"
+                    color="secondary"
+                    className='w-full sm:w-auto'
+                    onClick={handleSearch}
+                >
+                    Pesquisar
+                </Button>
+                <ExportButton data={{ rows, dateRange, sumTotal, sumTotalEntry, sumTotalExit }} />
+
+            </GridToolbarContainer>
+        );
+    }
 
     return (
         <>
@@ -206,20 +199,20 @@ export default function BasicEditingGrid(props) {
                     </p>
                 </header>
                 <div style={{ height: 500, width: '100%' }}>
-                  <DataGrid
-                            localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
-                            rows={rows}
-                            loading={isLoading}
-                            columns={columns}
-                            slots={{ toolbar: CustomToolbar }}
-                            editMode="row"
-                            rowModesModel={rowModesModel}
-                            componentsProps={{
-                                toolbar: { setRows, setRowModesModel },
-                            }}
-                        />
-                  
-                  
+                    <DataGrid
+                        localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
+                        rows={rows}
+                        loading={isLoading}
+                        columns={columns}
+                        slots={{ toolbar: CustomToolbar }}
+                        editMode="row"
+                        rowModesModel={rowModesModel}
+                        componentsProps={{
+                            toolbar: { setRows, setRowModesModel },
+                        }}
+                    />
+
+
                 </div>
                 <Box className="font-semibold">
                     Total movimentado:  R$ {sumTotal ?? '0,00'}
@@ -231,9 +224,9 @@ export default function BasicEditingGrid(props) {
                     Total de saídas no período:  R$ {sumTotalExit ?? '0,00'}
                 </Box>
             </Box>
- 
 
-       
+
+
         </>
     );
 }

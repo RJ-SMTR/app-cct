@@ -7,7 +7,6 @@ import { useMemo, useState } from 'react';
 import { Button } from '@mui/base';
 
 function ExportButton({ data }) {
-    console.log(data)
     const [anchorEl, setAnchorEl] = useState(null);
 
 

@@ -6,7 +6,7 @@ import accounting from 'accounting';
 
 import {
     DateRangePicker
-} from 'rsuite'; 
+} from 'rsuite';
 import 'rsuite/dist/rsuite.min.css';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ptBR as dateFnsPtBR } from 'date-fns/locale';
@@ -15,6 +15,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { useDispatch, useSelector } from 'react-redux';
 import { handleExtract } from 'app/store/releaseSlice';
 import { format } from 'date-fns';
+import ExportButton from './ExportButton';
 
 
 
@@ -24,7 +25,7 @@ export default function BasicEditingGrid(props) {
     const [rowModesModel, setRowModesModel] = useState({});
 
     const [isLoading, setIsLoading] = useState(false);
-    
+
 
     const [sumTotal, setSumTotal] = useState()
     const [sumTotalEntry, setSumTotalEntry] = useState()
@@ -36,37 +37,37 @@ export default function BasicEditingGrid(props) {
     const [tipo, setTipo] = useState([]);
     const [operacao, setOperacao] = useState([]);
     const accountBalance = useSelector(state => state.release.accountBalance)
-    
+
 
     const formatToBRL = (value) => {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     };
 
 
-   const formattedValue = (sum) => {
-         return accounting.formatMoney(sum, {
-              symbol: "",
-              decimal: ",",
-              thousand: ".",
-              precision: 2
-          });
-      
-      } 
-  
-      function getRemovedElements(arr, prop, value) {
-          return arr.filter(item => item && item[prop] === value);
-      }
-      
-      const type = (type, valor) => {
-              if (type === 'Saída') {
-                  return `- ${formatToBRL(valor)}`
-              }
-              return formatToBRL(valor)
-          
-      }    
+    const formattedValue = (sum) => {
+        return accounting.formatMoney(sum, {
+            symbol: "",
+            decimal: ",",
+            thousand: ".",
+            precision: 2
+        });
+
+    }
+
+    function getRemovedElements(arr, prop, value) {
+        return arr.filter(item => item && item[prop] === value);
+    }
+
+    const type = (type, valor) => {
+        if (type === 'Saída') {
+            return `- ${formatToBRL(valor)}`
+        }
+        return formatToBRL(valor)
+
+    }
 
 
-  
+
     const handleSearch = () => {
         setIsLoading(true);
         dispatch(handleExtract({
@@ -87,18 +88,19 @@ export default function BasicEditingGrid(props) {
 
                 }));
                 setRows(rowsWithId);
-                                const sumTotal = response.data.extrato.reduce((accumulator, item) => accumulator + accounting.unformat(item.valor.replace('.', ','), ','), 0);
-                                setSumTotal(formattedValue(sumTotal))
-                                const exits = getRemovedElements(rowsWithId, 'tipo', 'Saída')
-                                const sumExits = exits.reduce((accumulator, item) => accumulator - accounting.unformat(item.valor.replace(/\./g, '').replace('.', ','), ','), 0);
-                                setSumTotalExit(formattedValue(sumExits))
-                                const entry = getRemovedElements(rowsWithId, 'tipo', 'Entrada')
-                                const sumEntry = entry.reduce((accumulator, item) => accumulator + accounting.unformat(item.valor.replace(/\./g, '').replace('.', ','), ','), 0);
-                                setSumTotalEntry(formattedValue(sumEntry))
+                const sumTotal = response.data.extrato.reduce((accumulator, item) => accumulator + accounting.unformat(item.valor.replace('.', ','), ','), 0);
+                setSumTotal(formattedValue(sumTotal))
+                const exits = getRemovedElements(rowsWithId, 'tipo', 'Saída')
+                const sumExits = exits.reduce((accumulator, item) => accumulator - accounting.unformat(item.valor.replace(/\./g, '').replace('.', ','), ','), 0);
+                setSumTotalExit(formattedValue(sumExits))
+                const entry = getRemovedElements(rowsWithId, 'tipo', 'Entrada')
+                const sumEntry = entry.reduce((accumulator, item) => accumulator + accounting.unformat(item.valor.replace(/\./g, '').replace('.', ','), ','), 0);
+                setSumTotalEntry(formattedValue(sumEntry))
             }).finally(() => {
                 setIsLoading(false);
             });
     };
+
 
     const columns = [
         { field: 'data', headerName: 'Data', width: 300, editable: false },
@@ -117,16 +119,7 @@ export default function BasicEditingGrid(props) {
             )
         },
     ];
-    const csvOptions = { delimiter: ';' };
 
-    function CustomExportButton(props) {
-        return (
-            <GridToolbarExportContainer {...props}>
-
-                <GridCsvExportMenuItem options={csvOptions} />
-            </GridToolbarExportContainer>
-        );
-    }
     function CustomToolbar(props) {
         const tipoOptions = [
             { label: 'Saída', value: 'D' },
@@ -192,7 +185,8 @@ export default function BasicEditingGrid(props) {
                 >
                     Pesquisar
                 </Button>
-                <CustomExportButton />
+                <ExportButton data={{ rows, dateRange, sumTotal, sumTotalEntry, sumTotalExit }} />
+
 
             </GridToolbarContainer>
         );
@@ -206,6 +200,7 @@ export default function BasicEditingGrid(props) {
                     </h4>
                     <p className='font-semibold'>
                         Saldo da conta: {formatToBRL(accountBalance.cett)}
+
                     </p>
                 </header>
                 <div style={{ height: 500, width: '100%' }}>
