@@ -38,6 +38,7 @@ const consorciosStatus = [
 	{ label: "Todos" },
 	{ label: "Pago" },
 	{ label: "Erro" },
+	{label:"Aguardando Pagamento"}
 ];
 
 const erroStatus = [
@@ -79,11 +80,10 @@ export default function BasicEditingGrid() {
 		{ label: "TEC", value: "TEC", disabled: selected === "name" },
 	];
 
-const especificos = [
-    { label: 'Todos' },
-    { label: 'Eleição' },
-
-];
+	const especificos = [
+		{ label: 'Todos' },
+		{ label: 'Eleição' },
+	];
 
 	const dispatch = useDispatch();
 
@@ -944,7 +944,7 @@ const handleSelection = (field, newValue) => {
 								<TableRow>
 									<TableCell colSpan={6}>
 										<Box className="flex justify-center items-center m-10">
-											<CircularProgress />
+										<CircularProgress />
 										</Box>
 									</TableCell>
 								</TableRow>
