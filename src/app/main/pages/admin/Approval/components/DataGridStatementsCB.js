@@ -26,6 +26,8 @@ export default function BasicEditingGrid(props) {
     const [isLoading, setIsLoading] = useState(false);
 
     const [sumTotal, setSumTotal] = useState()
+    const [sumTotalEntry, setSumTotalEntry] = useState()
+    const [sumTotalExit, setSumTotalExit] = useState()
     const [rows, setRows] = useState([])
 
     const [dateRange, setDateRange] = useState([]);
@@ -37,17 +39,27 @@ export default function BasicEditingGrid(props) {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     };
 
-
-    useEffect(() => {
-        const sum = rows.reduce((accumulator, item) => accumulator + accounting.unformat(item.valor.replace(/\./g, '').replace('.', ','), ','), 0);
-        const formattedValue = accounting.formatMoney(sum, {
+    const formattedValue = (sum) => {
+       return accounting.formatMoney(sum, {
             symbol: "",
             decimal: ",",
             thousand: ".",
             precision: 2
         });
-        setSumTotal(formattedValue)
-    }, [rows])
+    
+    } 
+
+    function getRemovedElements(arr, prop, value) {
+        return arr.filter(item => item && item[prop] === value);
+    }
+    
+    const type = (type, valor) => {
+            if (type === 'Saída') {
+                return `- ${formatToBRL(valor)}`
+            }
+            return formatToBRL(valor)
+        
+    }    
 
     const handleSearch = () => {
         setIsLoading(true);
@@ -62,12 +74,20 @@ export default function BasicEditingGrid(props) {
                 const rowsWithId = response.data.extrato.map((item, index) => ({
                     id: `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 5)}`,
                    data: format(new Date(item.dataLancamento), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }),
-                    valor: formatToBRL(item.valor),
+                    valor: type(item.tipo, item.valor),
                     tipo: item.tipo,
                     operacao: item.operacao
 
                 }));
                 setRows(rowsWithId);
+                const sumTotal = response.data.extrato.reduce((accumulator, item) => accumulator + accounting.unformat(item.valor.replace('.', ','), ','), 0);
+                setSumTotal(formattedValue(sumTotal))
+                const exits = getRemovedElements(rowsWithId, 'tipo', 'Saída')
+                const sumExits = exits.reduce((accumulator, item) => accumulator - accounting.unformat(item.valor.replace(/\./g, '').replace('.', ','), ','), 0);
+                setSumTotalExit(formattedValue(sumExits))
+                const entry = getRemovedElements(rowsWithId, 'tipo', 'Entrada')
+                const sumEntry = entry.reduce((accumulator, item) => accumulator + accounting.unformat(item.valor.replace(/\./g, '').replace('.', ','), ','), 0);
+                setSumTotalEntry(formattedValue(sumEntry))
         })
         .finally(() => {
         setIsLoading(false);
@@ -81,7 +101,16 @@ export default function BasicEditingGrid(props) {
         {
             field: 'operacao', headerName: 'Operação', width: 200, editable: false,
         },
-        { field: 'valor', headerName: 'Valor', width: 200, editable: false },
+        {
+            field: 'valor',
+            headerName: 'Valor',
+            width: 200,
+            renderCell: (params) => (
+                <span className={params.row.tipo === 'Saída' ? 'text-red' : ''}>
+                    {params.value}
+                </span>
+            )
+        },
     ];
     const csvOptions = { delimiter: ';' };
 
@@ -172,7 +201,7 @@ export default function BasicEditingGrid(props) {
                     <h4 className="font-semibold">
                         Conta Bilhetagem
                     </h4>
-                    <p>
+                    <p className='font-semibold'>
                         Saldo da conta: {formatToBRL(accountBalance.cb)}
                     </p>
                 </header>
@@ -192,8 +221,14 @@ export default function BasicEditingGrid(props) {
                   
                   
                 </div>
-                <Box>
-                    Total movimentado:  R$ {sumTotal}
+                <Box className="font-semibold">
+                    Total movimentado:  R$ {sumTotal ?? '0,00'}
+                </Box>
+                <Box className="font-semibold">
+                    Total de entrada no período:  R$ {sumTotalEntry ?? '0,00'}
+                </Box>
+                <Box className="font-semibold">
+                    Total de saídas no período:  R$ {sumTotalExit ?? '0,00'}
                 </Box>
             </Box>
  
