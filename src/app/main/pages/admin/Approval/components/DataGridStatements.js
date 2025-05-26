@@ -13,7 +13,7 @@ import { ptBR as dateFnsPtBR } from 'date-fns/locale';
 
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { useDispatch, useSelector } from 'react-redux';
-import { handleExtract } from 'app/store/releaseSlice';
+import { handleExtract, setAccountBalance } from 'app/store/releaseSlice';
 import { format } from 'date-fns';
 import ExportButton from './ExportButton';
 
@@ -66,7 +66,10 @@ export default function BasicEditingGrid(props) {
           
       }    
 
-
+    function formatISODateToBR(dateString) {
+        const [year, month, day] = dateString.split('T')[0].split('-');
+        return `${day}/${month}/${year}`;
+    }
   
     const handleSearch = () => {
         setIsLoading(true);
@@ -78,15 +81,16 @@ export default function BasicEditingGrid(props) {
             operacao,
         }))
             .then((response) => {
-                const rowsWithId = response.data.extrato.map((item, index) => ({
-                    id: `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 5)}`,
-                    data: format(new Date(item.dataLancamento), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }),
-                    //    data: item.dataLancamento,
-                    valor: type(item.tipo, item.valor),
-                    tipo: item.tipo,
-                    operacao: item.operacao
-
-                }));
+                const rowsWithId = response.data.extrato.map((item, index) => {
+                    const formatted = formatISODateToBR(item.dataLancamento);
+                    return {
+                        id: `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 5)}`,
+                        data: formatted,
+                        valor: type(item.tipo, item.valor),
+                        tipo: item.tipo,
+                        operacao: item.operacao
+                    };
+                });
                 setRows(rowsWithId);
                                 const sumTotal = response.data.extrato.reduce((accumulator, item) => accumulator + accounting.unformat(item.valor.replace('.', ','), ','), 0);
                                 setSumTotal(formattedValue(sumTotal))
@@ -101,6 +105,10 @@ export default function BasicEditingGrid(props) {
             });
     };
 
+   useEffect(() => {
+        dispatch(setAccountBalance({ key: 'cett', value: parseFloat(accounting.unformat(sumTotalEntry?.replace(/\./g, '').replace('.', ','), ',')) - accounting.unformat(sumTotalExit?.replace(/\./g, '').replace('.', ','), ',') }))
+
+    }, [sumTotalEntry,sumTotalExit])
 
     const columns = [
         { field: 'data', headerName: 'Data', width: 300, editable: false },
