@@ -475,11 +475,26 @@ export default function BasicEditingGrid() {
 		setShowButton(false);
 	};
 
-const handleSelection = (field, newValue) => {
-	setSelected(newValue.length > 0 ? field : null);
-	setSelectedConsorcios(newValue); 
-	handleAutocompleteChange(field, newValue); 
-};
+
+
+	const handleSelection = (field, newValue) => {
+		setSelected(newValue.length > 0 ? field : null);
+		setSelectedConsorcios(newValue); 
+		handleAutocompleteChange(field, newValue); 
+	};
+
+	const getStatusStyles = (status) => {
+		switch (status) {
+			case "Pago":
+			return "bg-green-300 text-black";  
+			case "Estorno":
+				return "bg-yellow-400 text-black"; 
+			case "Aguardando Pagamento":
+				return "bg-gray-400 text-black";
+			default:
+			return "bg-red-300 text-black";
+		}
+	};
 
 	return (
 		<>
@@ -918,15 +933,7 @@ const handleSelection = (field, newValue) => {
 											<TableCell>{formatter.format(report.valor)}</TableCell>
 											<TableCell>
 												<span
-													className={`px-3 text-white py-1 rounded-full text-sm ${
-														report.status === "Pago"
-															? "bg-green-800"
-															: report.status === "Estorno"
-															? "bg-yellow-800"
-															: report.status === "Aguardando Pagamento"
-															? "bg-gray-500"
-															: "bg-red-800"
-													}`}
+														className={`px-3 py-1 rounded-full text-sm ${getStatusStyles(report.status)}`}
 												>
 													{report.status}
 												</span>
