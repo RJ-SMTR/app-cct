@@ -179,7 +179,6 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
                         };
                         dispatch(handleSynthData(combinedResponse))
                     } else {
-
                         dispatch(setReportList(responseData));
                     }
                     resolve(responseData);
