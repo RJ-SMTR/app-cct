@@ -54,9 +54,9 @@ function ExportButton({data}) {
     
         const csvFilename = useMemo(() => {
             if (dateInicio && dateFim) {
-                return `extrato_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.csv`;
+                return `extrato_${data.conta}_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.csv`;
             }
-            return `extrato_${format(new Date(), 'dd-MM-yyyy')}.csv`; 
+            return `extrato_${data.conta}_${format(new Date(), 'dd-MM-yyyy')}.csv`; 
         }, [dateInicio, dateFim])
     
 
@@ -139,7 +139,7 @@ function ExportButton({data}) {
             doc.text(totalValueExit, 14, doc.internal.pageSize.height - 12);
     
            
-            doc.save(`relatorio_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.pdf`);
+          doc.save(`extrato_${data.conta}_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.pdf`);
         };
 
 
