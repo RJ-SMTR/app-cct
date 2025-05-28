@@ -151,7 +151,9 @@ function ExportButton({data}) {
             doc.text(totalValueExit, 14, doc.internal.pageSize.height - 12);
     
            
-          doc.save(`extrato_cb_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.pdf`);
+
+          doc.save(`extrato_${data.conta}_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.pdf`);
+
         };
 
 

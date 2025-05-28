@@ -38,6 +38,7 @@ export default function BasicEditingGrid(props) {
     const [operacao, setOperacao] = useState([]);
     const accountBalance = useSelector(state => state.release.accountBalance)
     
+
     const formatToBRL = (value) => {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     };

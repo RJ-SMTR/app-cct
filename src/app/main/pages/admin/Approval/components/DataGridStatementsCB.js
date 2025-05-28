@@ -36,7 +36,7 @@ export default function BasicEditingGrid(props) {
     const [tipo, setTipo] = useState('');
     const [operacao, setOperacao] = useState('');
     const accountBalance = useSelector(state => state.release.accountBalance)
-
+    let conta = 'cb'
     const formatToBRL = (value) => {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     };
@@ -197,6 +197,7 @@ export default function BasicEditingGrid(props) {
                  </Button>
 
                  <ExportButton data={{ rows, dateRange, sumTotal, sumTotalEntry, sumTotalExit, conta: 'cb', saldo: formatToBRL(accountBalance.cb) }} />
+
 
              </GridToolbarContainer>
          );
