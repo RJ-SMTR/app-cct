@@ -40,6 +40,27 @@ const masterConfig = [
             //     icon: 'heroicons-solid:mail',
             //     url: 'disparo',
             // },
+           
+            {
+                id: 'support',
+                title: 'Suporte',
+                translate: 'Suporte',
+                type: 'item',
+                icon: 'material-outline:contact_support',
+                target: '_blank',
+                url: 'https://transportes.prefeitura.rio/atendimentodigital/',
+            },
+        ]
+
+    },
+
+    {
+        id: 'Movimentações Financeiras',
+        title: 'Movimentações Financeiras',
+        subtitle: '',
+        type: 'group',
+        icon: '',
+        children: [
             {
                 id: 'trigger-component',
                 title: 'report',
@@ -56,17 +77,7 @@ const masterConfig = [
                 icon: 'heroicons-outline:currency-dollar',
                 url: 'extrato-lançamentos',
             },
-            {
-                id: 'support',
-                title: 'Suporte',
-                translate: 'Suporte',
-                type: 'item',
-                icon: 'material-outline:contact_support',
-                target: '_blank',
-                url: 'https://transportes.prefeitura.rio/atendimentodigital/',
-            },
         ]
-
     },
 
     {

@@ -10,18 +10,22 @@ function ExportButton({data}) {
     console.log(data)
     const [anchorEl, setAnchorEl] = useState(null);
 
-    
-        const reportListData =
-             data.rows?.map(report => ({
+    const reportListData = [
+        { Data: `Conta: ${data.conta}`, Tipo: '', Operação: '', Valor: '' },
+        { Data: `Saldo: ${data.saldo}`, Tipo: '', Operação: '', Valor: '' },
+        ...(
+            data.rows?.map(report => ({
                 Data: report.data,
-                Tipo: report.tipo,  
-                Operação:report.operacao,
+                Tipo: report.tipo,
+                Operação: report.operacao,
                 Valor: report.valor,
-            }))
+            })) || []
+        )
+      ];
     
 
     const valorTotal = {
-        Data:'Valor Total',
+        Data:'Valor Total Movimentado',
         Tipo:'',
         Operação: '',
         Valor: `R$ ${data.sumTotal}`,
@@ -36,8 +40,9 @@ function ExportButton({data}) {
         Data:'Valor Saida',
         Tipo:'',
         Operação: '',
-        Valor: `R$ ${data.sumTotalExit}`,
+        Valor: `R$ - ${data.sumTotalExit}`,
             }
+            
     const csvData = [
         ...reportListData,
         valorTotal,
@@ -62,6 +67,8 @@ function ExportButton({data}) {
 
 
       const exportPDF = () => {
+            let conta = data.conta
+            let saldo = data.saldo
             const doc = new jsPDF();
             const tableColumn = ["Data", "Tipo", "Operação", "Valor"];
             const tableRows = [];
@@ -107,6 +114,11 @@ function ExportButton({data}) {
     
                    
                     doc.setFontSize(10);
+                    doc.text(`${conta == 'cb' ? 'Conta Bilhetagem' : 'Conta de Estabilização Tarifária dos Transportes'}`, 14, 35);
+                    doc.setFontSize(10);
+                    doc.text(`Saldo: ${saldo}`, 14, 40);
+
+                    doc.setFontSize(10);
                     doc.text(`Extrato dos dias: ${format(dateInicio, 'dd/MM/yyyy')} a ${format(dateFim, 'dd/MM/yyyy')}`, 14, 45);
     
     
@@ -132,14 +144,16 @@ function ExportButton({data}) {
     
             const totalValue = `Valor total Movimentado: ${data.sumTotal}`;
             const totalValueEntry = `Valor total Entrada: ${data.sumTotalEntry}`;
-            const totalValueExit = `Valor total Saída: ${data.sumTotalExit}`;
+            const totalValueExit = `Valor total Saída: - ${data.sumTotalExit}`;
             doc.setFontSize(10);
             doc.text(totalValue, 14, doc.internal.pageSize.height - 22);
             doc.text(totalValueEntry, 14, doc.internal.pageSize.height - 17);
             doc.text(totalValueExit, 14, doc.internal.pageSize.height - 12);
     
            
+
           doc.save(`extrato_${data.conta}_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.pdf`);
+
         };
 
 
@@ -150,11 +164,11 @@ function ExportButton({data}) {
     const handleMenuClose = (option) => {
         setAnchorEl(null);
         if (option === 'csv') {
-            document.getElementById('csv-export-link').click();
+            document.getElementById(`csv-export-link-${data.conta}`)?.click();
         } else if (option === 'pdf') {
             exportPDF();
-        };
-    }
+        }
+      };
   return (
     <>
        <Button
@@ -179,7 +193,7 @@ function ExportButton({data}) {
                             </Menu>
     
                             <CSVLink
-                                id="csv-export-link"
+                                id={`csv-export-link-${data.conta}`}
                                 data={csvData}
                                 filename={csvFilename}
                                 className="hidden"

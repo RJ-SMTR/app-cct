@@ -196,7 +196,8 @@ export default function BasicEditingGrid(props) {
                      Pesquisar
                  </Button>
 
-                 <ExportButton data={{ rows, dateRange, sumTotal, sumTotalEntry, sumTotalExit, conta }} />
+                 <ExportButton data={{ rows, dateRange, sumTotal, sumTotalEntry, sumTotalExit, conta: 'cb', saldo: formatToBRL(accountBalance.cb) }} />
+
 
              </GridToolbarContainer>
          );
