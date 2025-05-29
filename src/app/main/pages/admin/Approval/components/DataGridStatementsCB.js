@@ -196,7 +196,8 @@ export default function BasicEditingGrid(props) {
                      Pesquisar
                  </Button>
 
-                 <ExportButton data={{ rows, dateRange, sumTotal, sumTotalEntry, sumTotalExit, conta: 'cb', saldo: formatToBRL(accountBalance.cb) }} />
+                 <ExportButton data={{ rows, dateRange, sumTotal, sumTotalEntry, sumTotalExit, conta: 'CB', saldo: formatToBRL(accountBalance.cb) }} />
+
 
 
              </GridToolbarContainer>
@@ -218,6 +219,7 @@ export default function BasicEditingGrid(props) {
                   <DataGrid
                             localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
                             rows={rows}
+                        rowHeight={25}
                             loading={isLoading}
                             columns={columns}
                             slots={{ toolbar: CustomToolbar }}
