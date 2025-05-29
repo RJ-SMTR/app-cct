@@ -3,13 +3,12 @@ import { Typography, Box, Button, Modal } from '@mui/material';
 import React, { useContext, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { selectUser } from 'app/store/userSlice';
-import Entries from './widgets/Entries';
-import TableTransactions from './widgets/Table'
+import TableTransactions from '../extract/widgets/Table'
 
 import { setFullReport} from 'app/store/extractSlice';
 
-import TableTypes from './widgets/TableTypes';
-import TablePending from './widgets/TablePending';
+// import TableTypes from './widgets/TableTypes';
+// import TablePending from './widgets/TablePending';
 const style = {
   position: 'absolute',
   top: '50%',
@@ -30,25 +29,22 @@ function ExtractApp() {
   const dispatch = useDispatch()
   const user = useSelector(selectUser);
   const fullName = user.fullName ?? 'Admin';
-  const paidValue = useSelector(state => state.extract.valorPagoLabel);
-  const valorTransação = useSelector(state => state.extract.valorAcumuladoLabel);
-  const valorPago = useSelector(state => state.extract.valorPagoLabel);
   const [first] = fullName?.split(' ');
   const searchingWeek = useSelector(state => state.extract.searchingWeek)
   const searchingDay = useSelector(state => state.extract.searchingDay)
 
 
-  useEffect(() => {
-    dispatch(setFullReport(true))
-    const modalShown = sessionStorage.getItem('modalShown');
-    if (!modalShown) {
-      setModal(true);
-      sessionStorage.setItem('modalShown', 'true');
-    }
-  }, [])
-  const handleClose = () => {
-    setModal(false);
-  };
+  // useEffect(() => {
+  //   dispatch(setFullReport(true))
+  //   const modalShown = sessionStorage.getItem('modalShown');
+  //   if (!modalShown) {
+  //     setModal(true);
+  //     sessionStorage.setItem('modalShown', 'true');
+  //   }
+  // }, [])
+  // const handleClose = () => {
+  //   setModal(false);
+  // };
 
   return (
     <>
@@ -58,25 +54,21 @@ function ExtractApp() {
         <p className='w-[100%] md:w-[35%]'>Esse é seu painel financeiro, aqui você pode conferir os valores que deve receber nos próximos dias e uma média das suas entradas.</p>
       </div>
       <div className="p-24 pt-10">
-        <Typography className='font-medium text-3xl'>Resumo dos Valores</Typography>
+        <Typography className='font-medium text-3xl'>Resumo dos Valores de 2024</Typography>
         <Box className='flex flex-col md:flex-row mt-24 justify-around spacing-x-1'>
 
         </Box>
         <div className={`flex flex-col`}>
           <Box className='flex flex-col md:flex-row  justify-around'>
-            <TableTransactions data={{id: user.id, ano:25}}  />
+            <TableTransactions data={{id: user.id, ano: 24}} />
           </Box>
-
-       {searchingWeek && !searchingDay ? <div>
-                  <TablePending />
-                </div> : <></>}
 
         </div>
        
 
         <br />
       </div>
-      <Modal
+      {/* <Modal
         open={modal}
         onClose={handleClose}
         aria-labelledby="modal-modal-title"
@@ -90,7 +82,7 @@ function ExtractApp() {
             Qualquer dúvida, por favor, contacte o suporte!</p>
          
         </Box>
-      </Modal>
+      </Modal> */}
     </>
   );
 }

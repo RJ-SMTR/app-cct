@@ -46,7 +46,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import ptBR from 'date-fns/locale/pt-BR';
 
-function TableTransactions({ id }) {
+function TableTransactions({ data }) {
     const dispatch = useDispatch()
     const user = useSelector(selectUser)
     const {
@@ -165,10 +165,10 @@ function TableTransactions({ id }) {
     useEffect(() => {
         setPreviousDays("");
         if (user.role.name.includes("Admin")) {
-            dispatch(getStatements(dateRange, searchingDay, searchingWeek, id, ordemPgtoId, mocked))
+            dispatch(getStatements(dateRange, searchingDay, searchingWeek, data.id, ordemPgtoId, mocked))
              
         } else {
-            dispatch(getStatements(dateRange, searchingDay, searchingWeek,id, ordemPgtoId))
+            dispatch(getStatements(dateRange, searchingDay, searchingWeek,data.id, ordemPgtoId))
 
         }
 
@@ -364,8 +364,9 @@ function TableTransactions({ id }) {
 
                                 </LocalizationProvider> : <></>}
 
-
+                            {data.ano === 24 ? <></> : 
                             <Button className='self-center ml-10' variant="contained" onClick={handleDays} data-value={'lastMonth'}>Mês Atual</Button>
+                            }
 
                         </div>
                     </Hidden></> : <></>}
@@ -397,7 +398,7 @@ function TableTransactions({ id }) {
                                 </TableCell> : <></>}
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                        Valor Total para Pagamento
+                                        {data.ano === 24 ?' Valor Pago' :  'Valor Total para Pagamento'}
                                     </Typography>
                                 </TableCell>
                                 {searchingDay ? <TableCell>
