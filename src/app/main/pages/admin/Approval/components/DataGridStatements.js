@@ -197,6 +197,7 @@ export default function BasicEditingGrid(props) {
                 <ExportButton data={{rows, dateRange, sumTotal, sumTotalEntry, sumTotalExit, conta: 'CETT', saldo: formatToBRL(accountBalance.cett)}} />
 
 
+
             </GridToolbarContainer>
         );
     }
