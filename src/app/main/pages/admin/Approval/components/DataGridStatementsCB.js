@@ -36,7 +36,6 @@ export default function BasicEditingGrid(props) {
     const [tipo, setTipo] = useState('');
     const [operacao, setOperacao] = useState('');
     const accountBalance = useSelector(state => state.release.accountBalance)
-    let conta = 'cb'
     const formatToBRL = (value) => {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     };
@@ -50,16 +49,12 @@ export default function BasicEditingGrid(props) {
         });
     
     } 
-
-    function getRemovedElements(arr, prop, value) {
-        return arr.filter(item => item && item[prop] === value);
-    }
     
     const type = (type, valor) => {
             if (type === 'Saída') {
-                return `- ${formatToBRL(valor)}`
+                return parseFloat(valor) * -1
             }
-            return formatToBRL(valor)
+            return valor
         
     }    
     function formatISODateToBR(dateString) {
@@ -83,20 +78,38 @@ export default function BasicEditingGrid(props) {
                         id: `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 5)}`,
                         data: formatted,
                         valor: type(item.tipo, item.valor),
+                        // valor: item.valor,
                         tipo: item.tipo,
                         operacao: item.operacao
                     };
                 });
                 setRows(rowsWithId);
-                const sumTotal = response.data.extrato.reduce((accumulator, item) => accumulator + accounting.unformat(item.valor.replace('.', ','), ','), 0);
-                setSumTotal(formattedValue(sumTotal))
-                const exits = getRemovedElements(rowsWithId, 'tipo', 'Saída')
-                const sumExits = exits.reduce((accumulator, item) => accumulator - accounting.unformat(item.valor.replace(/\./g, '').replace('.', ','), ','), 0);
-                setSumTotalExit(formattedValue(sumExits))
-                const entry = getRemovedElements(rowsWithId, 'tipo', 'Entrada')
-                const sumEntry = entry.reduce((accumulator, item) => accumulator + accounting.unformat(item.valor.replace(/\./g, '').replace('.', ','), ','), 0);
-                setSumTotalEntry(formattedValue(sumEntry))
-                
+             
+                const totalMovimentado = response.data.extrato.reduce((acc, item) => {
+                    const valor = typeof item.valor === 'string'
+                        ? parseFloat(item.valor)
+                        : item.valor;
+                    return acc + Math.abs(valor);
+                }, 0);
+                setSumTotal(formattedValue(totalMovimentado));
+            
+                const entradas = response.data.extrato.filter(item => item.tipo === 'Entrada');
+                const totalEntrada = entradas.reduce((acc, item) => {
+                    const valor = typeof item.valor === 'string'
+                        ? parseFloat(item.valor)
+                        : item.valor;
+                    return acc + valor;
+                }, 0);
+                setSumTotalEntry(formattedValue(totalEntrada));
+
+                const saidas = response.data.extrato.filter(item => item.tipo === 'Saída');
+                const totalSaida = saidas.reduce((acc, item) => {
+                    const valor = typeof item.valor === 'string'
+                        ? parseFloat(item.valor)
+                        : item.valor;
+                    return acc + valor;
+                }, 0);
+                setSumTotalExit(formattedValue(totalSaida));
               
         })
         .finally(() => {
@@ -120,9 +133,10 @@ export default function BasicEditingGrid(props) {
             field: 'valor',
             headerName: 'Valor',
             width: 200,
+            type: 'number',
             renderCell: (params) => (
                 <span className={params.row.tipo === 'Saída' ? 'text-red ml-[-10px]' : ''}>
-                    {params.value}
+                    {formatToBRL(params.value)}
                 </span>
             )
         },
@@ -223,6 +237,7 @@ export default function BasicEditingGrid(props) {
                             loading={isLoading}
                             columns={columns}
                             slots={{ toolbar: CustomToolbar }}
+                        disableColumnMenu
                             editMode="row"
                             rowModesModel={rowModesModel}
                             componentsProps={{
