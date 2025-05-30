@@ -5,7 +5,6 @@ import { format } from "date-fns";
 function CardBalance({ type, amount }) {
     const date = new Date()
     const formattedDate = format(date, 'dd/MM/yyyy')
-    const isNumber = typeof amount === 'number'
     const formatter = new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL',
@@ -23,9 +22,10 @@ function CardBalance({ type, amount }) {
                     </div>
                 </div>
                 <div className="flex flex-row flex-wrap mt-8 ">
-                    <Typography className="mt-8 font-medium text-3xl leading-none">
-                        {isNumber ? formatter.format(amount) : amount}
-                    </Typography>
+                        <Typography className="mt-8 font-medium text-3xl leading-none">
+                            {formatter.format(amount)}
+                        </Typography>
+
                 </div>
                 <div className="absolute bottom-0 ltr:right-0 rtl:left-0 w-96 h-96 -m-24">
                     <FuseSvgIcon size={90} className="opacity-25 text-green-500 dark:text-green-400">

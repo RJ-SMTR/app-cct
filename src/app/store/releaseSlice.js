@@ -12,6 +12,9 @@ import { format } from 'date-fns';
 const initialState = {
     selectedPeriod: false,
     listTransactions: [],
+    listCett: [],
+    listCB: [],
+    // listTransactions: [],
     selectedDate: {
         mes: '',
         periodo: ''
@@ -19,7 +22,11 @@ const initialState = {
     authValue: '',
     selectedStatus: null,
     selectedYear: '',
-    clientesFavorecidos: []
+    clientesFavorecidos: [],
+    accountBalance: {
+        cb: null,
+        cett: null
+    }
 };
 
 const stepSlice = createSlice({
@@ -31,6 +38,12 @@ const stepSlice = createSlice({
         },
         setListTransactions: (state, action) => {
             state.listTransactions = action.payload;
+        },
+        setListCett: (state, action) => {
+            state.listCett = action.payload;
+        },
+        setListCB: (state, action) => {
+            state.listCB = action.payload;
         },
         setSelectedDate: (state, action) => {
             state.selectedDate = action.payload;
@@ -47,11 +60,21 @@ const stepSlice = createSlice({
         setClientesFavorecidos: (state, action) => {
             state.clientesFavorecidos = action.payload;
         },
+        setAccountBalance: (state, action) => {
+            const { key, value } = action.payload;
+            state.accountBalance = {
+                ...state.accountBalance,
+                [key]: value,
+            };
+        },
     },
 });
 
-export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTransactions, selectDate, setSelectedDate, authValue, setAuthValue, setSelectedStatus, selectedStatus, setSelectedYear, selectedYear, clientesFavorecidos, setClientesFavorecidos } = stepSlice.actions;
+export const { setSelectedPeriod, selectedPeriod, listTransactions, setListTransactions, selectDate, setSelectedDate, authValue, setAuthValue, setSelectedStatus, selectedStatus, setSelectedYear, selectedYear, clientesFavorecidos, setClientesFavorecidos, listCett, setListCett, listCB, setListCB, setAccountBalance, accountBalance } = stepSlice.actions;
 export default stepSlice.reducer;
+
+
+
 
 export const getData = (data) => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
@@ -280,7 +303,7 @@ export const handleAuthValue = (data) => (dispatch) => {
     });
 };
 
-export const handleAuthRelease = (selectedDate,selectedStatus, id, password) => (dispatch) => {
+export const handleAuthRelease = (selectedDate, selectedStatus, id, password) => (dispatch) => {
     const searchParams = {
         selectedDate: { ...selectedDate },
         selectedStatus,
@@ -309,6 +332,42 @@ export const handleAuthRelease = (selectedDate,selectedStatus, id, password) => 
             .catch((error) => {
                 reject(error)
             })
+
+    })
+}
+
+
+export const handleExtract = (data) => (dispatch) => {
+    const token = window.localStorage.getItem('jwt_access_token');
+    data.dataInicio = dayjs(data.dataInicio).format('YYYY-MM-DD');
+    data.dataFim = dayjs(data.dataFim).format('YYYY-MM-DD');
+
+    return new Promise(async (resolve, reject) => {
+
+        let config = {
+            method: 'get',
+            maxBodyLength: Infinity,
+            url: jwtServiceConfig.extrato,
+            headers: {
+                "Authorization": `Bearer ${token}`
+            },
+            params: data
+        };
+        try {
+            const response = await api.request(config);
+            if (data.conta === 'cett') {
+                dispatch(setListCett(response))
+                dispatch(setAccountBalance({ key: 'cett', value: response.data.saldoConta }));
+            }
+            if (data.conta === 'cb') {
+                dispatch(setListCB(response))
+                dispatch(setAccountBalance({ key: 'cb', value: response.data.saldoConta }));
+            }
+            resolve(response)
+        } catch (error) {
+            reject((error))
+        }
+
 
     })
 }
