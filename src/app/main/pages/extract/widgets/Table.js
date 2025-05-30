@@ -34,7 +34,8 @@ import { getStatements,
          setLoading, setLoadingWeek, 
          setLoadingPrevious, 
          setOrdemPgto,
-        setMocked } from 'app/store/extractSlice';
+        setMocked, 
+        get24} from 'app/store/extractSlice';
 
 import { showMessage } from 'app/store/fuse/messageSlice';
 
@@ -115,26 +116,7 @@ function TableTransactions({ data }) {
         setPage(page + 1)
     }
 
-    // const handleNextWeek = () => {
-    //     const nextWeekStart = new Date(currentWeekStart)
-    //     nextWeekStart.setDate(nextWeekStart.getDate() + 7)
-    //     setCurrentWeekStart(nextWeekStart)
-    //     dispatch( setLoading(true))
-    //     dispatch(setLoadingWeek(true))
-    //     dispatch(setLoadingPrevious(true))
-
-    // }
-
-
-    // const handlePreviousWeek = () => {
-    //     const previousWeekStart = new Date(currentWeekStart)
-    //     previousWeekStart.setDate(previousWeekStart.getDate() - 7)
-    //     setCurrentWeekStart(previousWeekStart)
-    //     dispatch(setLoading(true))
-    //     dispatch(setLoadingWeek(true))
-    //     dispatch(setLoadingPrevious(true))
-    // }
-
+   
     function isEndDateGreaterThanToday(endDate) {
         const today = new Date();
         const startOfToday = startOfDay(today)
@@ -163,14 +145,16 @@ function TableTransactions({ data }) {
     }
 
     useEffect(() => {
-        setPreviousDays("");
-        if (user.role.name.includes("Admin")) {
-            dispatch(getStatements(dateRange, searchingDay, searchingWeek, data.id, ordemPgtoId, mocked))
-             
-        } else {
-            dispatch(getStatements(dateRange, searchingDay, searchingWeek,data.id, ordemPgtoId))
+    
+            setPreviousDays("");
+            if (user.role.name.includes("Admin")) {
+                dispatch(getStatements(dateRange, searchingDay, searchingWeek, data.id, ordemPgtoId, mocked))
 
-        }
+            } else {
+                dispatch(getStatements(dateRange, searchingDay, searchingWeek, data.id, ordemPgtoId))
+
+            }
+       
 
 
     }, [previousDays, dateRange])
@@ -222,12 +206,7 @@ function TableTransactions({ data }) {
 
             setDataOrderDay(start)
             if (fullReport) {
-                // if (searchingWeek && !mocked) {
-                //     dispatch(setMocked(true))
-                //     dispatch(setDateRange([transformedDate, transformedDate]));
-
-
-                // } else 
+               
                 if (searchingWeek) {
                     dispatch(setValorAcumuladoLabel('Valor Operação - Detalhado'));
                     dispatch(setValorPagoLabel('Valor - Detalhado'));
@@ -256,23 +235,17 @@ function TableTransactions({ data }) {
     }
 
     const handleBack = () => {
-        // if(mocked && !searchingDay){
-        //     dispatch(setMocked(false))
-        //     dispatch(setDateRange(lastDate))
-            
-        // } else {
+       
             setSelectedDate(null);
             dispatch(setLoadingWeek(true))
             dispatch(setLoadingPrevious(true))
             dispatch(setLoading(true))
-            // dispatch(setMocked(false))
             if (searchingDay) {
                 dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
                 dispatch(setValorPagoLabel('Valor - Acumulado Semanal'));
                 dispatch(setDateRange(lastDate))
                 dispatch(setOrdemPgto(lastId))
                 setPage(0)
-                // dispatch(setMocked(true))
                 dispatch(setSearchingDay(false))
 
 
@@ -295,7 +268,6 @@ function TableTransactions({ data }) {
 
         }
        
-        // }
     }
 
  
@@ -432,7 +404,7 @@ function TableTransactions({ data }) {
                                         <CircularProgress />
                                     </Box> 
                                 </TableCell>
-                            : statements?.length > 0 ?
+                            : statements?.length > 0 || data.ano != 24 ?
                             statements?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
                                 const tz = 'UTC'
                                 const date = parseISO(i.data ?? i.dataCaptura ?? i.datetime_processamento);

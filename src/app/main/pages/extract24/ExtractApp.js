@@ -3,7 +3,7 @@ import { Typography, Box, Button, Modal } from '@mui/material';
 import React, { useContext, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { selectUser } from 'app/store/userSlice';
-import TableTransactions from '../extract/widgets/Table'
+import TableTransactions from './utils/Table'
 
 import { setFullReport} from 'app/store/extractSlice';
 
@@ -25,13 +25,10 @@ const style = {
 
 
 function ExtractApp() {
-    const [modal, setModal] = useState(false);
   const dispatch = useDispatch()
   const user = useSelector(selectUser);
   const fullName = user.fullName ?? 'Admin';
   const [first] = fullName?.split(' ');
-  const searchingWeek = useSelector(state => state.extract.searchingWeek)
-  const searchingDay = useSelector(state => state.extract.searchingDay)
 
 
   // useEffect(() => {
@@ -68,21 +65,6 @@ function ExtractApp() {
 
         <br />
       </div>
-      {/* <Modal
-        open={modal}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style} className="overflow-scroll text-center">
-          <Typography id="modal-modal-title" variant="h6" component="h3">
-           Comunicado:
-          </Typography>
-          <p>As informações anteriores ao dia 31/12/24 estão temporariamente indisponíveis.
-            Qualquer dúvida, por favor, contacte o suporte!</p>
-         
-        </Box>
-      </Modal> */}
     </>
   );
 }
