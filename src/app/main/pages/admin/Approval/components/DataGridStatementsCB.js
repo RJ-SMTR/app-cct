@@ -13,9 +13,10 @@ import { ptBR as dateFnsPtBR } from 'date-fns/locale';
 
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { useDispatch, useSelector } from 'react-redux';
-import { handleExtract } from 'app/store/releaseSlice';
+import { handleExtract, setAccountBalance } from 'app/store/releaseSlice';
 import { format } from 'date-fns';
 import ExportButton from './ExportButton';
+
 
 
 
@@ -35,7 +36,6 @@ export default function BasicEditingGrid(props) {
     const [tipo, setTipo] = useState('');
     const [operacao, setOperacao] = useState('');
     const accountBalance = useSelector(state => state.release.accountBalance)
-
     const formatToBRL = (value) => {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     };
@@ -50,18 +50,17 @@ export default function BasicEditingGrid(props) {
 
     }
 
-    function getRemovedElements(arr, prop, value) {
-        return arr.filter(item => item && item[prop] === value);
-    }
-
     const type = (type, valor) => {
         if (type === 'Saída') {
-            return `- ${formatToBRL(valor)}`
+            return parseFloat(valor) * -1
         }
-        return formatToBRL(valor)
+        return valor
 
     }
-
+    function formatISODateToBR(dateString) {
+        const [year, month, day] = dateString.split('T')[0].split('-');
+        return `${day}/${month}/${year}`;
+    }
     const handleSearch = () => {
         setIsLoading(true);
         dispatch(handleExtract({
@@ -72,29 +71,56 @@ export default function BasicEditingGrid(props) {
             operacao,
         }))
             .then((response) => {
-                const rowsWithId = response.data.extrato.map((item, index) => ({
-                    id: `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 5)}`,
-                    data: format(new Date(item.dataLancamento), 'dd/MM/yyyy', { timeZone: 'Etc/UTC' }),
-                    valor: type(item.tipo, item.valor),
-                    tipo: item.tipo,
-                    operacao: item.operacao
+                const rowsWithId = response.data.extrato.map((item, index) => {
+                    const formatted = formatISODateToBR(item.dataLancamento);
 
-                }));
+                    return {
+                        id: `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 5)}`,
+                        data: formatted,
+                        valor: type(item.tipo, item.valor),
+                        // valor: item.valor,
+                        tipo: item.tipo,
+                        operacao: item.operacao
+                    };
+                });
                 setRows(rowsWithId);
-                const sumTotal = response.data.extrato.reduce((accumulator, item) => accumulator + accounting.unformat(item.valor.replace('.', ','), ','), 0);
-                setSumTotal(formattedValue(sumTotal))
-                const exits = getRemovedElements(rowsWithId, 'tipo', 'Saída')
-                const sumExits = exits.reduce((accumulator, item) => accumulator - accounting.unformat(item.valor.replace(/\./g, '').replace('.', ','), ','), 0);
-                setSumTotalExit(formattedValue(sumExits))
-                const entry = getRemovedElements(rowsWithId, 'tipo', 'Entrada')
-                const sumEntry = entry.reduce((accumulator, item) => accumulator + accounting.unformat(item.valor.replace(/\./g, '').replace('.', ','), ','), 0);
-                setSumTotalEntry(formattedValue(sumEntry))
+
+                const totalMovimentado = response.data.extrato.reduce((acc, item) => {
+                    const valor = typeof item.valor === 'string'
+                        ? parseFloat(item.valor)
+                        : item.valor;
+                    return acc + Math.abs(valor);
+                }, 0);
+                setSumTotal(formattedValue(totalMovimentado));
+
+                const entradas = response.data.extrato.filter(item => item.tipo === 'Entrada');
+                const totalEntrada = entradas.reduce((acc, item) => {
+                    const valor = typeof item.valor === 'string'
+                        ? parseFloat(item.valor)
+                        : item.valor;
+                    return acc + valor;
+                }, 0);
+                setSumTotalEntry(formattedValue(totalEntrada));
+
+                const saidas = response.data.extrato.filter(item => item.tipo === 'Saída');
+                const totalSaida = saidas.reduce((acc, item) => {
+                    const valor = typeof item.valor === 'string'
+                        ? parseFloat(item.valor)
+                        : item.valor;
+                    return acc + valor;
+                }, 0);
+                setSumTotalExit(formattedValue(totalSaida));
+
             })
             .finally(() => {
                 setIsLoading(false);
             });
 
     };
+    useEffect(() => {
+        dispatch(setAccountBalance({ key: 'cb', value: parseFloat(accounting.unformat(sumTotalEntry?.replace(/\./g, '').replace('.', ','), ',')) - accounting.unformat(sumTotalExit?.replace(/\./g, '').replace('.', ','), ',') }))
+
+    }, [sumTotalEntry, sumTotalExit])
 
     const columns = [
         { field: 'data', headerName: 'Data', width: 300, editable: false },
@@ -103,12 +129,14 @@ export default function BasicEditingGrid(props) {
             field: 'operacao', headerName: 'Operação', width: 200, editable: false,
         },
         {
+
             field: 'valor',
             headerName: 'Valor',
             width: 200,
+            type: 'number',
             renderCell: (params) => (
-                <span className={params.row.tipo === 'Saída' ? 'text-red' : ''}>
-                    {params.value}
+                <span className={params.row.tipo === 'Saída' ? 'text-red ml-[-10px]' : ''}>
+                    {formatToBRL(params.value)}
                 </span>
             )
         },
@@ -181,7 +209,10 @@ export default function BasicEditingGrid(props) {
                 >
                     Pesquisar
                 </Button>
-                <ExportButton data={{ rows, dateRange, sumTotal, sumTotalEntry, sumTotalExit }} />
+
+                <ExportButton data={{ rows, dateRange, sumTotal, sumTotalEntry, sumTotalExit, conta: 'CB', saldo: formatToBRL(accountBalance.cb) }} />
+
+
 
             </GridToolbarContainer>
         );
@@ -202,9 +233,11 @@ export default function BasicEditingGrid(props) {
                     <DataGrid
                         localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
                         rows={rows}
+                        rowHeight={25}
                         loading={isLoading}
                         columns={columns}
                         slots={{ toolbar: CustomToolbar }}
+                        disableColumnMenu
                         editMode="row"
                         rowModesModel={rowModesModel}
                         componentsProps={{
@@ -220,8 +253,8 @@ export default function BasicEditingGrid(props) {
                 <Box className="font-semibold">
                     Total de entrada no período:  R$ {sumTotalEntry ?? '0,00'}
                 </Box>
-                <Box className="font-semibold">
-                    Total de saídas no período:  R$ {sumTotalExit ?? '0,00'}
+                <Box className="font-semibold text-red ">
+                    Total de saídas no período: - R$ {sumTotalExit ?? '0,00'}
                 </Box>
             </Box>
 
