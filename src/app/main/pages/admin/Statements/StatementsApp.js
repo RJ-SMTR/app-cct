@@ -21,8 +21,8 @@ function StatementsApp() {
 
    
     useEffect(() => {
-        dispatch(setAccountBalance({ key: 'cett', value: null }));
-        dispatch(setAccountBalance({ key: 'cb', value: null }));
+        dispatch(setAccountBalance({ key: 'cett', value: 0 }));
+        dispatch(setAccountBalance({ key: 'cb', value: 0 }));
     }, [])
     useEffect(() => {
         setBalanceTotal(parseFloat(accountBalance.cb) + parseFloat(accountBalance.cett))
