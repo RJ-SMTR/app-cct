@@ -11,7 +11,6 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 
 export function CustomTable(data) {
-  console.log(data)
   // const [dayAmount, setDayAmount] = useState(null)
   const searchingDay = useSelector(state => state.extract.searchingDay);
   const searchingWeek = useSelector(state => state.extract.searchingWeek);
@@ -58,16 +57,17 @@ export function CustomTable(data) {
   }
   const ErrorBadge = (data) => {
     const i = data.data.data
+    const error24 = i.motivo
     const errorDescription = i.motivoStatusRemessa ? i.descricaoMotivoStatusRemessa : <></>;
     const getStatus = (i) => {
       return  (
         <span className='underline'> Erro  <InfoOutlinedIcon fontSize='small' /></span>
       )
     }
-    if(i.statusRemessa === 4){
+    if(i.statusRemessa === 4 || i.status === 'Não Pago'){
       return (
             
-        <Tooltip   title={errorDescription} arrow enterTouchDelay={10} leaveTouchDelay={10000}>
+        <Tooltip   title={data.data.ano === 24 ? error24 :errorDescription} arrow enterTouchDelay={10} leaveTouchDelay={10000}>
           <Badge className={`${data.c?.root}  whitespace-nowrap`}
             color='error'
             badgeContent={getStatus(i)}
@@ -136,7 +136,7 @@ export function CustomTable(data) {
             <TableCell className='status' component="th" scope='row'>
               <CustomBadge data={data} />
             </TableCell>
-            <MyTableCell data={data} />
+            <MyTableCell props={data} />
         
         </>
         
