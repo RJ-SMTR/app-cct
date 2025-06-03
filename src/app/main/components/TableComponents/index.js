@@ -145,7 +145,7 @@ export function CustomTable(data) {
             <>
           <TableCell className='status' component="th" scope='row'>
               <Badge className={`${data.c?.root}  whitespace-nowrap`}
-                color={data.data.status === 'Não Pago' ? 'error' : data.data.status === 'pago' ? 'success' : 'warning'}
+                color={data.data.status === 'Não Pago' ? 'error' : data.data.status === 'Pago' ? 'success' : 'warning'}
                 badgeContent={data.data.status}
               />
           </TableCell>
