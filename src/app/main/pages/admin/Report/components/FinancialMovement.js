@@ -81,8 +81,9 @@ export default function BasicEditingGrid() {
 	];
 
 	const especificos = [
-		{ label: 'Todos' },
-		{ label: 'Eleição' },
+			{ label: 'Todos' },
+			{ label: 'Eleição' },
+
 	];
 
 	const dispatch = useDispatch();
@@ -474,8 +475,6 @@ export default function BasicEditingGrid() {
 		setValue(button, "");
 		setShowButton(false);
 	};
-
-
 
 	const handleSelection = (field, newValue) => {
 		setSelected(newValue.length > 0 ? field : null);
@@ -934,7 +933,8 @@ export default function BasicEditingGrid() {
 											<TableCell>
 												<span
 														className={`px-3 py-1 rounded-full text-sm ${getStatusStyles(report.status)}`}
-												>
+													>
+
 													{report.status}
 												</span>
 										</TableCell>
@@ -951,7 +951,8 @@ export default function BasicEditingGrid() {
 								<TableRow>
 									<TableCell colSpan={6}>
 										<Box className="flex justify-center items-center m-10">
-										<CircularProgress />
+											<CircularProgress />
+
 										</Box>
 									</TableCell>
 								</TableRow>

@@ -75,7 +75,7 @@ const masterConfig = [
                 translate: 'Extrato ',
                 type: 'item',
                 icon: 'heroicons-outline:currency-dollar',
-                url: 'extrato-lançamentos',
+                url: 'extrato-contas',
             },
         ]
     },

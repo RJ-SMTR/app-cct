@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { api } from 'app/configs/api/api';
-import { compareAsc, compareDesc, format, parseISO } from 'date-fns';
+import { compareAsc, compareDesc, endOfMonth, format, parseISO, startOfMonth } from 'date-fns';
 import accounting from 'accounting';
 import jwtServiceConfig from '../auth/services/jwtService/jwtServiceConfig';
 import JwtService from '../auth/services/jwtService';
@@ -27,7 +27,7 @@ const initialState = {
     isLoadingWeek: false,
     isLoadingPrevious: false,
     ordemPgtoId: '',
-    mocked: false
+    list24: []
 };
 
 const extractSlice = createSlice({
@@ -98,8 +98,8 @@ const extractSlice = createSlice({
         setOrdemPgto: (state, action) => {
             state.ordemPgtoId = action.payload;
         },
-        setMocked: (state, action) => {
-            state.mocked = action.payload;
+        setList24: (state, action) => {
+            state.list24 = action.payload;
         },
        
     },
@@ -143,8 +143,8 @@ export const {
     setLoadingPrevious,
     setOrdemPgto,
     ordemPgtoId,
-    mocked,
-    setMocked
+    list24,
+    setList24
 } = extractSlice.actions;
 
 export default extractSlice.reducer;
@@ -213,7 +213,7 @@ export const  getPreviousDays = (idOrdem, userId) => async (dispatch) => {
 //     }
 // };
 
-export const getStatements = (dateRange, searchingDay, searchingWeek, userId, idOrdem, mocked) => async (dispatch) => {
+export const getStatements = (dateRange, searchingDay, searchingWeek, userId, idOrdem) => async (dispatch) => {
 
     const requestData = searchingDay ? {ordemPagamentoIds: idOrdem}  : searchingWeek  ?  null : handleRequestData(null, dateRange, searchingDay, searchingWeek);
     let apiRoute = ''
@@ -283,7 +283,34 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
     }
 };
 
+export const get24 = (dateRange, userId) => async (dispatch) => {
+   const  dataInicio = startOfMonth(new Date(dateRange))
+   const  dataFim = endOfMonth(new Date(dateRange))
 
+    const token = window.localStorage.getItem('jwt_access_token');
+
+    if (JwtService.isAuthTokenValid(token)) {
+        let config = {
+            method: 'get',
+            maxBodyLength: Infinity,
+            url: jwtServiceConfig.van24 + `?userId=${userId}`,
+            headers: { "Authorization": `Bearer ${token}` },
+            params: {
+                dataInicio: dataInicio,
+                dataFim: dataFim,
+            }
+        }
+        try {
+            const response = await api.request(config)
+            dispatch(setList24(response.data))
+        } catch (error) {
+            console.error(error);
+        } finally {
+            dispatch(setLoadingPrevious(false))
+        }
+    }
+
+}
 
 
 

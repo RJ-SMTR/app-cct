@@ -378,6 +378,15 @@ const [selectedConsorcios, setSelectedConsorcios] = useState([]);
         handleAutocompleteChange(field, newValue);
     };
 
+    const sortedData = Array.isArray(reportList.data)
+        ? [...reportList.data].sort((a, b) =>
+            a.nomefavorecido.localeCompare(b.nomefavorecido)
+        )
+        : [];
+  
+      
+      
+
     return (
         <>
             <Paper>
@@ -740,8 +749,9 @@ const [selectedConsorcios, setSelectedConsorcios] = useState([]);
                             </TableHead>
                             <TableBody>
                                 {!isLoading ? (
+                            
                                     reportList.count > 0 ? (
-                                        reportList.data?.map((report, index) => (
+                                            sortedData.map((report, index) => (
                                             <TableRow key={index}>
                                                 <TableCell>{report.nomefavorecido}</TableCell>
                                                 <TableCell>{formatter.format(report.valor)}</TableCell>
