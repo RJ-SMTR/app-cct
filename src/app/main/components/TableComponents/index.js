@@ -136,7 +136,7 @@ export function CustomTable(data) {
             <TableCell className='status' component="th" scope='row'>
               <CustomBadge data={data} />
             </TableCell>
-            <MyTableCell props={data} />
+            <MyTableCell data={data} />
         
         </>
         
