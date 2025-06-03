@@ -206,6 +206,7 @@ export function PersonalInfo({ user }) {
 
 
 export function BankInfo({user}) {
+    console.log(user)
     const [bankCode, setBankCode] = useState()
     const [bankRm, setBankRm] = useState(false)
     const bankCodes = [184, 29, 479, 386, 249]

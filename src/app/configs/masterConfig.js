@@ -32,22 +32,15 @@ const masterConfig = [
                 icon: 'heroicons-outline:upload',
                 url: 'upload',
             },
-            {
-                id: 'trigger-component',
-                title: 'trigger',
-                translate: 'Disparo',
-                type: 'item',
-                icon: 'heroicons-solid:mail',
-                url: 'disparo',
-            },
-            {
-                id: 'trigger-component',
-                title: 'report',
-                translate: 'Relatório ',
-                type: 'item',
-                icon: 'heroicons-outline:document-report',
-                url: 'relatorio',
-            },
+            // {
+            //     id: 'trigger-component',
+            //     title: 'trigger',
+            //     translate: 'Disparo',
+            //     type: 'item',
+            //     icon: 'heroicons-solid:mail',
+            //     url: 'disparo',
+            // },
+           
             {
                 id: 'support',
                 title: 'Suporte',
@@ -59,6 +52,32 @@ const masterConfig = [
             },
         ]
 
+    },
+
+    {
+        id: 'Movimentações Financeiras',
+        title: 'Movimentações Financeiras',
+        subtitle: '',
+        type: 'group',
+        icon: '',
+        children: [
+            {
+                id: 'trigger-component',
+                title: 'report',
+                translate: 'Relatório ',
+                type: 'item',
+                icon: 'heroicons-outline:document-report',
+                url: 'relatorio',
+            },
+            {
+                id: 'trigger-component',
+                title: 'balance',
+                translate: 'Extrato ',
+                type: 'item',
+                icon: 'heroicons-outline:currency-dollar',
+                url: 'extrato-contas',
+            },
+        ]
     },
 
     {

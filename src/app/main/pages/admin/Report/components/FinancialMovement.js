@@ -83,6 +83,7 @@ export default function BasicEditingGrid() {
 	const especificos = [
 			{ label: 'Todos' },
 			{ label: 'Eleição' },
+
 	];
 
 	const dispatch = useDispatch();
@@ -933,6 +934,7 @@ export default function BasicEditingGrid() {
 												<span
 														className={`px-3 py-1 rounded-full text-sm ${getStatusStyles(report.status)}`}
 													>
+
 													{report.status}
 												</span>
 										</TableCell>
@@ -950,6 +952,7 @@ export default function BasicEditingGrid() {
 									<TableCell colSpan={6}>
 										<Box className="flex justify-center items-center m-10">
 											<CircularProgress />
+
 										</Box>
 									</TableCell>
 								</TableRow>
