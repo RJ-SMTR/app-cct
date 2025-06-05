@@ -284,8 +284,9 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
 };
 
 export const get24 = (dateRange, userId) => async (dispatch) => {
+    console.log(dateRange)
    const  dataInicio = startOfMonth(new Date(dateRange))
-   const  dataFim = endOfMonth(new Date(dateRange))
+   const  dataFim = new Date(dateRange)
 
     const token = window.localStorage.getItem('jwt_access_token');
 

@@ -64,7 +64,8 @@ function ExtractApp() {
         </Box>
         <div className={`flex flex-col`}>
           <Box className='flex flex-col md:flex-row  justify-around'>
-            <TableTransactions data={user.id}  />
+            <TableTransactions id={user.id}  />
+
           </Box>
 
        {searchingWeek && !searchingDay ? <div>

@@ -31,17 +31,7 @@ function ExtractApp() {
   const [first] = fullName?.split(' ');
 
 
-  // useEffect(() => {
-  //   dispatch(setFullReport(true))
-  //   const modalShown = sessionStorage.getItem('modalShown');
-  //   if (!modalShown) {
-  //     setModal(true);
-  //     sessionStorage.setItem('modalShown', 'true');
-  //   }
-  // }, [])
-  // const handleClose = () => {
-  //   setModal(false);
-  // };
+ 
 
   return (
     <>
