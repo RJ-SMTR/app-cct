@@ -152,6 +152,7 @@ function TableTransactions({ data }) {
                                 openTo="month"
                                 closeOnSelect
                                 minDate={new Date('2024-06-01')}
+
                                 maxDate={new Date('2025-01-01')}
                                 defaultValue={new Date('2024-12-31')}
                                 views={['month']}
