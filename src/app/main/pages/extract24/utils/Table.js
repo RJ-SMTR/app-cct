@@ -89,7 +89,6 @@ function TableTransactions({ data }) {
 
 
     const handleSelectedDate = (newValue) => {
-        console.log(newValue)
         setSelectedDate(newValue)
         dispatch(get24(newValue, data.id))
     }
@@ -100,16 +99,13 @@ function TableTransactions({ data }) {
 
     return (
         <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
-            <div className="flex flex-row justify-between">
+            <div className="flex sm:flex-row flex-col justify-between">
                 <Typography className="mr-16 text-lg font-medium tracking-tight leading-6 truncate">
                 <p>Valores recebidos</p>
                 </Typography>
 
  <Hidden smUp >
                     <div className="flex align-center">
-                        <Button onClick={filterMenuClick}>
-                            <FuseSvgIcon className="text-48" size={24} color="action">feather:filter</FuseSvgIcon>
-                        </Button>
 
                         {!searchingWeek && !searchingDay ?
                             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
@@ -117,8 +113,10 @@ function TableTransactions({ data }) {
                                     label="Selecionar Mês"
                                     openTo="month"
                                     closeOnSelect
-                                    maxDate={'2025-01-01'}
-                                    views={['year', 'month']}
+                                    minDate={new Date('2024-06-01')}
+                                    maxDate={new Date('2025-01-01')}
+                                    defaultValue={new Date('2024-12-31')}
+                                    views={['month']}
                                     value={selectedDate}
                                     onChange={handleSelectedDate}
                                 />
@@ -153,7 +151,7 @@ function TableTransactions({ data }) {
                                 label="Selecionar Mês"
                                 openTo="month"
                                 closeOnSelect
-                                minDate={new Date('2024-05-01')}
+                                minDate={new Date('2024-06-01')}
                                 maxDate={new Date('2025-01-01')}
                                 defaultValue={new Date('2024-12-31')}
                                 views={['month']}
@@ -210,9 +208,7 @@ function TableTransactions({ data }) {
                             list24?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
                                 const tz = 'UTC'
                                 const zonedDate = utcToZonedTime(i.dataVencimento, tz)
-                                console.log(zonedDate)
                                 const formattedDate = format(zonedDate, 'dd/MM/yyyy');
-                                console.log(formattedDate)
                                 return <MemoizedCustomTable data={i} c={c} date={formattedDate} lastDate={dataOrderDay} ano={24}  />
                             }) : 
                                 <TableCell colSpan={4}>
