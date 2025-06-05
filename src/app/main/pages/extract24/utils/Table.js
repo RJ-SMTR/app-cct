@@ -153,9 +153,10 @@ function TableTransactions({ data }) {
                                 label="Selecionar Mês"
                                 openTo="month"
                                 closeOnSelect
+                                minDate={new Date('2024-05-01')}
                                 maxDate={new Date('2025-01-01')}
                                 defaultValue={new Date('2024-12-31')}
-                                views={['year', 'month']}
+                                views={['month']}
                                 value={selectedDate}
                                 onChange={handleSelectedDate}
                             />
