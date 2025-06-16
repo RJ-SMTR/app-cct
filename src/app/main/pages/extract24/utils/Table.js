@@ -16,18 +16,19 @@ import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { makeStyles } from '@mui/styles';
 
 import { CustomTable } from 'src/app/main/components/TableComponents';
-import { format, parseISO,  isAfter, startOfDay, formatISO } from 'date-fns';
+import { format, parseISO, isAfter, startOfDay, formatISO } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
-        get24} from 'app/store/extractSlice';
+    get24
+} from 'app/store/extractSlice';
 
 import { useNavigate } from 'react-router-dom';
 import { selectUser } from 'app/store/userSlice';
 
-import {  MobileDatePicker } from '@mui/x-date-pickers';
+import { MobileDatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import ptBR from 'date-fns/locale/pt-BR';
@@ -48,15 +49,15 @@ function TableTransactions({ data }) {
         mocked
     } = useSelector((state) => state.extract);
     const MemoizedCustomTable = memo(CustomTable);
- 
-// REMOVER CARD
+
+    // REMOVER CARD
 
     const [filterMenu, setFilterMenu] = useState(null);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(8);
     const [selectedDate, setSelectedDate] = useState(null)
     const [dataOrderDay, setDataOrderDay] = useState('')
-    
+
 
     const navigate = useNavigate()
     const useStyles = makeStyles(() => ({
@@ -69,12 +70,12 @@ function TableTransactions({ data }) {
     const c = useStyles()
 
 
-  
-  
 
-  
 
-     
+
+
+
+
 
 
 
@@ -85,31 +86,27 @@ function TableTransactions({ data }) {
     const filterMenuClose = () => {
         setFilterMenu(null);
     }
-   
+
 
 
     const handleSelectedDate = (newValue) => {
-        console.log(newValue)
         setSelectedDate(newValue)
         dispatch(get24(newValue, data.id))
     }
 
-    
 
- 
+
+
 
     return (
         <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
-            <div className="flex flex-row justify-between">
+            <div className="flex sm:flex-row flex-col justify-between">
                 <Typography className="mr-16 text-lg font-medium tracking-tight leading-6 truncate">
-                <p>Valores recebidos</p>
+                    <p>Valores recebidos</p>
                 </Typography>
 
- <Hidden smUp >
+                <Hidden smUp >
                     <div className="flex align-center">
-                        <Button onClick={filterMenuClick}>
-                            <FuseSvgIcon className="text-48" size={24} color="action">feather:filter</FuseSvgIcon>
-                        </Button>
 
                         {!searchingWeek && !searchingDay ?
                             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
@@ -117,8 +114,10 @@ function TableTransactions({ data }) {
                                     label="Selecionar Mês"
                                     openTo="month"
                                     closeOnSelect
-                                    maxDate={'2025-01-01'}
-                                    views={['year', 'month']}
+                                    minDate={new Date('2024-09-01')}
+                                    maxDate={new Date('2025-01-01')}
+                                    defaultValue={new Date('2024-12-31')}
+                                    views={['month']}
                                     value={selectedDate}
                                     onChange={handleSelectedDate}
                                 />
@@ -126,44 +125,46 @@ function TableTransactions({ data }) {
                             </LocalizationProvider> : <></>}
                     </div>
                 </Hidden>
-                    <Popover
-                        open={Boolean(filterMenu)}
-                        anchorEl={filterMenu}
-                        onClose={filterMenuClose}
-                        anchorOrigin={{
-                            vertical: 'bottom',
-                            horizontal: 'center',
-                        }}
-                        transformOrigin={{
-                            vertical: 'top',
-                            horizontal: 'center',
-                        }}
-                        classes={{
-                            paper: 'py-8',
-                        }}
-                    >
-                     
-                    </Popover>
+                <Popover
+                    open={Boolean(filterMenu)}
+                    anchorEl={filterMenu}
+                    onClose={filterMenuClose}
+                    anchorOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'center',
+                    }}
+                    transformOrigin={{
+                        vertical: 'top',
+                        horizontal: 'center',
+                    }}
+                    classes={{
+                        paper: 'py-8',
+                    }}
+                >
 
-                    <Hidden smDown>
-                        <div className='flex flex-wrap content-center justify-center'>
+                </Popover>
 
-                                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                <Hidden smDown>
+                    <div className='flex flex-wrap content-center justify-center'>
+
+                        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
                             <MobileDatePicker
                                 label="Selecionar Mês"
                                 openTo="month"
                                 closeOnSelect
+                                minDate={new Date('2024-06-01')}
+
                                 maxDate={new Date('2025-01-01')}
                                 defaultValue={new Date('2024-12-31')}
-                                views={['year', 'month']}
+                                views={['month']}
                                 value={selectedDate}
                                 onChange={handleSelectedDate}
                             />
 
-                                </LocalizationProvider>
+                        </LocalizationProvider>
 
-                        </div>
-                    </Hidden>
+                    </div>
+                </Hidden>
 
             </div>
 
@@ -175,48 +176,46 @@ function TableTransactions({ data }) {
                             <TableRow>
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                      Data
+                                        Data
                                     </Typography>
                                 </TableCell>
                                 <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                   Valor Pago
+                                        Valor Pago
                                     </Typography>
                                 </TableCell>
-                                        <TableCell>
-                                            <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                                Status
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                                                Erro
-                                            </Typography>
-                                        </TableCell>
+                                <TableCell>
+                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                        Status
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                                        Erro
+                                    </Typography>
+                                </TableCell>
 
                             </TableRow>
                         </TableHead>
 
                         <TableBody>
 
-                            {isLoading  ? 
+                            {isLoading ?
                                 <TableCell colSpan={4}>
                                     <Box className="flex justify-center items-center m-10">
                                         <CircularProgress />
-                                    </Box> 
+                                    </Box>
                                 </TableCell>
-                            : list24?.length > 0  ?
-                            list24?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
-                                const tz = 'UTC'
-                                const zonedDate = utcToZonedTime(i.dataVencimento, tz)
-                                console.log(zonedDate)
-                                const formattedDate = format(zonedDate, 'dd/MM/yyyy');
-                                console.log(formattedDate)
-                                return <MemoizedCustomTable data={i} c={c} date={formattedDate} lastDate={dataOrderDay} ano={24}  />
-                            }) : 
-                                <TableCell colSpan={4}>
-                                    <p>Não há dados para sem exibidos</p>
-                                </TableCell>
+                                : list24?.length > 0 ?
+                                    list24?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
+                                        const tz = 'UTC'
+                                        const zonedDate = utcToZonedTime(i.dataVencimento, tz)
+                                        const formattedDate = format(zonedDate, 'dd/MM/yyyy');
+                                        return <MemoizedCustomTable data={i} c={c} date={formattedDate} lastDate={dataOrderDay} ano={24} />
+                                    }) :
+                                    <TableCell colSpan={4}>
+                                        <p>Não há dados para sem exibidos</p>
+                                    </TableCell>
                             }
                         </TableBody>
                     </Table>
