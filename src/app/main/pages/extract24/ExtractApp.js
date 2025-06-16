@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { selectUser } from 'app/store/userSlice';
 import TableTransactions from './utils/Table'
 
-import { setFullReport} from 'app/store/extractSlice';
+import { setFullReport } from 'app/store/extractSlice';
 
 // import TableTypes from './widgets/TableTypes';
 // import TablePending from './widgets/TablePending';
@@ -31,17 +31,7 @@ function ExtractApp() {
   const [first] = fullName?.split(' ');
 
 
-  // useEffect(() => {
-  //   dispatch(setFullReport(true))
-  //   const modalShown = sessionStorage.getItem('modalShown');
-  //   if (!modalShown) {
-  //     setModal(true);
-  //     sessionStorage.setItem('modalShown', 'true');
-  //   }
-  // }, [])
-  // const handleClose = () => {
-  //   setModal(false);
-  // };
+
 
   return (
     <>
@@ -57,11 +47,11 @@ function ExtractApp() {
         </Box>
         <div className={`flex flex-col`}>
           <Box className='flex flex-col md:flex-row  justify-around'>
-            <TableTransactions data={{id: user.id, ano: 24}} />
+            <TableTransactions data={{ id: user.id, ano: 24 }} />
           </Box>
 
         </div>
-       
+
 
         <br />
       </div>

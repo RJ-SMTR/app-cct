@@ -17,8 +17,8 @@ const initialState = {
     multipliedEntries: [],
     listByType: [],
     firstDate: [],
-    valorAcumuladoLabel:'Valor Operação - Acumulado Mensal',
-    valorPagoLabel:'Valor  - Acumulado Mensal',
+    valorAcumuladoLabel: 'Valor Operação - Acumulado Mensal',
+    valorPagoLabel: 'Valor  - Acumulado Mensal',
     sumInfo: [],
     sumInfoDay: [],
     pendingValue: [],
@@ -101,7 +101,7 @@ const extractSlice = createSlice({
         setList24: (state, action) => {
             state.list24 = action.payload;
         },
-       
+
     },
 });
 
@@ -150,15 +150,15 @@ export const {
 export default extractSlice.reducer;
 function handleRequestData(previousDays, dateRange) {
 
-        return previousDays > 0 ? { timeInterval: previousDays } : { yearMonth: dateRange }
+    return previousDays > 0 ? { timeInterval: previousDays } : { yearMonth: dateRange }
 
 }
 
 
-export const  getPreviousDays = (idOrdem, userId) => async (dispatch) => {
+export const getPreviousDays = (idOrdem, userId) => async (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
-   
-    if(JwtService.isAuthTokenValid(token)){
+
+    if (JwtService.isAuthTokenValid(token)) {
         let config = {
             method: 'get',
             maxBodyLength: Infinity,
@@ -215,18 +215,18 @@ export const  getPreviousDays = (idOrdem, userId) => async (dispatch) => {
 
 export const getStatements = (dateRange, searchingDay, searchingWeek, userId, idOrdem) => async (dispatch) => {
 
-    const requestData = searchingDay ? {ordemPagamentoIds: idOrdem}  : searchingWeek  ?  null : handleRequestData(null, dateRange, searchingDay, searchingWeek);
+    const requestData = searchingDay ? { ordemPagamentoIds: idOrdem } : searchingWeek ? null : handleRequestData(null, dateRange, searchingDay, searchingWeek);
     let apiRoute = ''
-        apiRoute = searchingWeek && searchingDay 
-            ? jwtServiceConfig.odpDiario + `/?userId=${userId}` 
-        : searchingWeek  
-                ? jwtServiceConfig.odpSemanal + `/${idOrdem}?userId=${userId}`
-        : jwtServiceConfig.odpMensal + `?userId=${userId}`;
+    apiRoute = searchingWeek && searchingDay
+        ? jwtServiceConfig.odpDiario + `/?userId=${userId}`
+        : searchingWeek
+            ? jwtServiceConfig.odpSemanal + `/${idOrdem}?userId=${userId}`
+            : jwtServiceConfig.odpMensal + `?userId=${userId}`;
     const method = 'get';
     const token = window.localStorage.getItem('jwt_access_token');
 
 
-    if(JwtService.isAuthTokenValid(token)){
+    if (JwtService.isAuthTokenValid(token)) {
         const config = {
             method: method,
             maxBodyLength: Infinity,
@@ -242,7 +242,7 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
         try {
             dispatch(setLoading(true))
             const response = await api(config);
-            if (searchingDay){
+            if (searchingDay) {
                 const statementsSort = response.data.sort((a, b) =>
                     compareDesc(parseISO(a.datetime_transacao), parseISO(b.datetime_transacao))
                 );
@@ -253,17 +253,17 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
                     .reduce((accumulator, currentValue) => accumulator + currentValue, 0)
                 dispatch(setSumInfoDay(sum))
             }
-            else if (searchingWeek  ) {
-                    dispatch(getPreviousDays(idOrdem, userId))
-              
-                    const statementsSort = response.data.sort((a, b) =>
-                        compareDesc(parseISO(a.dataCaptura), parseISO(b.dataCaptura))
-                    );
-                    dispatch(setStatements(statementsSort));
-            
-                    // }
+            else if (searchingWeek) {
+                dispatch(getPreviousDays(idOrdem, userId))
 
-               
+                const statementsSort = response.data.sort((a, b) =>
+                    compareDesc(parseISO(a.dataCaptura), parseISO(b.dataCaptura))
+                );
+                dispatch(setStatements(statementsSort));
+
+                // }
+
+
 
             } else {
                 const statementsSort = response.data.ordens.sort((a, b) =>
@@ -284,8 +284,8 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
 };
 
 export const get24 = (dateRange, userId) => async (dispatch) => {
-   const  dataInicio = startOfMonth(new Date(dateRange))
-   const  dataFim = endOfMonth(new Date(dateRange))
+    const dataInicio = startOfMonth(new Date(dateRange))
+    const dataFim = new Date(dateRange)
 
     const token = window.localStorage.getItem('jwt_access_token');
 
