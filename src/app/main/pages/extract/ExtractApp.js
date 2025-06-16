@@ -6,7 +6,7 @@ import { selectUser } from 'app/store/userSlice';
 import Entries from './widgets/Entries';
 import TableTransactions from './widgets/Table'
 
-import { setFullReport} from 'app/store/extractSlice';
+import { setFullReport } from 'app/store/extractSlice';
 
 import TableTypes from './widgets/TableTypes';
 import TablePending from './widgets/TablePending';
@@ -26,7 +26,7 @@ const style = {
 
 
 function ExtractApp() {
-    const [modal, setModal] = useState(false);
+  const [modal, setModal] = useState(false);
   const dispatch = useDispatch()
   const user = useSelector(selectUser);
   const fullName = user.fullName ?? 'Admin';
@@ -64,15 +64,16 @@ function ExtractApp() {
         </Box>
         <div className={`flex flex-col`}>
           <Box className='flex flex-col md:flex-row  justify-around'>
-            <TableTransactions data={{id: user.id, ano:25}}  />
+            <TableTransactions id={user.id} />
+
           </Box>
 
-       {searchingWeek && !searchingDay ? <div>
-                  <TablePending />
-                </div> : <></>}
+          {searchingWeek && !searchingDay ? <div>
+            <TablePending />
+          </div> : <></>}
 
         </div>
-       
+
 
         <br />
       </div>
@@ -84,11 +85,11 @@ function ExtractApp() {
       >
         <Box sx={style} className="overflow-scroll text-center">
           <Typography id="modal-modal-title" variant="h6" component="h3">
-           Comunicado:
+            Comunicado:
           </Typography>
           <p>As informações anteriores ao dia 01/08/24 estão temporariamente indisponíveis.
             Qualquer dúvida, por favor, contacte o suporte!</p>
-         
+
         </Box>
       </Modal>
     </>
