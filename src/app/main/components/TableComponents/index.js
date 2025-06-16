@@ -38,20 +38,21 @@ export function CustomTable(data) {
     const i = data.data.data
     const getStatus = (i) => {
       let status = ''
-      switch (i.statusRemessa){
+      switch (i.statusRemessa) {
         case 3:
           status = 'Pago';
           break;
-          case 4:
-           status =  'Pendente'
-           break;
+        case 4:
+          status = 'Pendente'
+          break;
         default:
-          status ='A pagar';
+          status = 'A pagar';
       }
-     return status
+      return status
     }
     return <Badge className={`${data.c?.root}  whitespace-nowrap`}
       color={i.statusRemessa === 4 ? 'error' : i.statusRemessa === 3 ? 'success' : i.statusRemessa === null ? 'op' : 'warning'}
+
       badgeContent={getStatus(i)}
     />
   }
@@ -60,14 +61,14 @@ export function CustomTable(data) {
     const error24 = i.motivo
     const errorDescription = i.motivoStatusRemessa ? i.descricaoMotivoStatusRemessa : <></>;
     const getStatus = (i) => {
-      return  (
+      return (
         <span className='underline'> Erro  <InfoOutlinedIcon fontSize='small' /></span>
       )
     }
-    if(i.statusRemessa === 4 || i.status === 'Não Pago'){
+    if (i.statusRemessa === 4 || i.status === 'Não Pago') {
       return (
-            
-        <Tooltip   title={data.data.ano === 24 ? error24 :errorDescription} arrow enterTouchDelay={10} leaveTouchDelay={10000}>
+
+        <Tooltip title={data.data.ano === 24 ? error24 : errorDescription} arrow enterTouchDelay={10} leaveTouchDelay={10000}>
           <Badge className={`${data.c?.root}  whitespace-nowrap`}
             color='error'
             badgeContent={getStatus(i)}
@@ -96,7 +97,7 @@ export function CustomTable(data) {
       <TableCell component="th" scope="row" onClick={searchingDay ? undefined : data.handleClickRow}>
         <Typography className={searchingDay ? "whitespace-nowrap " : "whitespace-nowrap underline"}>
 
-          {searchingDay ? dateUTC(data.data.datetime_transacao) : searchingWeek ? data.date :  data.date}
+          {searchingDay ? dateUTC(data.data.datetime_transacao) : searchingWeek ? data.date : data.date}
 
         </Typography>
       </TableCell>
@@ -106,9 +107,9 @@ export function CustomTable(data) {
           {data.lastDate}
         </TableCell>
       )
-      // ULTIMA DATA
-       }
-     
+        // ULTIMA DATA
+      }
+
       <TableCell component="th" scope="row">
         {/* Valor */}
         {searchingDay ? (
@@ -116,39 +117,40 @@ export function CustomTable(data) {
             {formatter.format(data.data.valor_pagamento ?? 0)}
           </>
         ) : (
-            <>  {formatter.format(data.data.valorTotal ?? data.data.valor ?? 0)}</>
+          <>  {formatter.format(data.data.valorTotal ?? data.data.valor ?? 0)}</>
         )}
 
 
       </TableCell>
       {searchingDay && (
-      <TableCell component="th" scope="row">
-        <Typography className="whitespace-nowrap">
-      
-              {data.data.tipo_transacao_smtr}
-    
-        </Typography>
+        <TableCell component="th" scope="row">
+          <Typography className="whitespace-nowrap">
 
-      </TableCell>)}
+            {data.data.tipo_transacao_smtr}
+
+          </Typography>
+
+        </TableCell>)}
       {!searchingWeek ? <>
-        {data.ano != 24 ? 
-        <>
+        {data.ano != 24 ?
+          <>
             <TableCell className='status' component="th" scope='row'>
               <CustomBadge data={data} />
             </TableCell>
             <MyTableCell data={data} />
-        
-        </>
-        
-        :    
-            <>
-          <TableCell className='status' component="th" scope='row'>
+
+          </>
+
+          :
+          <>
+            <TableCell className='status' component="th" scope='row'>
               <Badge className={`${data.c?.root}  whitespace-nowrap`}
-                color={data.data.status === 'Não Pago' ? 'error' : data.data.status === 'pago' ? 'success' : 'warning'}
+                color={data.data.status === 'Não Pago' ? 'error' : data.data.status === 'Pago' ? 'success' : 'warning'}
+
                 badgeContent={data.data.status}
               />
-          </TableCell>
-          <MyTableCell data={data} /></>}
+            </TableCell>
+            <MyTableCell data={data} /></>}
       </>
         : <> </>}
 
