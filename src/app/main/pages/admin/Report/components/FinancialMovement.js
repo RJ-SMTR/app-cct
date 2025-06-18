@@ -64,6 +64,7 @@ export default function BasicEditingGrid() {
 	const [showErroStatus, setShowErroStatus] = useState(false);
 	const [selectedErroStatus, setSelectedErroStatus] = useState(null);
 	const [selectedConsorcios, setSelectedConsorcios] = useState([]);
+	const [selectedFavorecidos, setSelectedFavorecidos] = useState([]);
 
 
 
@@ -83,6 +84,7 @@ export default function BasicEditingGrid() {
 	const especificos = [
 			{ label: 'Todos' },
 			{ label: 'Eleição' },
+
 	];
 
 	const dispatch = useDispatch();
@@ -477,9 +479,13 @@ export default function BasicEditingGrid() {
 
 	const handleSelection = (field, newValue) => {
 		setSelected(newValue.length > 0 ? field : null);
-		if (field === 'consorcioName') {
-			setSelectedConsorcios(newValue);
+		
+		if (field === "consorcioName") {
+			setSelectedConsorcios(newValue); 
+		} else if (field === "name") {
+			setSelectedFavorecidos(newValue);
 		}
+		
 		handleAutocompleteChange(field, newValue); 
 	};
 
@@ -505,7 +511,7 @@ export default function BasicEditingGrid() {
 					<Box className="flex items-center py-10 gap-10">
 						<form onSubmit={handleSubmit(onSubmit)}>
 							<Box className="flex gap-10 flex-wrap mb-20">
-								<Autocomplete
+							<Autocomplete
 									id="favorecidos"
 									multiple
 									className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
@@ -551,7 +557,6 @@ export default function BasicEditingGrid() {
 									getOptionLabel={(option) => option.label}
 									filterSelectedOptions
 									options={consorcios}
-									value={selectedConsorcios} 
 									getOptionDisabled={(option) => option.disabled}
 									isOptionEqualToValue={(option, value) => option.value === value.value} 
 									onChange={(_, newValue) => handleSelection("consorcioName", newValue)}
@@ -935,6 +940,7 @@ export default function BasicEditingGrid() {
 												<span
 														className={`px-3 py-1 rounded-full text-sm ${getStatusStyles(report.status)}`}
 													>
+
 													{report.status}
 												</span>
 										</TableCell>
@@ -952,6 +958,7 @@ export default function BasicEditingGrid() {
 									<TableCell colSpan={6}>
 										<Box className="flex justify-center items-center m-10">
 											<CircularProgress />
+
 										</Box>
 									</TableCell>
 								</TableRow>
