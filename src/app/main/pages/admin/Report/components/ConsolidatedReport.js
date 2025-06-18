@@ -374,9 +374,20 @@ const [selectedConsorcios, setSelectedConsorcios] = useState([]);
 
     const handleSelection = (field, newValue) => {
         setSelected(newValue.length > 0 ? field : null);
-	    setSelectedConsorcios(newValue);
+        if(field === 'consorcioName'){
+            setSelectedConsorcios(newValue);
+        }
         handleAutocompleteChange(field, newValue);
     };
+
+    const sortedData = Array.isArray(reportList.data)
+        ? [...reportList.data].sort((a, b) =>
+            a.nomefavorecido.localeCompare(b.nomefavorecido)
+        )
+        : [];
+  
+      
+      
 
     return (
         <>
@@ -740,8 +751,9 @@ const [selectedConsorcios, setSelectedConsorcios] = useState([]);
                             </TableHead>
                             <TableBody>
                                 {!isLoading ? (
+                            
                                     reportList.count > 0 ? (
-                                        reportList.data?.map((report, index) => (
+                                            sortedData.map((report, index) => (
                                             <TableRow key={index}>
                                                 <TableCell>{report.nomefavorecido}</TableCell>
                                                 <TableCell>{formatter.format(report.valor)}</TableCell>

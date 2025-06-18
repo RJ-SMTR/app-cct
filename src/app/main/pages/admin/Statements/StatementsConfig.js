@@ -16,7 +16,7 @@ const StatementsConfig = {
     auth: authRoles.commonFinan,
     routes: [
         {
-            path: 'extrato-lançamentos',
+            path: 'extrato-contas',
             element: <StatementsAppLazy />,
         },
     ],
