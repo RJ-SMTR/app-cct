@@ -478,16 +478,16 @@ export default function BasicEditingGrid() {
 	};
 
 	const handleSelection = (field, newValue) => {
-	setSelected(newValue.length > 0 ? field : null);
-	
-	if (field === "consorcioName") {
-		setSelectedConsorcios(newValue); 
-	} else if (field === "name") {
-		setSelectedFavorecidos(newValue);
-	}
-	
-	handleAutocompleteChange(field, newValue); 
-};
+		setSelected(newValue.length > 0 ? field : null);
+		
+		if (field === "consorcioName") {
+			setSelectedConsorcios(newValue); 
+		} else if (field === "name") {
+			setSelectedFavorecidos(newValue);
+		}
+		
+		handleAutocompleteChange(field, newValue); 
+	};
 
 	const getStatusStyles = (status) => {
 		switch (status) {
