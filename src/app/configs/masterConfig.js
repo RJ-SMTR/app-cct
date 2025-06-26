@@ -40,7 +40,7 @@ const masterConfig = [
             //     icon: 'heroicons-solid:mail',
             //     url: 'disparo',
             // },
-           
+
             {
                 id: 'support',
                 title: 'Suporte',
@@ -55,6 +55,7 @@ const masterConfig = [
     },
 
     {
+
         id: 'Movimentações Financeiras',
         title: 'Movimentações Financeiras',
         subtitle: '',
@@ -113,8 +114,8 @@ const masterConfig = [
             },
         ]
     },
-    
-  
+
+
 
 ];
 
