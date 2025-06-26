@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react';
-import { DataGrid, ptBR, GridCsvExportMenuItem, GridToolbarContainer, GridToolbarExportContainer, } from '@mui/x-data-grid';
+import {  useEffect, useState } from 'react';
+import { DataGrid,ptBR, GridCsvExportMenuItem, GridToolbarContainer, GridToolbarExportContainer, } from '@mui/x-data-grid';
 import { Box, Autocomplete, TextField, InputLabel, FormControl, Button, CircularProgress } from '@mui/material';
 
 import accounting from 'accounting';
 
 import {
     DateRangePicker
-} from 'rsuite';
+} from 'rsuite'; 
 import 'rsuite/dist/rsuite.min.css';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ptBR as dateFnsPtBR } from 'date-fns/locale';
@@ -24,7 +24,7 @@ import ExportButton from './ExportButton';
 export default function BasicEditingGrid(props) {
     const dispatch = useDispatch()
     const [rowModesModel, setRowModesModel] = useState({});
-
+ 
     const [isLoading, setIsLoading] = useState(false);
 
     const [sumTotal, setSumTotal] = useState()
@@ -36,31 +36,36 @@ export default function BasicEditingGrid(props) {
     const [tipo, setTipo] = useState('');
     const [operacao, setOperacao] = useState('');
     const accountBalance = useSelector(state => state.release.accountBalance)
+    let conta = 'cb'
     const formatToBRL = (value) => {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     };
 
     const formattedValue = (sum) => {
-        return accounting.formatMoney(sum, {
+       return accounting.formatMoney(sum, {
             symbol: "",
             decimal: ",",
             thousand: ".",
             precision: 2
         });
+    
+    } 
 
+    function getRemovedElements(arr, prop, value) {
+        return arr.filter(item => item && item[prop] === value);
     }
-
+    
     const type = (type, valor) => {
-        if (type === 'Saída') {
-            return parseFloat(valor) * -1
-        }
-        return valor
-
-    }
+            if (type === 'Saída') {
+                return `- ${formatToBRL(valor)}`
+            }
+            return formatToBRL(valor)
+        
+    }    
     function formatISODateToBR(dateString) {
         const [year, month, day] = dateString.split('T')[0].split('-');
         return `${day}/${month}/${year}`;
-    }
+      }
     const handleSearch = () => {
         setIsLoading(true);
         dispatch(handleExtract({
@@ -78,49 +83,31 @@ export default function BasicEditingGrid(props) {
                         id: `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 5)}`,
                         data: formatted,
                         valor: type(item.tipo, item.valor),
-                        // valor: item.valor,
                         tipo: item.tipo,
                         operacao: item.operacao
                     };
                 });
                 setRows(rowsWithId);
-
-                const totalMovimentado = response.data.extrato.reduce((acc, item) => {
-                    const valor = typeof item.valor === 'string'
-                        ? parseFloat(item.valor)
-                        : item.valor;
-                    return acc + Math.abs(valor);
-                }, 0);
-                setSumTotal(formattedValue(totalMovimentado));
-
-                const entradas = response.data.extrato.filter(item => item.tipo === 'Entrada');
-                const totalEntrada = entradas.reduce((acc, item) => {
-                    const valor = typeof item.valor === 'string'
-                        ? parseFloat(item.valor)
-                        : item.valor;
-                    return acc + valor;
-                }, 0);
-                setSumTotalEntry(formattedValue(totalEntrada));
-
-                const saidas = response.data.extrato.filter(item => item.tipo === 'Saída');
-                const totalSaida = saidas.reduce((acc, item) => {
-                    const valor = typeof item.valor === 'string'
-                        ? parseFloat(item.valor)
-                        : item.valor;
-                    return acc + valor;
-                }, 0);
-                setSumTotalExit(formattedValue(totalSaida));
-
-            })
-            .finally(() => {
-                setIsLoading(false);
-            });
+                const sumTotal = response.data.extrato.reduce((accumulator, item) => accumulator + accounting.unformat(item.valor.replace('.', ','), ','), 0);
+                setSumTotal(formattedValue(sumTotal))
+                const exits = getRemovedElements(rowsWithId, 'tipo', 'Saída')
+                const sumExits = exits.reduce((accumulator, item) => accumulator - accounting.unformat(item.valor.replace(/\./g, '').replace('.', ','), ','), 0);
+                setSumTotalExit(formattedValue(sumExits))
+                const entry = getRemovedElements(rowsWithId, 'tipo', 'Entrada')
+                const sumEntry = entry.reduce((accumulator, item) => accumulator + accounting.unformat(item.valor.replace(/\./g, '').replace('.', ','), ','), 0);
+                setSumTotalEntry(formattedValue(sumEntry))
+                
+              
+        })
+        .finally(() => {
+        setIsLoading(false);
+    });
 
     };
     useEffect(() => {
         dispatch(setAccountBalance({ key: 'cb', value: parseFloat(accounting.unformat(sumTotalEntry?.replace(/\./g, '').replace('.', ','), ',')) - accounting.unformat(sumTotalExit?.replace(/\./g, '').replace('.', ','), ',') }))
 
-    }, [sumTotalEntry, sumTotalExit])
+    }, [sumTotalEntry,sumTotalExit])
 
     const columns = [
         { field: 'data', headerName: 'Data', width: 300, editable: false },
@@ -133,10 +120,9 @@ export default function BasicEditingGrid(props) {
             field: 'valor',
             headerName: 'Valor',
             width: 200,
-            type: 'number',
             renderCell: (params) => (
                 <span className={params.row.tipo === 'Saída' ? 'text-red ml-[-10px]' : ''}>
-                    {formatToBRL(params.value)}
+                    {params.value}
                 </span>
             )
         },
@@ -144,79 +130,79 @@ export default function BasicEditingGrid(props) {
 
 
     function CustomToolbar(props) {
-        const tipoOptions = [
-            { label: 'Saída', value: 'D' },
-            { label: 'Entrada', value: 'C' },
-        ];
+         const tipoOptions = [
+             { label: 'Saída', value: 'D' },
+             { label: 'Entrada', value: 'C' },
+         ];
+ 
+         const operacaoOptions = [
+             { label: 'APL AUTOM', value: 'APL AUTOM' },
+             { label: 'APL FUNDO', value: 'APL FUNDO' },
+             { label: 'CRED.AUTOR', value: 'CRED.AUTOR' },
+             { label: 'CRED TED', value: 'CRED TED' },
+             { label: 'CRED PIX', value: 'CRED PIX' },
+             { label: 'DEB.AUTOR.', value: 'DEB.AUTOR.' },
+             { label: 'EST PG FOR', value: 'EST PG FOR' },
+             { label: 'PAG FORNEC', value: 'PAG FORNEC' },
+             { label: 'RESG AUTOM', value: 'RESG AUTOM' },
+             { label: 'RSG FUNDO', value: 'RSG FUNDO' },
+             { label: 'MANUT CTA', value: 'MANUT CTA' },
+         ];
+     
+         return (
+             <GridToolbarContainer className="flex-col sm:flex-row w-full  items-center gap-4 mb-4 justify-between" {...props}>
+                 <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={dateFnsPtBR}>
+                     <DateRangePicker
+                         value={dateRange}
+                         onChange={(range) => setDateRange(range)}
+                         id="custom-date-input"
+                         showOneCalendar
+                         showHeader={false}
+                         placement="auto"
+                         placeholder="Selecionar Data"
+                         format="dd/MM/yy"
+                         character=" - "
+                         className="custom-date-range-picker sm:w-[22%] w-full"
+                     />
+                 </LocalizationProvider>
+                 <Autocomplete
+                     options={tipoOptions}
+                     getOptionLabel={(option) => option.label}
+                     value={tipoOptions.find(opt => opt.value === tipo) || null}
+                     onChange={(e, newValue) => setTipo(newValue?.value || '')}
+                     renderInput={(params) => (
+                         <TextField {...params} label="Tipo" />
+                     )}
+                     className="min-w-[180px] sm:w-[22%] w-full"
+                 />
+                 <Autocomplete
+                     multiple
+                     options={operacaoOptions}
+                     getOptionLabel={(option) => option.label}
+                     value={operacaoOptions.filter((opt) => operacao.includes(opt.value))}
+                     onChange={(e, newValues) => setOperacao(newValues.map(val => val.value))}
+                     renderInput={(params) => (
+                         <TextField {...params} label="Operação" />
+                     )}
+                     className="min-w-[22%] sm:w-auto w-full"
+                 />
+ 
+                 <Button
+                     variant="contained"
+                     color="secondary"
+                     className='w-full sm:w-auto'
+                     onClick={handleSearch}
+                 >
+                     Pesquisar
+                 </Button>
 
-        const operacaoOptions = [
-            { label: 'APL AUTOM', value: 'APL AUTOM' },
-            { label: 'APL FUNDO', value: 'APL FUNDO' },
-            { label: 'CRED.AUTOR', value: 'CRED.AUTOR' },
-            { label: 'CRED TED', value: 'CRED TED' },
-            { label: 'CRED PIX', value: 'CRED PIX' },
-            { label: 'DEB.AUTOR.', value: 'DEB.AUTOR.' },
-            { label: 'EST PG FOR', value: 'EST PG FOR' },
-            { label: 'PAG FORNEC', value: 'PAG FORNEC' },
-            { label: 'RESG AUTOM', value: 'RESG AUTOM' },
-            { label: 'RSG FUNDO', value: 'RSG FUNDO' },
-            { label: 'MANUT CTA', value: 'MANUT CTA' },
-        ];
-
-        return (
-            <GridToolbarContainer className="flex-col sm:flex-row w-full  items-center gap-4 mb-4 justify-between" {...props}>
-                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={dateFnsPtBR}>
-                    <DateRangePicker
-                        value={dateRange}
-                        onChange={(range) => setDateRange(range)}
-                        id="custom-date-input"
-                        showOneCalendar
-                        showHeader={false}
-                        placement="auto"
-                        placeholder="Selecionar Data"
-                        format="dd/MM/yy"
-                        character=" - "
-                        className="custom-date-range-picker sm:w-[22%] w-full"
-                    />
-                </LocalizationProvider>
-                <Autocomplete
-                    options={tipoOptions}
-                    getOptionLabel={(option) => option.label}
-                    value={tipoOptions.find(opt => opt.value === tipo) || null}
-                    onChange={(e, newValue) => setTipo(newValue?.value || '')}
-                    renderInput={(params) => (
-                        <TextField {...params} label="Tipo" />
-                    )}
-                    className="min-w-[180px] sm:w-[22%] w-full"
-                />
-                <Autocomplete
-                    multiple
-                    options={operacaoOptions}
-                    getOptionLabel={(option) => option.label}
-                    value={operacaoOptions.filter((opt) => operacao.includes(opt.value))}
-                    onChange={(e, newValues) => setOperacao(newValues.map(val => val.value))}
-                    renderInput={(params) => (
-                        <TextField {...params} label="Operação" />
-                    )}
-                    className="min-w-[22%] sm:w-auto w-full"
-                />
-
-                <Button
-                    variant="contained"
-                    color="secondary"
-                    className='w-full sm:w-auto'
-                    onClick={handleSearch}
-                >
-                    Pesquisar
-                </Button>
-
-                <ExportButton data={{ rows, dateRange, sumTotal, sumTotalEntry, sumTotalExit, conta: 'CB', saldo: formatToBRL(accountBalance.cb) }} />
+                 <ExportButton data={{ rows, dateRange, sumTotal, sumTotalEntry, sumTotalExit, conta: 'CB', saldo: formatToBRL(accountBalance.cb) }} />
 
 
 
-            </GridToolbarContainer>
-        );
-    }
+             </GridToolbarContainer>
+         );
+     }
 
     return (
         <>
@@ -230,22 +216,21 @@ export default function BasicEditingGrid(props) {
                     </p>
                 </header>
                 <div style={{ height: 500, width: '100%' }}>
-                    <DataGrid
-                        localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
-                        rows={rows}
+                  <DataGrid
+                            localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
+                            rows={rows}
                         rowHeight={25}
-                        loading={isLoading}
-                        columns={columns}
-                        slots={{ toolbar: CustomToolbar }}
-                        disableColumnMenu
-                        editMode="row"
-                        rowModesModel={rowModesModel}
-                        componentsProps={{
-                            toolbar: { setRows, setRowModesModel },
-                        }}
-                    />
-
-
+                            loading={isLoading}
+                            columns={columns}
+                            slots={{ toolbar: CustomToolbar }}
+                            editMode="row"
+                            rowModesModel={rowModesModel}
+                            componentsProps={{
+                                toolbar: { setRows, setRowModesModel },
+                            }}
+                        />
+                  
+                  
                 </div>
                 <Box className="font-semibold">
                     Total movimentado:  R$ {sumTotal ?? '0,00'}
@@ -257,9 +242,9 @@ export default function BasicEditingGrid(props) {
                     Total de saídas no período: - R$ {sumTotalExit ?? '0,00'}
                 </Box>
             </Box>
+ 
 
-
-
+       
         </>
     );
 }

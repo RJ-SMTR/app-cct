@@ -206,6 +206,7 @@ export function PersonalInfo({ user }) {
 
 
 export function BankInfo({user}) {
+
     const [bankCode, setBankCode] = useState();
     const [previousBank, setPreviousBank] = useState();
     const [bankRm, setBankRm] = useState(false);

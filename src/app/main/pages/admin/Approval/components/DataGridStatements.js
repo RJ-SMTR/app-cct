@@ -6,7 +6,7 @@ import accounting from 'accounting';
 
 import {
     DateRangePicker
-} from 'rsuite';
+} from 'rsuite'; 
 import 'rsuite/dist/rsuite.min.css';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ptBR as dateFnsPtBR } from 'date-fns/locale';
@@ -25,7 +25,7 @@ export default function BasicEditingGrid(props) {
     const [rowModesModel, setRowModesModel] = useState({});
 
     const [isLoading, setIsLoading] = useState(false);
-
+    
 
     const [sumTotal, setSumTotal] = useState()
     const [sumTotalEntry, setSumTotalEntry] = useState()
@@ -37,36 +37,40 @@ export default function BasicEditingGrid(props) {
     const [tipo, setTipo] = useState([]);
     const [operacao, setOperacao] = useState([]);
     const accountBalance = useSelector(state => state.release.accountBalance)
-
+    
 
     const formatToBRL = (value) => {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     };
 
 
-    const formattedValue = (sum) => {
-        return accounting.formatMoney(sum, {
-            symbol: "",
-            decimal: ",",
-            thousand: ".",
-            precision: 2
-        });
+   const formattedValue = (sum) => {
+         return accounting.formatMoney(sum, {
+              symbol: "",
+              decimal: ",",
+              thousand: ".",
+              precision: 2
+          });
+      
+      } 
+  
+      function getRemovedElements(arr, prop, value) {
+          return arr.filter(item => item && item[prop] === value);
+      }
+      
+      const type = (type, valor) => {
+              if (type === 'Saída') {
+                  return `- ${formatToBRL(valor)}`
+              }
+              return formatToBRL(valor)
+          
+      }    
 
-    }
-
-
-
-    const type = (type, valor) => {
-        if (type === 'Saída') {
-            return parseFloat(valor) * -1
-        }
-        return valor
-
-    }
     function formatISODateToBR(dateString) {
         const [year, month, day] = dateString.split('T')[0].split('-');
         return `${day}/${month}/${year}`;
     }
+  
     const handleSearch = () => {
         setIsLoading(true);
         dispatch(handleExtract({
@@ -79,7 +83,6 @@ export default function BasicEditingGrid(props) {
             .then((response) => {
                 const rowsWithId = response.data.extrato.map((item, index) => {
                     const formatted = formatISODateToBR(item.dataLancamento);
-
                     return {
                         id: `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 5)}`,
                         data: formatted,
@@ -89,43 +92,23 @@ export default function BasicEditingGrid(props) {
                     };
                 });
                 setRows(rowsWithId);
-
-                const totalMovimentado = response.data.extrato.reduce((acc, item) => {
-                    const valor = typeof item.valor === 'string'
-                        ? parseFloat(item.valor)
-                        : item.valor;
-                    return acc + Math.abs(valor);
-                }, 0);
-                setSumTotal(formattedValue(totalMovimentado));
-
-                const entradas = response.data.extrato.filter(item => item.tipo === 'Entrada');
-                const totalEntrada = entradas.reduce((acc, item) => {
-                    const valor = typeof item.valor === 'string'
-                        ? parseFloat(item.valor)
-                        : item.valor;
-                    return acc + valor;
-                }, 0);
-                setSumTotalEntry(formattedValue(totalEntrada));
-
-                const saidas = response.data.extrato.filter(item => item.tipo === 'Saída');
-                const totalSaida = saidas.reduce((acc, item) => {
-                    const valor = typeof item.valor === 'string'
-                        ? parseFloat(item.valor)
-                        : item.valor;
-                    return acc + valor;
-                }, 0);
-                setSumTotalExit(formattedValue(totalSaida));
-
-            })
-            .finally(() => {
+                                const sumTotal = response.data.extrato.reduce((accumulator, item) => accumulator + accounting.unformat(item.valor.replace('.', ','), ','), 0);
+                                setSumTotal(formattedValue(sumTotal))
+                                const exits = getRemovedElements(rowsWithId, 'tipo', 'Saída')
+                                const sumExits = exits.reduce((accumulator, item) => accumulator - accounting.unformat(item.valor.replace(/\./g, '').replace('.', ','), ','), 0);
+                                setSumTotalExit(formattedValue(sumExits))
+                                const entry = getRemovedElements(rowsWithId, 'tipo', 'Entrada')
+                                const sumEntry = entry.reduce((accumulator, item) => accumulator + accounting.unformat(item.valor.replace(/\./g, '').replace('.', ','), ','), 0);
+                                setSumTotalEntry(formattedValue(sumEntry))
+            }).finally(() => {
                 setIsLoading(false);
             });
-
     };
-    useEffect(() => {
+
+   useEffect(() => {
         dispatch(setAccountBalance({ key: 'cett', value: parseFloat(accounting.unformat(sumTotalEntry?.replace(/\./g, '').replace('.', ','), ',')) - accounting.unformat(sumTotalExit?.replace(/\./g, '').replace('.', ','), ',') }))
 
-    }, [sumTotalEntry, sumTotalExit])
+    }, [sumTotalEntry,sumTotalExit])
 
     const columns = [
         { field: 'data', headerName: 'Data', width: 300, editable: false },
@@ -138,10 +121,9 @@ export default function BasicEditingGrid(props) {
             field: 'valor',
             headerName: 'Valor',
             width: 200,
-            type: 'number',
             renderCell: (params) => (
                 <span className={params.row.tipo === 'Saída' ? 'text-red ml-[-10px]' : ''}>
-                    {formatToBRL(params.value)}
+                    {params.value}
                 </span>
             )
         },
@@ -212,7 +194,7 @@ export default function BasicEditingGrid(props) {
                 >
                     Pesquisar
                 </Button>
-                <ExportButton data={{ rows, dateRange, sumTotal, sumTotalEntry, sumTotalExit, conta: 'CETT', saldo: formatToBRL(accountBalance.cett) }} />
+                <ExportButton data={{rows, dateRange, sumTotal, sumTotalEntry, sumTotalExit, conta: 'CETT', saldo: formatToBRL(accountBalance.cett)}} />
 
 
 

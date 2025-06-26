@@ -374,9 +374,11 @@ const [selectedConsorcios, setSelectedConsorcios] = useState([]);
 
     const handleSelection = (field, newValue) => {
         setSelected(newValue.length > 0 ? field : null);
+
         if(field === 'consorcioName'){
             setSelectedConsorcios(newValue);
         }
+
         handleAutocompleteChange(field, newValue);
     };
 
