@@ -214,18 +214,21 @@ export function BankInfo({user}) {
     const bankCodes = [184, 29, 479, 386, 249];
 
     useEffect(() => {
-                const response = api.get('/banks');
+        if (user.aux_bank != null) {
+            setBankCode(`${user.bankCode} - ${user.aux_bank.name}`);
+        } else {
+            setBankCode(user.bankCode);
+        }
+        async function fetchBanks() {
+            try {
+                const response = await api.get('/banks');
                 const bankList = response.data;
                 setBanks(bankList);
 
-                if (user.aux_bank != null) {
-                    setBankCode(`${user.bankCode} - ${user.aux_bank.name}`);
-                } else {
-                    setBankCode(user.bankCode);
-                }
+             
 
                 if (user.previousBankCode) {
-                    const previousBank = bankList.find(b => b.code === user.previousBankCode);
+                    const previousBank = bankList?.find(b => b.code === user.previousBankCode);
                     if (previousBank) {
                         setPreviousBank(`${user.previousBankCode} - ${previousBank.name}`);
                     } else {
@@ -237,7 +240,14 @@ export function BankInfo({user}) {
                     setBankRm(true);
                 }
 
-   
+            } catch (error) {
+                console.error('Erro ao buscar bancos:', error);
+            }
+        }
+
+        if (user) {
+            fetchBanks();
+        }
     }, [user]);
     
     return (
@@ -257,7 +267,7 @@ export function BankInfo({user}) {
 
 
                     <TextField
-                        value={bankCode}
+                        value={bankCode ?? user.bankCode}
                         disabled
                         label='Banco'
                         className=""
