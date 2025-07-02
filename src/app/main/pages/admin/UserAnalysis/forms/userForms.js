@@ -214,9 +214,7 @@ export function BankInfo({user}) {
     const bankCodes = [184, 29, 479, 386, 249];
 
     useEffect(() => {
-        async function fetchBanks() {
-            try {
-                const response = await api.get('/banks');
+                const response = api.get('/banks');
                 const bankList = response.data;
                 setBanks(bankList);
 
@@ -239,14 +237,7 @@ export function BankInfo({user}) {
                     setBankRm(true);
                 }
 
-            } catch (error) {
-                console.error('Erro ao buscar bancos:', error);
-            }
-        }
-
-        if (user) {
-            fetchBanks();
-        }
+   
     }, [user]);
     
     return (
