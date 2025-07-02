@@ -220,9 +220,8 @@ export function BankInfo({user}) {
                 const bankList = response.data;
                 setBanks(bankList);
 
-                const currentBank = bankList.find(b => b.code === user.bankCode);
-                if (currentBank) {
-                    setBankCode(`${user.bankCode} - ${currentBank.name}`);
+                if (user.aux_bank != null) {
+                    setBankCode(`${user.bankCode} - ${user.aux_bank.name}`);
                 } else {
                     setBankCode(user.bankCode);
                 }
