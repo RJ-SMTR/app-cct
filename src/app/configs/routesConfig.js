@@ -28,9 +28,9 @@ import ReportReleaseConfig from '../main/pages/admin/ReportRelease/ReportRelease
 const routeConfigs = [
   // HomeConifg,
   SignOutConfig,
-  SignInConfig,
-  ForgotPasswordConfig,
-  ResetPasswordConfig,
+  // SignInConfig,
+  // ForgotPasswordConfig,
+  // ResetPasswordConfig,
   ConcludeConfig,
   profileAppConfig,
   ExtractConfig,
