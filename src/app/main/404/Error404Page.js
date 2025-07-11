@@ -9,7 +9,6 @@ import LockIcon from '@mui/icons-material/Lock';
 
 function Error404Page() {
     const user = useSelector(selectUser);
-    console.log(user)
 
   if (user.role.length < 1) {
     return (
