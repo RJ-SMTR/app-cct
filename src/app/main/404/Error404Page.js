@@ -244,9 +244,9 @@ function Error404Page() {
           </Typography>
         </motion.div>
 
-        <Link className="block font-normal mt-48" to="/">
+        {/* <Link className="block font-normal mt-48" to="/">
           Voltar para página inicial
-        </Link>
+        </Link> */}
       </div>
     </div>
   );
