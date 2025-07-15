@@ -1,9 +1,11 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Controller, useForm } from 'react-hook-form';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
-import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
+import InputAdornment from '@mui/material/InputAdornment';
+import IconButton from '@mui/material/IconButton';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { Link, redirect } from 'react-router-dom';
@@ -40,7 +42,14 @@ function SignInPage() {
     });
 
     const { isValid, dirtyFields, errors } = formState;
+    const [showPassword, setShowPassword] = useState(false);
 
+    const handleTogglePasswordVisibility = () => {
+        const input = document.getElementById('admin-password');
+        if (input) input.blur(); 
+        setShowPassword((prev) => !prev);
+    };
+    
     function onSubmit({ email, password }) {
         jwtService
             .adminSignIn(email, password)
@@ -101,17 +110,32 @@ function SignInPage() {
                                 render={({ field }) => (
                                     <TextField
                                         {...field}
+                                        id="admin-password"
                                         className="mb-24"
                                         label="Senha"
-                                        type="password"
+                                        type={showPassword ? 'text' : 'password'}
                                         error={!!errors.password}
                                         helperText={errors?.password?.message}
                                         variant="outlined"
                                         required
                                         fullWidth
+                                        InputProps={{
+                                            endAdornment: (
+                                                <InputAdornment position="end">
+                                                    <IconButton
+                                                        onClick={handleTogglePasswordVisibility}
+                                                        onMouseDown={(e) => e.preventDefault()}
+                                                        edge="end"
+                                                    >
+                                                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                                                    </IconButton>
+                                                </InputAdornment>
+                                            ),
+                                        }}
                                     />
                                 )}
                             />
+
                         <Box className="flex justify-end">
                                 <Link className="text-md font-medium" to="/forgot-password">
                                     Esqueceu sua senha?

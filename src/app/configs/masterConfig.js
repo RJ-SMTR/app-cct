@@ -55,9 +55,9 @@ const masterConfig = [
     },
 
     {
+        id: 'Visão Financeira',
+        title: 'Visão Financeira',
 
-        id: 'Movimentações Financeiras',
-        title: 'Movimentações Financeiras',
         subtitle: '',
         type: 'group',
         icon: '',

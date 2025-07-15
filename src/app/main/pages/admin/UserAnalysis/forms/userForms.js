@@ -206,7 +206,6 @@ export function PersonalInfo({ user }) {
 
 
 export function BankInfo({user}) {
-
     const [bankCode, setBankCode] = useState();
     const [previousBank, setPreviousBank] = useState();
     const [bankRm, setBankRm] = useState(false);
@@ -215,21 +214,21 @@ export function BankInfo({user}) {
     const bankCodes = [184, 29, 479, 386, 249];
 
     useEffect(() => {
+        if (user.aux_bank != null) {
+            setBankCode(`${user.bankCode} - ${user.aux_bank.name}`);
+        } else {
+            setBankCode(user.bankCode);
+        }
         async function fetchBanks() {
             try {
                 const response = await api.get('/banks');
                 const bankList = response.data;
                 setBanks(bankList);
 
-                const currentBank = bankList.find(b => b.code === user.bankCode);
-                if (currentBank) {
-                    setBankCode(`${user.bankCode} - ${currentBank.name}`);
-                } else {
-                    setBankCode(user.bankCode);
-                }
+             
 
                 if (user.previousBankCode) {
-                    const previousBank = bankList.find(b => b.code === user.previousBankCode);
+                    const previousBank = bankList?.find(b => b.code === user.previousBankCode);
                     if (previousBank) {
                         setPreviousBank(`${user.previousBankCode} - ${previousBank.name}`);
                     } else {
@@ -268,7 +267,7 @@ export function BankInfo({user}) {
 
 
                     <TextField
-                        value={bankCode}
+                        value={bankCode ?? user.bankCode}
                         disabled
                         label='Banco'
                         className=""

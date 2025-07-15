@@ -7,9 +7,13 @@ import * as yup from 'yup';
 import _ from '@lodash';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { AuthContext } from 'src/app/auth/AuthContext';
-import {  useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom';
+import InputAdornment from '@mui/material/InputAdornment';
+import IconButton from '@mui/material/IconButton';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 const getCharacterValidationError = (str) => {
   return `Sua senha deve conter 1 ${str}`;
@@ -27,8 +31,8 @@ const schema = yup.object().shape({
 });
 
 function ResetPassword() {
-  const navigate = useNavigate()
-  let { hash } = useParams();
+  const navigate = useNavigate();
+  const { hash } = useParams();
   const { resetPasswordFunction } = useContext(AuthContext);
   const { control, formState, handleSubmit } = useForm({
     mode: 'onChange',
@@ -37,31 +41,44 @@ function ResetPassword() {
 
   const { isValid, dirtyFields, errors } = formState;
 
-  function onSubmit( password ) {
-    resetPasswordFunction(password.passwordConfirm, hash)
-      .then( setTimeout(() => {
-             return navigate('/sign-in')
-            }, 3000))
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const togglePassword = () => {
+    const input = document.getElementById('password');
+    if (input) input.blur();
+    setShowPassword((prev) => !prev);
+  };
+
+  const toggleConfirmPassword = () => {
+    const input = document.getElementById('passwordConfirm');
+    if (input) input.blur();
+    setShowConfirmPassword((prev) => !prev);
+  };
+
+  function onSubmit(data) {
+    resetPasswordFunction(data.passwordConfirm, hash).then(() => {
+      setTimeout(() => navigate('/sign-in'), 3000);
+    });
   }
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-center md:items-start sm:justify-center md:justify-start flex-1 min-w-0">
       <Paper className="h-full sm:h-auto flex items-center md:flex md:items-center md:justify-end w-full sm:w-auto md:h-full md:w-1/2 py-8 px-16 sm:p-48 md:p-64 sm:rounded-2xl md:rounded-none sm:shadow md:shadow-none ltr:border-r-1 rtl:border-l-1 relative">
-        <div className="w-full max-w-320 h-5/6 md:h-1/2  sm:w-320 mx-auto sm:mx-0">
+        <div className="w-full max-w-320 h-5/6 md:h-1/2 sm:w-320 mx-auto sm:mx-0">
           <Typography className="mt-32 text-4xl font-extrabold tracking-tight leading-tight">
             Recuperação de senha
           </Typography>
           <div className="flex flex-col items-baseline mt-2 font-medium">
-            <Typography>Digite sua nova senha!
-            </Typography>
-            <Typography> Ela deve conter: 
+            <Typography>Digite sua nova senha!</Typography>
+            <Typography>
+              Ela deve conter:
               <ul>
                 <li>- 8 caracteres</li>
                 <li>- Uma letra minúscula</li>
                 <li>- Uma letra maiúscula</li>
               </ul>
             </Typography>
-            
           </div>
 
           <form
@@ -76,33 +93,60 @@ function ResetPassword() {
               render={({ field }) => (
                 <TextField
                   {...field}
+                  id="password"
                   className="mb-24"
                   label="Senha"
-                  autoFocus
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   error={!!errors.password}
                   helperText={errors?.password?.message}
                   variant="outlined"
                   required
                   fullWidth
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={togglePassword}
+                          onMouseDown={(e) => e.preventDefault()}
+                          edge="end"
+                        >
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
                 />
               )}
             />
+
             <Controller
               name="passwordConfirm"
               control={control}
               render={({ field }) => (
                 <TextField
                   {...field}
+                  id="passwordConfirm"
                   className="mb-24"
                   label="Confirmação da senha"
-                  autoFocus
-                  type="password"
+                  type={showConfirmPassword ? 'text' : 'password'}
                   error={!!errors.passwordConfirm}
                   helperText={errors?.passwordConfirm?.message}
                   variant="outlined"
                   required
                   fullWidth
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={toggleConfirmPassword}
+                          onMouseDown={(e) => e.preventDefault()}
+                          edge="end"
+                        >
+                          {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
                 />
               )}
             />
@@ -120,6 +164,7 @@ function ResetPassword() {
             </Button>
           </form>
         </div>
+
         <svg
           className="absolute inset-0 pointer-events-none md:hidden"
           viewBox="0 0 960 540"
@@ -141,8 +186,8 @@ function ResetPassword() {
         </svg>
       </Paper>
 
-      <Box className="relative hidden md:flex flex-auto items-center justify-center h-screen  overflow-hidden ">
-    <img src="assets/images/etc/kombi.jpg" className="h-full w-full object-fill" alt="Kombis CCT" />
+      <Box className="relative hidden md:flex flex-auto items-center justify-center h-screen overflow-hidden">
+        <img src="assets/images/etc/kombi.jpg" className="h-full w-full object-fill" alt="Kombis CCT" />
       </Box>
     </div>
   );

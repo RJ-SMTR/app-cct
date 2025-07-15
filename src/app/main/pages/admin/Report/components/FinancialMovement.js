@@ -83,7 +83,6 @@ export default function BasicEditingGrid() {
 	const especificos = [
 			{ label: 'Todos' },
 			{ label: 'Eleição' },
-
 	];
 
 	const dispatch = useDispatch();
@@ -478,11 +477,9 @@ export default function BasicEditingGrid() {
 
 	const handleSelection = (field, newValue) => {
 		setSelected(newValue.length > 0 ? field : null);
-
 		if (field === 'consorcioName') {
 			setSelectedConsorcios(newValue);
 		}
-
 		handleAutocompleteChange(field, newValue); 
 	};
 

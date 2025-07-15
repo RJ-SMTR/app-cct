@@ -66,7 +66,7 @@ const stepSlice = createSlice({
                 ...state.accountBalance,
                 [key]: value,
             };
-          },
+        },
     },
 });
 
@@ -303,7 +303,7 @@ export const handleAuthValue = (data) => (dispatch) => {
     });
 };
 
-export const handleAuthRelease = (selectedDate,selectedStatus, id, password) => (dispatch) => {
+export const handleAuthRelease = (selectedDate, selectedStatus, id, password) => (dispatch) => {
     const searchParams = {
         selectedDate: { ...selectedDate },
         selectedStatus,
@@ -339,11 +339,11 @@ export const handleAuthRelease = (selectedDate,selectedStatus, id, password) => 
 
 export const handleExtract = (data) => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
-        data.dataInicio = dayjs(data.dataInicio).format('YYYY-MM-DD');
-            data.dataFim = dayjs(data.dataFim).format('YYYY-MM-DD');
-    
+    data.dataInicio = dayjs(data.dataInicio).format('YYYY-MM-DD');
+    data.dataFim = dayjs(data.dataFim).format('YYYY-MM-DD');
+
     return new Promise(async (resolve, reject) => {
-        
+
         let config = {
             method: 'get',
             maxBodyLength: Infinity,
@@ -353,18 +353,18 @@ export const handleExtract = (data) => (dispatch) => {
             },
             params: data
         };
-        try{
+        try {
             const response = await api.request(config);
-            if(data.conta === 'cett'){
+            if (data.conta === 'cett') {
                 dispatch(setListCett(response))
                 dispatch(setAccountBalance({ key: 'cett', value: response.data.saldoConta }));
             }
-            if(data.conta === 'cb'){
+            if (data.conta === 'cb') {
                 dispatch(setListCB(response))
                 dispatch(setAccountBalance({ key: 'cb', value: response.data.saldoConta }));
             }
             resolve(response)
-        } catch(error) {
+        } catch (error) {
             reject((error))
         }
 
