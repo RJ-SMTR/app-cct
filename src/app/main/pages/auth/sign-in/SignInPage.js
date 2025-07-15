@@ -5,6 +5,9 @@ import Checkbox from '@mui/material/Checkbox';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import TextField from '@mui/material/TextField';
+import Input from '@mui/material/Input';
+import InputLabel from '@mui/material/InputLabel';
+import FormHelperText from '@mui/material/FormHelperText';
 import Typography from '@mui/material/Typography';
 import { Link } from 'react-router-dom';
 import * as yup from 'yup';
@@ -12,6 +15,11 @@ import _ from '@lodash';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import jwtService from '../../../../auth/services/jwtService';
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { useState } from 'react';
 
 /**
  * Form Validation Schema
@@ -35,6 +43,16 @@ function SignInPage() {
     defaultValues,
     resolver: yupResolver(schema),
   });
+
+
+  const [showPassword, setShowPassword] = useState(false);
+  const handleClickShowPassword = () => {
+    const input = document.getElementById('password');
+    if (input) input.blur(); 
+    setShowPassword((show) => !show);
+  };
+  
+  const handleMouseDownPassword = (event) => event.preventDefault();
 
   const { isValid, dirtyFields, errors } = formState;
 
@@ -101,18 +119,39 @@ function SignInPage() {
               control={control}
               render={({ field }) => (
                 <TextField
-                  {...field}
-                  className="mb-24"
                   label="Senha"
-                  type="password"
+                  className="mb-24"
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
                   error={!!errors.password}
                   helperText={errors?.password?.message}
                   variant="outlined"
                   required
                   fullWidth
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={handleClickShowPassword}
+                          onMouseDown={handleMouseDownPassword}
+                          edge="end"
+                        >
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                    inputRef: field.ref, // Aqui é o importante!
+                  }}
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  name={field.name}
                 />
               )}
             />
+
+
 
             <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between">
               <Controller
