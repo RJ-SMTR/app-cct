@@ -31,10 +31,10 @@ function UserNavbarHeader(props) {
   return (
     <Root className="user relative flex flex-col items-center justify-center p-16 pb-14 shadow-0">
       <Typography className="username text-14 whitespace-nowrap font-medium">
-        {user.fullName ?? 'Admin'}
+        {user.fullName}
       </Typography>
       <Typography className="email text-13 whitespace-nowrap font-medium" color="text.secondary">
-        {user.email ?? 'Admin@example.com'}
+        {user.email}
       </Typography>
     </Root>
   );

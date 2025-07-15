@@ -27,13 +27,13 @@ export function CustomTable(data) {
     const formattedDate = format(parsed, 'dd/MM/yyyy HH:mm:ss');
     return formattedDate
   }
-  const dateUTCMonth = (i) => {
-    const tz = 'UTC'
-    const parsed = new Date(i)
-    const zonedDate = utcToZonedTime(parsed, tz)
-    const formattedDate = format(zonedDate, 'dd/MM/yyyy');
-    return formattedDate
-  }
+  // const dateUTCMonth = (i) => {
+  //   const tz = 'UTC'
+  //   const parsed = new Date(i)
+  //   const zonedDate = utcToZonedTime(parsed, tz)
+  //   const formattedDate = format(zonedDate, 'dd/MM/yyyy');
+  //   return formattedDate
+  // }
   const CustomBadge = (data) => {
     const i = data.data.data
     const getStatus = (i) => {
@@ -52,21 +52,23 @@ export function CustomTable(data) {
     }
     return <Badge className={`${data.c?.root}  whitespace-nowrap`}
       color={i.statusRemessa === 4 ? 'error' : i.statusRemessa === 3 ? 'success' : i.statusRemessa === null ? 'op' : 'warning'}
+
       badgeContent={getStatus(i)}
     />
   }
   const ErrorBadge = (data) => {
     const i = data.data.data
+    const error24 = i.motivo
     const errorDescription = i.motivoStatusRemessa ? i.descricaoMotivoStatusRemessa : <></>;
     const getStatus = (i) => {
       return  (
         <span className='underline'> Erro  <InfoOutlinedIcon fontSize='small' /></span>
       )
     }
-    if(i.statusRemessa === 4){
+    if(i.statusRemessa === 4 || i.status === 'Não Pago'){
       return (
             
-        <Tooltip   title={errorDescription} arrow enterTouchDelay={10} leaveTouchDelay={10000}>
+        <Tooltip   title={data.data.ano === 24 ? error24 :errorDescription} arrow enterTouchDelay={10} leaveTouchDelay={10000}>
           <Badge className={`${data.c?.root}  whitespace-nowrap`}
             color='error'
             badgeContent={getStatus(i)}
@@ -95,7 +97,7 @@ export function CustomTable(data) {
       <TableCell component="th" scope="row" onClick={searchingDay ? undefined : data.handleClickRow}>
         <Typography className={searchingDay ? "whitespace-nowrap " : "whitespace-nowrap underline"}>
 
-          {searchingDay ? dateUTC(data.data.datetime_transacao) : searchingWeek ? dateUTCMonth(data.data.dataCaptura) : dateUTCMonth(data.data.data)}
+          {searchingDay ? dateUTC(data.data.datetime_transacao) : searchingWeek ? data.date :  data.date}
 
         </Typography>
       </TableCell>
@@ -130,8 +132,25 @@ export function CustomTable(data) {
 
       </TableCell>)}
       {!searchingWeek ? <>
-        <TableCell className='status' component="th" scope='row'> <CustomBadge data={data} /> </TableCell>
-        <MyTableCell data={data} />
+        {data.ano != 24 ? 
+        <>
+            <TableCell className='status' component="th" scope='row'>
+              <CustomBadge data={data} />
+            </TableCell>
+            <MyTableCell data={data} />
+        
+        </>
+        
+        :    
+            <>
+          <TableCell className='status' component="th" scope='row'>
+              <Badge className={`${data.c?.root}  whitespace-nowrap`}
+                color={data.data.status === 'Não Pago' ? 'error' : data.data.status === 'Pago' ? 'success' : 'warning'}
+
+                badgeContent={data.data.status}
+              />
+          </TableCell>
+          <MyTableCell data={data} /></>}
       </>
         : <> </>}
 
