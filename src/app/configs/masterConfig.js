@@ -57,6 +57,7 @@ const masterConfig = [
     {
         id: 'Visão Financeira',
         title: 'Visão Financeira',
+
         subtitle: '',
         type: 'group',
         icon: '',

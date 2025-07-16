@@ -19,29 +19,31 @@ import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { makeStyles } from '@mui/styles';
 
 import { CustomTable } from 'src/app/main/components/TableComponents';
-import { format, parseISO,  isAfter, startOfDay, formatISO } from 'date-fns';
+import { format, parseISO, isAfter, startOfDay, formatISO } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 
 import { useDispatch, useSelector } from 'react-redux';
 
-import { getStatements,
-         setPreviousDays, 
-         setDateRange, 
-         setSearchingWeek, 
-         setSearchingDay, 
-         setValorAcumuladoLabel, 
-         setValorPagoLabel, 
-         setLoading, setLoadingWeek, 
-         setLoadingPrevious, 
-         setOrdemPgto,
-        setMocked } from 'app/store/extractSlice';
+import {
+    getStatements,
+    setPreviousDays,
+    setDateRange,
+    setSearchingWeek,
+    setSearchingDay,
+    setValorAcumuladoLabel,
+    setValorPagoLabel,
+    setLoading, setLoadingWeek,
+    setLoadingPrevious,
+    setOrdemPgto,
+    setMocked
+} from 'app/store/extractSlice';
 
 import { showMessage } from 'app/store/fuse/messageSlice';
 
 import { useNavigate } from 'react-router-dom';
 import { selectUser } from 'app/store/userSlice';
 
-import {  MobileDatePicker } from '@mui/x-date-pickers';
+import { MobileDatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import ptBR from 'date-fns/locale/pt-BR';
@@ -62,8 +64,8 @@ function TableTransactions({ id }) {
         mocked
     } = useSelector((state) => state.extract);
     const MemoizedCustomTable = memo(CustomTable);
- 
-// REMOVER CARD
+
+    // REMOVER CARD
 
     const [currentWeekStart, setCurrentWeekStart] = useState()
     const [isGreaterThanToday, setIsGreaterThanToday] = useState(false)
@@ -74,7 +76,7 @@ function TableTransactions({ id }) {
     const [rowsPerPage, setRowsPerPage] = useState(8);
     const [selectedDate, setSelectedDate] = useState(null)
     const [dataOrderDay, setDataOrderDay] = useState('')
-    
+
 
     const navigate = useNavigate()
     const useStyles = makeStyles(() => ({
@@ -99,7 +101,7 @@ function TableTransactions({ id }) {
     useEffect(() => {
         if (searchingWeek || searchingDay) {
             if (ordemPgtoId !== previousOrder.current) {
-                
+
                 setLastId(previousOrder.current);
                 previousOrder.current = ordemPgtoId;
             }
@@ -166,9 +168,9 @@ function TableTransactions({ id }) {
         setPreviousDays("");
         if (user.role.name.includes("Admin")) {
             dispatch(getStatements(dateRange, searchingDay, searchingWeek, id, ordemPgtoId, mocked))
-             
+
         } else {
-            dispatch(getStatements(dateRange, searchingDay, searchingWeek,id, ordemPgtoId))
+            dispatch(getStatements(dateRange, searchingDay, searchingWeek, id, ordemPgtoId))
 
         }
 
@@ -210,8 +212,8 @@ function TableTransactions({ id }) {
 
 
     const handleClickRow = (idOrder, event) => {
-        if(idOrder === null){
- dispatch(showMessage({ message: 'Não há valores para serem apresentados.' }))
+        if (idOrder === null) {
+            dispatch(showMessage({ message: 'Não há valores para serem apresentados.' }))
         } else {
             dispatch(setLoading(true))
             dispatch(setLoadingWeek(true))
@@ -252,53 +254,53 @@ function TableTransactions({ id }) {
                 navigate('/extrato')
             }
         }
-     
+
     }
 
     const handleBack = () => {
         // if(mocked && !searchingDay){
         //     dispatch(setMocked(false))
         //     dispatch(setDateRange(lastDate))
-            
+
         // } else {
-            setSelectedDate(null);
-            dispatch(setLoadingWeek(true))
-            dispatch(setLoadingPrevious(true))
-            dispatch(setLoading(true))
-            // dispatch(setMocked(false))
-            if (searchingDay) {
-                dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
-                dispatch(setValorPagoLabel('Valor - Acumulado Semanal'));
-                dispatch(setDateRange(lastDate))
-                dispatch(setOrdemPgto(lastId))
-                setPage(0)
-                // dispatch(setMocked(true))
-                dispatch(setSearchingDay(false))
+        setSelectedDate(null);
+        dispatch(setLoadingWeek(true))
+        dispatch(setLoadingPrevious(true))
+        dispatch(setLoading(true))
+        // dispatch(setMocked(false))
+        if (searchingDay) {
+            dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
+            dispatch(setValorPagoLabel('Valor - Acumulado Semanal'));
+            dispatch(setDateRange(lastDate))
+            dispatch(setOrdemPgto(lastId))
+            setPage(0)
+            // dispatch(setMocked(true))
+            dispatch(setSearchingDay(false))
 
 
+        } else {
+            if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
+            if (!searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Semanal'));
+            if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Mensal'));
+            if (searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Mensal'));
+            setPage(0)
+            dispatch(setSearchingWeek(false))
+
+            if (selectedDate !== null) {
+                const newDate = formatISO(selectedDate).substring(0, 7)
+                dispatch(setDateRange(newDate))
             } else {
-                if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
-                if (!searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Semanal'));
-                if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Mensal'));
-                if (searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Mensal'));
-                setPage(0)
-                dispatch(setSearchingWeek(false))
+                dispatch(setDateRange([]))
 
-                if (selectedDate !== null) {
-                    const newDate = formatISO(selectedDate).substring(0, 7)
-                    dispatch(setDateRange(newDate))
-                } else {
-                    dispatch(setDateRange([]))
-
-                }
+            }
 
 
         }
-       
+
         // }
     }
 
- 
+
 
     return (
         <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
@@ -425,31 +427,31 @@ function TableTransactions({ id }) {
 
                         <TableBody>
 
-                            {isLoading  ? 
+                            {isLoading ?
                                 <TableCell colSpan={4}>
                                     <Box className="flex justify-center items-center m-10">
                                         <CircularProgress />
-                                    </Box> 
+                                    </Box>
                                 </TableCell>
-                            : statements?.length > 0 ?
-                            statements?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
-                                const tz = 'UTC'
-                                const date = parseISO(i.data ?? i.dataCaptura ?? i.datetime_processamento);
-                                const zonedDate = utcToZonedTime(date, tz)
-                                const formattedDate = format(zonedDate, 'dd/MM/yyyy');
-                                const idOrdem = searchingWeek ? i.ids : i.ordemPagamentoAgrupadoId
-                                return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={(event) => handleClickRow(idOrdem, event)} lastDate={dataOrderDay}  />
-                            }) : 
-                                <TableCell colSpan={4}>
-                                    <p>Não há dados para sem exibidos</p>
-                                </TableCell>
+                                : statements?.length > 0 ?
+                                    statements?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
+                                        const tz = 'UTC'
+                                        const date = parseISO(i.data ?? i.dataCaptura ?? i.datetime_processamento);
+                                        const zonedDate = utcToZonedTime(date, tz)
+                                        const formattedDate = format(zonedDate, 'dd/MM/yyyy');
+                                        const idOrdem = searchingWeek ? i.ids : i.ordemPagamentoAgrupadoId
+                                        return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={(event) => handleClickRow(idOrdem, event)} lastDate={dataOrderDay} />
+                                    }) :
+                                    <TableCell colSpan={4}>
+                                        <p>Não há dados para sem exibidos</p>
+                                    </TableCell>
                             }
                         </TableBody>
                     </Table>
                 </TableContainer>
 
-                {searchingDay || searchingWeek ? 
-                    
+                {searchingDay || searchingWeek ?
+
                     <TablePagination
                         className={`overflow-visible ${c.root}`}
                         component="div"
@@ -459,7 +461,7 @@ function TableTransactions({ id }) {
                         onPageChange={handleChangePage}
                         labelRowsPerPage="Linhas por página"
                         labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-                        rowsPerPageOptions={[10,50, 100, 150]}
+                        rowsPerPageOptions={[10, 50, 100, 150]}
                         onRowsPerPageChange={handleChangeRowsPerPage}
                         ActionsComponent={() => (
                             <div className="my-4 flex space-x-2">
@@ -472,7 +474,7 @@ function TableTransactions({ id }) {
                         )}
 
                     />
-                : <></>}
+                    : <></>}
             </Box>
         </Paper>
     );
