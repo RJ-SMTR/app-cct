@@ -245,7 +245,9 @@ const [selectedConsorcios, setSelectedConsorcios] = useState([]);
 
     // Export PDF
     const exportPDF = () => {
-        const doc = new jsPDF();
+   const doc = new jsPDF({
+          orientation: "landscape",
+      });
         const tableColumn = ["Nome", "Valor"];
         const tableRows = [];
 

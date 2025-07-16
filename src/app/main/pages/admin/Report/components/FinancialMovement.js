@@ -244,6 +244,9 @@ export default function BasicEditingGrid() {
 		reportList.count > 0
 			? reportList.data?.map((report) => ({
 					Nome: report.nomes,
+			Email:	report.email,
+			'Cód Banco':	report.codBanco,
+				Banco: report.nomeBanco,
 					'CPF/CNPJ': report.cpfCnpj,
 					Consórcio: report.consorcio,
 					Valor: formatter.format(report.valor),
@@ -317,13 +320,19 @@ export default function BasicEditingGrid() {
 
 	// Export PDF
     const exportPDF = () => {
-      const doc = new jsPDF();
-      const tableColumn = ["Nome", "CPF/CNPJ", "Consórcio", "Valor", "Status"];
+      const doc = new jsPDF({
+		  orientation: "landscape",
+	  });
+      const tableColumn = ["Nome", "Email", "Cod Banco", "Banco", "CPF/CNPJ", "Consórcio", "Valor", "Status"];
       const tableRows = [];
 
       for (const report of reportList.data) {
+		console.log(report)
         const reportData = [
           report.nomes,
+		  report.email,
+		  report.codBanco,
+		  report.nomeBanco,
           report.cpfCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'),
           report.consorcio,
           formatter.format(report.valor),
@@ -424,9 +433,12 @@ export default function BasicEditingGrid() {
 		}
 		const data = [
 			["Status selecionado", "", "", "", whichStatus || "Todos"],
-			["Nome", "CPF/CNPJ", "Consórcio", "Valor", "Status"],
+			["Nome", "Email", "Cod Banco", "Banco", "CPF/CNPJ", "Consórcio", "Valor", "Status"],
 			...reportList.data.map((report) => [
 				report.nomes,
+				report.email,
+				report.codBanco,
+				report.nomeBanco,
 				report.cpfCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'),
 				report.consorcio,
 				formatter.format(report.valor),
