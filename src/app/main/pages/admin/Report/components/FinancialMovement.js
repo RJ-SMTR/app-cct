@@ -904,11 +904,16 @@ export default function BasicEditingGrid() {
 						style={{ height: "50vh", width: "100%" }}
 						className="overflow-scroll"
 					>
-						<Table size="small">
+						<Table  size="small">
 						<TableHead>
 							<TableRow className="sticky top-0 bg-white z-10">
 								<TableCell className="font-semibold">Data Pagamento</TableCell>
-								<TableCell className="font-semibold">Nome</TableCell>
+									<TableCell className="font-semibold" style={{ whiteSpace: 'nowrap' }}>
+										Nome
+									</TableCell>
+									<TableCell className="font-semibold" style={{ maxWidth: 220 }}>Email</TableCell>
+								<TableCell className="font-semibold">Cód. Banco</TableCell>
+								<TableCell className="font-semibold">Banco</TableCell>
 								<TableCell className="font-semibold">CPF/CNPJ</TableCell>
 								<TableCell className="font-semibold">Consórcios | Modais</TableCell>
 								<TableCell className="font-semibold">Valor</TableCell>
@@ -921,17 +926,22 @@ export default function BasicEditingGrid() {
 								reportList.count > 0 ? (
 									reportList.data?.map((report, index) => (
 										<TableRow key={index} className="hover:bg-gray-50">
-											<TableCell>{report.dataPagamento}</TableCell>
-											<TableCell>{report.nomes}</TableCell>
-											<TableCell>
+											<TableCell className="text-sm">{report.dataPagamento}</TableCell>
+											<TableCell className="text-sm text-nowrap" style={{whiteSpace: 'nowrap' }}>
+												{report.nomes}
+											</TableCell>
+											<TableCell className="text-sm" style={{ maxWidth: 220 }}>{report.email}</TableCell>
+											<TableCell className="text-sm">{report.codBanco}</TableCell>
+											<TableCell className="text-sm">{report.nomeBanco}</TableCell>
+											<TableCell className="text-sm">
 												{report.cpfCnpj.replace(
 													/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
 													"$1.$2.$3/$4-$5"
 												)}
 											</TableCell>
-											<TableCell>{report.consorcio}</TableCell>
-											<TableCell>{formatter.format(report.valor)}</TableCell>
-											<TableCell>
+											<TableCell className="text-sm">{report.consorcio}</TableCell>
+											<TableCell className="text-sm">{formatter.format(report.valor)}</TableCell>
+											<TableCell className="text-sm">
 												<span
 														className={`px-3 py-1 rounded-full text-sm ${getStatusStyles(report.status)}`}
 													>
@@ -965,7 +975,7 @@ export default function BasicEditingGrid() {
 							{(reportList.valorPago > 0 || reportList.valorEstornado > 0 || reportList.valorRejeitado > 0 || reportList.valor > 0) && (
 								<TableRow>
 									<TableCell />
-									<TableCell colSpan={4} className="text-right font-bold text-black text-base pt-16">
+									<TableCell colSpan={7} className="text-right font-bold text-black text-base pt-16">
 										{[
 											reportList.valorPago > 0 && `Total Pago: ${formatter.format(reportList.valorPago)}`,
 											reportList.valorEstornado > 0 && `Total Estorno: ${formatter.format(reportList.valorEstornado)}`,
