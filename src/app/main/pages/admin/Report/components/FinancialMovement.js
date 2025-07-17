@@ -320,6 +320,12 @@ export default function BasicEditingGrid() {
 
 	// Export PDF
     const exportPDF = () => {
+
+		const truncateText = (text, maxLength) => {
+			if (!text) return '';
+			return text.length > maxLength ? text.slice(0, maxLength - 3) + "..." : text;
+		};
+		  
       const doc = new jsPDF({
 		  orientation: "landscape",
 	  });
@@ -332,7 +338,7 @@ export default function BasicEditingGrid() {
           report.nomes,
 		  report.email,
 		  report.codBanco,
-		  report.nomeBanco,
+			truncateText(report.nomeBanco, 15),
           report.cpfCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'),
           report.consorcio,
           formatter.format(report.valor),
@@ -360,6 +366,13 @@ export default function BasicEditingGrid() {
         head: [tableColumn],
         body: tableRows,
         margin: { left: 14, right: 14, top: 60 },
+		  styles: {
+			  fontSize: 8,
+			  cellPadding: 2,
+		  },
+		  columnStyles: {
+			  1: { cellWidth: 30 },
+		  },
         startY: 60,
         didDrawPage: () => {
           doc.addImage(logoImg, "PNG", 14, 10, logoW, logoH);
@@ -942,9 +955,19 @@ export default function BasicEditingGrid() {
 											<TableCell className="text-sm text-nowrap" style={{whiteSpace: 'nowrap' }}>
 												{report.nomes}
 											</TableCell>
-											<TableCell className="text-sm" style={{ maxWidth: 220 }}>{report.email}</TableCell>
+											<TableCell className="text-sm" style={{ maxWidth: 220, overflowWrap: 'break-word' }}>{report.email}</TableCell>
 											<TableCell className="text-sm">{report.codBanco}</TableCell>
-											<TableCell className="text-sm">{report.nomeBanco}</TableCell>
+											<TableCell
+												className="text-sm"
+												style={{
+													textOverflow: 'ellipsis',
+													overflow: 'hidden',
+													whiteSpace: 'nowrap',
+													maxWidth: 120,
+												}}
+											>
+												{report.nomeBanco}
+											</TableCell>
 											<TableCell className="text-sm">
 												{report.cpfCnpj.replace(
 													/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
