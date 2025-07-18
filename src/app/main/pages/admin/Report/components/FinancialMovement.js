@@ -243,6 +243,7 @@ export default function BasicEditingGrid() {
 	const reportListData =
 		reportList.count > 0
 			? reportList.data?.map((report) => ({
+				Data: report.dataPagamento,
 					Nome: report.nomes,
 			Email:	report.email,
 			'Cód Banco':	report.codBanco,
@@ -329,12 +330,13 @@ export default function BasicEditingGrid() {
       const doc = new jsPDF({
 		  orientation: "landscape",
 	  });
-      const tableColumn = ["Nome", "Email", "Cod Banco", "Banco", "CPF/CNPJ", "Consórcio", "Valor", "Status"];
+      const tableColumn = ["Data","Nome", "Email", "Cod Banco", "Banco", "CPF/CNPJ", "Consórcio", "Valor", "Status"];
       const tableRows = [];
 
       for (const report of reportList.data) {
 		console.log(report)
         const reportData = [
+          report.dataPagamento,
           report.nomes,
 		  report.email,
 		  report.codBanco,
@@ -367,7 +369,7 @@ export default function BasicEditingGrid() {
         body: tableRows,
         margin: { left: 14, right: 14, top: 60 },
 		  styles: {
-			  fontSize: 8,
+			  fontSize: 6,
 			  cellPadding: 2,
 		  },
 		  columnStyles: {
@@ -446,8 +448,9 @@ export default function BasicEditingGrid() {
 		}
 		const data = [
 			["Status selecionado", "", "", "", whichStatus || "Todos"],
-			["Nome", "Email", "Cod Banco", "Banco", "CPF/CNPJ", "Consórcio", "Valor", "Status"],
+			["Data","Nome", "Email", "Cod Banco", "Banco", "CPF/CNPJ", "Consórcio", "Valor", "Status"],
 			...reportList.data.map((report) => [
+				 report.dataPagamento,
 				report.nomes,
 				report.email,
 				report.codBanco,
@@ -499,6 +502,25 @@ export default function BasicEditingGrid() {
 		setValue(button, "");
 		setShowButton(false);
 	};
+
+	const isConsorcio = (report, type) => {
+		const cnpjsConsorcio = [
+			'12464539000180',
+			'12464869000176',
+			'12464577000133',
+			'44520687000161',
+			'18201378000119',
+			'12464553000184'
+		];
+
+
+		if (cnpjsConsorcio.includes(report?.cpfCnpj)) {
+			return '';
+		} else {
+			return type;
+		}
+	};
+	  
 
 	const handleSelection = (field, newValue) => {
 		setSelected(newValue.length > 0 ? field : null);
@@ -955,8 +977,8 @@ export default function BasicEditingGrid() {
 											<TableCell className="text-sm text-nowrap" style={{whiteSpace: 'nowrap' }}>
 												{report.nomes}
 											</TableCell>
-											<TableCell className="text-sm" style={{ maxWidth: 220, overflowWrap: 'break-word' }}>{report.email}</TableCell>
-											<TableCell className="text-sm">{report.codBanco}</TableCell>
+											<TableCell className="text-sm" style={{ maxWidth: 220, overflowWrap: 'break-word' }}>{isConsorcio(report, report.email)}</TableCell>
+											<TableCell className="text-sm">{isConsorcio(report, report.codBanco)}</TableCell>
 											<TableCell
 												className="text-sm"
 												style={{
@@ -966,7 +988,7 @@ export default function BasicEditingGrid() {
 													maxWidth: 120,
 												}}
 											>
-												{report.nomeBanco}
+												{isConsorcio(report, report.nomeBanco)}
 											</TableCell>
 											<TableCell className="text-sm">
 												{report.cpfCnpj.replace(
