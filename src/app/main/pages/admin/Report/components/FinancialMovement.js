@@ -243,6 +243,7 @@ export default function BasicEditingGrid() {
 	const reportListData =
 		reportList.count > 0
 			? reportList.data?.map((report) => ({
+				Data: report.dataPagamento,
 					Nome: report.nomes,
 			Email:	report.email,
 			'Cód Banco':	report.codBanco,
@@ -329,12 +330,13 @@ export default function BasicEditingGrid() {
       const doc = new jsPDF({
 		  orientation: "landscape",
 	  });
-      const tableColumn = ["Nome", "Email", "Cod Banco", "Banco", "CPF/CNPJ", "Consórcio", "Valor", "Status"];
+      const tableColumn = ["Data","Nome", "Email", "Cod Banco", "Banco", "CPF/CNPJ", "Consórcio", "Valor", "Status"];
       const tableRows = [];
 
       for (const report of reportList.data) {
 		console.log(report)
         const reportData = [
+          report.dataPagamento,
           report.nomes,
 		  report.email,
 		  report.codBanco,
@@ -367,7 +369,7 @@ export default function BasicEditingGrid() {
         body: tableRows,
         margin: { left: 14, right: 14, top: 60 },
 		  styles: {
-			  fontSize: 8,
+			  fontSize: 6,
 			  cellPadding: 2,
 		  },
 		  columnStyles: {
@@ -446,8 +448,9 @@ export default function BasicEditingGrid() {
 		}
 		const data = [
 			["Status selecionado", "", "", "", whichStatus || "Todos"],
-			["Nome", "Email", "Cod Banco", "Banco", "CPF/CNPJ", "Consórcio", "Valor", "Status"],
+			["Data","Nome", "Email", "Cod Banco", "Banco", "CPF/CNPJ", "Consórcio", "Valor", "Status"],
 			...reportList.data.map((report) => [
+				 report.dataPagamento,
 				report.nomes,
 				report.email,
 				report.codBanco,
