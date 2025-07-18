@@ -500,6 +500,25 @@ export default function BasicEditingGrid() {
 		setShowButton(false);
 	};
 
+	const isConsorcio = (report, type) => {
+		const cnpjsConsorcio = [
+			'12464539000180',
+			'12464869000176',
+			'12464577000133',
+			'44520687000161',
+			'18201378000119',
+			'12464553000184'
+		];
+
+
+		if (cnpjsConsorcio.includes(report?.cpfCnpj)) {
+			return '';
+		} else {
+			return type;
+		}
+	};
+	  
+
 	const handleSelection = (field, newValue) => {
 		setSelected(newValue.length > 0 ? field : null);
 		if (field === 'consorcioName') {
@@ -955,8 +974,8 @@ export default function BasicEditingGrid() {
 											<TableCell className="text-sm text-nowrap" style={{whiteSpace: 'nowrap' }}>
 												{report.nomes}
 											</TableCell>
-											<TableCell className="text-sm" style={{ maxWidth: 220, overflowWrap: 'break-word' }}>{report.email}</TableCell>
-											<TableCell className="text-sm">{report.codBanco}</TableCell>
+											<TableCell className="text-sm" style={{ maxWidth: 220, overflowWrap: 'break-word' }}>{isConsorcio(report, report.email)}</TableCell>
+											<TableCell className="text-sm">{isConsorcio(report, report.codBanco)}</TableCell>
 											<TableCell
 												className="text-sm"
 												style={{
@@ -966,7 +985,7 @@ export default function BasicEditingGrid() {
 													maxWidth: 120,
 												}}
 											>
-												{report.nomeBanco}
+												{isConsorcio(report, report.nomeBanco)}
 											</TableCell>
 											<TableCell className="text-sm">
 												{report.cpfCnpj.replace(
