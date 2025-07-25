@@ -954,17 +954,17 @@ export default function BasicEditingGrid() {
 						<Table  size="small">
 						<TableHead>
 							<TableRow className="sticky top-0 bg-white z-10">
-								<TableCell className="font-semibold ">Data Pagamento</TableCell>
-									<TableCell className="font-semibold " style={{ whiteSpace: 'nowrap' }}>
+									<TableCell className="font-semibold py-1 text-sm leading-none">Data Pagamento</TableCell>
+									<TableCell className="font-semibold p-1 text-sm " style={{ whiteSpace: 'nowrap' }}>
 										Nome
 									</TableCell>
-									<TableCell className="font-semibold " style={{ maxWidth: 220 }}>Email</TableCell>
-								<TableCell className="font-semibold">Cód. Banco</TableCell>
-								<TableCell className="font-semibold ">Banco</TableCell>
-								<TableCell className="font-semibold ">CPF/CNPJ</TableCell>
-								<TableCell className="font-semibold ">Consórcios | Modais</TableCell>
-								<TableCell className="font-semibold ">Valor</TableCell>
-								<TableCell className="font-semibold ">Status</TableCell>
+									<TableCell className="font-semibold p-1 text-sm " style={{ maxWidth: 220 }}>Email</TableCell>
+									<TableCell className="font-semibold py-1 text-sm leading-none">Cód. Banco</TableCell>
+								<TableCell className="font-semibold p-1 text-sm ">Banco</TableCell>
+								<TableCell className="font-semibold p-1 text-sm ">CPF/CNPJ</TableCell>
+									<TableCell className="font-semibold py-1 text-sm leading-none">Consórcios | Modais</TableCell>
+								<TableCell className="font-semibold p-1 text-sm ">Valor</TableCell>
+								<TableCell className="font-semibold p-1 text-sm ">Status</TableCell>
 							</TableRow>
 						</TableHead>
 
@@ -973,14 +973,14 @@ export default function BasicEditingGrid() {
 								reportList.count > 0 ? (
 									reportList.data?.map((report, index) => (
 										<TableRow key={index} className="hover:bg-gray-50">
-											<TableCell className="text-xs p-1 border-gray-200">{report.dataPagamento}</TableCell>
-											<TableCell className="text-xs p-1 border-gray-200 text-nowrap" style={{whiteSpace: 'nowrap' }}>
+											<TableCell className="text-xs py-1">{report.dataPagamento}</TableCell>
+											<TableCell className="text-xs p-1 text-nowrap" style={{whiteSpace: 'nowrap' }}>
 												{report.nomes}
 											</TableCell>
-											<TableCell className="text-xs p-1 border-gray-200" style={{ maxWidth: 220, overflowWrap: 'break-word' }}>{isConsorcio(report, report.email)}</TableCell>
-											<TableCell className="text-xs p-1 border-gray-200 text-center">{isConsorcio(report, report.codBanco)}</TableCell>
+											<TableCell className="text-xs p-1" style={{ maxWidth: 220, overflowWrap: 'break-word' }}>{isConsorcio(report, report.email)}</TableCell>
+											<TableCell className="text-xs py-1 ">{isConsorcio(report, report.codBanco)}</TableCell>
 											<TableCell
-												className="text-xs p-1 border-gray-200"
+												className="text-xs p-1"
 												style={{
 													textOverflow: 'ellipsis',
 													overflow: 'hidden',
@@ -990,17 +990,17 @@ export default function BasicEditingGrid() {
 											>
 												{isConsorcio(report, report.nomeBanco)}
 											</TableCell>
-											<TableCell className="text-xs p-1 border-gray-200 text-center" >
+											<TableCell className="text-xs p-1 " >
 												{report.cpfCnpj.replace(
 													/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
 													"$1.$2.$3/$4-$5"
 												)}
 											</TableCell>
-											<TableCell className="text-xs p-1 border-gray-200 text-center">{report.consorcio}</TableCell>
-											<TableCell className="text-xs p-1 border-gray-200 text-center">{formatter.format(report.valor)}</TableCell>
-											<TableCell className="text-xs p-1 border-gray-200 text-center">
+											<TableCell className="text-xs py-1 ">{report.consorcio}</TableCell>
+											<TableCell className="text-xs p-1 ">{formatter.format(report.valor)}</TableCell>
+											<TableCell className="text-xs p-1 ">
 												<span
-														className={`px-3 py-1 rounded-full text-xs p-1 border-gray-200 ${getStatusStyles(report.status)}`}
+														className={`px-3 py-1 rounded-full text-xs p-1 ${getStatusStyles(report.status)}`}
 													>
 													{report.status}
 												</span>
