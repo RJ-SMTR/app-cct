@@ -974,13 +974,13 @@ export default function BasicEditingGrid() {
 									reportList.data?.map((report, index) => (
 										<TableRow key={index} className="hover:bg-gray-50">
 											<TableCell className="text-xs py-1">{report.dataPagamento}</TableCell>
-											<TableCell className="text-xs p-1 text-nowrap" style={{whiteSpace: 'nowrap' }}>
+											<TableCell className="text-xs py-6 px-1 text-nowrap" style={{whiteSpace: 'nowrap' }}>
 												{report.nomes}
 											</TableCell>
-											<TableCell className="text-xs p-1" style={{ maxWidth: 220, overflowWrap: 'break-word' }}>{isConsorcio(report, report.email)}</TableCell>
+											<TableCell className="text-xs py-6 px-1" style={{ maxWidth: 220, overflowWrap: 'break-word' }}>{isConsorcio(report, report.email)}</TableCell>
 											<TableCell className="text-xs py-1 ">{isConsorcio(report, report.codBanco)}</TableCell>
 											<TableCell
-												className="text-xs p-1"
+												className="text-xs py-6 px-1"
 												style={{
 													textOverflow: 'ellipsis',
 													overflow: 'hidden',
@@ -990,17 +990,17 @@ export default function BasicEditingGrid() {
 											>
 												{isConsorcio(report, report.nomeBanco)}
 											</TableCell>
-											<TableCell className="text-xs p-1 " >
+											<TableCell className="text-xs py-6 px-1 " >
 												{report.cpfCnpj.replace(
 													/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
 													"$1.$2.$3/$4-$5"
 												)}
 											</TableCell>
 											<TableCell className="text-xs py-1 ">{report.consorcio}</TableCell>
-											<TableCell className="text-xs p-1 ">{formatter.format(report.valor)}</TableCell>
-											<TableCell className="text-xs p-1 ">
+											<TableCell className="text-xs py-6 px-1 ">{formatter.format(report.valor)}</TableCell>
+											<TableCell className="text-xs py-6 px-1 ">
 												<span
-														className={`px-3 py-1 rounded-full text-xs p-1 ${getStatusStyles(report.status)}`}
+														className={`px-3 py-1 rounded-full text-xs py-1 px-1 ${getStatusStyles(report.status)}`}
 													>
 													{report.status}
 												</span>
