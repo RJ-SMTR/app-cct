@@ -214,19 +214,28 @@ export const  getPreviousDays = (idOrdem, userId) => async (dispatch) => {
 // };
 
 export const getStatements = (dateRange, searchingDay, searchingWeek, userId, idOrdem, mocked) => async (dispatch) => {
+    if (!idOrdem && (searchingDay || searchingWeek)) {
+        console.warn("idOrdem está indefinido. Requisição não será feita.");
+        return;
+    }
 
-    const requestData = searchingDay ? {ordemPagamentoIds: idOrdem}  : searchingWeek  ?  null : handleRequestData(null, dateRange, searchingDay, searchingWeek);
-    let apiRoute = ''
-        apiRoute = searchingWeek && searchingDay 
-            ? jwtServiceConfig.odpDiario + `/?userId=${userId}` 
-        : searchingWeek  
-                ? jwtServiceConfig.odpSemanal + `/${idOrdem}?userId=${userId}`
-        : jwtServiceConfig.odpMensal + `?userId=${userId}`;
+    const requestData = searchingDay
+        ? { ordemPagamentoIds: idOrdem }
+        : searchingWeek
+            ? null
+            : handleRequestData(null, dateRange, searchingDay, searchingWeek);
+
+    let apiRoute = '';
+    apiRoute = searchingWeek && searchingDay
+        ? jwtServiceConfig.odpDiario + `/?userId=${userId}`
+        : searchingWeek
+            ? jwtServiceConfig.odpSemanal + `/${idOrdem}?userId=${userId}`
+            : jwtServiceConfig.odpMensal + `?userId=${userId}`;
+
     const method = 'get';
     const token = window.localStorage.getItem('jwt_access_token');
 
-
-    if(JwtService.isAuthTokenValid(token)){
+    if (JwtService.isAuthTokenValid(token)) {
         const config = {
             method: method,
             maxBodyLength: Infinity,
@@ -240,9 +249,10 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
         };
 
         try {
-            dispatch(setLoading(true))
+            dispatch(setLoading(true));
             const response = await api(config);
-            if (searchingDay){
+
+            if (searchingDay) {
                 const statementsSort = response.data.sort((a, b) =>
                     compareDesc(parseISO(a.datetime_transacao), parseISO(b.datetime_transacao))
                 );
@@ -250,20 +260,16 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
                 dispatch(setStatements(statementsSort));
 
                 const sum = response.data.map((statement) => statement.valor_pagamento)
-                    .reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-                dispatch(setSumInfoDay(sum))
-            }
-            else if (searchingWeek  ) {
-                    dispatch(getPreviousDays(idOrdem, userId))
-              
-                    const statementsSort = response.data.sort((a, b) =>
-                        compareDesc(parseISO(a.dataCaptura), parseISO(b.dataCaptura))
-                    );
-                    dispatch(setStatements(statementsSort));
-            
-                    // }
+                    .reduce((acc, curr) => acc + curr, 0);
+                dispatch(setSumInfoDay(sum));
 
-               
+            } else if (searchingWeek) {
+                dispatch(getPreviousDays(idOrdem, userId));
+
+                const statementsSort = response.data.sort((a, b) =>
+                    compareDesc(parseISO(a.dataCaptura), parseISO(b.dataCaptura))
+                );
+                dispatch(setStatements(statementsSort));
 
             } else {
                 const statementsSort = response.data.ordens.sort((a, b) =>
@@ -271,17 +277,20 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
                 );
 
                 dispatch(setStatements(statementsSort));
-                dispatch(setSumInfo(response.data))
+                dispatch(setSumInfo(response.data));
             }
 
             return response.data;
+
         } catch (error) {
             throw error;
+
         } finally {
-            dispatch(setLoading(false))
+            dispatch(setLoading(false));
         }
     }
 };
+
 
 
 
