@@ -68,6 +68,8 @@ export default function BasicEditingGrid() {
 
     useEffect(() => {
         setRows(synthData)
+        console.log(synthData)
+        console.log(Object.entries(synthData))
     }, [synthData])
 
     const consorcios = [
@@ -541,36 +543,7 @@ export default function BasicEditingGrid() {
                                         />
                                     )}
                                 />
-                                <Autocomplete
-                                    id="status"
-                                    multiple
-                                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                                    options={específicos}
-                                    getOptionLabel={(option) => option.label}
-                                    filterSelectedOptions
-                                    onChange={(_, newValue) => {
-                                        if (newValue.length === 0) {
-                                            dispatch(setSpecificValue(false));
-                                        } else {
-                                            dispatch(setSpecificValue(true));
-                                        }
-                                    }}
-                                    renderInput={(params) => (
-                                        <TextField
-                                            {...params}
-                                            label="Selecionar Específicos"
-                                            variant="outlined"
-                                            InputProps={{
-                                                ...params.InputProps,
-                                                endAdornment: (
-                                                    <>
-                                                        {params.InputProps.endAdornment}
-                                                    </>
-                                                ),
-                                            }}
-                                        />
-                                    )}
-                                />
+                        
                                 <Autocomplete
                                     id="status"
                                     multiple
@@ -869,7 +842,7 @@ export default function BasicEditingGrid() {
                                                     </TableRow>
 
                                                     {Object.entries(
-                                                        group.items.reduce((acc, item) => {
+                                                        Array.isArray(group.items) ? group.items.reduce((acc, item) => {
                                                             let key;
                                                             if (item.consorcio === "STPC" || item.consorcio === "STPL" || item.consorcio === "TEC") {
                                                                 key = `${item.datapagamento}-${item.status}-${item.favorecido}`;
@@ -879,8 +852,9 @@ export default function BasicEditingGrid() {
                                                             if (!acc[key]) acc[key] = [];
                                                             acc[key].push(item);
                                                             return acc;
-                                                        }, {})
+                                                        }, {}) : {}
                                                     ).map(([key, items]) => {
+
                                                         const [datapagamento, status, favorecido] = key.split("-");
                                                         const isGroupedByFavorecido = items.some(item => item.consorcio === "STPC" || item.consorcio === "STPL" || item.consorcio === "TEC");
 

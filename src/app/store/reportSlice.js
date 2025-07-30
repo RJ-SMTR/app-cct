@@ -167,17 +167,18 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
                 const responseData = response.data;
               
                     if(reportType == 'sintetico'){
-                        const mergedData = responseData.reduce((acc, curr) => {
-                            return acc.concat(curr.data);
-                        }, []);
+                        // const mergedData = responseData.reduce((acc, curr) => {
+                        //     return acc.concat(curr.data);
+                        // }, []);
 
-                        const combinedResponse = {
-                            count: mergedData.length,
-                            data: mergedData,
-                            valor: responseData.reduce((sum, curr) => sum + curr.valor, 0),
-                            status: 'Todos'
-                        };
-                        dispatch(handleSynthData(combinedResponse))
+                        // const combinedResponse = {
+                        //     count: mergedData.length,
+                        //     data: mergedData,
+                        //     valor: responseData.reduce((sum, curr) => sum + curr.valor, 0),
+                        //     status: 'Todos'
+                        // };
+                        // dispatch(setSynthData(responseData));
+                        dispatch(handleSynthData(responseData))
                     } else {
 
                         dispatch(setReportList(responseData));
@@ -207,7 +208,7 @@ export const handleSynthData = (reportData) => async (dispatch) => {
 
 
         acc[key].items.push(item);
-        acc[key].total = item.subtotal;
+        acc[key].total = item.valor;
 
         const status = item.status;
         if (!acc[key].totalsByStatus[status]) {
