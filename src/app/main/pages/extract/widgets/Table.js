@@ -210,8 +210,8 @@ function TableTransactions({ id }) {
 
 
     const handleClickRow = (idOrder, event) => {
-        if(idOrder === null){
- dispatch(showMessage({ message: 'Não há valores para serem apresentados.' }))
+        if(idOrder === null || idOrder === undefined){
+            dispatch(showMessage({ message: 'Não há valores para serem apresentados.' }))
         } else {
             dispatch(setLoading(true))
             dispatch(setLoadingWeek(true))
@@ -222,12 +222,7 @@ function TableTransactions({ id }) {
 
             setDataOrderDay(start)
             if (fullReport) {
-                // if (searchingWeek && !mocked) {
-                //     dispatch(setMocked(true))
-                //     dispatch(setDateRange([transformedDate, transformedDate]));
-
-
-                // } else 
+          
                 if (searchingWeek) {
                     dispatch(setValorAcumuladoLabel('Valor Operação - Detalhado'));
                     dispatch(setValorPagoLabel('Valor - Detalhado'));
