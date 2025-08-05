@@ -283,7 +283,7 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
             return response.data;
 
         } catch (error) {
-            throw error;
+            console.log(error);
 
         } finally {
             dispatch(setLoading(false));

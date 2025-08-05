@@ -166,9 +166,21 @@ function TableTransactions({ id }) {
         setPreviousDays("");
         if (user.role.name.includes("Admin")) {
             dispatch(getStatements(dateRange, searchingDay, searchingWeek, id, ordemPgtoId, mocked))
+                     .catch((error) => {
+                        if(error){
+
+                            dispatch(showMessage({ message: 'Aguardando processamento. Tente novamente mais tarde.' }))
+                        }
+                        });
              
         } else {
             dispatch(getStatements(dateRange, searchingDay, searchingWeek,id, ordemPgtoId))
+                .catch((error) => {
+                    if (error) {
+
+                        dispatch(showMessage({ message: 'Aguardando processamento. Tente novamente mais tarde.' }))
+                    }
+                });
 
         }
 
