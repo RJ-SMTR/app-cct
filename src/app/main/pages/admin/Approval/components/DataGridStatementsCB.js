@@ -56,6 +56,13 @@ export default function BasicEditingGrid() {
         });
     };
 
+    const type = (type, valor) => {
+        if (type === 'Saída') {
+            return parseFloat(valor) * -1
+        }
+        return valor
+    }
+
     function formatISODateToBR(dateString) {
         const [year, month, day] = dateString.split('T')[0].split('-');
         return `${day}/${month}/${year}`;
@@ -76,11 +83,12 @@ export default function BasicEditingGrid() {
                 const rowsWithId = response.data.extrato.map((item, index) => {
                     const formatted = formatISODateToBR(item.dataLancamento);
 
+                    const itemType = item.tipo === 'Saída' ? 'Saída' : 'Entrada';
                     return {
                         id: `${item.id ?? index}-${Math.random()}`,
                         data: formatted,
-                        valor: item.valor,
-                        tipo: item.tipo === 'D' ? 'Saída' : 'Entrada',
+                        valor: type(item.tipo, item.valor),
+                        tipo: itemType,
                         operacao: item.operacao
                     };
                 });
