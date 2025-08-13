@@ -111,10 +111,13 @@ function UserApp() {
                </motion.div>
              </div>
             
-             <div className="flex flex-col items-center lg:items-start my-16 lg:mt-0 lg:ml-32 md:justify-between">
+             <div className="flex flex-col items-center lg:items-start my-16 lg:mt-16 lg:ml-32 md:justify-between">
               
                  <Typography className="text-lg font-bold leading-none">{user?.fullName}</Typography>
                  <Typography color="text.secondary">#{id}</Typography>
+                {user?.bloqueado ? 
+                <p className='text-red-600 mb-0'>Usuário desativado</p>
+                  : <></>}
             
              </div>
            </div>
