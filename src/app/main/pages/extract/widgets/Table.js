@@ -402,11 +402,12 @@ function TableTransactions({ id }) {
                                         Data Ordem Pagamento
                                     </Typography>
                                 </TableCell> : <></>}
-                                <TableCell>
+                                {!searchingDay ? <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
                                         Valor Total para Pagamento
                                     </Typography>
-                                </TableCell>
+                                </TableCell> : <></>}
+                             
                                 {searchingDay ? <TableCell>
                                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
                                         Tipo Operação
