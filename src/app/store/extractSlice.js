@@ -291,8 +291,6 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
     }
 };
 
-
-
 export const get24 = (dateRange, userId) => async (dispatch) => {
     const dataInicio = startOfMonth(new Date(dateRange))
     const dataFim = new Date(dateRange)
@@ -321,6 +319,7 @@ export const get24 = (dateRange, userId) => async (dispatch) => {
     }
 
 }
+
 
 
 export const getMultipliedEntries = (statements, searchingDay, searchingWeek) => (dispatch) => {
