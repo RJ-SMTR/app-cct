@@ -83,6 +83,7 @@ export default function BasicEditingGrid() {
 	const especificos = [
 			{ label: 'Todos' },
 			{ label: 'Eleição' },
+			{ label: 'Desativados' },
 	];
 
 	const dispatch = useDispatch();
@@ -128,8 +129,11 @@ export default function BasicEditingGrid() {
 			}
 
 
-			if(requestData.especificos[0] =="Eleição"){
+			if (data.especificos.includes("Eleição")) {
 				requestData.eleicao = true
+			}
+			if (data.especificos.includes("Desativados")) {
+				requestData.desativados = true
 			}
 
 			dispatch(handleReportInfo(requestData, reportType))
