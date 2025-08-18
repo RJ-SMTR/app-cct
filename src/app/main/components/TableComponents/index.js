@@ -108,18 +108,17 @@ export function CustomTable(data) {
       // ULTIMA DATA
        }
      
-      <TableCell component="th" scope="row">
         {/* Valor */}
         {searchingDay ? (
           <>
-            {formatter.format(data.data.valor_pagamento ?? 0)}
           </>
         ) : (
+          <TableCell component="th" scope="row">
             <>  {formatter.format(data.data.valorTotal ?? data.data.valor ?? 0)}</>
+      </TableCell>
         )}
 
 
-      </TableCell>
       {searchingDay && (
       <TableCell component="th" scope="row">
         <Typography className="whitespace-nowrap">
