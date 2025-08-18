@@ -7,7 +7,7 @@ i18next.addResourceBundle('en', 'navigation', en);
 i18next.addResourceBundle('tr', 'navigation', tr);
 i18next.addResourceBundle('ar', 'navigation', ar);
 
-const navigationConfig = [
+const suporteConfig = [
   // {
   //   id: 'Home-component',
   //   title: 'Home',
@@ -16,31 +16,7 @@ const navigationConfig = [
   //   icon: 'heroicons-outline:home',
   //   url: '/',
   // },
-  {
-    id: 'profile',
-    title: 'Perfil',
-    translate: 'Perfil',
-    type: 'item',
-    icon: 'heroicons-outline:user-circle',
-    url: 'profile',
-  },
-  {
-    id: 'extract',
-    title: 'Financeiro',
-    translate: 'Financeiro',
-    type: 'item',
-    icon: 'heroicons-outline:currency-dollar',
-    url: 'extrato',
-  },
-  {
-    id: 'extract',
-    title: 'Extrato 2024',
-    translate: 'Extrato 2024',
-    type: 'item',
-    icon: 'heroicons-outline:currency-dollar',
-    url: 'extrato-24',
-  },
-  {
+   {
     id: 'support',
     title: 'Suporte',
     translate: 'Suporte',
@@ -51,4 +27,4 @@ const navigationConfig = [
   },
 ];
 
-export default navigationConfig;
+export default suporteConfig;
