@@ -94,7 +94,7 @@ export function CustomTable(data) {
 
   return (
     data ? <TableRow key={data.data.ordemPagamentoAgrupadoId} className="hover:bg-gray-100 cursor-pointer">
-      <TableCell component="th" scope="row" onClick={searchingDay ? undefined : data.handleClickRow}>
+      <TableCell component="th" scope="row" onClick={searchingDay ? null : data.handleClickRow}>
         <Typography className={searchingDay ? "whitespace-nowrap " : "whitespace-nowrap underline"}>
 
           {searchingDay ? dateUTC(data.data.datetime_transacao) : searchingWeek ? data.date :  data.date}
@@ -110,18 +110,17 @@ export function CustomTable(data) {
       // ULTIMA DATA
        }
      
-      <TableCell component="th" scope="row">
         {/* Valor */}
         {searchingDay ? (
           <>
-            {formatter.format(data.data.valor_pagamento ?? 0)}
           </>
         ) : (
+          <TableCell component="th" scope="row">
             <>  {formatter.format(data.data.valorTotal ?? data.data.valor ?? 0)}</>
+      </TableCell>
         )}
 
 
-      </TableCell>
       {searchingDay && (
       <TableCell component="th" scope="row">
         <Typography className="whitespace-nowrap">

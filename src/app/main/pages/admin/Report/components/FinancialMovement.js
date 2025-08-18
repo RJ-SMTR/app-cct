@@ -83,6 +83,7 @@ export default function BasicEditingGrid() {
 	const especificos = [
 			{ label: 'Todos' },
 			{ label: 'Eleição' },
+			{ label: 'Desativados' },
 	];
 
 	const dispatch = useDispatch();
@@ -128,8 +129,11 @@ export default function BasicEditingGrid() {
 			}
 
 
-			if(requestData.especificos[0] =="Eleição"){
+			if (data.especificos.includes("Eleição")) {
 				requestData.eleicao = true
+			}
+			if (data.especificos.includes("Desativados")) {
+				requestData.desativados = true
 			}
 
 			dispatch(handleReportInfo(requestData, reportType))
@@ -243,7 +247,11 @@ export default function BasicEditingGrid() {
 	const reportListData =
 		reportList.count > 0
 			? reportList.data?.map((report) => ({
+				Data: report.dataPagamento,
 					Nome: report.nomes,
+				Email:	report.email,
+				'Cód Banco':	report.codBanco,
+				Banco: report.nomeBanco,
 					'CPF/CNPJ': report.cpfCnpj,
 					Consórcio: report.consorcio,
 					Valor: formatter.format(report.valor),
@@ -317,13 +325,26 @@ export default function BasicEditingGrid() {
 
 	// Export PDF
     const exportPDF = () => {
-      const doc = new jsPDF();
-      const tableColumn = ["Nome", "CPF/CNPJ", "Consórcio", "Valor", "Status"];
+
+		const truncateText = (text, maxLength) => {
+			if (!text) return '';
+			return text.length > maxLength ? text.slice(0, maxLength - 3) + "..." : text;
+		};
+		  
+      const doc = new jsPDF({
+		  orientation: "landscape",
+	  });
+      const tableColumn = ["Data","Nome", "Email", "Cod Banco", "Banco", "CPF/CNPJ", "Consórcio", "Valor", "Status"];
       const tableRows = [];
 
       for (const report of reportList.data) {
+		console.log(report)
         const reportData = [
+          report.dataPagamento,
           report.nomes,
+		  report.email,
+		  report.codBanco,
+			truncateText(report.nomeBanco, 15),
           report.cpfCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'),
           report.consorcio,
           formatter.format(report.valor),
@@ -351,6 +372,13 @@ export default function BasicEditingGrid() {
         head: [tableColumn],
         body: tableRows,
         margin: { left: 14, right: 14, top: 60 },
+		  styles: {
+			  fontSize: 6,
+			  cellPadding: 2,
+		  },
+		  columnStyles: {
+			  1: { cellWidth: 30 },
+		  },
         startY: 60,
         didDrawPage: () => {
           doc.addImage(logoImg, "PNG", 14, 10, logoW, logoH);
@@ -424,9 +452,13 @@ export default function BasicEditingGrid() {
 		}
 		const data = [
 			["Status selecionado", "", "", "", whichStatus || "Todos"],
-			["Nome", "CPF/CNPJ", "Consórcio", "Valor", "Status"],
+			["Data","Nome", "Email", "Cod Banco", "Banco", "CPF/CNPJ", "Consórcio", "Valor", "Status"],
 			...reportList.data.map((report) => [
+				 report.dataPagamento,
 				report.nomes,
+				report.email,
+				report.codBanco,
+				report.nomeBanco,
 				report.cpfCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'),
 				report.consorcio,
 				formatter.format(report.valor),
@@ -474,6 +506,25 @@ export default function BasicEditingGrid() {
 		setValue(button, "");
 		setShowButton(false);
 	};
+
+	const isConsorcio = (report, type) => {
+		const cnpjsConsorcio = [
+			'12464539000180',
+			'12464869000176',
+			'12464577000133',
+			'44520687000161',
+			'18201378000119',
+			'12464553000184'
+		];
+
+
+		if (cnpjsConsorcio.includes(report?.cpfCnpj)) {
+			return '';
+		} else {
+			return type;
+		}
+	};
+	  
 
 	const handleSelection = (field, newValue) => {
 		setSelected(newValue.length > 0 ? field : null);
@@ -907,17 +958,17 @@ export default function BasicEditingGrid() {
 						<Table  size="small">
 						<TableHead>
 							<TableRow className="sticky top-0 bg-white z-10">
-								<TableCell className="font-semibold">Data Pagamento</TableCell>
-									<TableCell className="font-semibold" style={{ whiteSpace: 'nowrap' }}>
+									<TableCell className="font-semibold py-1 text-sm leading-none">Data Pagamento</TableCell>
+									<TableCell className="font-semibold p-1 text-sm " style={{ whiteSpace: 'nowrap' }}>
 										Nome
 									</TableCell>
-									<TableCell className="font-semibold" style={{ maxWidth: 220 }}>Email</TableCell>
-								<TableCell className="font-semibold">Cód. Banco</TableCell>
-								<TableCell className="font-semibold">Banco</TableCell>
-								<TableCell className="font-semibold">CPF/CNPJ</TableCell>
-								<TableCell className="font-semibold">Consórcios | Modais</TableCell>
-								<TableCell className="font-semibold">Valor</TableCell>
-								<TableCell className="font-semibold">Status</TableCell>
+									<TableCell className="font-semibold p-1 text-sm " style={{ maxWidth: 220 }}>Email</TableCell>
+									<TableCell className="font-semibold py-1 text-sm leading-none">Cód. Banco</TableCell>
+								<TableCell className="font-semibold p-1 text-sm ">Banco</TableCell>
+								<TableCell className="font-semibold p-1 text-sm ">CPF/CNPJ</TableCell>
+									<TableCell className="font-semibold py-1 text-sm leading-none">Consórcios | Modais</TableCell>
+								<TableCell className="font-semibold p-1 text-sm ">Valor</TableCell>
+								<TableCell className="font-semibold p-1 text-sm ">Status</TableCell>
 							</TableRow>
 						</TableHead>
 
@@ -926,24 +977,34 @@ export default function BasicEditingGrid() {
 								reportList.count > 0 ? (
 									reportList.data?.map((report, index) => (
 										<TableRow key={index} className="hover:bg-gray-50">
-											<TableCell className="text-sm">{report.dataPagamento}</TableCell>
-											<TableCell className="text-sm text-nowrap" style={{whiteSpace: 'nowrap' }}>
+											<TableCell className="text-xs py-1">{report.dataPagamento}</TableCell>
+											<TableCell className="text-xs py-6 px-1 text-nowrap" style={{whiteSpace: 'nowrap' }}>
 												{report.nomes}
 											</TableCell>
-											<TableCell className="text-sm" style={{ maxWidth: 220 }}>{report.email}</TableCell>
-											<TableCell className="text-sm">{report.codBanco}</TableCell>
-											<TableCell className="text-sm">{report.nomeBanco}</TableCell>
-											<TableCell className="text-sm">
+											<TableCell className="text-xs py-6 px-1" style={{ maxWidth: 220, overflowWrap: 'break-word' }}>{isConsorcio(report, report.email)}</TableCell>
+											<TableCell className="text-xs py-1 ">{isConsorcio(report, report.codBanco)}</TableCell>
+											<TableCell
+												className="text-xs py-6 px-1"
+												style={{
+													textOverflow: 'ellipsis',
+													overflow: 'hidden',
+													whiteSpace: 'nowrap',
+													maxWidth: 120,
+												}}
+											>
+												{isConsorcio(report, report.nomeBanco)}
+											</TableCell>
+											<TableCell className="text-xs py-6 px-1 " >
 												{report.cpfCnpj.replace(
 													/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
 													"$1.$2.$3/$4-$5"
 												)}
 											</TableCell>
-											<TableCell className="text-sm">{report.consorcio}</TableCell>
-											<TableCell className="text-sm">{formatter.format(report.valor)}</TableCell>
-											<TableCell className="text-sm">
+											<TableCell className="text-xs py-1 ">{report.consorcio}</TableCell>
+											<TableCell className="text-xs py-6 px-1 ">{formatter.format(report.valor)}</TableCell>
+											<TableCell className="text-xs py-6 px-1 ">
 												<span
-														className={`px-3 py-1 rounded-full text-sm ${getStatusStyles(report.status)}`}
+														className={`px-3 py-1 rounded-full text-xs py-1 px-1 ${getStatusStyles(report.status)}`}
 													>
 													{report.status}
 												</span>
