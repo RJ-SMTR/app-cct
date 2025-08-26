@@ -28,7 +28,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { DateRangePicker } from 'rsuite';
 import { useForm, Controller } from 'react-hook-form';
 
-import { handleReportInfo, setReportList, setSpecificValue } from 'app/store/reportSlice';
+import { handleReportInfo, setReportList } from 'app/store/reportSlice';
 
 import { getUser } from 'app/store/adminSlice';
 import { NumericFormat } from 'react-number-format';
@@ -52,6 +52,8 @@ const consorciosStatus = [
 const específicos = [
     { label: 'Todos' },
     { label: 'Eleição' },
+    { label: 'Desativados' }
+
 
 ];
 
@@ -60,7 +62,6 @@ export default function BasicEditingGrid() {
     const reportType = useSelector(state => state.report.reportType);
     const reportList = useSelector(state => state.report.reportList)
     const userList = useSelector(state => state.admin.userList) || []
-    const specificValue = useSelector(state => state.report.specificValue)
     const [isLoading, setIsLoading] = useState(false)
     const [loadingUsers, setLoadingUsers] = useState(false)
     const [userOptions, setUserOptions] = useState([])
@@ -96,11 +97,13 @@ const [selectedConsorcios, setSelectedConsorcios] = useState([]);
             valorMax: '',
             valorMin: '',
             consorcioName: [],
+            especificos: [],
             status: []
         }
     });
 
     const onSubmit = (data) => {
+        console.log(data)
 
        if (
             (!data.status || data.status.length === 0) ||
@@ -111,9 +114,6 @@ const [selectedConsorcios, setSelectedConsorcios] = useState([]);
 
             setIsLoading(true)
 
-            if (specificValue) {
-                data.eleicao = true
-            }
             dispatch(handleReportInfo(data, reportType))
                 .then((response) => {
                     setIsLoading(false)
@@ -245,7 +245,9 @@ const [selectedConsorcios, setSelectedConsorcios] = useState([]);
 
     // Export PDF
     const exportPDF = () => {
-        const doc = new jsPDF();
+   const doc = new jsPDF({
+          orientation: "landscape",
+      });
         const tableColumn = ["Nome", "Valor"];
         const tableRows = [];
 
@@ -465,13 +467,9 @@ const [selectedConsorcios, setSelectedConsorcios] = useState([]);
                                     options={específicos}
                                     getOptionLabel={(option) => option.label}
                                     filterSelectedOptions
-                                    onChange={(_, newValue) => {
-                                        if (newValue.length === 0) {
-                                            dispatch(setSpecificValue(false));
-                                        } else {
-                                            dispatch(setSpecificValue(true));
-                                        }
-                                    }}
+                                    onChange={(_, newValue) =>
+                                        handleAutocompleteChange("especificos", newValue)
+                                    }
                                     renderInput={(params) => (
                                         <TextField
                                             {...params}
