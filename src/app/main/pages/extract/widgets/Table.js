@@ -47,6 +47,8 @@ import { MobileDatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import ptBR from 'date-fns/locale/pt-BR';
+import { ChevronLeft, ChevronRight } from '@mui/icons-material';
+import { useMediaQuery, useTheme } from "@mui/material";
 
 function TableTransactions({ id }) {
   const dispatch = useDispatch()
@@ -390,7 +392,10 @@ function TableTransactions({ id }) {
           )}
         </div>
 
-        <TableContainer>
+
+        <TableContainer
+          sx={{ maxHeight: 400, overflowX: "auto" }}
+        >
           <Table className="min-w-full">
             <TableHead>
               <TableRow>
@@ -459,7 +464,6 @@ function TableTransactions({ id }) {
         </TableContainer>
 
         {searchingDay || searchingWeek ?
-
           <TablePagination
             className={`overflow-visible ${c.root}`}
             component="div"
@@ -472,15 +476,39 @@ function TableTransactions({ id }) {
             rowsPerPageOptions={[10, 50, 100, 150, 300, 500]}
             onRowsPerPageChange={handleChangeRowsPerPage}
             ActionsComponent={() => (
-              <div className="my-4 flex space-x-2">
-                <Button variant="text" onClick={handleBackPage} disabled={page === 0}>
-                  &lt; Página Anterior                                </Button>
-                <Button variant="text" onClick={handleNextPage} disabled={page >= Math.ceil(statements.length / rowsPerPage) - 1}>
-                  Próxima Página &gt;
+              <div className="my-4 flex space-x-10 items-center">
+                <Button
+                  variant="text"
+                  onClick={handleBackPage}
+                  disabled={page === 0}
+                  className="sm:px-4 px-2 min-w-0"
+                >
+                  <span className="sm:hidden">&lt;</span>
+                  <span className="hidden sm:inline">&lt; Página Anterior</span>
+                </Button>
+                <Button
+                  variant="text"
+                  onClick={handleNextPage}
+                  disabled={page >= Math.ceil(statements.length / rowsPerPage) - 1}
+                  className="sm:px-4 px-2 min-w-0"
+                >
+                  <span className="sm:hidden">&gt;</span>
+                  <span className="hidden sm:inline">Próxima Página &gt;</span>
                 </Button>
               </div>
             )}
-
+            sx={{
+              display: "flex",
+              flexWrap: "nowrap", // impede quebra de linha
+              justifyContent: "space-between", // distribui espaço
+              "& .MuiTablePagination-displayedRows": {
+                minWidth: "100px", // evita empurrar demais os botões
+                textAlign: "center",
+              },
+              "& .MuiTablePagination-actions": {
+                flexShrink: 0, // impede os botões de serem espremidos
+              },
+            }}
           />
           : <></>}
       </Box>
