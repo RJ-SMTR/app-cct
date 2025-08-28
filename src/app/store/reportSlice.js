@@ -11,7 +11,6 @@ const initialState = {
     reportType: '',
     reportList: [],
     totalSynth: '',
-    specificValue: false,
 };
 
 const reportSlice = createSlice({
@@ -30,9 +29,7 @@ const reportSlice = createSlice({
         setTotalSynth: (state, action) => {
             state.totalSynth = action.payload;
         },
-        setSpecificValue: (state,action) => {
-            state.specificValue = action.payload;
-        }
+     
     },
 });
 
@@ -44,9 +41,7 @@ export const {
     reportList,
     setReportList,
     totalSynth,
-    setTotalSynth,
-    specificValue,
-    setSpecificValue
+    setTotalSynth
  } = reportSlice.actions;
 
 export default reportSlice.reducer;
@@ -82,6 +77,15 @@ function handleData(data) {
           
 
     } 
+
+
+    if (data.especificos.includes("Eleição")) {
+        requestData.eleicao = true
+    }
+    if (data.especificos.includes("Desativados")) {
+        requestData.desativados = true
+    }
+
     if (data.status && data.status.length > 0) {
         const statusSet = new Set(data.status);
 
