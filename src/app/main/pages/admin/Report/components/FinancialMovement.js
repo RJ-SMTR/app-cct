@@ -34,19 +34,6 @@ import { showMessage } from "app/store/fuse/messageSlice";
 import { ClearIcon } from "@mui/x-date-pickers";
 import { utils, writeFile as writeFileXLSX } from "xlsx";
 
-const consorciosStatus = [
-  { label: "Todos" },
-  { label: "Pago" },
-  { label: "Erro" },
-  { label: "Aguardando Pagamento" }
-];
-
-const erroStatus = [
-  { label: "Todos" },
-  { label: "Estorno" },
-  { label: "Rejeitado" },
-];
-
 export default function BasicEditingGrid() {
   const reportType = useSelector((state) => state.report.reportType);
   const reportList = useSelector((state) => state.report.reportList);
@@ -64,6 +51,25 @@ export default function BasicEditingGrid() {
   const [showErroStatus, setShowErroStatus] = useState(false);
   const [selectedErroStatus, setSelectedErroStatus] = useState(null);
   const [selectedConsorcios, setSelectedConsorcios] = useState([]);
+  const [selectedEspecificos, setSelectedEspecificos] = useState([]);
+
+
+  const consorciosStatusBase = [
+    { label: "Todos" },
+    { label: "Pago" },
+    { label: "Erro" },
+    { label: "Aguardando Pagamento" }
+  ];
+
+  const consorciosStatus = selectedEspecificos.includes("Pendentes")
+    ? [{ label: "Erro" }]
+    : consorciosStatusBase;
+
+  const erroStatus = [
+    { label: "Todos" },
+    { label: "Estorno" },
+    { label: "Rejeitado" },
+  ];
 
 
 
@@ -81,9 +87,9 @@ export default function BasicEditingGrid() {
   ];
 
   const especificos = [
-    { label: 'Todos' },
     { label: 'Eleição' },
     { label: 'Desativados' },
+    { label: 'Pendentes' }
   ];
 
   const dispatch = useDispatch();
@@ -102,10 +108,18 @@ export default function BasicEditingGrid() {
     });
 
   const onSubmit = (data) => {
-    if (data.name.length === 0 && data.consorcioName.length === 0 || (erroStatus.length === 0)) {
+    const isPendentes = selectedEspecificos.includes("Pendentes");
+    const hasNameOrConsorcio = data.name.length > 0 || data.consorcioName.length > 0;
+    const hasStatus = whichStatusShow.length > 0;
+    if (
+      (isPendentes && !hasStatus) ||
+      (!isPendentes && !hasNameOrConsorcio)
+    ) {
       dispatch(
         showMessage({
-          message: "Erro na busca, selecione favorecidos ou consórcios | modais.",
+          message: isPendentes
+            ? "Erro na busca, selecione um Status."
+            : "Erro na busca, selecione favorecidos ou consórcios | modais.",
         }),
       );
     } else {
@@ -134,6 +148,10 @@ export default function BasicEditingGrid() {
       }
       if (data.especificos.includes("Desativados")) {
         requestData.desativados = true
+      }
+
+      if (data.especificos.includes("Pendentes")) {
+        requestData.pendentes = true
       }
 
       dispatch(handleReportInfo(requestData, reportType))
@@ -225,11 +243,17 @@ export default function BasicEditingGrid() {
       }
     }
 
+    if (field === "especificos") {
+      const especificosSelecionados = newValue.map((i) => i.label);
+      setSelectedEspecificos(especificosSelecionados);
+    }
+
     setValue(
       field,
       newValue ? newValue.map((item) => item.value ?? item.label) : [],
     );
   };
+
 
   const valueProps = {
     startAdornment: <InputAdornment position="start">R$</InputAdornment>,
@@ -595,29 +619,31 @@ export default function BasicEditingGrid() {
                   )}
                 />
 
-                <Autocomplete
-                  id="consorcio"
-                  multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                  getOptionLabel={(option) => option.label}
-                  filterSelectedOptions
-                  options={consorcios}
-                  value={selectedConsorcios}
-                  getOptionDisabled={(option) => option.disabled}
-                  isOptionEqualToValue={(option, value) => option.value === value.value}
-                  onChange={(_, newValue) => handleSelection("consorcioName", newValue)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Selecionar Consórcios | Modais"
-                      variant="outlined"
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: <>{params.InputProps.endAdornment}</>,
-                      }}
-                    />
-                  )}
-                />
+                {!selectedEspecificos.includes("Pendentes") && (
+                  <Autocomplete
+                    id="consorcio"
+                    multiple
+                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                    getOptionLabel={(option) => option.label}
+                    filterSelectedOptions
+                    options={consorcios}
+                    value={selectedConsorcios}
+                    getOptionDisabled={(option) => option.disabled}
+                    isOptionEqualToValue={(option, value) => option.value === value.value}
+                    onChange={(_, newValue) => handleSelection("consorcioName", newValue)}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Selecionar Consórcios | Modais"
+                        variant="outlined"
+                        InputProps={{
+                          ...params.InputProps,
+                          endAdornment: <>{params.InputProps.endAdornment}</>,
+                        }}
+                      />
+                    )}
+                  />
+                )}
                 <Autocomplete
                   id="especificos"
                   multiple
