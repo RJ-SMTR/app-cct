@@ -85,6 +85,7 @@ function handleData(data) {
 
   if (data.especificos.includes("Pendentes") && data.name.length === 0) {
     requestData.todosVanzeiros = true
+    requestData.erro = true
   }
 
   if (data.status && data.status.length > 0) {

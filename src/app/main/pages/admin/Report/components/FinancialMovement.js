@@ -110,16 +110,10 @@ export default function BasicEditingGrid() {
   const onSubmit = (data) => {
     const isPendentes = selectedEspecificos.includes("Pendentes");
     const hasNameOrConsorcio = data.name.length > 0 || data.consorcioName.length > 0;
-    const hasStatus = whichStatusShow.length > 0;
-    if (
-      (isPendentes && !hasStatus) ||
-      (!isPendentes && !hasNameOrConsorcio)
-    ) {
+    if (!isPendentes && !hasNameOrConsorcio) {
       dispatch(
         showMessage({
-          message: isPendentes
-            ? "Erro na busca, selecione um Status."
-            : "Erro na busca, selecione favorecidos ou consórcios | modais.",
+          message: "Erro na busca, selecione favorecidos ou consórcios | modais.",
         }),
       );
     } else {
@@ -673,24 +667,28 @@ export default function BasicEditingGrid() {
               </Box>
 
               <Box className="flex items-center gap-10 flex-wrap">
-                <Autocomplete
-                  id="status"
-                  multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                  getOptionLabel={(option) => option.label}
-                  filterSelectedOptions
-                  options={consorciosStatus}
-                  onChange={(_, newValue) =>
-                    handleAutocompleteChange("status", newValue)
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Selecionar Status"
-                      variant="outlined"
-                    />
-                  )}
-                />
+
+                {!selectedEspecificos.includes("Pendentes") && (
+                  <Autocomplete
+                    id="status"
+                    multiple
+                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                    getOptionLabel={(option) => option.label}
+                    filterSelectedOptions
+                    options={consorciosStatus}
+                    onChange={(_, newValue) =>
+                      handleAutocompleteChange("status", newValue)
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Selecionar Status"
+                        variant="outlined"
+                      />
+                    )}
+                  />
+                )}
+
                 {showErroStatus && (
                   <Autocomplete
                     id="erroStatus"
@@ -730,9 +728,6 @@ export default function BasicEditingGrid() {
                     )}
                   />
                   <br />
-                  <span className="absolute text-xs text-red-600">
-                    Campo data obrigatório*
-                  </span>
                 </Box>
               </Box>
               <Box className="flex items-center my-[3.5rem] gap-10 flex-wrap">
