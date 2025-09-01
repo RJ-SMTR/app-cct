@@ -73,7 +73,7 @@ function TableTransactions({ id }) {
   const [page, setPage] = useState(0);
   const [lastId, setLastId] = useState()
   const [lastDate, setLastDate] = useState([])
-  const [rowsPerPage, setRowsPerPage] = useState(8);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedDate, setSelectedDate] = useState(null)
   const [dataOrderDay, setDataOrderDay] = useState('')
 
