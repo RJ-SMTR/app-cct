@@ -35,7 +35,8 @@ import {
   setLoading, setLoadingWeek,
   setLoadingPrevious,
   setOrdemPgto,
-  setMocked
+  setMocked,
+  setSumInfo
 } from 'app/store/extractSlice';
 
 import { showMessage } from 'app/store/fuse/messageSlice';
@@ -223,7 +224,7 @@ function TableTransactions({ id }) {
   }
 
 
-  const handleClickRow = (idOrder, event) => {
+  const handleClickRow = (idOrder, event, valor) => {
     if (idOrder === null || idOrder === undefined) {
       dispatch(showMessage({ message: 'Não há valores para serem apresentados.' }))
     } else {
@@ -244,6 +245,7 @@ function TableTransactions({ id }) {
           dispatch(setOrdemPgto(idOrder))
           dispatch(setSearchingDay(true))
           setPage(0)
+          dispatch(setSumInfo(valor))
         } else {
           if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
           if (!searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Semanal'));
@@ -448,7 +450,8 @@ function TableTransactions({ id }) {
                     const zonedDate = utcToZonedTime(date, tz)
                     const formattedDate = format(zonedDate, 'dd/MM/yyyy');
                     const idOrdem = searchingWeek ? i.ids : i.ordemPagamentoAgrupadoId
-                    return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={(event) => handleClickRow(idOrdem, event)} lastDate={dataOrderDay} />
+                    const valorDia = searchingWeek ? i.ids : i.valorTotal
+                    return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={(event) => handleClickRow(idOrdem, event, valorDia)} lastDate={dataOrderDay} />
                   }) :
                   <TableCell colSpan={4}>
                     <p>Não há dados para sem exibidos</p>
