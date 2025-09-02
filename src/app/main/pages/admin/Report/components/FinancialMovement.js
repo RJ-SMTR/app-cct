@@ -145,6 +145,7 @@ export default function BasicEditingGrid() {
       }
 
       if (data.especificos.includes("Pendentes")) {
+        console.log("estou enviando pendentes")
         requestData.pendentes = true
       }
 
@@ -560,6 +561,8 @@ export default function BasicEditingGrid() {
         return "bg-yellow-400 text-black";
       case "Aguardando Pagamento":
         return "bg-gray-400 text-black";
+      case "Pendente":
+        return "bg-blue-400 text-black";
       default:
         return "bg-red-300 text-black";
     }

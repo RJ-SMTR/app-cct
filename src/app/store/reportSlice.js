@@ -83,8 +83,10 @@ function handleData(data) {
     requestData.desativados = true
   }
 
-  if (data.especificos.includes("Pendentes") && data.name.length === 0) {
-    requestData.todosVanzeiros = true
+
+  requestData.todosVanzeiros = true
+  if (data.especificos.includes("Pendentes") && (data.name.length === 0) || data.name[0].fullName.includes('Todos')) {
+    requestData.pendentes = true
     requestData.erro = true
   }
 
