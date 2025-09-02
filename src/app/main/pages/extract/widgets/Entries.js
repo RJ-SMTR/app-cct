@@ -10,8 +10,7 @@ function Entries(type) {
     const [todayInfo, setTodayInfo] = useState()
     const [firstDate, setFirstDate] = useState('')
     const [lastDate, setLastDate] = useState('')
-    // const [dayDate, setDayDate] = useState('')
-    const dispatch = useDispatch()
+
   
     const formatter = new Intl.NumberFormat('pt-BR', {
         style: 'currency',
@@ -27,16 +26,11 @@ function Entries(type) {
    
  
 
-    useEffect(() => {
-            const sum = statements.map((statement) => statement.valor)
-                .reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-            dispatch(setSumInfo(sum))
-    }, [searchingWeek,pendingList])
+
     useEffect(() => {
             const date = new Date()
             const today = format(date, 'dd/MM/yyyy')
             setTodayInfo(today)
-      
     }, [])
   
 
