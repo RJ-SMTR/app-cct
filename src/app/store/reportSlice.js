@@ -85,7 +85,8 @@ function handleData(data) {
 
 
   requestData.todosVanzeiros = true
-  if (data.especificos.includes("Pendentes") && (data.name.length === 0) || data.name[0].fullName.includes('Todos')) {
+
+  if (data.especificos.includes("Pendentes")) {
     requestData.pendentes = true
     requestData.erro = true
   }

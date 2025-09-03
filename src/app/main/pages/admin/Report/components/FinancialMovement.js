@@ -145,7 +145,6 @@ export default function BasicEditingGrid() {
       }
 
       if (data.especificos.includes("Pendentes")) {
-        console.log("estou enviando pendentes")
         requestData.pendentes = true
       }
 
@@ -562,7 +561,7 @@ export default function BasicEditingGrid() {
       case "Aguardando Pagamento":
         return "bg-gray-400 text-black";
       case "Pendente":
-        return "bg-blue-400 text-black";
+        return "bg-gray-400 text-black";
       default:
         return "bg-red-300 text-black";
     }
@@ -1057,7 +1056,7 @@ export default function BasicEditingGrid() {
 
 
                 <TableRow></TableRow>
-                {(reportList.valorPago > 0 || reportList.valorEstornado > 0 || reportList.valorRejeitado > 0 || reportList.valor > 0) && (
+                {(reportList.valorPago > 0 || reportList.valorEstornado > 0 || reportList.valorRejeitado > 0 || reportList.valor > 0 || reportList.valorPendente > 0) && (
                   <TableRow>
                     <TableCell />
                     <TableCell colSpan={7} className="text-right font-bold text-black text-base pt-16">
@@ -1066,6 +1065,7 @@ export default function BasicEditingGrid() {
                         reportList.valorEstornado > 0 && `Total Estorno: ${formatter.format(reportList.valorEstornado)}`,
                         reportList.valorRejeitado > 0 && `Total Rejeitado: ${formatter.format(reportList.valorRejeitado)}`,
                         reportList.valorAguardandoPagamento > 0 && `Total Aguardando Pagamento: ${formatter.format(reportList.valorAguardandoPagamento)}`,
+                        reportList.valorPendente > 0 && `Total Pendentes: ${formatter.format(reportList.valorPendente)}`,
                         reportList.valor > 0 && `Total Geral: ${formatter.format(reportList.valor)}`
                       ]
                         .filter(Boolean)
