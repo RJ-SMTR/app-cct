@@ -36,8 +36,7 @@ import {
   setLoadingPrevious,
   setOrdemPgto,
   setMocked,
-  setSumInfo
-} from 'app/store/extractSlice';
+  setSumInfo} from 'app/store/extractSlice';
 
 import { showMessage } from 'app/store/fuse/messageSlice';
 
@@ -62,7 +61,8 @@ function TableTransactions({ id }) {
     isLoadingWeek,
     isLoading,
     ordemPgtoId,
-    mocked
+    mocked,
+    sumInfo
   } = useSelector((state) => state.extract);
   const MemoizedCustomTable = memo(CustomTable);
 
@@ -237,15 +237,15 @@ function TableTransactions({ id }) {
 
       setDataOrderDay(start)
       if (fullReport) {
-
         if (searchingWeek) {
+          dispatch(setSumInfo(valor))
           dispatch(setValorAcumuladoLabel('Valor Operação - Detalhado'));
           dispatch(setValorPagoLabel('Valor - Detalhado'));
           dispatch(setDateRange([transformedDate, transformedDate]));
           dispatch(setOrdemPgto(idOrder))
           dispatch(setSearchingDay(true))
           setPage(0)
-          dispatch(setSumInfo(valor))
+     
         } else {
           if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
           if (!searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Semanal'));
@@ -255,6 +255,7 @@ function TableTransactions({ id }) {
           const clickedDateToday = utcToZonedTime(clickedDate, tz);
           setCurrentWeekStart(clickedDateToday);
           dispatch(setSearchingWeek(true));
+          dispatch(setSumInfo(valor))
           setPage(0);
           dispatch(setOrdemPgto(idOrder))
 
@@ -276,6 +277,7 @@ function TableTransactions({ id }) {
     dispatch(setLoadingWeek(true))
     dispatch(setLoadingPrevious(true))
     dispatch(setLoading(true))
+    dispatch(setSumInfo(sumInfo))
     // dispatch(setMocked(false))
     if (searchingDay) {
       dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
@@ -450,7 +452,7 @@ function TableTransactions({ id }) {
                     const zonedDate = utcToZonedTime(date, tz)
                     const formattedDate = format(zonedDate, 'dd/MM/yyyy');
                     const idOrdem = searchingWeek ? i.ids : i.ordemPagamentoAgrupadoId
-                    const valorDia = searchingWeek ? i.ids : i.valorTotal
+                    const valorDia = i.valorTotal ?? i.valorTotalPago ?? sumInfo
                     return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={(event) => handleClickRow(idOrdem, event, valorDia)} lastDate={dataOrderDay} />
                   }) :
                   <TableCell colSpan={4}>
