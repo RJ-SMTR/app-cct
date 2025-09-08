@@ -85,7 +85,6 @@ function handleData(data) {
   }
 
 
-  requestData.todosVanzeiros = true
 
   if (data.especificos.includes("Pendentes")) {
     requestData.pendentes = true
