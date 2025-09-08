@@ -70,7 +70,7 @@ function Entries(type) {
                   {
                       searchingDay ? 
                           formatter.format(sumInfoDay)
-                          : formatter.format(sumInfo?.valorTotal ?? sumInfo ?? sumInfo?.valorTotalPago)
+                          : formatter.format(sumInfo?.valorTotalPago ?? sumInfo)
                   }
 
               </Typography>
