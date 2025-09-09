@@ -383,7 +383,12 @@ function TableTransactions({ id }) {
           )}
         </div>
 
-        <TableContainer>
+        <TableContainer
+          sx={{
+            maxHeight: 500,
+            overflowY: "auto",
+          }}
+        >
           <Table className="min-w-full">
             <TableHead>
               <TableRow>
