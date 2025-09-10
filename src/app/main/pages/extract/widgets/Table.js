@@ -36,7 +36,8 @@ import {
   setLoadingPrevious,
   setOrdemPgto,
   setMocked,
-  setSumInfo} from 'app/store/extractSlice';
+  setSumInfo
+} from 'app/store/extractSlice';
 
 import { showMessage } from 'app/store/fuse/messageSlice';
 
@@ -245,7 +246,7 @@ function TableTransactions({ id }) {
           dispatch(setOrdemPgto(idOrder))
           dispatch(setSearchingDay(true))
           setPage(0)
-     
+
         } else {
           if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
           if (!searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Semanal'));
@@ -394,7 +395,12 @@ function TableTransactions({ id }) {
           )}
         </div>
 
-        <TableContainer>
+        <TableContainer
+          sx={{
+            maxHeight: 500,
+            overflowY: "auto",
+          }}
+        >
           <Table className="min-w-full">
             <TableHead>
               <TableRow>
