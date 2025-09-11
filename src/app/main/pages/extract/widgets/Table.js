@@ -483,16 +483,31 @@ function TableTransactions({ id }) {
             rowsPerPageOptions={[10, 50, 100, 150, 300, 500]}
             onRowsPerPageChange={handleChangeRowsPerPage}
             ActionsComponent={() => (
-              <div className="my-4 flex space-x-2">
+              <div className="flex space-x-2 w-full justify-center sm:justify-start">
                 <Button variant="text" onClick={handleBackPage} disabled={page === 0}>
-                  &lt; Página Anterior                                </Button>
+                  &lt; Página Anterior
+                </Button>
                 <Button variant="text" onClick={handleNextPage} disabled={page >= Math.ceil(statements.length / rowsPerPage) - 1}>
                   Próxima Página &gt;
                 </Button>
               </div>
             )}
-
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              alignItems: "stretch",
+              "& .MuiTablePagination-toolbar": {
+                flexWrap: { xs: "wrap", sm: "nowrap" },
+              },
+              "& .MuiTablePagination-actions": {
+                width: "100%",
+                display: "flex",
+                justifyContent: { xs: "center", sm: "flex-end" },
+                mt: { xs: 1, sm: 0 },
+              },
+            }}
           />
+
           : <></>}
       </Box>
     </Paper>
