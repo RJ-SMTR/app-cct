@@ -258,10 +258,15 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
                 );
 
                 dispatch(setStatements(statementsSort));
+                console.log(response.data)
 
-                const sum = response.data.map((statement) => statement.valor_pagamento)
-                    .reduce((acc, curr) => acc + curr, 0);
+                const sum = response.data.reduce(
+                    (acc, statement) => acc + Number(statement.valor_pagamento.replace(",", ".")),
+                    0
+                );
+
                 dispatch(setSumInfoDay(sum));
+
 
             } else if (searchingWeek) {
                 dispatch(getPreviousDays(idOrdem, userId));
