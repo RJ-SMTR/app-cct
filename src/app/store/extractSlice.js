@@ -258,7 +258,7 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
                 );
 
                 dispatch(setStatements(statementsSort));
-                console.log(response.data)
+                
 
                 const sum = response.data.reduce(
                     (acc, statement) => acc + Number(statement.valor_pagamento.replace(",", ".")),
