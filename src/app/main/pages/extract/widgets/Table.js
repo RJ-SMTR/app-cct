@@ -1,4 +1,5 @@
 import Paper from '@mui/material/Paper';
+import { Modal } from '@mui/material';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableContainer from '@mui/material/TableContainer';
@@ -78,7 +79,19 @@ function TableTransactions({ id }) {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedDate, setSelectedDate] = useState(null)
   const [dataOrderDay, setDataOrderDay] = useState('')
-
+  const style = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '54rem',
+    maxWidth: '90%',
+    maxHeight: '85vh',
+    borderRadius: '.5rem',
+    bgcolor: 'background.paper',
+    boxShadow: 24,
+    p: 4,
+  };
 
   const navigate = useNavigate()
   const useStyles = makeStyles(() => ({
@@ -239,13 +252,15 @@ function TableTransactions({ id }) {
       setDataOrderDay(start)
       if (fullReport) {
         if (searchingWeek) {
-          dispatch(setSumInfo(valor))
           dispatch(setValorAcumuladoLabel('Valor Operação - Detalhado'));
           dispatch(setValorPagoLabel('Valor - Detalhado'));
           dispatch(setDateRange([transformedDate, transformedDate]));
           dispatch(setOrdemPgto(idOrder))
           dispatch(setSearchingDay(true))
           setPage(0)
+          if(statements.length == 0 ){
+            setModal(true)
+          }
 
         } else {
           if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
@@ -312,191 +327,218 @@ function TableTransactions({ id }) {
     // }
   }
 
+  const handleClose = () => {
+    setModalOpen(false);
+  };
+  const [modalOpen, setModalOpen] = useState(false);
 
-
+  useEffect(() => {
+    if (statements.length === 0 && searchingDay ) {
+      setModalOpen(true); 
+    }
+  }, [statements]);
   return (
-    <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
-      <div className="flex flex-row justify-between">
-        <Typography className="mr-16 text-lg font-medium tracking-tight leading-6 truncate">
-          {searchingDay ? <p>Detalhes da ordem</p> : (searchingWeek ? <p>Valores da semana</p> : <p>Valores recebidos</p>)}
-        </Typography>
+ <>
+     <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
+       <div className="flex flex-row justify-between">
+         <Typography className="mr-16 text-lg font-medium tracking-tight leading-6 truncate">
+           {searchingDay ? <p>Detalhes da ordem</p> : (searchingWeek ? <p>Valores da semana</p> : <p>Valores recebidos</p>)}
+         </Typography>
+  
+         {fullReport ? <> <Hidden smUp >
+           <div className="flex align-center">
+             <Button onClick={filterMenuClick}>
+               <FuseSvgIcon className="text-48" size={24} color="action">feather:filter</FuseSvgIcon>
+             </Button>
+  
+             {!searchingWeek && !searchingDay ?
+               <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                 <MobileDatePicker
+                   label="Selecionar Mês"
+                   openTo="month"
+                   closeOnSelect
+                   views={['year', 'month']}
+                   value={selectedDate}
+                   onChange={handleSelectedDate}
+                 />
+  
+               </LocalizationProvider> : <></>}
+           </div>
+         </Hidden>
+           <Popover
+             open={Boolean(filterMenu)}
+             anchorEl={filterMenu}
+             onClose={filterMenuClose}
+             anchorOrigin={{
+               vertical: 'bottom',
+               horizontal: 'center',
+             }}
+             transformOrigin={{
+               vertical: 'top',
+               horizontal: 'center',
+             }}
+             classes={{
+               paper: 'py-8',
+             }}
+           >
+             <MenuItem role="button" onClick={handleDays} data-value=''>
+               <ListItemText primary="Mês Atual" />
+             </MenuItem>
+           </Popover>
+  
+           <Hidden smDown>
+             <div className='flex flex-wrap content-center justify-center'>
+  
+               {!searchingWeek && !searchingDay ?
+                 <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                   <MobileDatePicker
+                     label="Selecionar Mês"
+                     openTo="month"
+                     closeOnSelect
+                     views={['year', 'month']}
+                     value={selectedDate}
+                     onChange={handleSelectedDate}
+                   />
+  
+                 </LocalizationProvider> : <></>}
+  
+  
+               <Button className='self-center ml-10' variant="contained" onClick={handleDays} data-value={'lastMonth'}>Mês Atual</Button>
+  
+             </div>
+           </Hidden></> : <></>}
+  
+       </div>
+  
+       <Box className="flex flex-col flex-auto mt-24  overflow-hidden">
+         <div className="flex flex-row justify-between items-center mb-4">
+           {searchingWeek && (
+             <Button onClick={handleBack} variant="outlined">
+               Voltar
+             </Button>
+           )}
+         </div>
+  
+         <TableContainer
+           sx={{
+             maxHeight: 500,
+             overflowY: "auto",
+           }}
+         >
+           <Table className="min-w-full">
+             <TableHead>
+               <TableRow>
+                 <TableCell>
+                   <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                     {searchingDay ? 'Data Transação' : searchingWeek ? 'Data Ordem de Pagamento' : 'Data'}
+                   </Typography>
+                 </TableCell>
+                 {searchingDay ? <TableCell>
+                   <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                     Data Ordem Pagamento
+                   </Typography>
+                 </TableCell> : <></>}
+                 {!searchingDay ? <TableCell>
+                   <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                     Valor Total para Pagamento
+                   </Typography>
+                 </TableCell> : <></>}
+  
+                 {searchingDay ? <TableCell>
+                   <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                     Tipo Operação
+                   </Typography>
+                 </TableCell> : <></>}
+                 {searchingWeek ? <></> :
+                   <>
+                     <TableCell>
+                       <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                         Status
+                       </Typography>
+                     </TableCell>
+                     <TableCell>
+                       <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                         Erro
+                       </Typography>
+                     </TableCell>
+                   </>}
+  
+  
+               </TableRow>
+             </TableHead>
+  
+             <TableBody>
+  
+               {isLoading ?
+                 <TableCell colSpan={4}>
+                   <Box className="flex justify-center items-center m-10">
+                     <CircularProgress />
+                   </Box>
+                 </TableCell>
+                 : statements?.length > 0 ?
+                   statements?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
+                     const tz = 'UTC'
+                     const date = parseISO(i.data ?? i.dataCaptura ?? i.datetime_processamento);
+                     const zonedDate = utcToZonedTime(date, tz)
+                     const formattedDate = format(zonedDate, 'dd/MM/yyyy');
+                     const idOrdem = searchingWeek ? i.ids : i.ordemPagamentoAgrupadoId
+                     const valorDia = i.valorTotal ?? i.valorTotalPago ?? sumInfo
+                     return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={(event) => handleClickRow(idOrdem, event, valorDia)} lastDate={dataOrderDay} />
+                   }) :
+                   <TableCell colSpan={4}>
+                     <p>Não há dados para sem exibidos</p>
+                   </TableCell>
+               }
+             </TableBody>
+           </Table>
+         </TableContainer>
+  
+         {searchingDay || searchingWeek ?
+  
+           <TablePagination
+             className={`overflow-visible ${c.root}`}
+             component="div"
+             count={statements.length}
+             rowsPerPage={rowsPerPage}
+             page={page}
+             onPageChange={handleChangePage}
+             labelRowsPerPage="Linhas por página"
+             labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+             rowsPerPageOptions={[10, 50, 100, 150, 300, 500]}
+             onRowsPerPageChange={handleChangeRowsPerPage}
+             ActionsComponent={() => (
+               <div className="my-4 flex space-x-2">
+                 <Button variant="text" onClick={handleBackPage} disabled={page === 0}>
+                   &lt; Página Anterior                                </Button>
+                 <Button variant="text" onClick={handleNextPage} disabled={page >= Math.ceil(statements.length / rowsPerPage) - 1}>
+                   Próxima Página &gt;
+                 </Button>
+               </div>
+             )}
+  
+           />
+           : <></>}
+       </Box>
+     </Paper>
 
-        {fullReport ? <> <Hidden smUp >
-          <div className="flex align-center">
-            <Button onClick={filterMenuClick}>
-              <FuseSvgIcon className="text-48" size={24} color="action">feather:filter</FuseSvgIcon>
-            </Button>
-
-            {!searchingWeek && !searchingDay ?
-              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                <MobileDatePicker
-                  label="Selecionar Mês"
-                  openTo="month"
-                  closeOnSelect
-                  views={['year', 'month']}
-                  value={selectedDate}
-                  onChange={handleSelectedDate}
-                />
-
-              </LocalizationProvider> : <></>}
-          </div>
-        </Hidden>
-          <Popover
-            open={Boolean(filterMenu)}
-            anchorEl={filterMenu}
-            onClose={filterMenuClose}
-            anchorOrigin={{
-              vertical: 'bottom',
-              horizontal: 'center',
-            }}
-            transformOrigin={{
-              vertical: 'top',
-              horizontal: 'center',
-            }}
-            classes={{
-              paper: 'py-8',
-            }}
-          >
-            <MenuItem role="button" onClick={handleDays} data-value=''>
-              <ListItemText primary="Mês Atual" />
-            </MenuItem>
-          </Popover>
-
-          <Hidden smDown>
-            <div className='flex flex-wrap content-center justify-center'>
-
-              {!searchingWeek && !searchingDay ?
-                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                  <MobileDatePicker
-                    label="Selecionar Mês"
-                    openTo="month"
-                    closeOnSelect
-                    views={['year', 'month']}
-                    value={selectedDate}
-                    onChange={handleSelectedDate}
-                  />
-
-                </LocalizationProvider> : <></>}
-
-
-              <Button className='self-center ml-10' variant="contained" onClick={handleDays} data-value={'lastMonth'}>Mês Atual</Button>
-
-            </div>
-          </Hidden></> : <></>}
-
-      </div>
-
-      <Box className="flex flex-col flex-auto mt-24  overflow-hidden">
-        <div className="flex flex-row justify-between items-center mb-4">
-          {searchingWeek && (
-            <Button onClick={handleBack} variant="outlined">
-              Voltar
-            </Button>
-          )}
-        </div>
-
-        <TableContainer
-          sx={{
-            maxHeight: 500,
-            overflowY: "auto",
-          }}
-        >
-          <Table className="min-w-full">
-            <TableHead>
-              <TableRow>
-                <TableCell>
-                  <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                    {searchingDay ? 'Data Transação' : searchingWeek ? 'Data Ordem de Pagamento' : 'Data'}
-                  </Typography>
-                </TableCell>
-                {searchingDay ? <TableCell>
-                  <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                    Data Ordem Pagamento
-                  </Typography>
-                </TableCell> : <></>}
-                {!searchingDay ? <TableCell>
-                  <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                    Valor Total para Pagamento
-                  </Typography>
-                </TableCell> : <></>}
-
-                {searchingDay ? <TableCell>
-                  <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                    Tipo Operação
-                  </Typography>
-                </TableCell> : <></>}
-                {searchingWeek ? <></> :
-                  <>
-                    <TableCell>
-                      <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                        Status
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                        Erro
-                      </Typography>
-                    </TableCell>
-                  </>}
-
-
-              </TableRow>
-            </TableHead>
-
-            <TableBody>
-
-              {isLoading ?
-                <TableCell colSpan={4}>
-                  <Box className="flex justify-center items-center m-10">
-                    <CircularProgress />
-                  </Box>
-                </TableCell>
-                : statements?.length > 0 ?
-                  statements?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
-                    const tz = 'UTC'
-                    const date = parseISO(i.data ?? i.dataCaptura ?? i.datetime_processamento);
-                    const zonedDate = utcToZonedTime(date, tz)
-                    const formattedDate = format(zonedDate, 'dd/MM/yyyy');
-                    const idOrdem = searchingWeek ? i.ids : i.ordemPagamentoAgrupadoId
-                    const valorDia = i.valorTotal ?? i.valorTotalPago ?? sumInfo
-                    return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={(event) => handleClickRow(idOrdem, event, valorDia)} lastDate={dataOrderDay} />
-                  }) :
-                  <TableCell colSpan={4}>
-                    <p>Não há dados para sem exibidos</p>
-                  </TableCell>
-              }
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        {searchingDay || searchingWeek ?
-
-          <TablePagination
-            className={`overflow-visible ${c.root}`}
-            component="div"
-            count={statements.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            labelRowsPerPage="Linhas por página"
-            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-            rowsPerPageOptions={[10, 50, 100, 150, 300, 500]}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            ActionsComponent={() => (
-              <div className="my-4 flex space-x-2">
-                <Button variant="text" onClick={handleBackPage} disabled={page === 0}>
-                  &lt; Página Anterior                                </Button>
-                <Button variant="text" onClick={handleNextPage} disabled={page >= Math.ceil(statements.length / rowsPerPage) - 1}>
-                  Próxima Página &gt;
-                </Button>
-              </div>
-            )}
-
-          />
-          : <></>}
-      </Box>
-    </Paper>
+      <Modal
+        open={modalOpen}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style} className="overflow-scroll text-center">
+          <Typography id="modal-modal-title" variant="h6" component="h3">
+            Comunicado:
+          </Typography>
+          <p>As transações estão temporariamente indisponíveis.
+            Qualquer dúvida, por favor, contacte o suporte!</p>
+        </Box>
+      </Modal> 
+     
+ </>
   );
+
 }
 
 export default memo(TableTransactions);
