@@ -295,6 +295,11 @@ export default function BasicEditingGrid() {
     Valor: "",
     Status: reportList.valorRejeitado > 0 ? formatter.format(reportList.valorRejeitado) : "",
   };
+  const valorPendente = {
+    Nome: "Total Pendente",
+    Valor: "",
+    Status: reportList.valorPendente > 0 ? formatter.format(reportList.valorPendente) : "",
+  };
 
   const valorAguardandoPagamento = {
     Nome: "Total Aguardando Pagamento",
@@ -323,6 +328,7 @@ export default function BasicEditingGrid() {
     ...(reportList.valorPago > 0 ? [valorPago] : []),
     ...(reportList.valorEstornado > 0 ? [valorEstornado] : []),
     ...(reportList.valorRejeitado > 0 ? [valorRejeitado] : []),
+    ...(reportList.valorPendente > 0 ? [valorPendente] : []),
     ...(reportList.valorAguardandoPagamento > 0 ? [valorAguardandoPagamento] : []),
     valorTotal,
   ];
@@ -436,6 +442,10 @@ export default function BasicEditingGrid() {
       doc.text(`Total Rejeitado: ${formatter.format(reportList.valorRejeitado)}`, 14, yPosition);
       yPosition += 5;
     }
+    if (reportList.valorPendente > 0) {
+      doc.text(`Total Pendente: ${formatter.format(reportList.valorPendente)}`, 14, yPosition);
+      yPosition += 5;
+    }
 
     if (reportList.valorAguardandoPagamento > 0) {
       doc.text(`Total Aguardando Pagamento: ${formatter.format(reportList.valorAguardandoPagamento)}`, 14, yPosition);
@@ -494,6 +504,9 @@ export default function BasicEditingGrid() {
         : []),
       ...(reportList.valorAguardandoPagamento > 0
         ? [["Total Aguardando Pagamento:", "", "", ` ${formatter.format(reportList.valorAguardandoPagamento)}`, ""]]
+        : []),
+      ...(reportList.valorPendente > 0
+        ? [["Total Pendente:", "", "", ` ${formatter.format(reportList.valorPendente)}`, ""]]
         : []),
       ["Valor Total", "", "", formatter.format(reportList.valor ?? 0), ""],
     ];
