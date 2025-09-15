@@ -153,7 +153,7 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
 
       reportType = reportType === 'Movimentação Financeira' ? 'financial-movement' : reportType;
 
-      const reportTypeUrl = reportType === 'sintetico' ? '/cnab/relatorio/sintetico' : jwtServiceConfig.report + `/${reportType}`;
+      const reportTypeUrl = jwtServiceConfig.report + `/${reportType}`;
 
       let config = {
         method: 'get',
@@ -170,17 +170,7 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
         const responseData = response.data;
 
         if (reportType == 'sintetico') {
-          const mergedData = responseData.reduce((acc, curr) => {
-            return acc.concat(curr.data);
-          }, []);
-
-          const combinedResponse = {
-            count: mergedData.length,
-            data: mergedData,
-            valor: responseData.reduce((sum, curr) => sum + curr.valor, 0),
-            status: 'Todos'
-          };
-          dispatch(handleSynthData(combinedResponse))
+          dispatch(handleSynthData(responseData));
         } else {
           dispatch(setReportList(responseData));
         }
@@ -193,51 +183,64 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
   }
 };
 
+
+
 export const handleSynthData = (reportData) => async (dispatch) => {
-  const total = accounting.formatMoney(reportData.valor, {
+  const total = reportData.total;
+  dispatch(setTotalSynth(accounting.formatMoney(total, {
     symbol: 'R$ ',
     decimal: ',',
     thousand: '.',
     precision: 2
-  })
-  dispatch(setTotalSynth(total))
-  const groupedData = reportData.data.reduce((acc, item) => {
-    const key = item.consorcio;
+  })));
+  console.log(total)
+
+  const groupedData = reportData.agrupamentoConsorcio.reduce((acc, consorcio) => {
+    const key = consorcio.nomeConsorcio;
+
     if (!acc[key]) {
       acc[key] = { items: [], total: 0, totalsByStatus: {} };
     }
 
+    consorcio.agrupamentoFavorecido.forEach((favorecido) => {
+      favorecido.agrupamentoDia.forEach((dia) => {
+        acc[key].items.push(dia);
 
-    acc[key].items.push(item);
-    acc[key].total = item.subtotal;
+        acc[key].total += Number(dia.valorPagamento);
 
-    const status = item.status;
-    if (!acc[key].totalsByStatus[status]) {
-      acc[key].totalsByStatus[status] = 0;
-    }
-    acc[key].totalsByStatus[status] += item.valor;
+        const status = dia.status.trim();
+        if (!acc[key].totalsByStatus[status]) {
+          acc[key].totalsByStatus[status] = 0;
+        }
+        acc[key].totalsByStatus[status] += Number(dia.valorPagamento);
+      });
+    });
 
     return acc;
   }, {});
 
   for (const key in groupedData) {
     groupedData[key].total = accounting.formatMoney(groupedData[key].total, {
-      symbol: 'R$',
+      symbol: 'R$ ',
       decimal: ',',
       thousand: '.',
       precision: 2
     });
 
     for (const status in groupedData[key].totalsByStatus) {
-      groupedData[key].totalsByStatus[status] = accounting.formatMoney(groupedData[key].totalsByStatus[status], {
-        symbol: 'R$',
-        decimal: ',',
-        thousand: '.',
-        precision: 2
-      });
+      groupedData[key].totalsByStatus[status] = accounting.formatMoney(
+        groupedData[key].totalsByStatus[status],
+        {
+          symbol: 'R$ ',
+          decimal: ',',
+          thousand: '.',
+          precision: 2
+        }
+      );
     }
   }
 
   dispatch(setSynthData(groupedData));
-
-}
+  console.log(groupedData);
+};
+;
