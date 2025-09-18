@@ -123,7 +123,7 @@ export function  CustomTable(data) {
       <TableCell component="th" scope="row">
         <Typography className="whitespace-nowrap">
       
-              {data.data.tipo_transacao_smtr}
+              {data.data.tipo_transacao}
     
         </Typography>
 
