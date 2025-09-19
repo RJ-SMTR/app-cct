@@ -10,7 +10,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 
 
-export function  CustomTable(data) {
+export function CustomTable(data) {
   // const [dayAmount, setDayAmount] = useState(null)
   const searchingDay = useSelector(state => state.extract.searchingDay);
   const searchingWeek = useSelector(state => state.extract.searchingWeek);
@@ -38,17 +38,17 @@ export function  CustomTable(data) {
     const i = data.data.data
     const getStatus = (i) => {
       let status = ''
-      switch (i.statusRemessa){
+      switch (i.statusRemessa) {
         case 3:
           status = 'Pago';
           break;
-          case 4:
-           status =  'Pendente'
-           break;
+        case 4:
+          status = 'Pendente'
+          break;
         default:
-          status ='A pagar';
+          status = 'A pagar';
       }
-     return status
+      return status
     }
     return <Badge className={`${data.c?.root}  whitespace-nowrap`}
       color={i.statusRemessa === 4 ? 'error' : i.statusRemessa === 3 ? 'success' : i.statusRemessa === null ? 'op' : 'warning'}
@@ -59,14 +59,14 @@ export function  CustomTable(data) {
     const i = data.data.data
     const errorDescription = i.motivoStatusRemessa ? i.descricaoMotivoStatusRemessa : <></>;
     const getStatus = (i) => {
-      return  (
+      return (
         <span className='underline'> Erro  <InfoOutlinedIcon fontSize='small' /></span>
       )
     }
-    if(i.statusRemessa === 4){
+    if (i.statusRemessa === 4) {
       return (
-            
-        <Tooltip   title={errorDescription} arrow enterTouchDelay={10} leaveTouchDelay={10000}>
+
+        <Tooltip title={errorDescription} arrow enterTouchDelay={10} leaveTouchDelay={10000}>
           <Badge className={`${data.c?.root}  whitespace-nowrap`}
             color='error'
             badgeContent={getStatus(i)}
@@ -105,38 +105,51 @@ export function  CustomTable(data) {
           {data.lastDate}
         </TableCell>
       )
-      // ULTIMA DATA
-       }
-     
-        {/* Valor */}
-        {searchingDay ? (
-          <>
-          </>
-        ) : (
+        // ULTIMA DATA
+      }
+
+      {/* Valor */}
+      {searchingDay ? (
+        <>
+        </>
+      ) : (
+        <TableCell component="th" scope="row">
+          <>  {formatter.format(data.data.valorTotal ?? data.data.valor ?? 0)}</>
+        </TableCell>
+      )}
+
+
+      {/* NOVA COLUNA: Data Efetiva Pagamento */}
+
+      {
+        !searchingDay ? (
+
           <TableCell component="th" scope="row">
-            <>  {formatter.format(data.data.valorTotal ?? data.data.valor ?? 0)}</>
-      </TableCell>
-        )}
+            <Typography className="whitespace-nowrap"> {data.dataPagamento}
+            </Typography>
+          </TableCell>
+        ) : <> </>
+      }
 
+      {
+        searchingDay && (
+          <TableCell component="th" scope="row">
+            <Typography className="whitespace-nowrap">
 
-      {searchingDay && (
-      <TableCell component="th" scope="row">
-        <Typography className="whitespace-nowrap">
-      
               {data.data.tipo_transacao}
-    
-        </Typography>
 
-      </TableCell>)}
-      {!searchingWeek ? <>
-        <TableCell className='status' component="th" scope='row'> <CustomBadge data={data} /> </TableCell>
-        <MyTableCell data={data} />
-      </>
-        : <> </>}
+            </Typography>
 
+          </TableCell>)
+      }
+      {
+        !searchingWeek ? <>
+          <TableCell className='status' component="th" scope='row'> <CustomBadge data={data} /> </TableCell>
+          <MyTableCell data={data} />
+        </>
+          : <> </>
+      }
 
-
-
-    </TableRow> : <p>Loading</p>
+    </TableRow > : <p>Loading</p>
   )
 }
