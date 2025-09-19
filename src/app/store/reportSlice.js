@@ -48,6 +48,7 @@ export default reportSlice.reducer;
 
 function handleData(data) {
   let requestData = {};
+  console.log(data)
 
 
   if (data.consorcioName && data.consorcioName.length > 0) {
@@ -84,7 +85,7 @@ function handleData(data) {
   }
 
 
-  requestData.todosVanzeiros = true
+  //requestData.todosVanzeiros = true
 
   if (data.especificos.includes("Pendentes")) {
     requestData.pendentes = true
