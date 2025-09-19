@@ -45,6 +45,8 @@ export function CustomTable(data) {
         case 4:
           status = 'Pendente'
           break;
+        case 6:
+          status = 'Pendencia Paga'
         default:
           status = 'A pagar';
       }
