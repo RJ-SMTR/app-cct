@@ -193,7 +193,6 @@ export const handleSynthData = (reportData) => async (dispatch) => {
     thousand: '.',
     precision: 2
   })));
-  console.log(total)
 
   const groupedData = reportData.agrupamentoConsorcio.reduce((acc, consorcio) => {
     const key = consorcio.nomeConsorcio;
@@ -241,6 +240,4 @@ export const handleSynthData = (reportData) => async (dispatch) => {
   }
 
   dispatch(setSynthData(groupedData));
-  console.log(groupedData);
-};
-;
+} 
