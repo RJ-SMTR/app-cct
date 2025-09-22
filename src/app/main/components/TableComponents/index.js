@@ -34,29 +34,48 @@ export function CustomTable(data) {
     const formattedDate = format(zonedDate, 'dd/MM/yyyy');
     return formattedDate
   }
+
+
   const CustomBadge = (data) => {
-    const i = data.data.data
+    const i = data.data.data;
+    console.log(i.statusRemessa);
+
     const getStatus = (i) => {
-      let status = ''
       switch (i.statusRemessa) {
         case 3:
-          status = 'Pago';
-          break;
+          return 'Pago';
         case 4:
-          status = 'Pendente'
-          break;
+          return 'Pendente';
         case 6:
-          status = 'Pendencia Paga'
+          return 'Pendencia Paga';
         default:
-          status = 'A pagar';
+          console.log(`Default ${i.statusRemessa}`);
+          return 'A pagar';
       }
-      return status
-    }
-    return <Badge className={`${data.c?.root}  whitespace-nowrap`}
-      color={i.statusRemessa === 4 ? 'error' : i.statusRemessa === 3 ? 'success' : i.statusRemessa === null ? 'op' : 'warning'}
-      badgeContent={getStatus(i)}
-    />
-  }
+    };
+
+    const getColor = (status) => {
+      switch (status) {
+        case 3:
+          return 'success';
+        case 4:
+          return 'error';
+        case 6:
+          return 'info';
+        default:
+          return 'warning';
+      }
+    };
+
+    return (
+      <Badge
+        className={`${data.c?.root} whitespace-nowrap`}
+        color={getColor(i.statusRemessa)}
+        badgeContent={getStatus(i)}
+      />
+    );
+  };
+
   const ErrorBadge = (data) => {
     const i = data.data.data
     const errorDescription = i.motivoStatusRemessa ? i.descricaoMotivoStatusRemessa : <></>;
