@@ -98,7 +98,7 @@ export default function ReportVanzeiro() {
       <Paper>
         <Box className="w-full md:mx-9 p-24 relative mt-32">
           <div
-            style={{ height: "100vh", width: "100%" }}
+            style={{ height: "70vh", width: "100%" }}
             className="overflow-scroll"
           >
             <Table size="small">
