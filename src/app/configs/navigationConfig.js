@@ -33,6 +33,14 @@ const navigationConfig = [
     url: 'extrato',
   },
   {
+    id: 'trigger-component',
+    title: 'report',
+    translate: 'Relatório',
+    type: 'item',
+    icon: 'heroicons-outline:document-report',
+    url: 'relatorio-vanzeiro',
+  },
+  {
     id: 'extract',
     title: 'Extrato 2024',
     translate: 'Extrato 2024',
@@ -49,6 +57,7 @@ const navigationConfig = [
     target: '_blank',
     url: 'https://transportes.prefeitura.rio/atendimentodigital/',
   },
+
 ];
 
 export default navigationConfig;
