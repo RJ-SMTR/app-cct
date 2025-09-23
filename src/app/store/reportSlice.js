@@ -91,7 +91,8 @@ function handleData(data) {
   if (data.status && data.status.length > 0) {
     const statusSet = new Set(data.status);
 
-    const hasAllStatuses = statusSet.has('Pago') && statusSet.has('Erro') && statusSet.has('Aguardando Pagamento');
+    console.log(data.status)
+    const hasAllStatuses = statusSet.has('Pago') && statusSet.has('Erro') && statusSet.has('Aguardando Pagamento') && statusSet.has('Pendencia Paga');
 
     if (!hasAllStatuses) {
       data.status.forEach(status => {
@@ -105,15 +106,14 @@ function handleData(data) {
           case 'Aguardando Pagamento':
             requestData.emProcessamento = true;
             break;
-
           case 'Estorno':
             requestData.estorno = true;
             break;
-
           case 'Rejeitado':
             requestData.rejeitado = true;
             break;
-
+          case 'Pendencia Paga':
+            requestData.pendenciaPaga = true
           case 'Todos':
             break;
           default:
