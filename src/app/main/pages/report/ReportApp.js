@@ -157,15 +157,17 @@ export default function ReportVanzeiro() {
                     <TableCell />
                     <TableCell colSpan={7} className="text-right font-bold text-black text-base pt-16">
                       {[
-                        reportList.valorPago > 0 && `Total Pago: ${formatter.format(reportList.valorPago)}`,
                         reportList.valorEstornado > 0 && `Total Estorno: ${formatter.format(reportList.valorEstornado)}`,
                         reportList.valorRejeitado > 0 && `Total Rejeitado: ${formatter.format(reportList.valorRejeitado)}`,
                         reportList.valorPendente > 0 && `Total Pendentes: ${formatter.format(reportList.valorPendente)}`,
                         reportList.valorPendenciaPaga > 0 && `Total Pendencia Paga: ${formatter.format(reportList.valorPendenciaPaga)}`,
-                        reportList.valor > 0 && `Total Geral: ${formatter.format(reportList.valor)}`
+                        (reportList.valorEstornado + reportList.valorRejeitado + reportList.valorPendente - reportList.valorPendenciaPaga) > 0 &&
+                        `Saldo a Receber: ${formatter.format(
+                          reportList.valorEstornado + reportList.valorRejeitado + reportList.valorPendente - reportList.valorPendenciaPaga
+                        )}`
                       ]
                         .filter(Boolean)
-                        .join("    |    ")
+                        .join("    |    ")
                       }
                     </TableCell>
                     <TableCell />
