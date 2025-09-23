@@ -49,7 +49,7 @@ export default function ReportVanzeiro() {
     ]
     requestData.valorMax = ''
     requestData.valorMin = ''
-    requestData.status = ['Pago']
+    requestData.status = ['Pendencia Paga']
     dispatch(handleReportInfo(requestData, reportType))
       .then((response) => {
         setIsLoading(false);
@@ -118,8 +118,8 @@ export default function ReportVanzeiro() {
                   reportList.count > 0 ? (
                     reportList.data?.map((report, index) => (
                       <TableRow key={index} className="hover:bg-gray-50">
-                        <TableCell className="text-base py-1">{report.dataPagamento}</TableCell>
-                        <TableCell className="text-base py-1 ">{report.dataPagamento}</TableCell>
+                        <TableCell className="text-base py-1">{report.dataReferencia}</TableCell>
+                        <TableCell className="text-base py-1 ">{report.status == 'Pendencia Paga' ? report.dataPagamento : '-'}</TableCell>
                         <TableCell className="text-base py-6 px-1 ">{formatter.format(report.valor)}</TableCell>
                         <TableCell className="text-base py-6 px-1 ">
                           <span
