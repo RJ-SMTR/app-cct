@@ -49,7 +49,7 @@ export default function ReportVanzeiro() {
     ]
     requestData.valorMax = ''
     requestData.valorMin = ''
-
+    requestData.status = ['Pago']
     dispatch(handleReportInfo(requestData, reportType))
       .then((response) => {
         setIsLoading(false);
@@ -84,6 +84,8 @@ export default function ReportVanzeiro() {
         return "bg-yellow-400 text-black";
       case "Pendente":
         return "bg-gray-400 text-black";
+      case "Pendencia Paga":
+        return "bg-blue-400 text-black";
       default:
         return "bg-red-300 text-black";
     }
@@ -104,15 +106,8 @@ export default function ReportVanzeiro() {
             <Table size="small">
               <TableHead>
                 <TableRow className="sticky top-0 bg-white z-10">
-                  <TableCell className="font-semibold py-1 text-sm leading-none">Data Pagamento</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm " style={{ whiteSpace: 'nowrap' }}>
-                    Nome
-                  </TableCell>
-                  <TableCell className="font-semibold p-1 text-sm " style={{ maxWidth: 220 }}>Email</TableCell>
-                  <TableCell className="font-semibold py-1 text-sm leading-none">Cód. Banco</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm ">Banco</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm ">CPF/CNPJ</TableCell>
-                  <TableCell className="font-semibold py-1 text-sm leading-none">Consórcios | Modais</TableCell>
+                  <TableCell className="font-semibold py-1 text-sm leading-none">Data Tenativa Pagamento</TableCell>
+                  <TableCell className="font-semibold p-1 text-sm ">Data Efetiva Pagamento</TableCell>
                   <TableCell className="font-semibold p-1 text-sm ">Valor</TableCell>
                   <TableCell className="font-semibold p-1 text-sm ">Status</TableCell>
                 </TableRow>
@@ -124,29 +119,7 @@ export default function ReportVanzeiro() {
                     reportList.data?.map((report, index) => (
                       <TableRow key={index} className="hover:bg-gray-50">
                         <TableCell className="text-base py-1">{report.dataPagamento}</TableCell>
-                        <TableCell className="text-base py-6 px-1 text-nowrap" style={{ whiteSpace: 'nowrap' }}>
-                          {report.nomes}
-                        </TableCell>
-                        <TableCell className="text-base py-6 px-1" style={{ maxWidth: 220, overflowWrap: 'break-word' }}>{report.email}</TableCell>
-                        <TableCell className="text-base py-1 ">{report.codBanco}</TableCell>
-                        <TableCell
-                          className="text-base py-6 px-1"
-                          style={{
-                            textOverflow: 'ellipsis',
-                            overflow: 'hidden',
-                            whiteSpace: 'nowrap',
-                            maxWidth: 120,
-                          }}
-                        >
-                          {report.nomeBanco}
-                        </TableCell>
-                        <TableCell className="text-base py-6 px-1 " >
-                          {report.cpfCnpj.replace(
-                            /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
-                            "$1.$2.$3/$4-$5"
-                          )}
-                        </TableCell>
-                        <TableCell className="text-base py-1 ">{report.consorcio}</TableCell>
+                        <TableCell className="text-base py-1 ">{report.dataPagamento}</TableCell>
                         <TableCell className="text-base py-6 px-1 ">{formatter.format(report.valor)}</TableCell>
                         <TableCell className="text-base py-6 px-1 ">
                           <span
@@ -188,6 +161,7 @@ export default function ReportVanzeiro() {
                         reportList.valorEstornado > 0 && `Total Estorno: ${formatter.format(reportList.valorEstornado)}`,
                         reportList.valorRejeitado > 0 && `Total Rejeitado: ${formatter.format(reportList.valorRejeitado)}`,
                         reportList.valorPendente > 0 && `Total Pendentes: ${formatter.format(reportList.valorPendente)}`,
+                        reportList.valorPendenciaPaga > 0 && `Total Pendencia Paga: ${formatter.format(reportList.valorPendenciaPaga)}`,
                         reportList.valor > 0 && `Total Geral: ${formatter.format(reportList.valor)}`
                       ]
                         .filter(Boolean)
