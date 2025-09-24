@@ -83,15 +83,9 @@ function handleData(data) {
   }
 
 
-  if (data.especificos.includes("Pendentes")) {
-    requestData.pendentes = true
-    requestData.erro = true
-  }
-
   if (data.status && data.status.length > 0) {
     const statusSet = new Set(data.status);
 
-    console.log(data.status)
     const hasAllStatuses = statusSet.has('Pago') && statusSet.has('Erro') && statusSet.has('Aguardando Pagamento') && statusSet.has('Pendencia Paga');
 
     if (!hasAllStatuses) {
@@ -114,6 +108,10 @@ function handleData(data) {
             break;
           case 'Pendencia Paga':
             requestData.pendenciaPaga = true
+            break;
+          case 'Pendentes':
+            requestData.pendentes = true
+            break;
           case 'Todos':
             break;
           default:
