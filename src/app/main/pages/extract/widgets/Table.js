@@ -430,7 +430,7 @@ function TableTransactions({ id }) {
                 <TableRow>
                   <TableCell>
                     <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                      {searchingDay ? 'Data Transação' : searchingWeek ? 'Data Ordem de Pagamento' : 'Data Tentativa Inicial'}
+                      {searchingDay ? 'Data Transação' : searchingWeek ? 'Data Ordem de Pagamento' : 'Data Tentativa Pagamento'}
                     </Typography>
                   </TableCell>
                   {searchingDay ? <TableCell>
