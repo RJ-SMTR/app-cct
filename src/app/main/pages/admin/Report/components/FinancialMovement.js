@@ -1068,6 +1068,10 @@ export default function BasicEditingGrid() {
                           return [
                             reportList.valorPago > 0 &&
                             `Total Pago: ${formatter.format(reportList.valorPago)}`,
+                            reportList.valorPendenciaPaga > 0 &&
+                            `Total Pendencia Paga: ${formatter.format(
+                              reportList.valorPendenciaPaga
+                            )}`,
                             reportList.valorEstornado > 0 &&
                             `Total Estorno: ${formatter.format(reportList.valorEstornado)}`,
                             reportList.valorRejeitado > 0 &&
@@ -1078,13 +1082,10 @@ export default function BasicEditingGrid() {
                             )}`,
                             reportList.valorPendente > 0 &&
                             `Total Pendentes: ${formatter.format(reportList.valorPendente)}`,
-                            reportList.valorPendenciaPaga > 0 &&
-                            `Total Pendencia Paga: ${formatter.format(
-                              reportList.valorPendenciaPaga
-                            )}`,
+
                             totalGeral > 0 &&
                             `${reportList.valorPendenciaPaga > 0
-                              ? "Saldo a Receber"
+                              ? "Saldo a Pagar"
                               : "Total Geral"
                             }: ${formatter.format(totalGeral)}`
                           ]
