@@ -40,16 +40,15 @@ export default function ReportVanzeiro() {
         userId: user.id
       }
     ];
-
+    requestData.especificos = []
     requestData.userIds = [user.id]
-    requestData.especificos = ['Pendentes'];
     requestData.dateRange = [
       new Date('2025-01-01'),
       new Date(),
     ]
     requestData.valorMax = ''
     requestData.valorMin = ''
-    requestData.status = ['Pendencia Paga']
+    requestData.status = ['Pendencia Paga', 'Erro']
     dispatch(handleReportInfo(requestData, reportType))
       .then((response) => {
         setIsLoading(false);
