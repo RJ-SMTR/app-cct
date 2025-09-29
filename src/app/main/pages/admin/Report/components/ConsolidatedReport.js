@@ -2,8 +2,6 @@ import React, { useEffect, useState, useMemo } from 'react';
 import {
   Box,
   MenuItem,
-  ListItemText,
-  Checkbox,
   Table,
   TableHead,
   TableBody,
@@ -13,16 +11,11 @@ import {
   TableRow,
   TableCell,
   Paper,
-  Select,
-  InputLabel,
-  FormControl,
   CircularProgress,
   InputAdornment,
-  TableFooter,
   Menu,
   IconButton
 } from '@mui/material';
-import { ptBR as pt } from '@mui/x-data-grid';
 import { format } from 'date-fns';
 import { useDispatch, useSelector } from 'react-redux';
 import { DateRangePicker } from 'rsuite';
@@ -57,23 +50,18 @@ export default function BasicEditingGrid() {
   const [selectedEspecificos, setSelectedEspecificos] = useState([]);
 
 
-  const consorciosStatusBase = [
-    { label: 'Todos' },
-    { label: 'A pagar' },
-    { label: 'Pago' },
-    { label: 'Aguardando Pagamento' },
-    { label: 'Erro' },
+  const consorciosStatus = [
+    { label: "Todos" },
+    { label: "Pago" },
+    { label: "Erro" },
+    { label: "Aguardando Pagamento" },
+    { label: "Pendencia Paga" }
   ];
-
-  const consorciosStatus = selectedEspecificos.includes("Pendentes")
-    ? [{ label: "Erro" }]
-    : consorciosStatusBase;
 
   const específicos = [
     { label: 'Todos' },
     { label: 'Eleição' },
     { label: 'Desativados' },
-    { label: 'Pendentes' }
   ];
 
 
@@ -107,27 +95,20 @@ export default function BasicEditingGrid() {
 
   const onSubmit = (data) => {
 
-    const isPendentes = selectedEspecificos.includes("Pendentes");
-    const hasNameOrConsorcio = data.name.length > 0 || data.consorcioName.length > 0;
+    setIsLoading(true)
 
-    if (!isPendentes && !hasNameOrConsorcio) {
-      dispatch(
-        showMessage({
-          message: "Erro na busca, selecione favorecidos ou consórcios | modais.",
-        }),
-      );
-    } else {
-      setIsLoading(true)
-
-      dispatch(handleReportInfo(data, reportType))
-        .then((response) => {
-          setIsLoading(false)
-        })
-        .catch((error) => {
-          dispatch(showMessage({ message: 'Erro na busca, verifique os campos e tente novamente.' }))
-          setIsLoading(false)
-        });
+    if (data.status.includes('Erro')) {
+      data.status.push('Pendentes')
     }
+
+    dispatch(handleReportInfo(data, reportType))
+      .then((response) => {
+        setIsLoading(false)
+      })
+      .catch((error) => {
+        dispatch(showMessage({ message: 'Erro na busca, verifique os campos e tente novamente.' }))
+        setIsLoading(false)
+      });
 
   };
 
@@ -447,31 +428,29 @@ export default function BasicEditingGrid() {
                 />
 
 
-                {!selectedEspecificos.includes("Pendentes") && (
-                  <Autocomplete
-                    id="consorcio"
-                    multiple
-                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                    getOptionLabel={(option) => option.label}
-                    filterSelectedOptions
-                    options={consorcios}
-                    value={selectedConsorcios}
-                    getOptionDisabled={(option) => option.disabled}
-                    isOptionEqualToValue={(option, value) => option.value === value.value}
-                    onChange={(_, newValue) => handleSelection('consorcioName', newValue)}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Selecionar Consórcios"
-                        variant="outlined"
-                        InputProps={{
-                          ...params.InputProps,
-                          endAdornment: <>{params.InputProps.endAdornment}</>,
-                        }}
-                      />
-                    )}
-                  />
-                )}
+                <Autocomplete
+                  id="consorcio"
+                  multiple
+                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                  getOptionLabel={(option) => option.label}
+                  filterSelectedOptions
+                  options={consorcios}
+                  value={selectedConsorcios}
+                  getOptionDisabled={(option) => option.disabled}
+                  isOptionEqualToValue={(option, value) => option.value === value.value}
+                  onChange={(_, newValue) => handleSelection('consorcioName', newValue)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Selecionar Consórcios"
+                      variant="outlined"
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: <>{params.InputProps.endAdornment}</>,
+                      }}
+                    />
+                  )}
+                />
 
                 <Autocomplete
                   id="status"
@@ -506,32 +485,30 @@ export default function BasicEditingGrid() {
                 <Box>
 
 
-                  {!selectedEspecificos.includes("Pendentes") && (
-                    <Autocomplete
-                      id="status"
-                      multiple
-                      className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
-                      getOptionLabel={(option) => option.label}
-                      filterSelectedOptions
-                      options={consorciosStatus}
-                      onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="Selecionar Status"
-                          variant="outlined"
-                          InputProps={{
-                            ...params.InputProps,
-                            endAdornment: (
-                              <>
-                                {params.InputProps.endAdornment}
-                              </>
-                            ),
-                          }}
-                        />
-                      )}
-                    />
-                  )}
+                  <Autocomplete
+                    id="status"
+                    multiple
+                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
+                    getOptionLabel={(option) => option.label}
+                    filterSelectedOptions
+                    options={consorciosStatus}
+                    onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Selecionar Status"
+                        variant="outlined"
+                        InputProps={{
+                          ...params.InputProps,
+                          endAdornment: (
+                            <>
+                              {params.InputProps.endAdornment}
+                            </>
+                          ),
+                        }}
+                      />
+                    )}
+                  />
                 </Box>
 
                 <Box>

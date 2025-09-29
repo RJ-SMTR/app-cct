@@ -27,48 +27,67 @@ export function CustomTable(data) {
     const formattedDate = format(parsed, 'dd/MM/yyyy HH:mm:ss');
     return formattedDate
   }
-  // const dateUTCMonth = (i) => {
-  //   const tz = 'UTC'
-  //   const parsed = new Date(i)
-  //   const zonedDate = utcToZonedTime(parsed, tz)
-  //   const formattedDate = format(zonedDate, 'dd/MM/yyyy');
-  //   return formattedDate
-  // }
-  const CustomBadge = (data) => {
-    const i = data.data.data
-    const getStatus = (i) => {
-      let status = ''
-      switch (i.statusRemessa){
-        case 3:
-          status = 'Pago';
-          break;
-          case 4:
-           status =  'Pendente'
-           break;
-        default:
-          status ='A pagar';
-      }
-     return status
-    }
-    return <Badge className={`${data.c?.root}  whitespace-nowrap`}
-      color={i.statusRemessa === 4 ? 'error' : i.statusRemessa === 3 ? 'success' : i.statusRemessa === null ? 'op' : 'warning'}
-
-      badgeContent={getStatus(i)}
-    />
+  const dateUTCMonth = (i) => {
+    const tz = 'UTC'
+    const parsed = new Date(i)
+    const zonedDate = utcToZonedTime(parsed, tz)
+    const formattedDate = format(zonedDate, 'dd/MM/yyyy');
+    return formattedDate
   }
+
+
+  const CustomBadge = (data) => {
+    const i = data.data.data;
+    console.log(i.statusRemessa);
+
+    const getStatus = (i) => {
+      switch (i.statusRemessa) {
+        case 3:
+          return 'Pago';
+        case 4:
+          return 'Pendente';
+        case 6:
+          return 'Pendencia Paga';
+        default:
+          console.log(`Default ${i.statusRemessa}`);
+          return 'A pagar';
+      }
+    };
+
+    const getColor = (status) => {
+      switch (status) {
+        case 3:
+          return 'success';
+        case 4:
+          return 'error';
+        case 6:
+          return 'info';
+        default:
+          return 'warning';
+      }
+    };
+
+    return (
+      <Badge
+        className={`${data.c?.root} whitespace-nowrap`}
+        color={getColor(i.statusRemessa)}
+        badgeContent={getStatus(i)}
+      />
+    );
+  };
+
   const ErrorBadge = (data) => {
     const i = data.data.data
-    const error24 = i.motivo
     const errorDescription = i.motivoStatusRemessa ? i.descricaoMotivoStatusRemessa : <></>;
     const getStatus = (i) => {
-      return  (
+      return (
         <span className='underline'> Erro  <InfoOutlinedIcon fontSize='small' /></span>
       )
     }
-    if(i.statusRemessa === 4 || i.status === 'Não Pago'){
+    if (i.statusRemessa === 4) {
       return (
-            
-        <Tooltip   title={data.data.ano === 24 ? error24 :errorDescription} arrow enterTouchDelay={10} leaveTouchDelay={10000}>
+
+        <Tooltip title={errorDescription} arrow enterTouchDelay={10} leaveTouchDelay={10000}>
           <Badge className={`${data.c?.root}  whitespace-nowrap`}
             color='error'
             badgeContent={getStatus(i)}
@@ -97,7 +116,7 @@ export function CustomTable(data) {
       <TableCell component="th" scope="row" onClick={searchingDay ? null : data.handleClickRow}>
         <Typography className={searchingDay ? "whitespace-nowrap " : "whitespace-nowrap underline"}>
 
-          {searchingDay ? dateUTC(data.data.datetime_transacao) : searchingWeek ? data.date :  data.date}
+          {searchingDay ? dateUTC(data.data.datetime_transacao) : searchingWeek ? dateUTCMonth(data.data.dataCaptura) : dateUTCMonth(data.data.data)}
 
         </Typography>
       </TableCell>
@@ -107,55 +126,50 @@ export function CustomTable(data) {
           {data.lastDate}
         </TableCell>
       )
-      // ULTIMA DATA
-       }
-     
-        {/* Valor */}
-        {searchingDay ? (
-          <>
-          </>
-        ) : (
-          <TableCell component="th" scope="row">
-            <>  {formatter.format(data.data.valorTotal ?? data.data.valor ?? 0)}</>
-      </TableCell>
-        )}
+        // ULTIMA DATA
+      }
 
-
-      {searchingDay && (
-      <TableCell component="th" scope="row">
-        <Typography className="whitespace-nowrap">
-      
-              {data.data.tipo_transacao_smtr}
-    
-        </Typography>
-
-      </TableCell>)}
-      {!searchingWeek ? <>
-        {data.ano != 24 ? 
+      {/* Valor */}
+      {searchingDay ? (
         <>
-            <TableCell className='status' component="th" scope='row'>
-              <CustomBadge data={data} />
-            </TableCell>
-            <MyTableCell data={data} />
-        
         </>
-        
-        :    
-            <>
-          <TableCell className='status' component="th" scope='row'>
-              <Badge className={`${data.c?.root}  whitespace-nowrap`}
-                color={data.data.status === 'Não Pago' ? 'error' : data.data.status === 'Pago' ? 'success' : 'warning'}
+      ) : (
+        <TableCell component="th" scope="row">
+          <>  {formatter.format(data.data.valorTotal ?? data.data.valor ?? 0)}</>
+        </TableCell>
+      )}
 
-                badgeContent={data.data.status}
-              />
+
+
+      {
+        !searchingDay ? (
+
+          <TableCell component="th" scope="row">
+            <Typography className="whitespace-nowrap"> {data.dataPagamento}
+            </Typography>
           </TableCell>
-          <MyTableCell data={data} /></>}
-      </>
-        : <> </>}
+        ) : <> </>
+      }
 
+      {
+        searchingDay && (
+          <TableCell component="th" scope="row">
+            <Typography className="whitespace-nowrap">
 
+              {data.data.tipo_transacao}
 
+            </Typography>
 
-    </TableRow> : <p>Loading</p>
+          </TableCell>)
+      }
+      {
+        !searchingWeek ? <>
+          <TableCell className='status' component="th" scope='row'> <CustomBadge data={data} /> </TableCell>
+          <MyTableCell data={data} />
+        </>
+          : <> </>
+      }
+
+    </TableRow > : <p>Loading</p>
   )
 }

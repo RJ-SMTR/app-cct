@@ -58,17 +58,15 @@ export default function BasicEditingGrid() {
     { label: "Todos" },
     { label: "Pago" },
     { label: "Erro" },
-    { label: "Aguardando Pagamento" }
+    { label: "Aguardando Pagamento" },
+    { label: "Pendencia Paga" }
   ];
-
-  const consorciosStatus = selectedEspecificos.includes("Pendentes")
-    ? [{ label: "Erro" }]
-    : consorciosStatusBase;
 
   const erroStatus = [
     { label: "Todos" },
     { label: "Estorno" },
     { label: "Rejeitado" },
+    { label: "Pendentes" },
   ];
 
 
@@ -89,7 +87,6 @@ export default function BasicEditingGrid() {
   const especificos = [
     { label: 'Eleição' },
     { label: 'Desativados' },
-    { label: 'Pendentes' }
   ];
 
   const dispatch = useDispatch();
@@ -125,7 +122,7 @@ export default function BasicEditingGrid() {
         requestData.status = requestData.status.filter(status => status !== "Erro");
 
         if (selectedErroStatus.label === "Todos") {
-          requestData.status = [...requestData.status, "Erro"];
+          requestData.status = [...requestData.status, "Erro", "Pendentes"];
           requestData.erro = true;
         } else if (selectedErroStatus.label === "Estorno") {
           requestData.status = [...requestData.status, "Estorno"];
@@ -133,6 +130,8 @@ export default function BasicEditingGrid() {
         } else if (selectedErroStatus.label === "Rejeitado") {
           requestData.status = [...requestData.status, "Rejeitado"];
           requestData.rejeitado = true;
+        } else if (selectedErroStatus.label === "Pendentes") {
+          requestData.status = [...requestData.status, "Pendentes"];
         }
       }
 
@@ -142,10 +141,6 @@ export default function BasicEditingGrid() {
       }
       if (data.especificos.includes("Desativados")) {
         requestData.desativados = true
-      }
-
-      if (data.especificos.includes("Pendentes")) {
-        requestData.pendentes = true
       }
 
       dispatch(handleReportInfo(requestData, reportType))
@@ -356,7 +351,6 @@ export default function BasicEditingGrid() {
     const tableRows = [];
 
     for (const report of reportList.data) {
-      console.log(report)
       const reportData = [
         report.dataPagamento,
         report.nomes,
@@ -562,6 +556,8 @@ export default function BasicEditingGrid() {
         return "bg-gray-400 text-black";
       case "Pendente":
         return "bg-gray-400 text-black";
+      case "Pendencia Paga":
+        return "bg-blue-400 text-black";
       default:
         return "bg-red-300 text-black";
     }
@@ -615,31 +611,29 @@ export default function BasicEditingGrid() {
                   )}
                 />
 
-                {!selectedEspecificos.includes("Pendentes") && (
-                  <Autocomplete
-                    id="consorcio"
-                    multiple
-                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                    getOptionLabel={(option) => option.label}
-                    filterSelectedOptions
-                    options={consorcios}
-                    value={selectedConsorcios}
-                    getOptionDisabled={(option) => option.disabled}
-                    isOptionEqualToValue={(option, value) => option.value === value.value}
-                    onChange={(_, newValue) => handleSelection("consorcioName", newValue)}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Selecionar Consórcios | Modais"
-                        variant="outlined"
-                        InputProps={{
-                          ...params.InputProps,
-                          endAdornment: <>{params.InputProps.endAdornment}</>,
-                        }}
-                      />
-                    )}
-                  />
-                )}
+                <Autocomplete
+                  id="consorcio"
+                  multiple
+                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                  getOptionLabel={(option) => option.label}
+                  filterSelectedOptions
+                  options={consorcios}
+                  value={selectedConsorcios}
+                  getOptionDisabled={(option) => option.disabled}
+                  isOptionEqualToValue={(option, value) => option.value === value.value}
+                  onChange={(_, newValue) => handleSelection("consorcioName", newValue)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Selecionar Consórcios | Modais"
+                      variant="outlined"
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: <>{params.InputProps.endAdornment}</>,
+                      }}
+                    />
+                  )}
+                />
                 <Autocomplete
                   id="especificos"
                   multiple
@@ -670,26 +664,24 @@ export default function BasicEditingGrid() {
 
               <Box className="flex items-center gap-10 flex-wrap">
 
-                {!selectedEspecificos.includes("Pendentes") && (
-                  <Autocomplete
-                    id="status"
-                    multiple
-                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                    getOptionLabel={(option) => option.label}
-                    filterSelectedOptions
-                    options={consorciosStatus}
-                    onChange={(_, newValue) =>
-                      handleAutocompleteChange("status", newValue)
-                    }
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Selecionar Status"
-                        variant="outlined"
-                      />
-                    )}
-                  />
-                )}
+                <Autocomplete
+                  id="status"
+                  multiple
+                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                  getOptionLabel={(option) => option.label}
+                  filterSelectedOptions
+                  options={consorciosStatusBase}
+                  onChange={(_, newValue) =>
+                    handleAutocompleteChange("status", newValue)
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Selecionar Status"
+                      variant="outlined"
+                    />
+                  )}
+                />
 
                 {showErroStatus && (
                   <Autocomplete
@@ -981,7 +973,7 @@ export default function BasicEditingGrid() {
             <Table size="small">
               <TableHead>
                 <TableRow className="sticky top-0 bg-white z-10">
-                  <TableCell className="font-semibold py-1 text-sm leading-none">Data Pagamento</TableCell>
+                  <TableCell className="font-semibold py-1 text-sm leading-none">Data Tentativa Pagamento</TableCell>
                   <TableCell className="font-semibold p-1 text-sm " style={{ whiteSpace: 'nowrap' }}>
                     Nome
                   </TableCell>
@@ -990,6 +982,7 @@ export default function BasicEditingGrid() {
                   <TableCell className="font-semibold p-1 text-sm ">Banco</TableCell>
                   <TableCell className="font-semibold p-1 text-sm ">CPF/CNPJ</TableCell>
                   <TableCell className="font-semibold py-1 text-sm leading-none">Consórcios | Modais</TableCell>
+                  <TableCell className="font-semibold py-1 text-sm leading-none">Data Efetiva Pagamento</TableCell>
                   <TableCell className="font-semibold p-1 text-sm ">Valor</TableCell>
                   <TableCell className="font-semibold p-1 text-sm ">Status</TableCell>
                 </TableRow>
@@ -1000,7 +993,7 @@ export default function BasicEditingGrid() {
                   reportList.count > 0 ? (
                     reportList.data?.map((report, index) => (
                       <TableRow key={index} className="hover:bg-gray-50">
-                        <TableCell className="text-xs py-1">{report.dataPagamento}</TableCell>
+                        <TableCell className="text-xs py-1">{report.dataReferencia}</TableCell>
                         <TableCell className="text-xs py-6 px-1 text-nowrap" style={{ whiteSpace: 'nowrap' }}>
                           {report.nomes}
                         </TableCell>
@@ -1024,6 +1017,7 @@ export default function BasicEditingGrid() {
                           )}
                         </TableCell>
                         <TableCell className="text-xs py-1 ">{report.consorcio}</TableCell>
+                        <TableCell className="text-xs py-1 ">{report.status == 'Pendencia Paga' ? report.dataPagamento : '-'}</TableCell>
                         <TableCell className="text-xs py-6 px-1 ">{formatter.format(report.valor)}</TableCell>
                         <TableCell className="text-xs py-6 px-1 ">
                           <span
@@ -1053,28 +1047,56 @@ export default function BasicEditingGrid() {
               </TableBody>
 
               <TableFooter className="sticky bottom-0 bg-white z-10">
-
-
                 <TableRow></TableRow>
-                {(reportList.valorPago > 0 || reportList.valorEstornado > 0 || reportList.valorRejeitado > 0 || reportList.valor > 0 || reportList.valorPendente > 0) && (
-                  <TableRow>
-                    <TableCell />
-                    <TableCell colSpan={7} className="text-right font-bold text-black text-base pt-16">
-                      {[
-                        reportList.valorPago > 0 && `Total Pago: ${formatter.format(reportList.valorPago)}`,
-                        reportList.valorEstornado > 0 && `Total Estorno: ${formatter.format(reportList.valorEstornado)}`,
-                        reportList.valorRejeitado > 0 && `Total Rejeitado: ${formatter.format(reportList.valorRejeitado)}`,
-                        reportList.valorAguardandoPagamento > 0 && `Total Aguardando Pagamento: ${formatter.format(reportList.valorAguardandoPagamento)}`,
-                        reportList.valorPendente > 0 && `Total Pendentes: ${formatter.format(reportList.valorPendente)}`,
-                        reportList.valor > 0 && `Total Geral: ${formatter.format(reportList.valor)}`
-                      ]
-                        .filter(Boolean)
-                        .join("    |    ")
-                      }
-                    </TableCell>
-                    <TableCell />
-                  </TableRow>
-                )}
+                {(reportList.valorPago > 0 ||
+                  reportList.valorEstornado > 0 ||
+                  reportList.valorRejeitado > 0 ||
+                  reportList.valor > 0 ||
+                  reportList.valorPendente > 0) && (
+                    <TableRow>
+                      <TableCell />
+                      <TableCell
+                        colSpan={7}
+                        className="text-right font-bold text-black text-base pt-16"
+                      >
+                        {(() => {
+                          const totalGeral =
+                            reportList.valorPendenciaPaga > 0
+                              ? reportList.valor - reportList.valorPendenciaPaga
+                              : reportList.valor;
+
+                          return [
+                            reportList.valorPago > 0 &&
+                            `Total Pago: ${formatter.format(reportList.valorPago)}`,
+                            reportList.valorPendenciaPaga > 0 &&
+                            `Total Pendencia Paga: ${formatter.format(
+                              reportList.valorPendenciaPaga
+                            )}`,
+                            reportList.valorEstornado > 0 &&
+                            `Total Estorno: ${formatter.format(reportList.valorEstornado)}`,
+                            reportList.valorRejeitado > 0 &&
+                            `Total Rejeitado: ${formatter.format(reportList.valorRejeitado)}`,
+                            reportList.valorAguardandoPagamento > 0 &&
+                            `Total Aguardando Pagamento: ${formatter.format(
+                              reportList.valorAguardandoPagamento
+                            )}`,
+                            reportList.valorPendente > 0 &&
+                            `Total Pendentes: ${formatter.format(reportList.valorPendente)}`,
+
+                            totalGeral > 0 &&
+                            `${reportList.valorPendenciaPaga > 0
+                              ? "Saldo a Pagar"
+                              : "Total Geral"
+                            }: ${formatter.format(totalGeral)}`
+                          ]
+                            .filter(Boolean)
+                            .join("    |    ");
+                        })()}
+                      </TableCell>
+                      <TableCell />
+                      <TableCell />
+                    </TableRow>
+                  )}
               </TableFooter>
             </Table>
           </div>
