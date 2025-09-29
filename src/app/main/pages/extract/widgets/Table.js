@@ -493,7 +493,6 @@ function TableTransactions({ id }) {
                       if (i.dataPagamento) {
                         const zonedEffectiveDate = utcToZonedTime(parseISO(i.dataPagamento), tz);
                         const formattedEffectiveDate = format(zonedEffectiveDate, 'dd/MM/yyyy');
-
                         dataPagamento = formattedEffectiveDate === formattedDate ? '-' : formattedEffectiveDate;
                       }
                       const valorDia = i.valorTotal ?? i.valorTotalPago ?? sumInfo
