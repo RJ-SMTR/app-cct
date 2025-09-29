@@ -218,7 +218,6 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
         console.warn("idOrdem está indefinido. Requisição não será feita.");
         return;
     }
-
     const requestData = searchingDay
         ? { ordemPagamentoIds: idOrdem }
         : searchingWeek
@@ -229,7 +228,7 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
     apiRoute = searchingWeek && searchingDay
         ? jwtServiceConfig.odpDiario + `/?userId=${userId}`
         : searchingWeek
-            ? jwtServiceConfig.odpSemanal + `/${idOrdem}?userId=${userId}`
+            ? jwtServiceConfig.odpSemanal + `/${idOrdem}?userId=${userId}&endDate=${format(dateRange[1], 'yyyy-MM-dd')}`
             : jwtServiceConfig.odpMensal + `?userId=${userId}`;
 
     const method = 'get';
