@@ -229,7 +229,7 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
     apiRoute = searchingWeek && searchingDay
         ? jwtServiceConfig.odpDiario + `/?userId=${userId}`
         : searchingWeek
-            ? jwtServiceConfig.odpSemanal + `/${idOrdem}?userId=${userId}`
+            ? jwtServiceConfig.odpSemanal + `/${idOrdem}?userId=${userId}&endDate=${format(dateRange[1], 'yyyy-MM-dd')}`
             : jwtServiceConfig.odpMensal + `?userId=${userId}`;
 
     const method = 'get';
