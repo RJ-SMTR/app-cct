@@ -54,6 +54,7 @@ export default function BasicEditingGrid() {
     { label: "Todos" },
     { label: "Pago" },
     { label: "Erro" },
+    { label: "A pagar" },
     { label: "Aguardando Pagamento" },
     { label: "Pendencia Paga" }
   ];
@@ -658,13 +659,6 @@ export default function BasicEditingGrid() {
               <Box>
 
               </Box>
-              {whichStatusShow.includes("A pagar") && (
-                <span className="text-sm text-red-600">
-
-                  Atenção: Para o status "a pagar", a data escolhida deve ser referente a Data Ordem de Pagamento (sexta a quinta-feira).
-
-                </span>
-              )}
               <Box>
                 <Button
                   variant="contained"
