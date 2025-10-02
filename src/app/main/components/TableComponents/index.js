@@ -46,10 +46,9 @@ export function CustomTable(data) {
           return 'Pago';
         case 4:
           return 'Pendente';
-        case 6:
+        case 5:
           return 'Pendencia Paga';
         default:
-          console.log(`Default ${i.statusRemessa}`);
           return 'A pagar';
       }
     };
@@ -60,10 +59,14 @@ export function CustomTable(data) {
           return 'success';
         case 4:
           return 'error';
-        case 6:
+        case 5:
           return 'info';
-        default:
+        case 2:
           return 'warning';
+        case 1:
+          return 'warning';
+        default:
+          return 'op';
       }
     };
 
