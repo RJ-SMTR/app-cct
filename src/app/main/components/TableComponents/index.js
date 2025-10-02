@@ -65,6 +65,8 @@ export function CustomTable(data) {
           return 'warning';
         case 1:
           return 'warning';
+        case 0:
+          return 'warning';
         default:
           return 'op';
       }
@@ -112,7 +114,7 @@ export function CustomTable(data) {
     )
   }
 
-
+ 
 
   return (
     data ? <TableRow key={data.data.ordemPagamentoAgrupadoId} className="hover:bg-gray-100 cursor-pointer">
