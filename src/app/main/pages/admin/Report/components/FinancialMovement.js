@@ -1022,10 +1022,10 @@ export default function BasicEditingGrid() {
                         <TableCell className="text-xs py-6 px-1 ">
                           <span
                             className={`px-3 py-1 rounded-full text-xs ${getStatusStyles(
-                              report.status === "Pendentes" ? "OPs Atrasada" : report.status
+                              report.status === "Pendente" ? "OPs Atrasada" : report.status
                             )}`}
                           >
-                            {report.status === "Pendentes" ? "OPs Atrasada" : report.status}
+                            {report.status === "Pendente" ? "OPs Atrasada" : report.status}
                           </span>
                         </TableCell>
                       </TableRow>

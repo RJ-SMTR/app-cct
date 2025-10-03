@@ -122,10 +122,10 @@ export default function ReportVanzeiro() {
                         <TableCell className="text-base py-6 px-1 ">
                           <span
                             className={`px-3 py-1 rounded-full text-xs ${getStatusStyles(
-                              report.status === "Pendentes" ? "Pendência de Pagamento" : report.status
+                              report.status === "Pendente" ? "Pendência de Pagamento" : report.status
                             )}`}
                           >
-                            {report.status === "Pendentes" ? "Pendência de Pagamento" : report.status}
+                            {report.status === "Pendente" ? "Pendência de Pagamento" : report.status}
                           </span>
 
                         </TableCell>
