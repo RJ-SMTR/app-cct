@@ -554,7 +554,7 @@ export default function BasicEditingGrid() {
         return "bg-yellow-400 text-black";
       case "Aguardando Pagamento":
         return "bg-gray-400 text-black";
-      case "Pendente":
+      case "OPs Atrasada":
         return "bg-gray-400 text-black";
       case "Pendencia Paga":
         return "bg-blue-400 text-black";
@@ -1021,9 +1021,11 @@ export default function BasicEditingGrid() {
                         <TableCell className="text-xs py-6 px-1 ">{formatter.format(report.valor)}</TableCell>
                         <TableCell className="text-xs py-6 px-1 ">
                           <span
-                            className={`px-3 py-1 rounded-full text-xs py-1 px-1 ${getStatusStyles(report.status)}`}
+                            className={`px-3 py-1 rounded-full text-xs ${getStatusStyles(
+                              report.status === "Pendentes" ? "OPs Atrasada" : report.status
+                            )}`}
                           >
-                            {report.status}
+                            {report.status === "Pendentes" ? "OPs Atrasada" : report.status}
                           </span>
                         </TableCell>
                       </TableRow>
@@ -1081,7 +1083,7 @@ export default function BasicEditingGrid() {
                               reportList.valorAguardandoPagamento
                             )}`,
                             reportList.valorPendente > 0 &&
-                            `Total Pendentes: ${formatter.format(reportList.valorPendente)}`,
+                            `Total Pendencia de Pagamento: ${formatter.format(reportList.valorPendente)}`,
 
                             totalGeral > 0 &&
                             `${reportList.valorPendenciaPaga > 0

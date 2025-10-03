@@ -40,19 +40,18 @@ export default function ReportVanzeiro() {
         userId: user.id
       }
     ];
-    requestData.especificos = []
+    requestData.especificos = ["Pendentes"]
     requestData.userIds = [user.id]
     requestData.dateRange = [
-      new Date('2025-01-01'),
+      new Date(2025, 0, 1),
       new Date(),
     ]
     requestData.valorMax = ''
     requestData.valorMin = ''
     requestData.status = ['Pendencia Paga', 'Erro']
-    dispatch(handleReportInfo(requestData, reportType))
-      .then((response) => {
-        setIsLoading(false);
-      })
+    dispatch(handleReportInfo(requestData, reportType)).then((response) => {
+      setIsLoading(false);
+    })
       .catch((error) => {
         dispatch(
           showMessage({
@@ -81,9 +80,9 @@ export default function ReportVanzeiro() {
         return "bg-green-300 text-black";
       case "Estorno":
         return "bg-yellow-400 text-black";
-      case "Pendente":
+      case "Pendência de Pagamento":
         return "bg-gray-400 text-black";
-      case "Pendencia Paga":
+      case "Pendência Paga":
         return "bg-blue-400 text-black";
       default:
         return "bg-red-300 text-black";
@@ -122,10 +121,13 @@ export default function ReportVanzeiro() {
                         <TableCell className="text-base py-6 px-1 ">{formatter.format(report.valor)}</TableCell>
                         <TableCell className="text-base py-6 px-1 ">
                           <span
-                            className={`px-3 py-1 rounded-full text-base py-1 px-1 ${getStatusStyles(report.status)}`}
+                            className={`px-3 py-1 rounded-full text-xs ${getStatusStyles(
+                              report.status === "Pendentes" ? "Pendência de Pagamento" : report.status
+                            )}`}
                           >
-                            {report.status}
+                            {report.status === "Pendentes" ? "Pendência de Pagamento" : report.status}
                           </span>
+
                         </TableCell>
                       </TableRow>
                     ))
