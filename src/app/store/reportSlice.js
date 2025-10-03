@@ -78,8 +78,13 @@ function handleData(data) {
   if (data.especificos.includes("Eleição")) {
     requestData.eleicao = true
   }
+
   if (data.especificos.includes("Desativados")) {
     requestData.desativados = true
+  }
+
+  if (data.especificos.includes("Pendentes")) {
+    requestData.pendentes = true
   }
 
 
