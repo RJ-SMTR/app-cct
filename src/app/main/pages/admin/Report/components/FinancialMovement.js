@@ -554,7 +554,7 @@ export default function BasicEditingGrid() {
         return "bg-yellow-400 text-black";
       case "Aguardando Pagamento":
         return "bg-gray-400 text-black";
-      case "OPs Atrasada":
+      case "OP Atrasada":
         return "bg-gray-400 text-black";
       case "Pendencia Paga":
         return "bg-blue-400 text-black";
@@ -1022,10 +1022,10 @@ export default function BasicEditingGrid() {
                         <TableCell className="text-xs py-6 px-1 ">
                           <span
                             className={`px-3 py-1 rounded-full text-xs ${getStatusStyles(
-                              report.status === "Pendente" ? "OPs Atrasada" : report.status
+                              report.status === "Pendente" ? "OP Atrasada" : report.status
                             )}`}
                           >
-                            {report.status === "Pendente" ? "OPs Atrasada" : report.status}
+                            {report.status === "Pendente" ? "OP Atrasada" : report.status}
                           </span>
                         </TableCell>
                       </TableRow>
