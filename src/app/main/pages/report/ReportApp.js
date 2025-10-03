@@ -82,7 +82,7 @@ export default function ReportVanzeiro() {
         return "bg-yellow-400 text-black";
       case "Pendência de Pagamento":
         return "bg-gray-400 text-black";
-      case "Pendência Paga":
+      case "Pendencia Paga":
         return "bg-blue-400 text-black";
       default:
         return "bg-red-300 text-black";
@@ -104,7 +104,7 @@ export default function ReportVanzeiro() {
             <Table size="small">
               <TableHead>
                 <TableRow className="sticky top-0 bg-white z-10">
-                  <TableCell className="font-semibold py-1 text-sm leading-none">Data Tenativa Pagamento</TableCell>
+                  <TableCell className="font-semibold py-1 text-sm leading-none">Data Tentativa Pagamento</TableCell>
                   <TableCell className="font-semibold p-1 text-sm ">Data Efetiva Pagamento</TableCell>
                   <TableCell className="font-semibold p-1 text-sm ">Valor</TableCell>
                   <TableCell className="font-semibold p-1 text-sm ">Status</TableCell>
