@@ -486,8 +486,14 @@ function TableTransactions({ id }) {
                       const zonedDate = utcToZonedTime(date, tz)
                       const formattedDate = format(zonedDate, 'dd/MM/yyyy');
                       const idOrdem = searchingWeek ? i.ids : i.ordemPagamentoAgrupadoId
+                      let dataPagamento = '-';
+                      if (i.dataPagamento) {
+                        const zonedEffectiveDate = utcToZonedTime(parseISO(i.dataPagamento), tz);
+                        const formattedEffectiveDate = format(zonedEffectiveDate, 'dd/MM/yyyy');
+                        dataPagamento = formattedEffectiveDate === formattedDate ? '-' : formattedEffectiveDate;
+                      }
                       const valorDia = i.valorTotal ?? i.valorTotalPago ?? sumInfo
-                      return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={(event) => handleClickRow(idOrdem, event, valorDia)} lastDate={dataOrderDay} />
+                      return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={(event) => handleClickRow(idOrdem, event, valorDia)} lastDate={dataOrderDay} dataPagamento={dataPagamento} />
                     }) :
                     <TableCell colSpan={4}>
                       <p>Não há dados para sem exibidos</p>

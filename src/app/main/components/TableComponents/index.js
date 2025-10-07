@@ -145,19 +145,24 @@ export function CustomTable(data) {
 
 
 
+
       {
         !searchingDay ? (
-
           <TableCell component="th" scope="row">
             <Typography className="whitespace-nowrap">
               {
-                data.data.statusRemessa === 5 ? data.dataPagamento : <></>
+                (() => {
+                  console.log("🔍 statusRemessa:", data.data.statusRemessa);
+                  console.log("📅 dataPagamento:", data.dataPagamento);
+                  return data.data.statusRemessa === 5 ? data.dataPagamento : <></>;
+                })()
               }
             </Typography>
           </TableCell>
-        ) : <> </>
+        ) : (
+          <></>
+        )
       }
-
       {
         searchingDay && (
           <TableCell component="th" scope="row">
