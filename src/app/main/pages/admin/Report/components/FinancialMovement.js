@@ -105,57 +105,48 @@ export default function BasicEditingGrid() {
     });
 
   const onSubmit = (data) => {
-    const isPendentes = selectedEspecificos.includes("Pendentes");
-    const hasNameOrConsorcio = data.name.length > 0 || data.consorcioName.length > 0;
-    if (!isPendentes && !hasNameOrConsorcio) {
-      dispatch(
-        showMessage({
-          message: "Erro na busca, selecione favorecidos ou consórcios | modais.",
-        }),
-      );
-    } else {
-      setIsLoading(true);
+    setIsLoading(true);
 
-      const requestData = { ...data };
+    const requestData = { ...data };
 
-      if (whichStatusShow.includes("Erro") && selectedErroStatus) {
-        requestData.status = requestData.status.filter(status => status !== "Erro");
+    if (whichStatusShow.includes("Erro") && selectedErroStatus) {
+      requestData.status = requestData.status.filter(status => status !== "Erro");
 
-        if (selectedErroStatus.label === "Todos") {
-          requestData.status = [...requestData.status, "Erro", "Pendentes"];
-          requestData.erro = true;
-        } else if (selectedErroStatus.label === "Estorno") {
-          requestData.status = [...requestData.status, "Estorno"];
-          requestData.estorno = true;
-        } else if (selectedErroStatus.label === "Rejeitado") {
-          requestData.status = [...requestData.status, "Rejeitado"];
-          requestData.rejeitado = true;
-        } else if (selectedErroStatus.label === "Pendentes") {
-          requestData.status = [...requestData.status, "Pendentes"];
-        }
+      if (selectedErroStatus.label === "Todos") {
+        requestData.status = [...requestData.status, "Erro", "Pendentes"];
+        requestData.erro = true;
+      } else if (selectedErroStatus.label === "Estorno") {
+        requestData.status = [...requestData.status, "Estorno"];
+        requestData.estorno = true;
+      } else if (selectedErroStatus.label === "Rejeitado") {
+        requestData.status = [...requestData.status, "Rejeitado"];
+        requestData.rejeitado = true;
+      } else if (selectedErroStatus.label === "Pendentes") {
+        requestData.status = [...requestData.status, "Pendentes"];
       }
-
-
-      if (data.especificos.includes("Eleição")) {
-        requestData.eleicao = true
-      }
-      if (data.especificos.includes("Desativados")) {
-        requestData.desativados = true
-      }
-
-      dispatch(handleReportInfo(requestData, reportType))
-        .then((response) => {
-          setIsLoading(false);
-        })
-        .catch((error) => {
-          dispatch(
-            showMessage({
-              message: "Erro na busca, verifique os campos e tente novamente.",
-            }),
-          );
-          setIsLoading(false);
-        });
     }
+
+
+    if (data.especificos.includes("Eleição")) {
+      requestData.eleicao = true
+    }
+    if (data.especificos.includes("Desativados")) {
+      requestData.desativados = true
+    }
+
+    dispatch(handleReportInfo(requestData, reportType))
+      .then((response) => {
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        dispatch(
+          showMessage({
+            message: "Erro na busca, verifique os campos e tente novamente.",
+          }),
+        );
+        setIsLoading(false);
+      });
+
   };
 
   const handleClear = () => {
