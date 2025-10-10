@@ -55,18 +55,18 @@ export default function BasicEditingGrid() {
 
 
   const consorciosStatusBase = [
-    { label: "Todos" },
     { label: "Pago" },
-    { label: "Erro" },
+    { label: "A Pagar" },
     { label: "Aguardando Pagamento" },
-    { label: "Pendencia Paga" }
+    { label: "Pendencia Paga" },
+    { label: "Pendência de Pagamento" }
   ];
 
   const erroStatus = [
     { label: "Todos" },
     { label: "Estorno" },
     { label: "Rejeitado" },
-    { label: "Pendentes" },
+    { label: "OPs atrasadas" },
   ];
 
 
@@ -109,8 +109,8 @@ export default function BasicEditingGrid() {
 
     const requestData = { ...data };
 
-    if (whichStatusShow.includes("Erro") && selectedErroStatus) {
-      requestData.status = requestData.status.filter(status => status !== "Erro");
+    if (whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus) {
+      requestData.status = requestData.status.filter(status => status !== "Pendência de Pagamento");
 
       if (selectedErroStatus.label === "Todos") {
         requestData.status = [...requestData.status, "Erro", "Pendentes"];
@@ -121,7 +121,7 @@ export default function BasicEditingGrid() {
       } else if (selectedErroStatus.label === "Rejeitado") {
         requestData.status = [...requestData.status, "Rejeitado"];
         requestData.rejeitado = true;
-      } else if (selectedErroStatus.label === "Pendentes") {
+      } else if (selectedErroStatus.label === "OPs atrasadas") {
         requestData.status = [...requestData.status, "Pendentes"];
       }
     }
@@ -214,7 +214,7 @@ export default function BasicEditingGrid() {
       const status = newValue.map((i) => i.label);
       setWhichStatus(status);
 
-      const hasErro = status.includes("Erro");
+      const hasErro = status.includes("Pendência de Pagamento");
       setShowErroStatus(hasErro);
 
       if (!hasErro) {
@@ -688,7 +688,7 @@ export default function BasicEditingGrid() {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Tipo de Erro"
+                        label="Motivos"
                         variant="outlined"
                       />
                     )}
