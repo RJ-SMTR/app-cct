@@ -1,4 +1,3 @@
-
 import { createSlice } from '@reduxjs/toolkit';
 import jwtServiceConfig from '../auth/services/jwtService/jwtServiceConfig';
 import { api } from 'app/configs/api/api';
@@ -50,7 +49,6 @@ export default reportSlice.reducer;
 function handleData(data) {
   let requestData = {};
 
-
   if (data.consorcioName && data.consorcioName.length > 0) {
     if (data.consorcioName.includes('Todos')) {
       requestData.todosConsorcios = true
@@ -80,21 +78,20 @@ function handleData(data) {
   if (data.especificos.includes("Eleição")) {
     requestData.eleicao = true
   }
+
   if (data.especificos.includes("Desativados")) {
     requestData.desativados = true
   }
 
-
-
   if (data.especificos.includes("Pendentes")) {
     requestData.pendentes = true
-    requestData.erro = true
   }
+
 
   if (data.status && data.status.length > 0) {
     const statusSet = new Set(data.status);
 
-    const hasAllStatuses = statusSet.has('Pago') && statusSet.has('Erro') && statusSet.has('Aguardando Pagamento');
+    const hasAllStatuses = statusSet.has('Pago') && statusSet.has('Erro') && statusSet.has('Aguardando Pagamento') && statusSet.has('Pendencia Paga');
 
     if (!hasAllStatuses) {
       data.status.forEach(status => {
@@ -108,15 +105,18 @@ function handleData(data) {
           case 'Aguardando Pagamento':
             requestData.emProcessamento = true;
             break;
-
           case 'Estorno':
             requestData.estorno = true;
             break;
-
           case 'Rejeitado':
             requestData.rejeitado = true;
             break;
-
+          case 'Pendencia Paga':
+            requestData.pendenciaPaga = true
+            break;
+          case 'Pendentes':
+            requestData.pendentes = true
+            break;
           case 'Todos':
             break;
           default:
@@ -246,4 +246,3 @@ export const handleSynthData = (reportData) => async (dispatch) => {
   dispatch(setSynthData(groupedData));
 
 }
-
