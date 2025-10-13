@@ -33,6 +33,14 @@ const navigationConfig = [
     url: 'extrato',
   },
   {
+    id: 'trigger-component',
+    title: 'report',
+    translate: 'Relatório',
+    type: 'item',
+    icon: 'heroicons-outline:document-report',
+    url: 'relatorio-vanzeiro',
+  },
+  {
     id: 'support',
     title: 'Suporte',
     translate: 'Suporte',
