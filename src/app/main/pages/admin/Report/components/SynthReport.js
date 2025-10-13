@@ -3,12 +3,12 @@ import {
   Box,
   MenuItem,
   Table,
+  TableHead,
   TableBody,
   Autocomplete,
   TextField,
   Button,
   TableRow,
-  TableHead,
   TableCell,
   Paper,
   CircularProgress,
@@ -16,58 +16,55 @@ import {
   Menu,
   IconButton
 } from '@mui/material';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { useDispatch, useSelector } from 'react-redux';
-import { CustomProvider, DateRangePicker } from 'rsuite';
+import { DateRangePicker } from 'rsuite';
 import { useForm, Controller } from 'react-hook-form';
-import { handleReportInfo, setTotalSynth } from 'app/store/reportSlice';
+
+import { handleReportInfo, setReportList } from 'app/store/reportSlice';
+
 import { getUser } from 'app/store/adminSlice';
 import { NumericFormat } from 'react-number-format';
 import { CSVLink } from 'react-csv';
-import { ClearIcon } from '@mui/x-date-pickers';
 import jsPDF from 'jspdf';
-import { showMessage } from 'app/store/fuse/messageSlice';
 import 'jspdf-autotable';
-import ptBR from 'rsuite/locales/pt_BR';
-import { utils, writeFileXLSX } from 'xlsx';
-
-const consorciosStatus = [
-  { label: 'Todos' },
-  { label: 'A pagar' },
-  { label: 'Pago' },
-  { label: 'Aguardando Pagamento' },
-  { label: 'Erro' },
-];
-
-
-const específicos = [
-  { label: 'Todos' },
-  { label: 'Eleição' },
-];
-
-
-
+import { showMessage } from 'app/store/fuse/messageSlice';
+import { ClearIcon } from '@mui/x-date-pickers';
+import { utils, writeFile as writeFileXLSX } from 'xlsx';
 
 
 export default function BasicEditingGrid() {
-  const synthData = useSelector(state => state.report.synthData)
-  const totalSynth = useSelector(state => state.report.totalSynth)
   const reportType = useSelector(state => state.report.reportType);
+  const reportList = useSelector(state => state.report.reportList)
   const userList = useSelector(state => state.admin.userList) || []
   const [isLoading, setIsLoading] = useState(false)
   const [loadingUsers, setLoadingUsers] = useState(false)
   const [userOptions, setUserOptions] = useState([])
+  const [anchorEl, setAnchorEl] = useState(null);
   const [showClearMin, setShowClearMin] = useState(false)
   const [showClearMax, setShowClearMax] = useState(false)
-  const [rows, setRows] = useState([])
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [showButton, setShowButton] = useState(false)
   const [whichStatusShow, setWhichStatus] = useState([])
   const [selected, setSelected] = useState(null)
+  const [selectedConsorcios, setSelectedConsorcios] = useState([]);
+  const [selectedEspecificos, setSelectedEspecificos] = useState([]);
 
 
-  useEffect(() => {
-    setRows(synthData)
-  }, [synthData])
+  const consorciosStatus = [
+    { label: "Todos" },
+    { label: "Pago" },
+    { label: "A pagar" },
+    { label: "Erro" },
+    { label: "Aguardando Pagamento" },
+    { label: "Pendencia Paga" }
+  ];
+
+  const específicos = [
+    { label: 'Todos' },
+    { label: 'Eleição' },
+    { label: 'Desativados' },
+  ];
+
 
   const consorcios = [
     { label: 'Todos', value: "Todos" },
@@ -92,38 +89,38 @@ export default function BasicEditingGrid() {
       valorMax: '',
       valorMin: '',
       consorcioName: [],
-      favorecidoSearch: '',
+      especificos: [],
       status: []
     }
   });
 
   const onSubmit = (data) => {
-    if (data.name.length === 0 && data.consorcioName.length === 0) {
-      dispatch(showMessage({ message: 'Erro na busca, selecione favorecidos ou consórcios.' }))
-    } else {
-      dispatch(setTotalSynth(''))
 
-      setIsLoading(true)
+    setIsLoading(true)
 
-
-      dispatch(handleReportInfo(data, reportType))
-        .then((response) => {
-          setIsLoading(false)
-        })
-        .catch((error) => {
-          dispatch(showMessage({ message: 'Erro na busca, verifique os campos e tente novamente.' }))
-          setIsLoading(false)
-        });
+    if (data.status.includes('Erro')) {
+      data.status.push('Pendentes')
     }
 
+    dispatch(handleReportInfo(data, reportType))
+      .then((response) => {
+        setIsLoading(false)
+      })
+      .catch((error) => {
+        dispatch(showMessage({ message: 'Erro na busca, verifique os campos e tente novamente.' }))
+        setIsLoading(false)
+      });
+
   };
+
   const handleClear = () => {
+    // reset()
+    dispatch(setReportList([]))
     setValue('name', [])
     setValue('dateRange', [])
     setValue('valorMax', '')
     setValue('valorMin', '')
     setValue('consorcioName', [])
-    setValue('favorecidoSearch', '')
     setValue('status', [])
     document.querySelectorAll('.MuiAutocomplete-clearIndicator').forEach(button => button.click());
   }
@@ -141,8 +138,9 @@ export default function BasicEditingGrid() {
 
   useEffect(() => {
     setIsLoading(false)
-  }, [rows]);
+  }, [reportList]);
 
+  // Handle AutoComplete
   useEffect(() => {
     if (userList && userList.length > 0) {
       const options = userList.map((user) => ({
@@ -150,7 +148,10 @@ export default function BasicEditingGrid() {
         value: {
           cpfCnpj: user.cpfCnpj,
           permitCode: user.permitCode,
-          fullName: user.fullName
+
+          fullName: user.fullName,
+          userId: user.id
+
         }
       }));
       const sortedOptions = options.sort((a, b) => {
@@ -167,11 +168,16 @@ export default function BasicEditingGrid() {
   }, [userList]);
 
   const handleAutocompleteChange = (field, newValue) => {
-
     if (field === 'status') {
       const status = newValue.map(i => i.label)
       setWhichStatus(status)
     }
+
+    if (field === "especificos") {
+      const especificosSelecionados = newValue.map((i) => i.label);
+      setSelectedEspecificos(especificosSelecionados);
+    }
+
     setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
   };
 
@@ -184,75 +190,66 @@ export default function BasicEditingGrid() {
     currency: 'BRL',
   });
 
+  // Export CSV
+  const status = getValues('status')
+  const whichStatus = status?.join(',')
 
+  const reportListData = reportList.count > 0
+    ? reportList.data?.map(report => ({
+      Nome: report.nomefavorecido,
+      Valor: formatter.format(report.valor),
+      Status: "",
+    }))
+    : [];
 
-  const prepareCSVData = (rows) => {
-    const csvData = [];
+  const valorTotal = {
+    Nome: "Valor Total",
+    Valor: "",
+    Status: formatter.format(reportList?.valor),
+  }
 
-    Object.entries(rows).forEach(([consorcio, group]) => {
-      group.items.forEach(item => {
-        const row = {
-          'Data da Operação': item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
-          'Dt. Efetiva Pgto.': item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
-          'Consórcio': item.consorcio,
-          'Favorecido': item.favorecido,
-          'Valor p/ Pagamento': formatter.format(item.valor),
-          'Status': showStatus(item.status),
-          'Ocorrência': item.status === 'naopago' ? item.mensagem_status : '',
-        };
-        csvData.push(row);
-      });
-    });
-
-    return csvData;
+  const statusRow = {
+    Nome: "Status selecionado",
+    Valor: "",
+    Status: whichStatus || "Todos",
   };
 
+  const csvData = [
+    statusRow,
+    ...reportListData,
+    valorTotal
+  ]
+  let dateInicio;
+  let dateFim;
+  const selectedDate = getValues('dateRange');
 
-  const exportToCSV = (rows) => {
-    const status = getValues('status');
-    const whichStatus = status?.join(',');
+  if (selectedDate !== null) {
+    dateInicio = selectedDate[0];
+    dateFim = selectedDate[1];
+  }
 
-    const csvData = [
-      ['Status selecionado', '', whichStatus || 'Todos'],
-      [],
-      ['Data da Operação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência'],
-    ];
+  const csvFilename = useMemo(() => {
+    if (dateInicio && dateFim) {
+      return `relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.csv`;
+    }
+    return `relatorio_${format(new Date(), 'dd-MM-yyyy')}.csv`;
+  }, [dateInicio, dateFim])
 
-    Object.entries(rows).forEach(([consorcio, group]) => {
-      csvData.push([`Consórcio: ${consorcio}`]);
-
-      group.items.forEach(item => {
-        const row = [
-          item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
-          item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
-          item.consorcio,
-          item.favorecido,
-          formatter.format(item.valor),
-          showStatus(item.status),
-          item.status === 'naopago' ? item.mensagem_status : '',
-        ];
-        csvData.push(row);
-      });
-      const subtotal = group.items[0].subtotal
-
-      csvData.push([
-        `Subtotal ${consorcio}`,
-        '',
-        '',
-        '',
-        formatter.format(subtotal),
-        '',
-        ''
-      ]);
+  // Export PDF
+  const exportPDF = () => {
+    const doc = new jsPDF({
+      orientation: "landscape",
     });
+    const tableColumn = ["Nome", "Valor"];
+    const tableRows = [];
 
-    csvData.push(['Valor Total', '', '', '', `${totalSynth}`]);
-
-    return csvData;
-  };
-
-  const CSVExportButton = ({ rows }) => {
-    const csvData = exportToCSV(rows);
+    reportList.data.forEach(report => {
+      const reportData = [
+        report.nomefavorecido,
+        formatter.format(report.valor)
+      ];
+      tableRows.push(reportData);
+    });
     let dateInicio;
     let dateFim;
     const selectedDate = getValues('dateRange');
@@ -261,186 +258,91 @@ export default function BasicEditingGrid() {
       dateInicio = selectedDate[0];
       dateFim = selectedDate[1];
     }
-
-    const csvFilename = useMemo(() => {
-      if (dateInicio && dateFim) {
-        return `relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.csv`;
-      }
-      return `relatorio_${format(new Date(), 'dd-MM-yyyy')}.csv`;
-    }, [dateInicio, dateFim]);
-
-    return (
-      <CSVLink data={csvData} filename={csvFilename}>
-        CSV
-      </CSVLink>
-    );
-  };
-
-
-
-
-  // Export XLSX
-  const exportToXLSX = (rows) => {
     const status = getValues('status');
-    const whichStatus = status?.join(',');
-    let dateInicio;
-    let dateFim;
-    const selectedDate = getValues('dateRange');
+    const selectedStatus = status.join(',');
 
-    if (selectedDate !== null) {
-      dateInicio = selectedDate[0];
-      dateFim = selectedDate[1];
-    }
-
-    const data = [
-      ["Status selecionado", "", whichStatus || "Todos"],
-      [],
-      ["Data da Operação", "Dt. Efetiva Pgto.", "Consórcio", "Favorecido", "Valor p/ Pagamento", "Status", "Ocorrência"],
-    ];
-
-    Object.entries(rows).forEach(([consorcio, group]) => {
-      data.push([`Consórcio: ${consorcio}`]);
-
-      group.items.forEach(item => {
-        const row = [
-          item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
-          item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
-          item.consorcio,
-          item.favorecido,
-          formatter.format(item.valor),
-          showStatus(item.status),
-          item.status === 'naopago' ? item.mensagem_status : '',
-        ];
-        data.push(row);
-      });
-      const subtotal = group.items[0].subtotal
-      data.push([
-        `Subtotal ${consorcio}`,
-        '',
-        '',
-        '',
-        formatter.format(subtotal),
-        '',
-        ''
-      ]);
-    });
-
-    data.push(['Valor Total', '', '', '', `${totalSynth}`]);
-
-    const wb = utils.book_new();
-    const ws = utils.aoa_to_sheet(data);
-    utils.book_append_sheet(wb, ws, 'Relatório');
-
-    const filename = `relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.xlsx`;
-
-    writeFileXLSX(wb, filename);
-  };
-
-  const exportToPDF = (rows) => {
-    const doc = new jsPDF({ orientation: 'landscape' });
     const logoImg = 'assets/icons/logoPrefeitura.png';
-    const logoH = 7.5;
-    const logoW = 15;
+    const logoH = 15;
+    const logoW = 30;
 
-    const addLogo = () => {
-      doc.addImage(logoImg, 'PNG', 7, 7, logoW, logoH);
-    };
 
-    let dateInicio;
-    let dateFim;
-    const selectedDate = getValues('dateRange');
 
-    if (selectedDate !== null) {
-      dateInicio = selectedDate[0];
-      dateFim = selectedDate[1];
-    }
-    const status = getValues('status');
-    const selectedStatus = status?.join(',') || 'Todos';
 
-    const pageWidth = doc.internal.pageSize.width;
-    const pageHeight = doc.internal.pageSize.height;
+    doc.autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      margin: { left: 14, right: 14, top: 60 },
+      startY: 60,
+      didDrawPage: (data) => {
 
-    let currentY = 40;
-    let previousConsorcio = '';
+        doc.addImage(logoImg, 'PNG', 14, 10, logoW, logoH);
 
-    const addHeader = () => {
-      addLogo();
-      doc.setFontSize(10);
-      doc.text(`Relatório dos dias: ${format(dateInicio, 'dd/MM/yyyy')} a ${format(dateFim, 'dd/MM/yyyy')}`, 7, 20);
-      doc.text(`Status observado: ${selectedStatus}`, 7, 25);
-      doc.setLineWidth(0.3);
-      doc.line(7, 28, pageWidth - 7, 28);
-    };
 
-    const startNewPage = () => {
-      doc.addPage();
-      currentY = 40;
-      addHeader();
-    };
+        const hrYPosition = 30;
+        doc.setLineWidth(0.3);
+        doc.line(14, hrYPosition, 196, hrYPosition);
 
-    addHeader();
 
-    Object.entries(rows).forEach(([consorcio, group], index) => {
-      if (consorcio !== previousConsorcio && index > 0) {
-        if (currentY + 10 + (group.items.length * 10) > pageHeight - 30) {
-          startNewPage();
-        }
-      }
+        doc.setFontSize(10);
+        doc.text(`Relatório dos dias: ${format(dateInicio, 'dd/MM/yyyy')} a ${format(dateFim, 'dd/MM/yyyy')}`, 14, 45);
+        doc.text(`Status observado: ${selectedStatus || 'Todos'}`, 14, 50);
 
-      previousConsorcio = consorcio;
 
-      doc.setFontSize(10);
-      doc.text(`Consórcio: ${consorcio}`, 7, currentY);
-      currentY += 10;
 
-      const tableData = group.items.map(item => [
-        item.datatransacao ? format(new Date(item.datatransacao), 'dd/MM/yyyy') : '',
-        item.datapagamento ? format(new Date(item.datapagamento), 'dd/MM/yyyy') : '',
-        item.consorcio,
-        item.favorecido,
-        formatter.format(item.valor),
-        showStatus(item.status),
-        item.status === 'naopago' ? item.mensagem_status : '',
-      ]);
 
-      doc.autoTable({
-        head: [['Data da Operação', 'Dt. Efetiva Pgto.', 'Consórcio', 'Favorecido', 'Valor p/ Pagamento', 'Status', 'Ocorrência']],
-        body: tableData,
-        startY: currentY,
-        margin: { left: 7, right: 7 },
-        styles: { cellPadding: 1, fontSize: 8 },
-        didDrawPage: (data) => {
-          currentY = data.cursor.y + 10;
-        },
-      });
 
-      const subtotal = group.items[0].subtotal;
-      doc.setFontSize(10);
-      doc.text(`Subtotal ${consorcio}: ${formatter.format(subtotal)}`, 7, currentY);
-
-      currentY += 10;
-
-      if (currentY > pageHeight - 30) {
-        startNewPage();
-      }
+      },
     });
-
-    doc.setFontSize(10);
-    const totalValue = `Valor Total: ${totalSynth}`;
-    doc.text(totalValue, 7, currentY + 10);
 
     const pageCount = doc.internal.getNumberOfPages();
+
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       doc.setFontSize(10);
-      const text = `Página ${i} de ${pageCount}`;
-      const xPos = pageWidth - 30;
-      const yPos = pageHeight - 10;
+
+      const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
+      const text = `Página ${currentPage} de ${pageCount}`;
+      const xPos = 14;
+      const yPos = doc.internal.pageSize.height - 5;
+
       doc.text(text, xPos, yPos);
     }
 
-    doc.save(`relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.pdf`);
+    const totalValue = `Valor total: ${formatter.format(reportList.valor ?? 0)}`;
+    doc.setFontSize(10);
+    doc.text(totalValue, 14, doc.internal.pageSize.height - 10);
+
+
+    doc.save(`relatorio_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.pdf`);
   };
+
+  // Export XLSX
+  const exportXLSX = () => {
+    let dateInicio;
+    let dateFim;
+    const selectedDate = getValues('dateRange');
+
+    if (selectedDate !== null) {
+      dateInicio = selectedDate[0];
+      dateFim = selectedDate[1];
+    }
+    const data = [
+      ["Status selecionado", "", whichStatus || "Todos"],
+      ["Nome", "Valor"],
+      ...reportList.data.map(report => [
+        report.nomefavorecido,
+        formatter.format(report.valor),
+      ]),
+      ["Valor Total", "", formatter.format(reportList.valor ?? 0)],
+
+    ];
+
+    const wb = utils.book_new();
+    utils.book_append_sheet(wb, utils.json_to_sheet(data));
+    writeFileXLSX(wb, `relatorio_${format(dateInicio, 'dd/MM/yyyy')}_${format(dateFim, 'dd/MM/yyyy')}.xlsx`);
+  };
+
+
 
 
 
@@ -448,28 +350,37 @@ export default function BasicEditingGrid() {
     setAnchorEl(event.currentTarget);
   };
 
-
-  const showStatus = (status) => {
-    switch (status) {
-      case 'pago':
-        return 'Pago';
-      case 'a pagar':
-        return 'A pagar';
-      case 'naopago':
-        return 'Erro';
-      default:
-        return status;
+  const handleMenuClose = (option) => {
+    setAnchorEl(null);
+    if (option === 'csv') {
+      document.getElementById('csv-export-link').click();
+    } else if (option === 'pdf') {
+      exportPDF();
+    } else if (option === 'xlsx') {
+      exportXLSX();
     }
   };
 
   const clearSelect = (button) => {
     setValue(button, '');
+    setShowButton(false)
   };
 
   const handleSelection = (field, newValue) => {
     setSelected(newValue.length > 0 ? field : null);
+    if (field === 'consorcioName') {
+      setSelectedConsorcios(newValue);
+    }
     handleAutocompleteChange(field, newValue);
   };
+
+  const sortedData = Array.isArray(reportList.data)
+    ? [...reportList.data].sort((a, b) =>
+      a.nomefavorecido.localeCompare(b.nomefavorecido)
+    )
+    : [];
+
+
 
 
   return (
@@ -477,6 +388,7 @@ export default function BasicEditingGrid() {
       <Paper>
         <Box className="w-full md:mx-9 p-24 relative mt-32">
           <header>Filtros de Pesquisa</header>
+
           <Box className="flex items-center py-10 gap-10">
             <form onSubmit={handleSubmit(onSubmit)}>
               <Box className="flex gap-10 flex-wrap mb-20">
@@ -516,6 +428,7 @@ export default function BasicEditingGrid() {
                   )}
                 />
 
+
                 <Autocomplete
                   id="consorcio"
                   multiple
@@ -523,7 +436,9 @@ export default function BasicEditingGrid() {
                   getOptionLabel={(option) => option.label}
                   filterSelectedOptions
                   options={consorcios}
+                  value={selectedConsorcios}
                   getOptionDisabled={(option) => option.disabled}
+                  isOptionEqualToValue={(option, value) => option.value === value.value}
                   onChange={(_, newValue) => handleSelection('consorcioName', newValue)}
                   renderInput={(params) => (
                     <TextField
@@ -537,6 +452,7 @@ export default function BasicEditingGrid() {
                     />
                   )}
                 />
+
                 <Autocomplete
                   id="status"
                   multiple
@@ -544,13 +460,9 @@ export default function BasicEditingGrid() {
                   options={específicos}
                   getOptionLabel={(option) => option.label}
                   filterSelectedOptions
-                  // onChange={(_, newValue) => {
-                  //     if (newValue.length === 0) {
-                  //         dispatch(setSpecificValue(false));
-                  //     } else {
-                  //         dispatch(setSpecificValue(true));
-                  //     }
-                  // }}
+                  onChange={(_, newValue) =>
+                    handleAutocompleteChange("especificos", newValue)
+                  }
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -571,62 +483,67 @@ export default function BasicEditingGrid() {
               </Box>
 
               <Box className="flex items-center gap-10 flex-wrap">
-                <Autocomplete
-                  id="status"
-                  multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
-                  getOptionLabel={(option) => option.label}
-                  filterSelectedOptions
-                  options={consorciosStatus}
-                  onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Selecionar Status"
-                      variant="outlined"
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: (
-                          <>
-                            {params.InputProps.endAdornment}
-                          </>
-                        ),
-                      }}
-                    />
-                  )}
-                />
                 <Box>
-                  <CustomProvider locale={ptBR}>
-                    <Controller
-                      name="dateRange"
-                      control={control}
-                      render={({ field }) => (
-                        <DateRangePicker
-                          {...field}
-                          id="custom-date-input"
-                          showOneCalendar
-                          showHeader={false}
-                          placement="auto"
-                          placeholder="Selecionar Data"
-                          format="dd/MM/yy"
-                          character=" - "
-                          className="custom-date-range-picker"
-                        />)}
-                    />
-                  </CustomProvider>
+
+
+                  <Autocomplete
+                    id="status"
+                    multiple
+                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
+                    getOptionLabel={(option) => option.label}
+                    filterSelectedOptions
+                    options={consorciosStatus}
+                    onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Selecionar Status"
+                        variant="outlined"
+                        InputProps={{
+                          ...params.InputProps,
+                          endAdornment: (
+                            <>
+                              {params.InputProps.endAdornment}
+                            </>
+                          ),
+                        }}
+                      />
+                    )}
+                  />
+                </Box>
+
+                <Box>
+                  <Controller
+                    name="dateRange"
+                    control={control}
+                    render={({ field }) => (
+                      <DateRangePicker
+                        {...field}
+                        id="custom-date-input"
+                        showOneCalendar
+                        showHeader={false}
+                        placement="auto"
+                        placeholder="Selecionar Data"
+                        format="dd/MM/yy"
+                        character=" - "
+                        className="custom-date-range-picker"
+                      />)}
+                  />
                   <br />
                   <span className='absolute text-xs text-red-600'>Campo data obrigatório*</span>
                 </Box>
               </Box>
-              <Box className="flex items-center my-20 gap-10 flex-wrap">
+              <Box className="flex items-center my-[3.5rem] gap-10 flex-wrap">
                 <Controller
                   name="valorMin"
                   control={control}
                   rules={{
                     validate: (value) => {
                       if (!value) return true;
-                      const valorMin = parseFloat(value.replace(',', '.'));
-                      const valorMax = parseFloat(getValues("valorMax").replace(',', '.'));
+
+                      const valorMin = parseFloat(value.split(',')[0].replace('.', ''));
+                      const valorMax = parseFloat(getValues("valorMax").split(',')[0].replace('.', ''));
+
                       return valorMin <= valorMax || "Valor Mínimo não pode ser maior que o Valor Máximo";
                     }
                   }}
@@ -643,8 +560,9 @@ export default function BasicEditingGrid() {
                       value={field.value}
                       onChange={(e) => {
                         field.onChange(e);
-                        const valorMin = parseFloat(e.target.value.replace(',', '.'));
-                        const valorMax = parseFloat(getValues("valorMax").replace(',', '.'));
+
+                        const valorMin = parseFloat(e.target.value.split(',')[0].replace('.', ''));
+                        const valorMax = parseFloat(getValues("valorMax").split(',')[0].replace('.', ''));
 
                         if (valorMin <= valorMax) {
                           clearErrors("valorMin");
@@ -682,8 +600,10 @@ export default function BasicEditingGrid() {
                   rules={{
                     validate: (value) => {
                       if (!value) return true;
-                      const valorMax = parseFloat(value.replace(',', '.'));
-                      const valorMin = parseFloat(getValues("valorMin").replace(',', '.'));
+
+                      const valorMax = parseFloat(value.split(',')[0].replace('.', ''));
+                      const valorMin = parseFloat(getValues("valorMin").split(',')[0].replace('.', ''));
+
                       return valorMax >= valorMin || "Valor Máximo não pode ser menor que o Valor Mínimo";
                     }
                   }}
@@ -699,8 +619,10 @@ export default function BasicEditingGrid() {
                       value={field.value}
                       onChange={(e) => {
                         field.onChange(e);
-                        const valorMax = parseFloat(e.target.value.replace(',', '.'));
-                        const valorMin = parseFloat(getValues("valorMin").replace(',', '.'));
+
+                        const valorMax = parseFloat(e.target.value.split(',')[0].replace('.', ''));
+                        const valorMin = parseFloat(getValues("valorMin").split(',')[0].replace('.', ''));
+
 
                         if (valorMax >= valorMin) {
                           clearErrors("valorMax");
@@ -733,8 +655,6 @@ export default function BasicEditingGrid() {
                   )}
                 />
               </Box>
-
-
 
               <Box>
 
@@ -773,6 +693,7 @@ export default function BasicEditingGrid() {
           </Box>
         </Box>
       </Paper>
+
       <Paper>
         <Box className="w-full md:mx-9 p-24 relative mt-32">
           <header className="flex justify-between items-center">
@@ -787,7 +708,9 @@ export default function BasicEditingGrid() {
               onClick={handleMenuClick}
               style={{ marginTop: '20px' }}
             >
-              <svg class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium muiltr-hgpioi-MuiSvgIcon-root h-[2rem]" focusable="false" aria-hidden="true" viewBox="0 0 24 24" data-testid="SaveAltIcon"><path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"></path></svg> Exportar
+
+              <svg className="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium muiltr-hgpioi-MuiSvgIcon-root h-[2rem]" focusable="false" aria-hidden="true" viewBox="0 0 24 24" data-testid="SaveAltIcon"><path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"></path></svg> Exportar
+
             </Button>
             <Menu
               id="simple-menu"
@@ -796,136 +719,59 @@ export default function BasicEditingGrid() {
               open={Boolean(anchorEl)}
               onClose={() => setAnchorEl(null)}
             >
-              <MenuItem>
-                <CSVExportButton rows={rows} />
-              </MenuItem>
-              <MenuItem onClick={() => exportToXLSX(rows)}>XLSX</MenuItem>
-              <MenuItem onClick={() => exportToPDF(rows)}>PDF</MenuItem>
-
+              <MenuItem onClick={() => handleMenuClose('csv')}>CSV</MenuItem>
+              <MenuItem onClick={() => handleMenuClose('pdf')}>PDF</MenuItem>
+              <MenuItem onClick={() => handleMenuClose('xlsx')}>XLSX</MenuItem>
             </Menu>
+
+            <CSVLink
+              id="csv-export-link"
+              data={csvData}
+              filename={csvFilename}
+              className="hidden"
+
+            />
           </header>
-          <div style={{ height: '65vh', width: '100%' }} className='overflow-scroll'>
-            <Table dense table stickyHeader sx={{ tableLayout: 'fixed', width: '100%' }}>
 
-
+          <div style={{ height: '50vh', width: '100%' }} className="overflow-scroll">
+            <Table size='small'>
+              <TableHead className="items-center mb-4">
+                <TableRow>
+                  <TableCell>Nome</TableCell>
+                  <TableCell>Valor</TableCell>
+                </TableRow>
+              </TableHead>
               <TableBody>
                 {!isLoading ? (
-                  Object.entries(rows).length > 0 ? (
-                    Object.entries(rows).map(([consorcio, group]) => {
-                      let totalConsorcio = group.total;
 
-
-                      return (
-                        <React.Fragment key={consorcio}>
-                          <TableRow>
-                            <TableCell component="th" colSpan={12} sx={{ backgroundColor: '#EAEAEA', }}>
-                              <Box className="flex justify-between w-full">
-                                <p style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{consorcio}</p>
-                              </Box>
-                            </TableCell>
-                          </TableRow>
-
-                          <TableRow>
-                            <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Data da Operação</TableCell>
-                            <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Dt. Efetiva Pgto.</TableCell>
-                            <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Consórcio</TableCell>
-                            <TableCell colSpan={4.5} className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Favorecido</TableCell>
-                            <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Valor p/ Pagamento</TableCell>
-                            <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Status</TableCell>
-                            <TableCell className="font-bold text-small p-0" sx={{ paddingLeft: '0px' }}>Ocorrência</TableCell>
-                          </TableRow>
-
-                          {Object.entries(
-                            group.items.reduce((acc, item) => {
-                              let key;
-                              if (item.consorcio === "STPC" || item.consorcio === "STPL" || item.consorcio === "TEC") {
-                                key = `${item.datapagamento}-${item.status}-${item.favorecido}`;
-                              } else {
-                                key = `${item.datapagamento}-${item.status}`;
-                              }
-                              if (!acc[key]) acc[key] = [];
-                              acc[key].push(item);
-                              return acc;
-                            }, {})
-                          ).map(([key, items]) => {
-                            const [datapagamento, status, favorecido] = key.split("-");
-                            const isGroupedByFavorecido = items.some(item => item.consorcio === "STPC" || item.consorcio === "STPL" || item.consorcio === "TEC");
-
-                            return (
-                              <React.Fragment key={`${consorcio}-${datapagamento}-${status}-${favorecido || ''}`}>
-                                {items.map((item) => (
-                                  <TableRow sx={{ width: "100%" }} className="w-full" key={item.id}>
-                                    <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>
-                                      {item.datatransacao ? format(parseISO(item.datatransacao), "dd/MM/yyyy") : null}
-                                    </TableCell>
-                                    <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>
-                                      {item.datapagamento ? format(parseISO(item.datapagamento), "dd/MM/yyyy") : null}
-                                    </TableCell>
-                                    <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{item.consorcio}</TableCell>
-                                    <TableCell colSpan={4.5} className='text-[1.2rem]' sx={{ minWidth: 300, maxWidth: 350, overflow: "hidden", textOverflow: "ellipsis", padding: 0 }}>
-                                      {item.favorecido}
-                                    </TableCell>
-                                    <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{formatter.format(item.valor)}</TableCell>
-                                    <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }}>{showStatus(item.status)}</TableCell>
-                                    {item.status === "naopago" ? (
-                                      <TableCell className='p-0 text-[1.2rem]' sx={{ paddingLeft: '0px' }} colSpan={3}>
-                                        {item.mensagem_status}
-                                      </TableCell>
-                                    ) : null}
-                                  </TableRow>
-                                ))}
-                                <TableRow>
-                                  <Box className="flex pb-[20px] gap-10">
-                                    <p style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
-                                      {isGroupedByFavorecido ? "Subtotal:" : "Subtotal do dia:"}
-                                    </p>
-                                    <p className="font-bold">
-                                      {formatter.format(items.reduce((sum, item) => sum + item.valor, 0))}
-                                    </p>
-                                  </Box>
-                                </TableRow>
-                              </React.Fragment>
-                            );
-                          })}
-
-                          <Box className="flex pb-[20px] gap-10">
-                            <p style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
-                              Total {consorcio}:
-                            </p>
-                            <p className="font-bold">
-                              {totalConsorcio}
-                            </p>
-                          </Box>
-
-
-
-                        </React.Fragment>
-                      );
-                    })
+                  reportList.count > 0 ? (
+                    sortedData.map((report, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{report.nomefavorecido}</TableCell>
+                        <TableCell>{formatter.format(report.valor)}</TableCell>
+                      </TableRow>
+                    ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={8}>Não há dados para serem exibidos</TableCell>
+                      <TableCell colSpan={2}>Não há dados para serem exibidos</TableCell>
                     </TableRow>
                   )
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8}>Carregando...</TableCell>
+                    <TableCell colSpan={5}>
+                      <Box className="flex justify-center items-center m-10">
+                        <CircularProgress />
+                      </Box>
+                    </TableCell>
                   </TableRow>
                 )}
-
-
-
-
-
-                <Box className="flex pb-[20px] gap-10 whitespace-nowrap">
-                  <p className='font-bold'>Total geral: </p>
-                  <p className='font-bold'>{totalSynth}</p>
-                </Box>
+                <TableRow key={Math.random()}>
+                  <TableCell className='font-bold'>Valor Total: </TableCell>
+                  <TableCell className='font-bold'> {formatter.format(reportList.valor ?? 0)}</TableCell>
+                </TableRow>
               </TableBody>
-
             </Table>
           </div>
-
         </Box>
       </Paper>
     </>
