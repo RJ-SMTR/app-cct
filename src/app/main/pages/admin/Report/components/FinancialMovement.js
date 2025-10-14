@@ -55,11 +55,11 @@ export default function BasicEditingGrid() {
 
 
   const consorciosStatusBase = [
-    { label: "Pago" },
     { label: "A Pagar" },
     { label: "Aguardando Pagamento" },
-    { label: "Pendencia Paga" },
-    { label: "Pendência de Pagamento" }
+    { label: "Pago" },
+    { label: "Pendência de Pagamento" },
+    { label: "Pendencia Paga" }
   ];
 
   const erroStatus = [
