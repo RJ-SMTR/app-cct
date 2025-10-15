@@ -563,9 +563,8 @@ export default function BasicEditingGrid() {
                   rules={{
                     validate: (value) => {
                       if (!value) return true;
-
-                      const valorMin = parseFloat(value.split(',')[0].replace('.', ''));
-                      const valorMax = parseFloat(getValues("valorMax").split(',')[0].replace('.', ''));
+                      const valorMin = parseFloat(value.replace(/\./g, '').replace(',', '.'))
+                      const valorMax = parseFloat(getValues("valorMax").replace(/\./g, '').replace(',', '.'));
 
                       return valorMin <= valorMax || "Valor Mínimo não pode ser maior que o Valor Máximo";
                     }
@@ -584,8 +583,8 @@ export default function BasicEditingGrid() {
                       onChange={(e) => {
                         field.onChange(e);
 
-                        const valorMin = parseFloat(e.target.value.split(',')[0].replace('.', ''));
-                        const valorMax = parseFloat(getValues("valorMax").split(',')[0].replace('.', ''));
+                        const valorMin = parseFloat(e.target.value.replace(/\./g, '').replace(',', '.'))
+                        const valorMax = parseFloat(getValues("valorMax").replace(/\./g, '').replace(',', '.'));
 
                         if (valorMin <= valorMax) {
                           clearErrors("valorMin");
@@ -624,8 +623,8 @@ export default function BasicEditingGrid() {
                     validate: (value) => {
                       if (!value) return true;
 
-                      const valorMax = parseFloat(value.split(',')[0].replace('.', ''));
-                      const valorMin = parseFloat(getValues("valorMin").split(',')[0].replace('.', ''));
+                      const valorMax = parseFloat(value.replace(/\./g, '').replace(',', '.'));
+                      const valorMin = parseFloat(getValues("valorMin").replace(/\./g, '').replace(',', '.'));
 
                       return valorMax >= valorMin || "Valor Máximo não pode ser menor que o Valor Mínimo";
                     }
