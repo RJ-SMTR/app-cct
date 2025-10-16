@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Table,
@@ -95,39 +95,48 @@ export default function ReportVanzeiro() {
 
   return (
     <>
+
       <Paper>
         <Box className="w-full md:mx-9 p-24 relative mt-32">
           <div
             style={{ height: "70vh", width: "100%" }}
-            className="overflow-scroll"
+            className="overflow-x-auto overflow-y-auto"
           >
-            <Table size="small">
+            <Table
+              size="small"
+              style={{ minWidth: "600px", tableLayout: "auto" }} // garante que a tabela tenha largura mínima
+            >
               <TableHead>
                 <TableRow className="sticky top-0 bg-white z-10">
-                  <TableCell className="font-semibold py-1 text-sm leading-none">Data Tentativa Pagamento</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm ">Data Efetiva Pagamento</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm ">Valor</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm ">Status</TableCell>
+                  <TableCell className="font-semibold py-1 text-sm whitespace-nowrap">Data Tentativa Pagamento</TableCell>
+                  <TableCell className="font-semibold p-1 text-sm whitespace-nowrap">Data Efetiva Pagamento</TableCell>
+                  <TableCell className="font-semibold p-1 text-sm whitespace-nowrap">Valor</TableCell>
+                  <TableCell className="font-semibold p-1 text-sm whitespace-nowrap">Status</TableCell>
                 </TableRow>
               </TableHead>
 
-              <TableBody className="overflow-scroll">
+              <TableBody>
                 {!isLoading ? (
                   reportList.count > 0 ? (
                     reportList.data?.map((report, index) => (
                       <TableRow key={index} className="hover:bg-gray-50">
-                        <TableCell className="text-base py-1">{report.dataReferencia}</TableCell>
-                        <TableCell className="text-base py-1 ">{report.status == 'Pendencia Paga' ? report.dataPagamento : '-'}</TableCell>
-                        <TableCell className="text-base py-6 px-1 ">{formatter.format(report.valor)}</TableCell>
-                        <TableCell className="text-base py-6 px-1 ">
+                        <TableCell className="text-base py-1 whitespace-nowrap">
+                          {report.dataReferencia}
+                        </TableCell>
+                        <TableCell className="text-base py-1 whitespace-nowrap">
+                          {report.status == "Pendencia Paga" ? report.dataPagamento : "-"}
+                        </TableCell>
+                        <TableCell className="text-base py-6 px-1 whitespace-nowrap">
+                          {formatter.format(report.valor)}
+                        </TableCell>
+                        <TableCell className="text-base py-6 px-1 whitespace-nowrap">
                           <span
-                            className={`px-3 py-1 rounded-full text-xs ${getStatusStyles(
+                            className={`px-3 py-1 rounded-full text-xs whitespace-nowrap ${getStatusStyles(
                               report.status === "Pendente" ? "Pendência de Pagamento" : report.status
                             )}`}
                           >
                             {report.status === "Pendente" ? "Pendência de Pagamento" : report.status}
                           </span>
-
                         </TableCell>
                       </TableRow>
                     ))
@@ -150,30 +159,30 @@ export default function ReportVanzeiro() {
               </TableBody>
 
               <TableFooter className="sticky bottom-0 bg-white z-10">
-
-
-                <TableRow></TableRow>
-                {(reportList.valorPago > 0 || reportList.valorEstornado > 0 || reportList.valorRejeitado > 0 || reportList.valor > 0 || reportList.valorPendente > 0) && (
-                  <TableRow>
-                    <TableCell />
-                    <TableCell colSpan={7} className="text-right font-bold text-black text-base pt-16">
-                      {[
-                        reportList.valorEstornado > 0 && `Total Estorno: ${formatter.format(reportList.valorEstornado)}`,
-                        reportList.valorRejeitado > 0 && `Total Rejeitado: ${formatter.format(reportList.valorRejeitado)}`,
-                        reportList.valorPendente > 0 && `Total Pendentes: ${formatter.format(reportList.valorPendente)}`,
-                        reportList.valorPendenciaPaga > 0 && `Total Pendencia Paga: ${formatter.format(reportList.valorPendenciaPaga)}`,
-                        (reportList.valorEstornado + reportList.valorRejeitado + reportList.valorPendente - reportList.valorPendenciaPaga) > 0 &&
-                        `Saldo a Receber: ${formatter.format(
-                          reportList.valorEstornado + reportList.valorRejeitado + reportList.valorPendente - reportList.valorPendenciaPaga
-                        )}`
-                      ]
-                        .filter(Boolean)
-                        .join("    |    ")
-                      }
-                    </TableCell>
-                    <TableCell />
-                  </TableRow>
-                )}
+                {(reportList.valorPago > 0 ||
+                  reportList.valorEstornado > 0 ||
+                  reportList.valorRejeitado > 0 ||
+                  reportList.valor > 0 ||
+                  reportList.valorPendente > 0) && (
+                    <TableRow>
+                      <TableCell />
+                      <TableCell colSpan={7} className="text-right font-bold text-black text-base pt-16 whitespace-nowrap">
+                        {[
+                          reportList.valorEstornado > 0 && `Total Estorno: ${formatter.format(reportList.valorEstornado)}`,
+                          reportList.valorRejeitado > 0 && `Total Rejeitado: ${formatter.format(reportList.valorRejeitado)}`,
+                          reportList.valorPendente > 0 && `Total Pendentes: ${formatter.format(reportList.valorPendente)}`,
+                          reportList.valorPendenciaPaga > 0 && `Total Pendencia Paga: ${formatter.format(reportList.valorPendenciaPaga)}`,
+                          (reportList.valorEstornado + reportList.valorRejeitado + reportList.valorPendente - reportList.valorPendenciaPaga) > 0 &&
+                          `Saldo a Receber: ${formatter.format(
+                            reportList.valorEstornado + reportList.valorRejeitado + reportList.valorPendente - reportList.valorPendenciaPaga
+                          )}`
+                        ]
+                          .filter(Boolean)
+                          .join("    |    ")}
+                      </TableCell>
+                      <TableCell />
+                    </TableRow>
+                  )}
               </TableFooter>
             </Table>
           </div>
