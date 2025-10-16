@@ -242,7 +242,6 @@ function TableTransactions({ id }) {
     if (idOrder === null || idOrder === undefined) {
       dispatch(showMessage({ message: 'Não há valores para serem apresentados.' }))
     } else {
-      dispatch(setLoading(true))
       dispatch(setLoadingWeek(true))
       const start = event.target.innerText;
       const [day, month, year] = start.split('/');
@@ -252,15 +251,14 @@ function TableTransactions({ id }) {
       setDataOrderDay(start)
       if (fullReport) {
         if (searchingWeek) {
+          dispatch(setLoading(false))
           dispatch(setValorAcumuladoLabel('Valor Operação - Detalhado'));
           dispatch(setValorPagoLabel('Valor - Detalhado'));
-          dispatch(setDateRange([transformedDate, transformedDate]));
+          // dispatch(setDateRange([transformedDate, transformedDate]));
           dispatch(setOrdemPgto(idOrder))
-          dispatch(setSearchingDay(true))
+          // dispatch(setSearchingDay(true))
           setPage(0)
-          if (statements.length == 0) {
-            setModal(true)
-          }
+            setModalOpen(true)
 
         } else {
           if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
@@ -269,6 +267,7 @@ function TableTransactions({ id }) {
           if (searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Mensal'));
           const clickedDate = parseISO(transformedDate);
           const clickedDateToday = utcToZonedTime(clickedDate, tz);
+          dispatch(setLoading(true))
           setCurrentWeekStart(clickedDateToday);
           dispatch(setSearchingWeek(true));
           dispatch(setSumInfo(valor))
@@ -541,7 +540,7 @@ function TableTransactions({ id }) {
           <Typography id="modal-modal-title" variant="h6" component="h3">
             Comunicado:
           </Typography>
-          <p>As transações estão temporariamente indisponíveis.
+          <p>As transações estão temporariamente em manutenção.
             Qualquer dúvida, por favor, contacte o suporte!</p>
         </Box>
       </Modal>
