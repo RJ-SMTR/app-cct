@@ -549,6 +549,8 @@ export default function BasicEditingGrid() {
         return "bg-gray-400 text-black";
       case "Pendencia Paga":
         return "bg-blue-400 text-black";
+      case "A Pagar":
+        return "bg-gray-400 text-black";
       default:
         return "bg-red-300 text-black";
     }
