@@ -55,11 +55,11 @@ export default function BasicEditingGrid() {
 
 
   const consorciosStatusBase = [
-    { label: "Pago" },
     { label: "A Pagar" },
     { label: "Aguardando Pagamento" },
-    { label: "Pendencia Paga" },
-    { label: "Pendência de Pagamento" }
+    { label: "Pago" },
+    { label: "Pendência de Pagamento" },
+    { label: "Pendencia Paga" }
   ];
 
   const erroStatus = [
@@ -723,12 +723,8 @@ export default function BasicEditingGrid() {
                     validate: (value) => {
                       if (!value) return true;
 
-                      const valorMin = Number.parseFloat(
-                        value.split(",")[0].replace(".", ""),
-                      );
-                      const valorMax = Number.parseFloat(
-                        getValues("valorMax").split(",")[0].replace(".", ""),
-                      );
+                      const valorMin = Number.parseFloat(value.replace(/\./g, '').replace(',', '.'))
+                      const valorMax = Number.parseFloat(getValues("valorMax").replace(/\./g, '').replace(',', '.'));
 
                       return (
                         valorMin <= valorMax ||
@@ -749,12 +745,8 @@ export default function BasicEditingGrid() {
                       onChange={(e) => {
                         field.onChange(e);
 
-                        const valorMin = Number.parseFloat(
-                          e.target.value.split(",")[0].replace(".", ""),
-                        );
-                        const valorMax = Number.parseFloat(
-                          getValues("valorMax").split(",")[0].replace(".", ""),
-                        );
+                        const valorMin = Number.parseFloat(e?.target.value.replace(/\./g, '').replace(',', '.'))
+                        const valorMax = Number.parseFloat(getValues("valorMax").replace(/\./g, '').replace(',', '.'));
 
                         if (valorMin <= valorMax) {
                           clearErrors("valorMin");
@@ -803,12 +795,8 @@ export default function BasicEditingGrid() {
                     validate: (value) => {
                       if (!value) return true;
 
-                      const valorMax = Number.parseFloat(
-                        value.split(",")[0].replace(".", ""),
-                      );
-                      const valorMin = Number.parseFloat(
-                        getValues("valorMin").split(",")[0].replace(".", ""),
-                      );
+                      const valorMax = Number.parseFloat(value.replace(/\./g, '').replace(',', '.'));
+                      const valorMin = Number.parseFloat(getValues("valorMin").replace(/\./g, '').replace(',', '.'));
 
                       return (
                         valorMax >= valorMin ||
@@ -827,13 +815,13 @@ export default function BasicEditingGrid() {
                       label="Valor Máximo"
                       value={field.value}
                       onChange={(e) => {
-                        field.onChange(e);
+                        field.onChange(e)
 
                         const valorMax = Number.parseFloat(
-                          e.target.value.split(",")[0].replace(".", ""),
+                          e.target.value.replace(/\./g, '').replace(',', '.')
                         );
                         const valorMin = Number.parseFloat(
-                          getValues("valorMin").split(",")[0].replace(".", ""),
+                          getValues("valorMin").replace(/\./g, '').replace(',', '.')
                         );
 
                         if (valorMax >= valorMin) {
@@ -1055,7 +1043,7 @@ export default function BasicEditingGrid() {
                         {(() => {
                           const totalGeral =
                             reportList.valorPendenciaPaga > 0
-                              ? reportList.valor - reportList.valorPendenciaPaga
+                              ? (reportList.valorRejeitado || 0) + (reportList.valorEstornado || 0)
                               : reportList.valor;
 
                           return [
@@ -1076,11 +1064,8 @@ export default function BasicEditingGrid() {
                             reportList.valorPendente > 0 &&
                             `Total Pendencia de Pagamento: ${formatter.format(reportList.valorPendente)}`,
 
-                            totalGeral > 0 &&
-                            `${reportList.valorPendenciaPaga > 0
-                              ? "Saldo a Pagar"
-                              : "Total Geral"
-                            }: ${formatter.format(totalGeral)}`
+                            (totalGeral ?? 0) >= 0 &&
+                            `${reportList.valorPendenciaPaga > 0 ? "Saldo a Pagar" : "Total Geral"}: ${formatter.format(totalGeral)}`
                           ]
                             .filter(Boolean)
                             .join("    |    ");

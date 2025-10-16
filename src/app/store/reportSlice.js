@@ -119,6 +119,9 @@ function handleData(data) {
             break;
           case 'Todos':
             break;
+          case 'A pagar':
+            requestData.apagar = true
+            break;
           default:
             requestData.aPagar = true;
             break;
