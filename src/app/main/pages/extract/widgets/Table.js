@@ -332,8 +332,7 @@ function TableTransactions({ id }) {
 
   useEffect(() => {
     if (searchingDay &&
-      statements?.length === 0 ||
-      statements.every(i => !i.data && !i.dataCaptura && !i.datetime_processamento)
+      statements?.length === 0 
     ) {
       setLoading(false);
       setModalOpen(true);
