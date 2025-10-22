@@ -120,7 +120,13 @@ export function CustomTable(data) {
       <TableCell component="th" scope="row" onClick={searchingDay ? null : data.handleClickRow}>
         <Typography className={searchingDay ? "whitespace-nowrap " : "whitespace-nowrap underline"}>
 
-          {searchingDay ? dateUTC(data.data.datetime_transacao) : searchingWeek ? dateUTCMonth(data.data.dataCaptura) : dateUTCMonth(data.data.data)}
+          {
+            searchingDay
+              ? (data.data?.datetime_transacao ? dateUTC(data.data.datetime_transacao) : "--")
+              : searchingWeek
+                ? (data.data?.dataCaptura ? dateUTCMonth(data.data.dataCaptura) : "--")
+                : (data.data?.data ? dateUTCMonth(data.data.data) : "--")
+          }
 
         </Typography>
       </TableCell>
