@@ -258,7 +258,6 @@ function TableTransactions({ id }) {
           dispatch(setOrdemPgto(idOrder))
           dispatch(setSearchingDay(true))
           setPage(0)
-            setModalOpen(true)
 
         } else {
           if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
@@ -332,14 +331,15 @@ function TableTransactions({ id }) {
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
-    if (
+    if (searchingDay &&
+      !isLoading && 
       statements?.length === 0 ||
       statements.every(i => !i.data && !i.dataCaptura && !i.datetime_processamento)
     ) {
       setLoading(false);
       setModalOpen(true);
     }
-  }, [searchingDay, isLoading, statements]);
+  }, [statements]);
   return (
     <>
       <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
