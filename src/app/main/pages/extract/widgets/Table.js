@@ -540,7 +540,7 @@ function TableTransactions({ id }) {
           <Typography id="modal-modal-title" variant="h6" component="h3">
             Comunicado:
           </Typography>
-            Qualquer dúvida, por favor, contacte o suporte!</p>
+            <p>Qualquer dúvida, por favor, contacte o suporte!</p>
         </Box>
       </Modal>
 
