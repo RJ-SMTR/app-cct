@@ -332,7 +332,6 @@ function TableTransactions({ id }) {
 
   useEffect(() => {
     if (searchingDay &&
-      !isLoading && 
       statements?.length === 0 ||
       statements.every(i => !i.data && !i.dataCaptura && !i.datetime_processamento)
     ) {
