@@ -503,17 +503,17 @@ function TableTransactions({ id }) {
                       }
 
                       const valorDia = i.valorTotal ?? i.valorTotalPago ?? sumInfo;
-                      if (
-                        searchingDay &&
-                        statements?.length > 0 &&
-                        statements.every(i => !i.data && !i.dataCaptura && !i.datetime_processamento)
-                      ) {
-                        return null
-                      }
+                      // if (
+                      //   searchingDay &&
+                      //   statements?.length > 0 &&
+                      //   statements.every(i => !i.data && !i.dataCaptura && !i.datetime_processamento)
+                      // ) {
+                      //   return null
+                      // }
 
                       return (
                         <MemoizedCustomTable
-                          key={idOrdem ?? formattedDate}
+                          key={idOrdem ?? `${formattedDate}-${Math.random()}`}
                           data={i}
                           c={c}
                           date={formattedDate}
@@ -561,7 +561,7 @@ function TableTransactions({ id }) {
         </Box>
       </Paper>
 
-      <Modal
+      {/* <Modal
         open={modalOpen}
         onClose={handleClose}
         aria-labelledby="modal-modal-title"
@@ -574,7 +574,7 @@ function TableTransactions({ id }) {
             <p>Transações estão temporariamente em manutenção!</p>
             <p>Qualquer dúvida, por favor, contacte o suporte!</p>
         </Box>
-      </Modal>
+      </Modal> */}
 
     </>
   );
