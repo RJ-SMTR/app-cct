@@ -25,6 +25,7 @@ import StatementsConfig from '../main/pages/admin/Statements/StatementsConfig';
 import ReportConfig from '../main/pages/admin/Report/ReportConfig';
 import ReportReleaseConfig from '../main/pages/admin/ReportRelease/ReportReleaseConfig';
 import ReportVanzeiroConfig from '../main/pages/report/reportConfig';
+import RemessaConfig from '../main/pages/admin/Remessa/RemessaConfig';
 const routeConfigs = [
   // HomeConifg,
   SignOutConfig,
@@ -33,6 +34,7 @@ const routeConfigs = [
   ResetPasswordConfig,
   ConcludeConfig,
   profileAppConfig,
+  RemessaConfig,
   ExtractConfig,
   // ResumeConfig,
   AdminSignIn,

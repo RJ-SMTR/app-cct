@@ -79,6 +79,31 @@ const masterConfig = [
             },
         ]
     },
+    {
+        id: 'Agendamento',
+        title: 'Agendamento',
+        subtitle: '',
+        type: 'group',
+        icon: '',
+        children: [
+            {
+                id: 'trigger-component',
+                title: 'report',
+                translate: 'Agendar Remessa ',
+                type: 'item',
+                icon: 'heroicons-outline:document-report',
+                url: 'agendar',
+            },
+            {
+                id: 'trigger-component',
+                title: 'balance',
+                translate: 'Aprovação Remessa ',
+                type: 'item',
+                icon: 'heroicons-outline:currency-dollar',
+                url: 'aprovacao-remessa',
+            },
+        ]
+    },
 
     {
         id: 'Financeiro',
