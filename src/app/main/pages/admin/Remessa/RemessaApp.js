@@ -4,13 +4,12 @@ import { Card, Select, TextField, Typography, MenuItem, InputLabel, InputAdornme
 import { Box } from '@mui/system';
 import { Controller, useForm } from 'react-hook-form';
 import { FormControl, Autocomplete } from "@mui/material";
-import DateRangePicker from 'rsuite/DateRangePicker';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import {DatePicker} from 'rsuite';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import ptBR from 'date-fns/locale/pt-BR';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { NumericFormat } from 'react-number-format';
-import { getFavorecidos, setListTransactions, setRelease, setSelectedDate, setSelectedPeriod, setSelectedYear } from 'app/store/releaseSlice';
+import { showMessage } from 'app/store/fuse/messageSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { AuthContext } from 'src/app/auth/AuthContext';
 import dayjs from 'dayjs';
@@ -20,7 +19,6 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { makeStyles } from '@mui/styles';
 // import { styling } from './customStyles';
 import accounting from 'accounting';
-import { showMessage } from 'app/store/fuse/messageSlice';
 
 
 
@@ -85,14 +83,10 @@ function RemessaApp() {
 
   const { reset, handleSubmit, setValue, control, getValues, trigger, clearErrors } = useForm({
     defaultValues: {
-      name: [],
-      dateRange: [],
-      valorMax: '',
-      valorMin: '',
-      weekdays: [],
-      approvalStatus: [],
-      status: []
+        name:[],
+        consorcioName: []
     }
+
   });
       const dispatch = useDispatch()
 
@@ -133,7 +127,7 @@ function RemessaApp() {
       
 
     const handleSelection = (field, newValue) => {
-        setSelected(newValue.length > 0 ? field : null);
+        setSelected(newValue?.length > 0 ? field : null);
         if (field === 'consorcioName') {
             setSelectedConsorcios(newValue);
         }
@@ -146,8 +140,43 @@ function RemessaApp() {
             setValue(field, newValue.map(item => item.value ?? item.label));
         } else {
             setValue(field, newValue ? (newValue.value ?? newValue.label) : '');
+            if(field === 'paymentType'){
+                setSelectedWeekDays(newValue?.label)
+            }
         }
     };
+
+      const onSubmit = (data) => {
+          const hasNameOrConsorcio = data.name.length > 0 || data.consorcioName.length > 0;
+            if (!hasNameOrConsorcio) {
+              dispatch(
+                showMessage({
+                  message: "Erro na busca, selecione favorecidos ou consórcios | modais.",
+                }),
+              );
+            } else {
+              setIsLoading(true)
+        
+            //   dispatch(handleReportInfo(data, reportType))
+            //     .then((response) => {
+            //       setIsLoading(false)
+            //     })
+            //     .catch((error) => {
+            //       dispatch(showMessage({ message: 'Erro na busca, verifique os campos e tente novamente.' }))
+            //       setIsLoading(false)
+            //     });
+            }
+    
+
+            
+      };
+       const handleValueChange = (name, value) => {
+        console.log(name,value)
+          };
+
+       const valueProps = {
+              endAdornment: <InputAdornment position='end'>Dias</InputAdornment>
+          }
 
 
     return (
@@ -165,8 +194,7 @@ function RemessaApp() {
                             name="Personal"
                             noValidate
                             className="flex flex-col justify-center w-full mt-32"
-                            // onSubmit={handleSubmit(onSubmit)}
-                            // onKeyDown={}
+                            onSubmit={handleSubmit(onSubmit)}
                         >
                                <Box className="flex gap-10 flex-wrap mb-20">
                             
@@ -229,24 +257,7 @@ function RemessaApp() {
                                                   />
                                                 )}
                                               />
-                                <Autocomplete
-                                    id="weekday"
-                                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                                    getOptionLabel={(option) => option.label}
-                                    options={weekdays}
-                                    onChange={(_, newValue) => handleSelection('weekday', newValue)}
-                                    renderInput={(params) => (
-                                        <TextField
-                                            {...params}
-                                            label="Agendado Para"
-                                            variant="outlined"
-                                            InputProps={{
-                                                ...params.InputProps,
-                                                endAdornment: <>{params.InputProps.endAdornment}</>,
-                                            }}
-                                        />
-                                    )}
-                                />
+                      
                             
                                  
                             
@@ -320,8 +331,172 @@ function RemessaApp() {
                                         />
                                     )}
                                 />
-
                                           </Box>
+                                          {selectedWeekdays?.includes('Único') ?
+                                    <Box className="flex gap-10 flex-wrap mb-20">
+                                    <Controller
+                                        name="toPay"
+                                        control={control}
+                                        render={({ field }) =>
+                                            <NumericFormat
+                                                {...field}
+                                                // defaultValue={releaseData.algoritmo}
+                                                labelId="algoritmo-label"
+                                                thousandSeparator={'.'}
+                                                decimalSeparator={','}
+                                                className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                                                fixedDecimalScale
+                                                decimalScale={2}
+                                                label="Valor a ser pago"
+                                                customInput={TextField}
+                                                InputProps={valueProps}
+                                                onValueChange={(values, sourceInfo) => {
+                                                    if (sourceInfo.event !== undefined && sourceInfo.event.target.value !== '') {
+                                                        const { name } = sourceInfo.event.target;
+                                                        handleValueChange(name, values.value);
+                                                    }
+                                                }}
+                                            />
+                                        }
+                                    />
+                                          
+                                                            <Controller
+                                                              name="dateRange"
+                                                              control={control}
+                                                              render={({ field }) => (
+                                                                <DatePicker
+                                                                  {...field}
+                                                                  id="custom-date-input"
+                                                                  showOneCalendar
+                                                                  showHeader={false}
+                                                                  placement="auto"
+                                                                  placeholder="Selecionar Data"
+                                                                  format="dd/MM/yy"
+                                                                  character=" - "
+                                                                    className="custom-date-range-picker"
+                                                                />)}
+                                                            />
+                                                         
+                                    <TextField
+                                        id="reason"
+                                        label="Motivo Pagamento"
+                                        variant="outlined"
+                                        className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                                        onChange={(e) => setValue('reason', e.target.value)}
+                                    />
+                                                       
+                                                          </Box> 
+                                                          : selectedWeekdays?.includes('Recorrente') ? 
+                                    <Box className="flex gap-10 flex-wrap mb-20">
+                                          <Controller
+                                            name="intervaloDias"
+                                            control={control}
+                                            render={({ field }) =>
+                                              <NumericFormat
+                                                {...field}
+                                                labelId="algoritmo-label"
+                                                className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                                                label="Pagar a cada"
+                                                customInput={TextField}
+                                                InputProps={valueProps}
+                                                onValueChange={(values, sourceInfo) => {
+                                                  if (sourceInfo.event !== undefined && sourceInfo.event.target.value !== '') {
+                                                    const { name } = sourceInfo.event.target;
+                                                    handleValueChange(name, values.value);
+                                                  }
+                                                }}
+                                              />
+                                            }
+                                          />
+                                    <Autocomplete
+                                        id="weekday"
+                                        multiple
+                                        className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                                        getOptionLabel={(option) => option.label}
+                                        options={weekdays}
+                                        onChange={(_, newValue) => handleSelection('weekday', newValue)}
+                                        renderInput={(params) => (
+                                            <TextField
+                                                {...params}
+                                                label="Agendado Para"
+                                                variant="outlined"
+                                                InputProps={{
+                                                    ...params.InputProps,
+                                                    endAdornment: <>{params.InputProps.endAdornment}</>,
+                                                }}
+                                            />
+                                        )}
+                                    />
+
+                      <Box>
+                        <p className='text-[rgba(0, 0, 0, 0.54)]'>Dias a serem pagos</p>
+                        <Controller
+                          name="weekdays"
+                          control={control}
+                          defaultValue={[]}
+                          render={({ field }) => (
+                            <Box display="flex" gap={1}>
+                              {[
+                                { label: "Dom", value: "sun" },
+                                { label: "Seg", value: "mon" },
+                                { label: "Ter", value: "tue" },
+                                { label: "Qua", value: "wed" },
+                                { label: "Qui", value: "thu" },
+                                { label: "Sex", value: "fri" },
+                                { label: "Sab", value: "sat" },
+                              ].map((day) => {
+                                const isSelected = field.value.includes(day.value);
+                                return (
+                                  <Box
+                                    key={day.value}
+                                    onClick={() => {
+                                      const newValue = isSelected
+                                        ? field.value.filter((v) => v !== day.value)
+                                        : [...field.value, day.value];
+                                      field.onChange(newValue);
+                                    }}
+                                    sx={{
+                                      borderRadius: "6px",
+                                      backgroundColor: isSelected ? "#2AD705" : "#ddd",
+                                      color: isSelected ? "#fff" : "#000",
+                                      height: 40,
+                                      width: 40,
+                                      lineHeight: "40px",
+                                      textAlign: "center",
+                                      cursor: "pointer",
+                                      userSelect: "none",
+                                    }}
+                                  >
+                                    {day.label}
+                                  </Box>
+                                );
+                              })}
+                            </Box>
+                          )}
+                        />
+                      </Box>
+                   
+
+
+                                               <Controller
+                                                              name="time"
+                                                              control={control}
+                                                              render={({ field }) => (
+                                                                <DatePicker
+                                                                  {...field}
+                                                                  id="custom-date-input"
+                                                                  showOneCalendar
+                                                                  showHeader={false}
+                                                                  placement="auto"
+                                                                  placeholder="Selecionar Horário"
+                                                                      format="HH:mm"
+                                                                  character=" - "
+                                                                    className="custom-date-range-picker"
+                                                                />)}
+                                                            />
+                                                            </Box>
+                                                          
+                                                          : <></>}
                             
                    
                             <div className='flex justify-end mt-24'>
