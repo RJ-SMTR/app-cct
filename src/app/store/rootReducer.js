@@ -7,6 +7,7 @@ import extract from './extractSlice'
 import admin from './adminSlice'
 import release from './releaseSlice'
 import report from './reportSlice'
+import automation from './automationSlice'
 
 
 const createReducer = (asyncReducers) => (state, action) => {
@@ -19,6 +20,7 @@ const createReducer = (asyncReducers) => (state, action) => {
     admin,
     release,
     report,
+    automation,
     ...asyncReducers,
   });
 

@@ -19,6 +19,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { makeStyles } from '@mui/styles';
 // import { styling } from './customStyles';
 import accounting from 'accounting';
+import { bookPayment, getBookings } from 'app/store/automationSlice';
+import { TableRemessa } from './components/TableRemessa';
 
 
 
@@ -38,13 +40,7 @@ function RemessaApp() {
   
   const [selectedWeekdays, setSelectedWeekDays] = useState([])
 
-    const consorciosStatusBase = [
-        { label: 'Todos' },
-        { label: 'A pagar' },
-        { label: 'Pago' },
-        { label: 'Aguardando Pagamento' },
-        { label: 'Erro' },
-    ];
+
     const weekdays = [
         { label: 'Segunda-feira' },
         { label: 'Terça-feira' },
@@ -54,29 +50,19 @@ function RemessaApp() {
   
     ];
 
-    const consorciosStatus = selectedEspecificos.includes("Pendentes")
-        ? [{ label: "Erro" }]
-        : consorciosStatusBase;
-
-    const específicos = [
-        { label: 'Todos' },
-        { label: 'Eleição' },
-        { label: 'Desativados' },
-        { label: 'Pendentes' }
-    ];
 
 
     const consorcios = [
         { label: 'Todos', value: "Todos" },
-        { label: 'Internorte', value: "Internorte" },
-        { label: 'Intersul', value: "Intersul" },
-        { label: 'MobiRio', value: "MobiRio" },
-        { label: 'Santa Cruz', value: "Santa Cruz" },
-        { label: 'STPC', value: "STPC", disabled: selected === 'name' ? true : false },
-        { label: 'STPL', value: "STPL", disabled: selected === 'name' ? true : false },
-        { label: 'Transcarioca', value: "Transcarioca" },
-        { label: 'VLT', value: "VLT" },
-        { label: 'TEC', value: "TEC", disabled: selected === 'name' ? true : false }
+      { label: 'Internorte', value: 2079 },
+      { label: 'Intersul', value: 2078 },
+      { label: 'MobiRio', value: 2081 },
+      { label: 'Santa Cruz', value: 2082 },
+      { label: 'STPC', value: 2199, disabled: selected === 'name' ? true : false },
+      { label: 'STPL', value: 2198, disabled: selected === 'name' ? true : false },
+      { label: 'Transcarioca', value: 2080 },
+      { label: 'VLT', value: 2077 },
+      { label: 'TEC', value: 2200, disabled: selected === 'name' ? true : false }
 
     ];
 
@@ -98,6 +84,7 @@ function RemessaApp() {
       
         useEffect(() => {
           fetchUsers()
+          dispatch(getBookings())
         }, []);
         useEffect(() => {
           if (userList && userList.length > 0) {
@@ -106,7 +93,6 @@ function RemessaApp() {
               value: {
                 cpfCnpj: user.cpfCnpj,
                 permitCode: user.permitCode,
-      
                 fullName: user.fullName,
                 userId: user.id
       
@@ -137,10 +123,10 @@ function RemessaApp() {
 
     const handleAutocompleteChange = (field, newValue) => {
         if (Array.isArray(newValue)) {
-            setValue(field, newValue.map(item => item.value ?? item.label));
+            setValue(field, newValue.map(item => item.value.userId));
         } else {
             setValue(field, newValue ? (newValue.value ?? newValue.label) : '');
-            if(field === 'paymentType'){
+            if(field === 'tipoPagamento'){
                 setSelectedWeekDays(newValue?.label)
             }
         }
@@ -151,31 +137,35 @@ function RemessaApp() {
             if (!hasNameOrConsorcio) {
               dispatch(
                 showMessage({
-                  message: "Erro na busca, selecione favorecidos ou consórcios | modais.",
+                  message: "Erro no agendamento, selecione favorecidos ou consórcios",
                 }),
               );
             } else {
               setIsLoading(true)
         
-            //   dispatch(handleReportInfo(data, reportType))
-            //     .then((response) => {
-            //       setIsLoading(false)
-            //     })
-            //     .catch((error) => {
-            //       dispatch(showMessage({ message: 'Erro na busca, verifique os campos e tente novamente.' }))
-            //       setIsLoading(false)
-            //     });
+              dispatch(bookPayment(data))
+                .then((response) => {
+                  setIsLoading(false)
+                })
+                .catch((error) => {
+                  dispatch(showMessage({ message: 'Erro no agendamento, verifique os campos e tente novamente.' }))
+                  setIsLoading(false)
+                });
             }
     
 
             
       };
+      
        const handleValueChange = (name, value) => {
         console.log(name,value)
           };
 
        const valueProps = {
               endAdornment: <InputAdornment position='end'>Dias</InputAdornment>
+          }
+       const valuePropsValor = {
+              startAdornment: <InputAdornment position='start'>R$</InputAdornment>
           }
 
 
@@ -186,9 +176,9 @@ function RemessaApp() {
                 <Box className='flex flex-col  justify-around'>
                     <Card className="w-full md:mx-9 p-24 relative mt-32">
                         <header className="flex justify-between items-center">
-                            <h1 className="font-semibold">
-                                Novo Registro
-                            </h1>
+                            <h2 className="font-semibold">
+                                Novo Agendamento
+                            </h2>
                         </header>
                         <form
                             name="Personal"
@@ -264,7 +254,7 @@ function RemessaApp() {
                                           </Box>
                             <Box className="flex gap-10 flex-wrap mb-20">
                                 <Autocomplete
-                                    id="weekday"
+                                    id="tipoPagamento"
                                     className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
                                     getOptionLabel={(option) => option.label}
                                     filterSelectedOptions
@@ -273,7 +263,7 @@ function RemessaApp() {
                                         {label: 'Único'}
                                     ]}
                                  
-                                    onChange={(_, newValue) => handleSelection('paymentType', newValue)}
+                                    onChange={(_, newValue) => handleSelection('tipoPagamento', newValue)}
                                     renderInput={(params) => (
                                         <TextField
                                             {...params}
@@ -310,7 +300,7 @@ function RemessaApp() {
                                     )}
                                 />
                                 <Autocomplete
-                                    id="approvalStatus"
+                                    id="aprovacao"
                                     className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
                                     getOptionLabel={(option) => option.label}
                                     filterSelectedOptions
@@ -318,7 +308,7 @@ function RemessaApp() {
                                         {label: 'Necessita Aprovação'},
                                         {label: 'Livre de Aprovação'}
                                     ]}
-                                    onChange={(_, newValue) => handleSelection('approvalStatus', newValue)}
+                                    onChange={(_, newValue) => handleSelection('aprovacao', newValue)}
                                     renderInput={(params) => (
                                         <TextField
                                             {...params}
@@ -335,7 +325,7 @@ function RemessaApp() {
                                           {selectedWeekdays?.includes('Único') ?
                                     <Box className="flex gap-10 flex-wrap mb-20">
                                     <Controller
-                                        name="toPay"
+                                        name="valorPagamentoUnico"
                                         control={control}
                                         render={({ field }) =>
                                             <NumericFormat
@@ -349,7 +339,7 @@ function RemessaApp() {
                                                 decimalScale={2}
                                                 label="Valor a ser pago"
                                                 customInput={TextField}
-                                                InputProps={valueProps}
+                                            InputProps={valuePropsValor}
                                                 onValueChange={(values, sourceInfo) => {
                                                     if (sourceInfo.event !== undefined && sourceInfo.event.target.value !== '') {
                                                         const { name } = sourceInfo.event.target;
@@ -361,7 +351,7 @@ function RemessaApp() {
                                     />
                                           
                                                             <Controller
-                                                              name="dateRange"
+                                                              name="dataPagamentoUnico"
                                                               control={control}
                                                               render={({ field }) => (
                                                                 <DatePicker
@@ -378,7 +368,7 @@ function RemessaApp() {
                                                             />
                                                          
                                     <TextField
-                                        id="reason"
+                                        id="motivoPagamentoUnico"
                                         label="Motivo Pagamento"
                                         variant="outlined"
                                         className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
@@ -409,12 +399,11 @@ function RemessaApp() {
                                             }
                                           />
                                     <Autocomplete
-                                        id="weekday"
-                                        multiple
+                                        id="diaSemana"
                                         className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
                                         getOptionLabel={(option) => option.label}
                                         options={weekdays}
-                                        onChange={(_, newValue) => handleSelection('weekday', newValue)}
+                                        onChange={(_, newValue) => handleSelection('diaSemana', newValue)}
                                         renderInput={(params) => (
                                             <TextField
                                                 {...params}
@@ -479,7 +468,7 @@ function RemessaApp() {
 
 
                                                <Controller
-                                                              name="time"
+                                                              name="horario"
                                                               control={control}
                                                               render={({ field }) => (
                                                                 <DatePicker
@@ -507,6 +496,20 @@ function RemessaApp() {
 
 
                         </form>
+
+                    </Card>
+                </Box>
+                <br />
+            </div>
+            <div className="p-24 pt-10">
+                <Box className='flex flex-col  justify-around'>
+                    <Card className="w-full md:mx-9 p-24 relative mt-16">
+                        <header className="flex justify-between items-center">
+                            <h3 className="font-semibold">
+                                Agendamentos
+                            </h3>
+                        </header>
+                        <TableRemessa/>
 
                     </Card>
                 </Box>
