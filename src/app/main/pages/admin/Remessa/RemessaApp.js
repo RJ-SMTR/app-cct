@@ -123,7 +123,11 @@ function RemessaApp() {
 
     const handleAutocompleteChange = (field, newValue) => {
         if (Array.isArray(newValue)) {
+          if (field === 'consorcioName') {
+            setValue(field, newValue.map(item => item.value));
+          } else {
             setValue(field, newValue.map(item => item.value.userId));
+          }
         } else {
             setValue(field, newValue ? (newValue.value ?? newValue.label) : '');
             if(field === 'tipoPagamento'){

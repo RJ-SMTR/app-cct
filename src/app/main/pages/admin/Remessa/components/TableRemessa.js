@@ -1,264 +1,333 @@
-import React, { useEffect, useState } from 'react'
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import TablePagination from '@mui/material/TablePagination';
-import Typography from '@mui/material/Typography';
-import { useDispatch, useSelector } from 'react-redux';
-import { Badge} from '@mui/material';
-import { Link, redirect } from 'react-router-dom';
-import { getUser, getUserByInfo, getUserByInvite } from 'app/store/adminSlice';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import { useForm, Controller } from 'react-hook-form';
-import Modal from '@mui/material/Modal';
-import Select from '@mui/material/Select';
-import TextField from '@mui/material/TextField';
-import MenuItem from '@mui/material/MenuItem';
-import { showMessage } from 'app/store/fuse/messageSlice';
-import { format } from 'date-fns';
+import React, { useEffect, useState } from 'react';
+import { utils, writeFile as writeFileXLSX } from 'xlsx';
 
-const style = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 400,
-    borderRadius: '.5rem',
-    bgcolor: 'background.paper',
-    boxShadow: 24,
-    p: 4,
+import {
+    DataGrid,
+    GridCsvExportMenuItem,
+    GridPrintExportMenuItem,
+    GridToolbarContainer,
+    GridToolbarExport,
+    GridToolbarExportContainer,
+    GridToolbarQuickFilter,
+    useGridApiRef
+} from '@mui/x-data-grid';
+import accounting from 'accounting';
+import {
+    Box,
+    MenuItem,
+    Paper,
+    Button,
+    IconButton,
+    FormGroup,
+    Menu,
+    InputLabel,
+    Select,
+    FormControlLabel,
+    Checkbox,
+    Badge,
+    FormControl
+} from '@mui/material';
+import dayjs from 'dayjs';
+import { ptBR as pt } from '@mui/x-data-grid';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import { parseISO, format } from 'date-fns';
+import { useDispatch, useSelector } from 'react-redux';
+import JwtService from 'src/app/auth/services/jwtService';
+import { useForm } from 'react-hook-form';
+import { getData, selectedYear, setSelectedDate, setSelectedYear } from 'app/store/releaseSlice';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import ptBR from 'date-fns/locale/pt-BR';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
+
+const locale = pt;
+
+const predefinedFilters = [
+    { label: 'Todos', filterFn: () => true },
+    { label: 'CONSORCIO INTERSUL TRANSPORTES', filterFn: (row) => row.beneficiarioUsuario.fullName.includes('INTERSUL') },
+    { label: 'CONSORCIO INTERNORTE TRANSPORTES', filterFn: (row) => row.beneficiarioUsuario.fullName.includes('INTERNORTE') },
+    { label: 'CONSORCIO TRANSCARIOCA DE TRANSPORTES', filterFn: (row) => row.beneficiarioUsuario.fullName.includes('TRANSCARIOCA') },
+    { label: 'CONSORCIO SANTA CRUZ TRANSPORTES', filterFn: (row) => row.beneficiarioUsuario.fullName.includes('SANTA CRUZ') },
+    { label: 'MOBIRIO', filterFn: (row) => row.beneficiarioUsuario.fullName.includes('MUNICIPAL') },
+    { label: 'CONCESSIONARIA DO VLT CARIOCA S.A.', filterFn: (row) => row.beneficiarioUsuario.fullName.includes('VLT') },
+];
+
+const predefinedFiltersStatus = [
+    { label: 'Todos', filterFn: () => true },
+    { label: 'Pago', filterFn: (row) => row.statusPago.includes('Pago') },
+    { label: 'Erro', filterFn: (row) => row.statusPago.includes('Não Pago') },
+];
+
+
+
+const columns = [
+    { field: 'beneficiarioUsuario', headerName: 'Beneficiário', width: 380, editable: false, cellClassName: 'noWrapName', renderCell: (params) => <p>{params?.value.fullName}</p> },
+    { field: 'valorPagamentoUnico', headerName: 'Valor a ser pago', width: 145, editable: false, renderCell: (params) => <p >{params.value ? formatter.format(params?.value) : ''}</p> },
+    { field: 'dataPagamentoUnico', headerName: 'Data Pagamento', width: 145, editable: false,  renderCell: (params) => <p >{params.value ? format(new Date(params?.value), 'dd/MM/yyyy'): ''}</p> },
+    { field: 'diaSemana', headerName: 'Dia da semana', width: 180, editable: false },
+    { field: 'tipoPagamento', headerName: 'Tipo Pagamento', width: 180, editable: false },
+    {
+        field: 'status',
+        headerName: 'Status de Aprovação',
+        width: 200,
+        editable: false,
+        renderCell: (params) => (
+            <CustomBadge
+                status={params.value}
+                aprovacao={params.row.aprovacao}
+            />
+        )
+    },
+    { field: 'ocorrencia', headerName: 'Ações', width: 150, editable: false, cellClassName: 'noWrapName' },
+];
+
+const formatter = new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+});
+
+const CustomBadge = ({ status, aprovacao }) => {
+
+    const getStatusLabel = () => {
+        if (aprovacao === false) return "Livre de aprovação";
+        if (status === true) return "Aprovado";
+        if (status === false) return "Não Aprovado";
+        return "";
+    };
+
+    const getColor = () => {
+        if (aprovacao === false) return "info";
+        return status ? "success" : "warning";
+    };
+
+    return (
+        <Badge
+            badgeContent={getStatusLabel()}
+            color={getColor()}
+        />
+    );
 };
 
 export function TableRemessa() {
-    const bookings = useSelector((state) => state.automation.bookings)
     const dispatch = useDispatch()
-    const [page, setPage] = useState(0)
-    const [rowsPerPage, setRowsPerPage] = useState(50)
-    const [open, setOpen] = useState(false)
-    const [filtered, setFiltered] = useState(false)
+    const selectedDate = useSelector(state => state.release.selectedDate)
+    const selectedYear = useSelector(state => state.release.selectedYear)
+    const bookings = useSelector((state) => state.automation.bookings)
 
-
-  
-    const handleOpen = () => setOpen(true);
-    const handleClose = () => setOpen(false);
-
-
-    const { control, handleSubmit, formState: { errors, dirtyFields, isValid }, reset } = useForm();
-
-    const formatter = new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
+    const [rowModesModel, setRowModesModel] = useState({});
+    const [rows, setRows] = useState([]);
+    const [date, setDate] = useState([]);
+    const [checkedFilters, setCheckedFilters] = useState(new Array(predefinedFilters.length).fill(false));
+    const [checkedFiltersStatus, setCheckedFiltersStatus] = useState(new Array(predefinedFiltersStatus.length).fill(false));
+    const [loading, setLoading] = useState(false);
+    const [consorcioAnchorEl, setConsorcioAnchorEl] = useState(null);
+    const [statusAnchorEl, setStatusAnchorEl] = useState(null);
+    const openConsorcioMenu = Boolean(consorcioAnchorEl);
+    const openStatusMenu = Boolean(statusAnchorEl);
+    const apiRef = useGridApiRef();
+    const [errors, setErrors] = useState({
+        mes: false,
+        periodo: false,
     });
+    const { register } = useForm()
 
-    const onSubmit = (data) => {
-        const { selectedQuery, query, inviteStatus } = data;
 
-        dispatch(getUserByInfo(selectedQuery, query, inviteStatus))
-                .then((response) => {
-                    handleClose()
-                    setFiltered(true)
-                    setPage(0)
-                    reset();
-                }).catch((error) => {
-                    if (error.response.data.status === 401) {
-                        dispatch(showMessage({ message: 'Erro de autenticação. Faça login novamente' }))
-                    } else {
-                        dispatch(showMessage({ message: 'Houve um erro desconhecido, tente novamente mais tarde.' }));
-                    }
-                })
-    }
+   
+    useEffect(() => {
+        setRows(bookings)
 
+    },[bookings])
+
+
+
+
+ 
+
+
+
+
+ 
+    const handleCheckboxChange = (index) => {
+        const newCheckedFilters = [...checkedFilters];
+        newCheckedFilters[index] = !newCheckedFilters[index];
+        setCheckedFilters(newCheckedFilters);
+    };
+
+    const handleCheckboxChangeStatus = (index) => {
+        const newCheckedFiltersStatus = [...checkedFiltersStatus];
+        newCheckedFiltersStatus[index] = !newCheckedFiltersStatus[index];
+        setCheckedFiltersStatus(newCheckedFiltersStatus);
+    };
+
+    const applyFilters = () => {
+        const activeFilters = predefinedFilters
+            .filter((_, i) => checkedFilters[i])
+            .map(({ filterFn }) => filterFn);
+
+        const activeFiltersStatus = predefinedFiltersStatus
+            .filter((_, i) => checkedFiltersStatus[i])
+            .map(({ filterFn }) => filterFn);
+
+        if (activeFilters.length === 0 && activeFiltersStatus.length === 0) {
+            return rows;
+        }
+
+        return rows.filter(row =>
+            (activeFilters.length === 0 || activeFilters.some(filterFn => filterFn(row))) &&
+            (activeFiltersStatus.length === 0 || activeFiltersStatus.some(filterFn => filterFn(row)))
+        );
+    };
+
+    const handleConsorcioClick = (event) => {
+        setConsorcioAnchorEl(event.currentTarget);
+    };
+
+    const handleStatusClick = (event) => {
+        setStatusAnchorEl(event.currentTarget);
+    };
+
+    const handleCloseConsorcioMenu = () => {
+        setConsorcioAnchorEl(null);
+    };
+
+    const handleCloseStatusMenu = () => {
+        setStatusAnchorEl(null);
+    };
+    const handleYearChange = (newValue) => {
+        dispatch(setSelectedYear(newValue));
+    };
+
+
+    const filteredRows = applyFilters();
+
+    
   
-    function removeFilters(){
-            dispatch(getUser())
-            setFiltered(false)
-    }
 
-    const handleChangePage = (event, newPage) => {
-        setPage(newPage)
-    }
 
-    const handleChangeRowsPerPage = (event) => {
-        setRowsPerPage(+event.target.value)
-        setPage(0)
-    }
+
+
+    const ToolBarCustom = () => (
+        <GridToolbarContainer className='w-[100%] flex justify-between my-20'>
+            <div className="flex items-center mb-4">
+
+                <Box className="flex items-center">
+                    <p>Filtrar por consórcio</p>
+                    <IconButton
+                        id="consorcio-filter-button"
+                        aria-controls={openConsorcioMenu ? 'consorcio-menu' : undefined}
+                        aria-haspopup="true"
+                        aria-expanded={openConsorcioMenu ? 'true' : undefined}
+                        onClick={handleConsorcioClick}
+                    >
+                        <FilterListIcon />
+                    </IconButton>
+                    <Menu
+                        id="consorcio-menu"
+                        anchorEl={consorcioAnchorEl}
+                        open={openConsorcioMenu}
+                        onClose={handleCloseConsorcioMenu}
+                    >
+                        <FormGroup>
+                            {predefinedFilters.map((filter, index) => (
+                                <MenuItem key={filter.label}>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={checkedFilters[index]}
+                                                onChange={() => handleCheckboxChange(index)}
+                                            />
+                                        }
+                                        label={filter.label}
+                                    />
+                                </MenuItem>
+                            ))}
+                        </FormGroup>
+                    </Menu>
+                </Box>
+                <Box className="flex items-center">
+                    <p>Filtrar por status</p>
+                    <IconButton
+                        id="status-filter-button"
+                        aria-controls={openStatusMenu ? 'status-menu' : undefined}
+                        aria-haspopup="true"
+                        aria-expanded={openStatusMenu ? 'true' : undefined}
+                        onClick={handleStatusClick}
+                    >
+                        <FilterListIcon />
+                    </IconButton>
+                    <Menu
+                        id="status-menu"
+                        anchorEl={statusAnchorEl}
+                        open={openStatusMenu}
+                        onClose={handleCloseStatusMenu}
+                    >
+                        <FormGroup>
+                            {predefinedFiltersStatus.map((filter, index) => (
+                                <MenuItem key={filter.label}>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={checkedFiltersStatus[index]}
+                                                onChange={() => handleCheckboxChangeStatus(index)}
+                                            />
+                                        }
+                                        label={filter.label}
+                                    />
+                                </MenuItem>
+                            ))}
+                        </FormGroup>
+                    </Menu>
+                </Box>
+            </div>
+            <div className='flex gap-10'>
+                <GridToolbarQuickFilter />
+               
+            </div>
+
+
+        </GridToolbarContainer>
+    );
+
+ 
 
     return (
+
         <>
-            <div>
-                    {/* <div className="flex flex-row justify-between">
-                        <Typography className="mr-16 text-lg font-medium tracking-tight leading-6 truncate">
-                            Usuários
-                        </Typography>
+                <Box className="w-full md:mx-9 p-24 relative mt-32">
 
-                   <div className='flex'>
-                    {filtered ? <Button className='mx-4' onClick={() => removeFilters()}>
-                        Remover filtros
-                    </Button> : <></>}
-
-                            <Button variant="contained"
-                                color="secondary" onClick={handleOpen}>Pesquisar usuários</Button>
-                   </div> */}
-                     
-                    {/* </div> */}
-                    {/* <TablePagination
-                        component="div"
-                        count={bookings.length}
-                        rowsPerPage={rowsPerPage}
-                        page={page}
-                        onPageChange={handleChangePage}
-                        onRowsPerPageChange={handleChangeRowsPerPage}
-                        labelRowsPerPage="Linhas por página"
-                        labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-                        rowsPerPageOptions={[10, 50, 100, 250, 500, 1000]}
-                    /> */}
-                    <div style={{ height: '30vh', overflow: 'auto', marginTop: '24px' }}>
-                        <Table className="w-full min-w-full" >
-                            <TableHead>
-                              <TableRow>
-                                  <TableCell>
-                                      <Typography
-                                         
-                                          className="font-semibold  whitespace-nowrap"
-                                      >
-                                          Beneficiário
-                                      </Typography>
-                                  </TableCell>
-                                  <TableCell>
-                                      <Typography
-                                         
-                                          className="font-semibold  whitespace-nowrap"
-                                      >
-                                          Valor a ser pago
-                                      </Typography>
-                                  </TableCell>
-                                  <TableCell>
-                                      <Typography
-                                         
-                                          className="font-semibold  whitespace-nowrap"
-                                      >
-                                          Data Pagamento
-                                      </Typography>
-                                  </TableCell>
-                                  <TableCell>
-                                      <Typography
-                                         
-                                          className="font-semibold  whitespace-nowrap"
-                                      >
-                                          Dia da semana
-                                      </Typography>
-                                  </TableCell>
-                                  <TableCell>
-                                      <Typography
-                                         
-                                          className="font-semibold  whitespace-nowrap"
-                                      >
-                                        Pagamento Recorrente
-                                      </Typography>
-                                  </TableCell>
-                                  <TableCell>
-                                      <Typography
-                                         
-                                          className="font-semibold  whitespace-nowrap"
-                                      >
-                                        Status de aprovação
-                                      </Typography>
-                                  </TableCell>
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {bookings.length > 0 ? bookings.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
-                                    const emailStatus = (i) => {
-                                        switch (i.status) {
-                                            case true:
-                                                return 'Aprovado';
-                                                break;
-                                            case false:
-                                                return 'Não Aprovado';
-                                                break;
-                                        }
-                                    }
-                                    return <TableRow >
-                                        <TableCell component="th" scope="row">
-                                            <Typography className="">
-                                                {i.beneficiarioUsuario.fullName}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell component="th" scope="row">
-                                            <Typography className="whitespace-nowrap">
-                                                {i.valorPagamentoUnico ? formatter.format(i.valorPagamentoUnico) : ''}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell component="th" scope="row">
-                                            <Typography className="whitespace-nowrap">
-                                               
-                                                {i.dataPagamentoUnico ?format(new Date(i.dataPagamentoUnico), 'dd/MM/yyyy') : ''}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell component="th" scope="row">
-                                            <Typography className="whitespace-nowrap">
-                                                {i.diaSemana}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell component="th" scope="row">
-                                            <Typography className="whitespace-nowrap">
-                                                {i.tipoPagamento}
-                                            </Typography>
-                                        </TableCell>
-                                        {i.aprovacao ?
-                                            <TableCell component="th" scope="row">
-                                                <Typography className="whitespace-nowrap">
-                                                    <Badge
-                                                        className='top-[5px] mt-10'
-                                                        color={i.status ? 'success' : 'warning'}
-                                                        badgeContent={emailStatus(i)}
-                                                    />
-                                                </Typography>
-                                            </TableCell> :
-                                            <TableCell component="th" scope="row">
-                                                <Typography className="whitespace-nowrap">
-                                                    <Badge
-                                                        className='top-[5px] mt-10'
-                                                        color={'success'}
-                                                        badgeContent={'Livre de aprovação'}
-                                                    />
-                                                </Typography>
-                                            </TableCell> 
-                                        }
-                                        <TableCell component="th" scope="row">
-                                            <Typography className="whitespace-nowrap flex items-center">
-                                                <Link to={`/admin/user/${i.id}`} aria-disabled className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10'>
-                                                    Aprovar
-                                                </Link>
-                                            </Typography>
-                                        </TableCell>
-                                    </TableRow>}) : <>
-                               <Typography variant='h6' component="h2">
-                                Não obtivemos resultados para esta consulta
-                               </Typography>
-                               </> }
-                            </TableBody>
-                        </Table>
+                    <div style={{ height: '65vh', width: '100%', }}>
+                        <DataGrid
+                            id='data-table'
+                            localeText={locale.components.MuiDataGrid.defaultProps.localeText}
+                            rows={filteredRows}
+                            disableColumnMenu
+                            disableColumnSelector
+                            disableDensitySelector
+                            disableMultipleColumnsFiltering
+                            apiRef={apiRef}
+                            columns={columns}
+                            slots={{ toolbar: ToolBarCustom }}
+                            loading={loading}
+                            rowHeight={42}
+                            slotProps={{
+                                toolbar: {
+                                    showQuickFilter: true,
+                                },
+                            }}
+                            rowModesModel={rowModesModel}
+                            onRowEditStop={(params, event) => {
+                                event.defaultMuiPrevented = true;
+                            }}
+                            componentsProps={{
+                                toolbar: { setRows, setRowModesModel },
+                            }}
+                        />
                     </div>
-                
-                    <TablePagination
-                        component="div"
-                        count={bookings.length}
-                        rowsPerPage={rowsPerPage}
-                        page={page}
-                        onPageChange={handleChangePage}
-                        onRowsPerPageChange={handleChangeRowsPerPage}
-                        labelRowsPerPage="Linhas por página"
-                        labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-                        rowsPerPageOptions={[ 50, 100, 250, 500, 1000]}
-                    />
-            </div>
-          
+
+                </Box>
         </>
-        
     );
 }
