@@ -30,6 +30,7 @@ const jwtServiceConfig = {
   odpAnteriores: '/ordem-pagamento/transacoes-dias-anteriores',
   extrato: '/cnab/relatorio/extrato/',
   agendamento: '/agendamentoPagamento/',
+  aprovacao: '/aprovacaoPagamento/',
   
 
 };

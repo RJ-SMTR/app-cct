@@ -3,14 +3,13 @@ import { utils, writeFile as writeFileXLSX } from 'xlsx';
 
 import {
     DataGrid,
-    GridCsvExportMenuItem,
-    GridPrintExportMenuItem,
+    GridActionsCellItem,
     GridToolbarContainer,
-    GridToolbarExport,
-    GridToolbarExportContainer,
     GridToolbarQuickFilter,
     useGridApiRef
 } from '@mui/x-data-grid';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import accounting from 'accounting';
 import {
     Box,
@@ -25,7 +24,8 @@ import {
     FormControlLabel,
     Checkbox,
     Badge,
-    FormControl
+    FormControl,
+    Typography
 } from '@mui/material';
 import dayjs from 'dayjs';
 import { ptBR as pt } from '@mui/x-data-grid';
@@ -41,6 +41,9 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import ptBR from 'date-fns/locale/pt-BR';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { getBookings } from 'app/store/automationSlice';
+import { ModalDelete } from './ModalDelete';
+import { ModalApproval } from './ModalApproval';
 
 
 const locale = pt;
@@ -63,63 +66,17 @@ const predefinedFiltersStatus = [
 
 
 
-const columns = [
-    { field: 'beneficiarioUsuario', headerName: 'Beneficiário', width: 380, editable: false, cellClassName: 'noWrapName', renderCell: (params) => <p>{params?.value.fullName}</p> },
-    { field: 'valorPagamentoUnico', headerName: 'Valor a ser pago', width: 145, editable: false, renderCell: (params) => <p >{params.value ? formatter.format(params?.value) : ''}</p> },
-    { field: 'dataPagamentoUnico', headerName: 'Data Pagamento', width: 145, editable: false,  renderCell: (params) => <p >{params.value ? format(new Date(params?.value), 'dd/MM/yyyy'): ''}</p> },
-    { field: 'diaSemana', headerName: 'Dia da semana', width: 180, editable: false },
-    { field: 'tipoPagamento', headerName: 'Tipo Pagamento', width: 180, editable: false },
-    {
-        field: 'status',
-        headerName: 'Status de Aprovação',
-        width: 200,
-        editable: false,
-        renderCell: (params) => (
-            <CustomBadge
-                status={params.value}
-                aprovacao={params.row.aprovacao}
-            />
-        )
-    },
-    { field: 'ocorrencia', headerName: 'Ações', width: 150, editable: false, cellClassName: 'noWrapName' },
-];
-
-const formatter = new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-});
-
-const CustomBadge = ({ status, aprovacao }) => {
-
-    const getStatusLabel = () => {
-        if (aprovacao === false) return "Livre de aprovação";
-        if (status === true) return "Aprovado";
-        if (status === false) return "Não Aprovado";
-        return "";
-    };
-
-    const getColor = () => {
-        if (aprovacao === false) return "info";
-        return status ? "success" : "warning";
-    };
-
-    return (
-        <Badge
-            badgeContent={getStatusLabel()}
-            color={getColor()}
-        />
-    );
-};
 
 export function TableRemessa() {
+
     const dispatch = useDispatch()
-    const selectedDate = useSelector(state => state.release.selectedDate)
-    const selectedYear = useSelector(state => state.release.selectedYear)
     const bookings = useSelector((state) => state.automation.bookings)
 
     const [rowModesModel, setRowModesModel] = useState({});
     const [rows, setRows] = useState([]);
-    const [date, setDate] = useState([]);
+    const [openDelete, setOpenDelete] = useState(false)
+    const [openApproval, setOpenApproval] = useState(false)
+    const [selectedRow, setSelectedRow] = useState()
     const [checkedFilters, setCheckedFilters] = useState(new Array(predefinedFilters.length).fill(false));
     const [checkedFiltersStatus, setCheckedFiltersStatus] = useState(new Array(predefinedFiltersStatus.length).fill(false));
     const [loading, setLoading] = useState(false);
@@ -135,15 +92,140 @@ export function TableRemessa() {
     const { register } = useForm()
 
 
-   
+
     useEffect(() => {
         setRows(bookings)
 
-    },[bookings])
+    }, [bookings])
 
 
 
 
+
+    const CellActions = ({id, row}) => {
+
+
+        return [
+            // <GridActionsCellItem
+            //     icon={<EditIcon sx={{ color: `white`, opacity: 1 }} />}
+            //     label="Edit"
+            //     onClick={handleEditClick(id.id)}
+            //     color="inherit"
+            //     // disabled={hasMultipleAuthBy}
+            //     sx={{
+            //         backgroundColor: '#004A80',
+            //         '&:hover': {
+            //             backgroundColor: '#004A80',
+            //         },
+            //         '&:disabled': {
+            //             backgroundColor: 'gray',
+
+            //             opacity: 0.8
+            //         },
+            //     }}
+
+            // />,
+            <GridActionsCellItem
+                icon={<DeleteIcon sx= {{ color: `white`, opacity: 1 }} />}
+                label="Delete"
+                onClick={handleDeleteClick(row)}
+                // disabled={hasMultipleAuthBy}
+                color="inherit"
+                sx={{
+                    backgroundColor: '#FF4C4C',
+                    '&:hover': {
+                        backgroundColor: '#FF4C4C',
+                    },
+                    '&:disabled': {
+                        backgroundColor: 'gray',
+                        opacity: 0.8
+                    },
+
+
+
+                }}
+            />,
+         
+            <GridActionsCellItem icon={
+                <Typography aria-disabled className='rounded p-1 uppercase text-white bg-[#0DB1E3]  min-h-[12px] font-small px-10'>
+                    Aprovar
+                </Typography>
+            }
+                onClick={handleApprovalClick(row)}
+
+                                                         
+                                              />
+
+        ]
+    }
+
+
+    const handleDeleteClick = (row) => () => {
+        
+        setOpenDelete(true)
+        setSelectedRow(row)
+    };
+
+    const handleApprovalClick = (row) => () => {
+        setOpenApproval(true)
+        setSelectedRow(row)
+    };
+
+
+
+    const columns = [
+        { field: 'beneficiarioUsuario', headerName: 'Beneficiário', width: 380, editable: false, cellClassName: 'noWrapName', renderCell: (params) => <p>{params?.value.fullName}</p> },
+        { field: 'valorPagamentoUnico', headerName: 'Valor a ser pago', width: 145, editable: false, renderCell: (params) => <p >{params.value ? formatter.format(params?.value) : ''}</p> },
+        { field: 'dataPagamentoUnico', headerName: 'Data Pagamento', width: 145, editable: false, renderCell: (params) => <p >{params.value ? format(new Date(params?.value), 'dd/MM/yyyy') : ''}</p> },
+        { field: 'diaSemana', headerName: 'Dia da semana', width: 180, editable: false },
+        { field: 'tipoPagamento', headerName: 'Tipo Pagamento', width: 180, editable: false },
+        {
+            field: 'status',
+            headerName: 'Status de Aprovação',
+            width: 200,
+            editable: false,
+            renderCell: (params) => (
+                <CustomBadge
+                    status={params.value}
+                    aprovacao={params.row.aprovacao}
+                />
+            )
+        },
+        {
+            field: 'id', type: 'actions', headerName: 'Ações', width: 150, editable: false, cellClassName: 'actions', getActions: ({ id, row }) => {
+                return [<CellActions id={id} row={row} />];
+            },
+
+        },
+    ];
+
+    const formatter = new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+    });
+
+    const CustomBadge = ({ status, aprovacao }) => {
+
+        const getStatusLabel = () => {
+            if (aprovacao === false) return "Livre de aprovação";
+            if (status === true) return "Aprovado";
+            if (status === false) return "Não Aprovado";
+            return "";
+        };
+
+        const getColor = () => {
+            if (aprovacao === false) return "info";
+            return status ? "success" : "warning";
+        };
+
+        return (
+            <Badge
+            className='mt-20'
+                badgeContent={getStatusLabel()}
+                color={getColor()}
+            />
+        );
+    };
  
 
 
@@ -291,12 +373,16 @@ export function TableRemessa() {
         </GridToolbarContainer>
     );
 
+
+
+    const handleCloseDelete = () => setOpenDelete(false);
+    const handleCloseApproval = () => setOpenApproval(false);
  
 
     return (
 
         <>
-                <Box className="w-full md:mx-9 p-24 relative mt-32">
+                <Box className="w-full md:mx-9 p-10 relative mt-32">
 
                     <div style={{ height: '65vh', width: '100%', }}>
                         <DataGrid
@@ -328,6 +414,22 @@ export function TableRemessa() {
                     </div>
 
                 </Box>
+            <ModalDelete
+                openDelete={openDelete}
+                handleCloseDelete={handleCloseDelete}
+                row={selectedRow}
+                setOpenDelete={setOpenDelete}
+              
+            />
+
+            <ModalApproval
+                openApproval={openApproval}
+                handleCloseApproval={handleCloseApproval}
+                row={selectedRow}
+                setOpenApproval={setOpenApproval}
+              
+            />
+              
         </>
     );
 }

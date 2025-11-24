@@ -5,6 +5,7 @@ import { api } from 'app/configs/api/api';
 
 const initialState = {
     bookings: [],
+    approval: [],
 };
 
 const automationSlice = createSlice({
@@ -14,12 +15,16 @@ const automationSlice = createSlice({
         setBookings: (state, action) => {
             state.bookings = action.payload;
         },
+        setApproval: (state, action) => {
+            state.approval = action.payload;
+        },
 
     }
 });
 
 export const {
-    bookings,setBookings
+    bookings,setBookings,
+    approval,setApproval,
 } = automationSlice.actions;
 
 export default automationSlice.reducer;
@@ -87,6 +92,31 @@ export const bookPayment = (data) => async (dispatch) => {
 
 }
 
+export const editPayment = (data) => async (dispatch) => {
+    const apiRoute = `${jwtServiceConfig.agendamento}${data.id}`; 
+    const token = window.localStorage.getItem('jwt_access_token');
+
+    const config = {
+        method: 'put',
+        url: apiRoute,
+        headers: { "Authorization": `Bearer ${token}` },
+        data
+    };
+
+    try {
+        const response = await api(config);
+        if ([200, 201, 202, 204].includes(response.status)) { 
+            dispatch(getBookings());
+        }
+        return response; 
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+};
+
+
+
 export const getBookings = (data) => async (dispatch) => {
 
     
@@ -115,11 +145,11 @@ export const getBookings = (data) => async (dispatch) => {
     }catch{}
 
 }
+export const getApproval = (data) => async (dispatch) => {
 
-export const rmPayment = (id, password) => async (dispatch) => {
-
-    let apiRoute = jwtServiceConfig.agendamento
-    const method = 'delete';
+    
+    let apiRoute = jwtServiceConfig.aprovacao
+    const method = 'get';
     const token = window.localStorage.getItem('jwt_access_token');
 
     const config = {
@@ -130,31 +160,81 @@ export const rmPayment = (id, password) => async (dispatch) => {
             "Authorization": `Bearer ${token}`
         },
         params: {
-           password: password,
-           id: id
+            id: data
         }
     };
 
     try{
-        const response = await api(config);
-        console.log(response)
-        return response.data;
-    } catch(error) {
-        console.error(error)
-    }
+        const response = await api.request(config)
+        dispatch(setApproval(response.data))
+        
+
+
+    }catch{}
 
 }
-export const editPayment = (id, data) => async (dispatch) => {
-    const token = window.localStorage.getItem('jwt_access_token');
-     api.put(jwtServiceConfig.agendamento + `?agendamentoId=${id}`,
-        data,
-        { headers: { "Authorization": `Bearer ${token}` } })
-        .then((response) => {
-          console.log(response)
-        })
-        .catch((error) => {
-            console.error(error);
+
+// export const rmPayment = (id, password) => async (dispatch) => {
+
+//     let apiRoute = jwtServiceConfig.agendamento
+//     const method = 'delete';
+//     const token = window.localStorage.getItem('jwt_access_token');
+
+//     const config = {
+//         method: method,
+//         maxBodyLength: Infinity,
+//         url: apiRoute,
+//         headers: {
+//             "Authorization": `Bearer ${token}`
+//         },
+//         params: {
+//            password: password,
+//            id: id
+//         }
+//     };
+
+//     try{
+//         const response = await api(config);
+//         console.log(response)
+//         return response.data;
+//     } catch(error) {
+//         console.error(error)
+//     }
+
+// }
+// export const editPayment = (id, data) => async (dispatch) => {
+//     const token = window.localStorage.getItem('jwt_access_token');
+//      api.put(jwtServiceConfig.agendamento + `?agendamentoId=${id}`,
+//         data,
+//         { headers: { "Authorization": `Bearer ${token}` } })
+//         .then((response) => {
+//           console.log(response)
+//         })
+//         .catch((error) => {
+//             console.error(error);
+//         });
+
+// }
+
+
+    export const deleteBooking = (data) => async (dispatch) => {
+        console.log(data)
+        const token = window.localStorage.getItem('jwt_access_token');
+        return new Promise((resolve, reject) => {
+            api.delete(
+                `${jwtServiceConfig.agendamento}${data}`,
+                {
+                    headers: { "Authorization": `Bearer ${token}` },
+                }
+            )
+                .then((response) => {
+                 
+                    resolve(response);
+                })
+                .catch((error) => {
+                    reject(error);
+                });
         });
 
-}
+    }
 
