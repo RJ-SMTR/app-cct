@@ -2,9 +2,9 @@ import { useForm } from 'react-hook-form';
 import { Modal, Box, Typography, TextField } from '@mui/material';
 import dayjs from 'dayjs';
 import { useDispatch } from 'react-redux';
-import { deleteBooking, editPayment, getApproval, getBookings } from 'app/store/automationSlice';
+import {  editPayment } from 'app/store/automationSlice';
 import { showMessage } from 'app/store/fuse/messageSlice';
-import { useEffect } from 'react';
+import { useState } from 'react';
 import { format, parse } from 'date-fns';
 import { utcToZonedTime, formatInTimeZone } from "date-fns-tz";
 
@@ -22,7 +22,7 @@ const style = {
 };
 
 export const ModalApproval = ({ openApproval, handleCloseApproval, row, setOpenApproval  }) => {
-    
+     const [password, setPassword] = useState('');
     
 
     function formatHorario(horario) {
@@ -32,16 +32,12 @@ export const ModalApproval = ({ openApproval, handleCloseApproval, row, setOpenA
         if (!regex.test(horario)) return "--";
 
         try {
-            // Normaliza para HH:mm:ss
             const normalized = horario.length === 5 ? `${horario}:00` : horario;
 
-            // Interpreta como UTC
             const utcDate = parse(normalized, "HH:mm:ss", new Date());
 
-            // Converte UTC → America/Sao_Paulo
             const spTime = utcToZonedTime(utcDate, "America/Sao_Paulo");
 
-            // Formata para HH:mm
             return formatInTimeZone(spTime, "America/Sao_Paulo", "HH:mm");
         } catch {
             return "--";
@@ -59,24 +55,34 @@ export const ModalApproval = ({ openApproval, handleCloseApproval, row, setOpenA
     });
 
 
-    const onSubmit = () => {
-        
-        let approveData = { ...row, status: true,
-            valorPagamentoUnico: parseFloat(row.valorPagamentoUnico)
-         };
+   
 
-        dispatch(editPayment(approveData))
+    const checkPassword = (inputPassword) => {
+        const correctPassword = "admin123";
+        if (inputPassword === correctPassword) {
+            let approveData = {
+                ...row, status: true,
+                valorPagamentoUnico: parseFloat(row.valorPagamentoUnico)
+            };
+
+            dispatch(editPayment(approveData))
                 .then((response) => {
-                    
-                    if(response.status === 202)
-                    {
-                        dispatch(showMessage({message: "Aprovado com sucesso!"}));
+
+                    if (response.status === 202) {
+                        dispatch(showMessage({ message: "Aprovado com sucesso!" }));
                         setOpenApproval(false)
+                        setPassword('')
                     }
                 })
-            .catch((error) => {
-                console.log(error)
-            });
+                .catch((error) => {
+                    console.log(error)
+                });
+        } else {
+            dispatch(showMessage({ message: "Senha incorreta!" }));
+        }
+    }
+    const onSubmit = () => {
+        checkPassword(password);
     };
 
     return (
@@ -138,7 +144,19 @@ export const ModalApproval = ({ openApproval, handleCloseApproval, row, setOpenA
 
                     </div>
                 </div>
+                    <div >
+                    <p className="font-semibold my-10">Digite sua senha para aprovar:</p>
+                    <TextField
+                        id="motivoPagamentoUnico"
+                        label="Senha"
+                        variant="outlined"
+                        type='password'
+                        className="w-full p-1"
+                        onChange={(e) => setPassword(e.target.value)}
+                    />
 
+                    </div>
+                     
                 {/* Botão */}
                 <button
                     type="submit"

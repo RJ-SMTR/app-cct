@@ -54,7 +54,7 @@ function handleData(data) {
     }
 
     requestData.tipoPagamento = data.tipoPagamento;
-    requestData.horario = data.horario;
+    requestData.horario = data.horario.toTimeString().split(' ')[0];
     requestData.diaSemana = data.diaSemana;
     requestData.status = false;
   

@@ -8,7 +8,7 @@ import {
     GridToolbarQuickFilter,
     useGridApiRef
 } from '@mui/x-data-grid';
-import EditIcon from '@mui/icons-material/Edit';
+import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import accounting from 'accounting';
 import {
@@ -64,6 +64,20 @@ const predefinedFiltersStatus = [
     { label: 'Erro', filterFn: (row) => row.statusPago.includes('Não Pago') },
 ];
 
+// Normalize helper to remove diacritics and lowercase for robust comparisons
+const normalize = (s) => s?.toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+
+const predefinedFiltersDay = [
+    { label: 'Todos', filterFn: () => true },
+    { label: 'Segunda', filterFn: (row) => normalize(row.diaSemana ?? '').includes('segunda') },
+    { label: 'Terça', filterFn: (row) => normalize(row.diaSemana ?? '').includes('terca')},
+    { label: 'Quarta', filterFn: (row) => normalize(row.diaSemana ?? '').includes('quarta')},
+    { label: 'Quinta', filterFn: (row) => normalize(row.diaSemana ?? '').includes('quinta')},
+    { label: 'Sexta', filterFn: (row) => normalize(row.diaSemana ?? '').includes('sexta')},
+    { label: 'Sábado', filterFn: (row) => normalize(row.diaSemana ?? '').includes('sabado')},
+    { label: 'Domingo', filterFn: (row) => normalize(row.diaSemana ?? '').includes('domingo')},
+];
+
 
 
 
@@ -79,6 +93,7 @@ export function TableRemessa() {
     const [selectedRow, setSelectedRow] = useState()
     const [checkedFilters, setCheckedFilters] = useState(new Array(predefinedFilters.length).fill(false));
     const [checkedFiltersStatus, setCheckedFiltersStatus] = useState(new Array(predefinedFiltersStatus.length).fill(false));
+    const [checkedFiltersDay, setCheckedFiltersDay] = useState(new Array(predefinedFiltersDay.length).fill(false));
     const [loading, setLoading] = useState(false);
     const [consorcioAnchorEl, setConsorcioAnchorEl] = useState(null);
     const [statusAnchorEl, setStatusAnchorEl] = useState(null);
@@ -106,30 +121,30 @@ export function TableRemessa() {
 
 
         return [
-            // <GridActionsCellItem
-            //     icon={<EditIcon sx={{ color: `white`, opacity: 1 }} />}
-            //     label="Edit"
-            //     onClick={handleEditClick(id.id)}
-            //     color="inherit"
-            //     // disabled={hasMultipleAuthBy}
-            //     sx={{
-            //         backgroundColor: '#004A80',
-            //         '&:hover': {
-            //             backgroundColor: '#004A80',
-            //         },
-            //         '&:disabled': {
-            //             backgroundColor: 'gray',
+      
+            <GridActionsCellItem
+                icon={<EditIcon sx= {{ color: `white`, opacity: 1 }} />}
+                label="Delete"
+                onClick={handleDeleteClick(row)}
+                color="inherit"
+                sx={{
+                    backgroundColor: '#0288d1',
+                    '&:hover': {
+                        backgroundColor: '#0288d1',
+                    },
+                    '&:disabled': {
+                        backgroundColor: 'gray',
+                        opacity: 0.8
+                    },
 
-            //             opacity: 0.8
-            //         },
-            //     }}
 
-            // />,
+
+                }}
+            />,
             <GridActionsCellItem
                 icon={<DeleteIcon sx= {{ color: `white`, opacity: 1 }} />}
                 label="Delete"
                 onClick={handleDeleteClick(row)}
-                // disabled={hasMultipleAuthBy}
                 color="inherit"
                 sx={{
                     backgroundColor: '#FF4C4C',
@@ -147,11 +162,13 @@ export function TableRemessa() {
             />,
          
             <GridActionsCellItem icon={
-                <Typography aria-disabled className='rounded p-1 uppercase text-white bg-[#0DB1E3]  min-h-[12px] font-small px-10'>
-                    Aprovar
+                <Typography >
+                    {row.status === true ? 'Aprovado' : 'Aprovar'} 
                 </Typography>
             }
+                className={`rounded p-1 uppercase text-white ${row.status === true ? 'disabled:bg-green disabled:text-white' : 'bg-[#0DB1E3]'}  disabled:bg-gray  min-h-[12px]  min-w-[90.82px] font-small px-10`}
                 onClick={handleApprovalClick(row)}
+                disabled={row.aprovacao === false || row.status === true}
 
                                                          
                                               />
@@ -171,28 +188,45 @@ export function TableRemessa() {
         setSelectedRow(row)
     };
 
-
+    
 
     const columns = [
-        { field: 'beneficiarioUsuario', headerName: 'Beneficiário', width: 380, editable: false, cellClassName: 'noWrapName', renderCell: (params) => <p>{params?.value.fullName}</p> },
+        {
+            field: 'beneficiarioUsuario',
+            headerName: 'Beneficiário',
+            width: 380,
+            editable: false,
+            cellClassName: 'noWrapName',
+            valueGetter: (params) => params.row?.beneficiarioUsuario?.fullName || '',
+            renderCell: (params) => <p>{params?.value}</p>
+        },
         { field: 'valorPagamentoUnico', headerName: 'Valor a ser pago', width: 145, editable: false, renderCell: (params) => <p >{params.value ? formatter.format(params?.value) : ''}</p> },
         { field: 'dataPagamentoUnico', headerName: 'Data Pagamento', width: 145, editable: false, renderCell: (params) => <p >{params.value ? format(new Date(params?.value), 'dd/MM/yyyy') : ''}</p> },
-        { field: 'diaSemana', headerName: 'Dia da semana', width: 180, editable: false },
+        { field: 'diaSemana', headerName: 'Dia da semana', width: 150, editable: false , },
+        { field: 'horario', headerName: 'Horário', width: 90, editable: false, renderCell: (params) => <p >{params.value ? params?.value.split(':').slice(0, 2).join(':') : ''}</p> },
         { field: 'tipoPagamento', headerName: 'Tipo Pagamento', width: 180, editable: false },
         {
             field: 'status',
             headerName: 'Status de Aprovação',
             width: 200,
             editable: false,
+            valueGetter: (params) => {
+                const aprovacao = params.row?.aprovacao;
+                const status = params.row?.status;
+                if (aprovacao === false) return 'Livre de aprovação';
+                if (status === true) return 'Aprovado';
+                if (status === false) return 'Não Aprovado';
+                return '';
+            },
             renderCell: (params) => (
                 <CustomBadge
-                    status={params.value}
-                    aprovacao={params.row.aprovacao}
+                    status={params.row?.status}
+                    aprovacao={params.row?.aprovacao}
                 />
             )
         },
         {
-            field: 'id', type: 'actions', headerName: 'Ações', width: 150, editable: false, cellClassName: 'actions', getActions: ({ id, row }) => {
+            field: 'id', type: 'actions', headerName: 'Ações', width: 200, editable: false, cellClassName: 'actions', getActions: ({ id, row }) => {
                 return [<CellActions id={id} row={row} />];
             },
 
@@ -244,6 +278,12 @@ export function TableRemessa() {
         setCheckedFiltersStatus(newCheckedFiltersStatus);
     };
 
+    const handleCheckboxChangeDay = (index) => {
+        const newCheckedFiltersDay = [...checkedFiltersDay];
+        newCheckedFiltersDay[index] = !newCheckedFiltersDay[index];
+        setCheckedFiltersDay(newCheckedFiltersDay);
+    };
+
     const applyFilters = () => {
         const activeFilters = predefinedFilters
             .filter((_, i) => checkedFilters[i])
@@ -253,13 +293,18 @@ export function TableRemessa() {
             .filter((_, i) => checkedFiltersStatus[i])
             .map(({ filterFn }) => filterFn);
 
-        if (activeFilters.length === 0 && activeFiltersStatus.length === 0) {
+        const activeFiltersDay = predefinedFiltersDay
+            .filter((_, i) => checkedFiltersDay[i])
+            .map(({ filterFn }) => filterFn);
+
+        if (activeFilters.length === 0 && activeFiltersStatus.length === 0 && activeFiltersDay.length === 0) {
             return rows;
         }
 
         return rows.filter(row =>
             (activeFilters.length === 0 || activeFilters.some(filterFn => filterFn(row))) &&
-            (activeFiltersStatus.length === 0 || activeFiltersStatus.some(filterFn => filterFn(row)))
+            (activeFiltersStatus.length === 0 || activeFiltersStatus.some(filterFn => filterFn(row))) &&
+            (activeFiltersDay.length === 0 || activeFiltersDay.some(filterFn => filterFn(row)))
         );
     };
 
@@ -269,6 +314,17 @@ export function TableRemessa() {
 
     const handleStatusClick = (event) => {
         setStatusAnchorEl(event.currentTarget);
+    };
+
+    const [diaAnchorEl, setDiaAnchorEl] = useState(null);
+    const openDiaMenu = Boolean(diaAnchorEl);
+
+    const handleDiaClick = (event) => {
+        setDiaAnchorEl(event.currentTarget);
+    };
+
+    const handleCloseDiaMenu = () => {
+        setDiaAnchorEl(null);
     };
 
     const handleCloseConsorcioMenu = () => {
@@ -354,6 +410,40 @@ export function TableRemessa() {
                                             <Checkbox
                                                 checked={checkedFiltersStatus[index]}
                                                 onChange={() => handleCheckboxChangeStatus(index)}
+                                            />
+                                        }
+                                        label={filter.label}
+                                    />
+                                </MenuItem>
+                            ))}
+                        </FormGroup>
+                    </Menu>
+                </Box>
+                <Box className="flex items-center">
+                    <p>Filtrar por dia</p>
+                    <IconButton
+                        id="dia-filter-button"
+                        aria-controls={openDiaMenu ? 'dia-menu' : undefined}
+                        aria-haspopup="true"
+                        aria-expanded={openDiaMenu ? 'true' : undefined}
+                        onClick={handleDiaClick}
+                    >
+                        <FilterListIcon />
+                    </IconButton>
+                    <Menu
+                        id="dia-menu"
+                        anchorEl={diaAnchorEl}
+                        open={openDiaMenu}
+                        onClose={handleCloseDiaMenu}
+                    >
+                        <FormGroup>
+                            {predefinedFiltersDay.map((filter, index) => (
+                                <MenuItem key={filter.label}>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={checkedFiltersDay[index]}
+                                                onChange={() => handleCheckboxChangeDay(index)}
                                             />
                                         }
                                         label={filter.label}
