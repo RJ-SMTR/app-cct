@@ -38,7 +38,6 @@ export function CustomTable(data) {
 
   const CustomBadge = (data) => {
     const i = data.data.data;
-    console.log(i.statusRemessa);
 
     const getStatus = (i) => {
       switch (i.statusRemessa) {
@@ -121,7 +120,13 @@ export function CustomTable(data) {
       <TableCell component="th" scope="row" onClick={searchingDay ? null : data.handleClickRow}>
         <Typography className={searchingDay ? "whitespace-nowrap " : "whitespace-nowrap underline"}>
 
-          {searchingDay ? dateUTC(data.data.datetime_transacao) : searchingWeek ? dateUTCMonth(data.data.dataCaptura) : dateUTCMonth(data.data.data)}
+          {
+            searchingDay
+              ? (data.data?.datetime_transacao ? dateUTC(data.data.datetime_transacao) : "--")
+              : searchingWeek
+                ? (data.data?.dataCaptura ? dateUTCMonth(data.data.dataCaptura) : "--")
+                : (data.data?.data ? dateUTCMonth(data.data.data) : "--")
+          }
 
         </Typography>
       </TableCell>
@@ -144,21 +149,34 @@ export function CustomTable(data) {
         </TableCell>
       )}
 
+      {/* Valor */}
+      {searchingDay ? (
+        <>
+        </>
+      ) : (
+        <TableCell component="th" scope="row">
+          <>  {formatter.format(data.data.valorTotal ?? data.data.valor ?? 0)}</>
+        </TableCell>
+      )}
+
 
 
       {
         !searchingDay ? (
-          
           <TableCell component="th" scope="row">
-            <Typography className="whitespace-nowrap"> 
+            <Typography className="whitespace-nowrap">
               {
-                data.data.statusRemessa === 5 ? data.dataPagamento : <></>
+                (() => {
+                  
+                  return data.data.statusRemessa === 5 ? data.dataPagamento : <></>;
+                })()
               }
             </Typography>
           </TableCell>
-        ) : <> </>
+        ) : (
+          <></>
+        )
       }
-
       {
         searchingDay && (
           <TableCell component="th" scope="row">

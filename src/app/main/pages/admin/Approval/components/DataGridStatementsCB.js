@@ -88,7 +88,6 @@ export default function BasicEditingGrid() {
                         id: `${item.id ?? index}-${Math.random()}`,
                         data: formatted,
                         valor: type(item.tipo, item.valor),
-
                         tipo: itemType,
                         operacao: item.operacao
                     };

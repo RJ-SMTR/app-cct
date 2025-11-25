@@ -28,8 +28,11 @@ const jwtServiceConfig = {
   odpSemanal: '/ordem-pagamento/semanal',
   odpDiario: '/ordem-pagamento/diario',
   odpAnteriores: '/ordem-pagamento/transacoes-dias-anteriores',
+  extrato: '/cnab/relatorio/extrato/',
+  agendamento: '/agendamentoPagamento/',
+  aprovacao: '/aprovacaoPagamento/',
+  
   van24: '/cnab/relatorio/detalhadoVanzeiro',
-  extrato: '/cnab/relatorio/extrato/'
 
 };
 

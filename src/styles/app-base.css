@@ -257,6 +257,9 @@ display: none !important;
     background-color: white;
 }
 
+.rs-picker-menu{
+z-index: 1000 !important;
+}
 .custom-date-range-picker .rs-picker-toggle:hover {
     border-color: rgba(0, 0, 0, 0.87);
 }

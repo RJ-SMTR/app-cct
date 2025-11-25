@@ -6,7 +6,7 @@ import { selectUser } from 'app/store/userSlice';
 import Entries from './widgets/Entries';
 import TableTransactions from './widgets/Table'
 
-import { setFullReport} from 'app/store/extractSlice';
+import { setFullReport } from 'app/store/extractSlice';
 
 import TableTypes from './widgets/TableTypes';
 import TablePending from './widgets/TablePending';
@@ -26,7 +26,7 @@ const style = {
 
 
 function ExtractApp() {
-    const [modal, setModal] = useState(false);
+  const [modal, setModal] = useState(false);
   const dispatch = useDispatch()
   const user = useSelector(selectUser);
   const fullName = user.fullName ?? 'Admin';
@@ -68,12 +68,12 @@ function ExtractApp() {
 
           </Box>
 
-       {searchingWeek && !searchingDay ? <div>
-                  <TablePending />
-                </div> : <></>}
+          {searchingWeek && !searchingDay ? <div>
+            <TablePending />
+          </div> : <></>}
 
         </div>
-       
+
 
         <br />
       </div>

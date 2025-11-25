@@ -258,6 +258,7 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
                 );
 
                 dispatch(setStatements(statementsSort));
+                
 
                 const sum = response.data.map((statement) => statement.valor_pagamento)
                     .reduce((acc, curr) => acc + curr, 0);
@@ -319,6 +320,7 @@ export const get24 = (dateRange, userId) => async (dispatch) => {
     }
 
 }
+
 
 
 
