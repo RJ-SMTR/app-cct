@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { useDispatch } from 'react-redux';
 import { deleteBooking, getBookings } from 'app/store/automationSlice';
 import { showMessage } from 'app/store/fuse/messageSlice';
+import { format, parse } from 'date-fns';
 import { useState } from 'react';
 const style = {
     position: 'absolute',
@@ -45,28 +46,20 @@ export const ModalDelete = ({ openDelete, handleCloseDelete, row, setOpenDelete 
             }
         }
        
-        const checkPassword = (inputPassword) => {
-            const correctPassword = "admin123"; 
-            if(inputPassword === correctPassword){
-                dispatch(deleteBooking(row.id))
-                    .then((response) => {
-
-                        if (response.status === 204) {
-                            dispatch(showMessage({ message: "Deletado com sucesso!" }));
-                            dispatch(getBookings())
-                            setOpenDelete(false)
-                            setPassword('')
-                        }
-                    })
-                    .catch((error) => {
-                        console.log(error)
-                    });
-            } else {
-                dispatch(showMessage({message: "Senha incorreta!"}));
-            }
-        }
+     
     const onSubmit = () => {
-        checkPassword(password);
+        dispatch(deleteBooking(row.id, password))
+            .then((response) => {
+                if (response.status === 204) {
+                    dispatch(showMessage({ message: "Deletado com sucesso!" }));
+                    dispatch(getBookings())
+                    setOpenDelete(false)
+                    setPassword('')
+                }
+            })
+            .catch((error) => {
+                dispatch(showMessage({ message: "Senha incorreta!" }));
+            });
     };
     const formatter = new Intl.NumberFormat('pt-BR', {
         style: 'currency',
@@ -118,7 +111,7 @@ export const ModalDelete = ({ openDelete, handleCloseDelete, row, setOpenDelete 
               
                                   <div className="flex gap-2">
                                       <span className="font-semibold">Data do Pagamento:</span>
-                                      <span>{row?.aprovacaoPagamento ? format(new Date(row?.aprovacaoPagamento?.detalheA?.dataVencimento), 'dd/MM/yy') : ''}</span>
+                        <span>{row?.aprovacaoPagamento ? format(new Date(row?.aprovacaoPagamento?.dataAprovacao), 'dd/MM/yy') : ''}</span>
                                   </div>
               
                                   <div className="flex gap-2">

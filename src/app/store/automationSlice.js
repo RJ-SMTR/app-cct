@@ -217,14 +217,14 @@ export const getApproval = (data) => async (dispatch) => {
 // }
 
 
-    export const deleteBooking = (data) => async (dispatch) => {
-        console.log(data)
+    export const deleteBooking = (id, password) => async (dispatch) => {
         const token = window.localStorage.getItem('jwt_access_token');
         return new Promise((resolve, reject) => {
             api.delete(
-                `${jwtServiceConfig.agendamento}${data}`,
+                `${jwtServiceConfig.agendamento}${id}`,
                 {
-                    headers: { "Authorization": `Bearer ${token}` },
+                    headers: { "Authorization": `Bearer ${token}`},
+                    data: { password: password }
                 }
             )
                 .then((response) => {
@@ -237,4 +237,24 @@ export const getApproval = (data) => async (dispatch) => {
         });
 
     }
+export const approveBooking = (id, password) => async (dispatch) => {
+    const token = window.localStorage.getItem('jwt_access_token');
 
+    return new Promise((resolve, reject) => {
+        api.put(
+            `${jwtServiceConfig.aprovacao}aprovar/${id}`,
+            { password: password }, 
+            {
+                headers: {
+                    "Authorization": `Bearer ${token}` 
+                }
+            }
+        )
+            .then((response) => {
+                resolve(response);
+            })
+            .catch((error) => {
+                reject(error);
+            });
+    });
+};

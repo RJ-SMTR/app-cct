@@ -163,12 +163,12 @@ export function TableRemessa() {
          
             <GridActionsCellItem icon={
                 <Typography >
-                    {row.status === true ? 'Aprovado' : 'Aprovar'} 
+                    {row.aprovacaoPagamento?.status === 1 ? 'Aprovado' : 'Aprovar'} 
                 </Typography>
             }
-                className={`rounded p-1 uppercase text-white ${row.status === true ? 'disabled:bg-green disabled:text-white' : 'bg-[#0DB1E3]'}  disabled:bg-gray  min-h-[12px]  min-w-[90.82px] font-small px-10`}
+                className={`rounded p-1 uppercase text-white ${row.aprovacaoPagamento?.status === 1 ? 'disabled:bg-green disabled:text-white' : 'bg-[#0DB1E3]'}  disabled:bg-gray  min-h-[12px]  min-w-[90.82px] font-small px-10`}
                 onClick={handleApprovalClick(row)}
-                disabled={row.aprovacao === false || row.status === true}
+                disabled={row.aprovacao === false || row.aprovacaoPagamento?.status === 1}
 
                                                          
                                               />
@@ -212,15 +212,15 @@ export function TableRemessa() {
             editable: false,
             valueGetter: (params) => {
                 const aprovacao = params.row?.aprovacao;
-                const status = params.row?.status;
+                const status = params.row?.aprovacaoPagamento?.status;
                 if (aprovacao === false) return 'Livre de aprovação';
-                if (status === true) return 'Aprovado';
-                if (status === false) return 'Não Aprovado';
+                if (status === 1) return 'Aprovado';
+                if (status != 1) return 'Não Aprovado';
                 return '';
             },
             renderCell: (params) => (
                 <CustomBadge
-                    status={params.row?.status}
+                    status={params.row?.aprovacaoPagamento?.status}
                     aprovacao={params.row?.aprovacao}
                 />
             )
@@ -242,8 +242,8 @@ export function TableRemessa() {
 
         const getStatusLabel = () => {
             if (aprovacao === false) return "Livre de aprovação";
-            if (status === true) return "Aprovado";
-            if (status === false) return "Não Aprovado";
+            if (status === 1) return "Aprovado";
+            if (status !== 1) return "Não Aprovado";
             return "";
         };
 

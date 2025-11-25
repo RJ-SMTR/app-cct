@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { Modal, Box, Typography, TextField } from '@mui/material';
 import dayjs from 'dayjs';
 import { useDispatch } from 'react-redux';
-import {  editPayment } from 'app/store/automationSlice';
+import {  approveBooking, editPayment, getBookings } from 'app/store/automationSlice';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import { useState } from 'react';
 import { format, parse } from 'date-fns';
@@ -57,32 +57,21 @@ export const ModalApproval = ({ openApproval, handleCloseApproval, row, setOpenA
 
    
 
-    const checkPassword = (inputPassword) => {
-        const correctPassword = "admin123";
-        if (inputPassword === correctPassword) {
-            let approveData = {
-                ...row, status: true,
-                valorPagamentoUnico: parseFloat(row.valorPagamentoUnico)
-            };
-
-            dispatch(editPayment(approveData))
-                .then((response) => {
-
-                    if (response.status === 202) {
-                        dispatch(showMessage({ message: "Aprovado com sucesso!" }));
-                        setOpenApproval(false)
-                        setPassword('')
-                    }
-                })
-                .catch((error) => {
-                    console.log(error)
-                });
-        } else {
-            dispatch(showMessage({ message: "Senha incorreta!" }));
-        }
-    }
     const onSubmit = () => {
-        checkPassword(password);
+        console.log(row)
+        dispatch(approveBooking(row.aprovacaoPagamento.id, password))
+            .then((response) => {
+
+                if (response.status === 204) {
+                    dispatch(showMessage({ message: "Aprovado com sucesso!" }));
+                                   dispatch(getBookings())
+                    setOpenApproval(false)
+                    setPassword('')
+                }
+            })
+            .catch((error) => {
+                console.log(error)
+            });
     };
 
     return (
@@ -135,7 +124,7 @@ export const ModalApproval = ({ openApproval, handleCloseApproval, row, setOpenA
 
                     <div className="flex gap-2">
                         <span className="font-semibold">Data do Pagamento:</span>
-                        <span>{row?.aprovacaoPagamento ? format(new Date(row?.aprovacaoPagamento?.detalheA?.dataVencimento), 'dd/MM/yy') : ''}</span>
+                        <span>{row?.aprovacaoPagamento ? format(new Date(row?.aprovacaoPagamento?.dataAprovacao), 'dd/MM/yy') : ''}</span>
                     </div>
 
                     <div className="flex gap-2">
