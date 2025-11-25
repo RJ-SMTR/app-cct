@@ -6,6 +6,7 @@ import i18next from 'i18next';
 import _ from '@lodash';
 import navFinanConfig from 'app/configs/navFinanConfig';
 import masterConfig from 'app/configs/masterConfig';
+import suporteConfig from 'app/configs/suporteConfig';
 
 const navigationAdapter = createEntityAdapter();
 const emptyInitialState = navigationAdapter.getInitialState();
@@ -87,8 +88,11 @@ export const selectNavigation = createSelector(
       case 'Admin Finan':
         configToUse = navFinanConfig;
         break;
-      default:
+        case 'User':
         configToUse = navigationConfig;
+        break;
+      default:
+      configToUse = suporteConfig;
 
     }
     

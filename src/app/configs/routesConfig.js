@@ -11,6 +11,7 @@ import Error404Page from '../main/404/Error404Page';
 import HomeConifg from '../main/pages/home/HomeConfig';
 import profileAppConfig from '../main/pages/profile/profileAppConfig';
 import ExtractConfig from '../main/pages/extract/ExtractConfig';
+import ExtractConfig24 from '../main/pages/extract24/ExtractConfig';
 import AdminSignIn from '../main/pages/auth/admin/sign-in/SignInConfig';
 import FinanSignInConfig from '../main/pages/auth/finan/SignInConfig';
 import AdminConfig from '../main/pages/admin/AdminConfig';
@@ -29,13 +30,14 @@ import RemessaConfig from '../main/pages/admin/Remessa/RemessaConfig';
 const routeConfigs = [
   // HomeConifg,
   SignOutConfig,
-  SignInConfig,
-  ForgotPasswordConfig,
-  ResetPasswordConfig,
+  // SignInConfig,
+  // ForgotPasswordConfig,
+  // ResetPasswordConfig,
   ConcludeConfig,
   profileAppConfig,
   RemessaConfig,
   ExtractConfig,
+  ExtractConfig24,
   // ResumeConfig,
   AdminSignIn,
   AdminConfig,
@@ -50,6 +52,7 @@ const routeConfigs = [
   StatementsConfig,
   ReportVanzeiroConfig,
   ReportConfig,
+  ReportVanzeiroConfig,
   ReportReleaseConfig
 ];
 

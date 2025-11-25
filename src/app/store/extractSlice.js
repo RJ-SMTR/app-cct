@@ -260,13 +260,9 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
                 dispatch(setStatements(statementsSort));
                 
 
-                const sum = response.data.reduce(
-                    (acc, statement) => acc + Number(statement.valor_pagamento.replace(",", ".")),
-                    0
-                );
-
+                const sum = response.data.map((statement) => statement.valor_pagamento)
+                    .reduce((acc, curr) => acc + curr, 0);
                 dispatch(setSumInfoDay(sum));
-
 
             } else if (searchingWeek) {
                 dispatch(getPreviousDays(idOrdem, userId));
@@ -296,7 +292,34 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
     }
 };
 
+export const get24 = (dateRange, userId) => async (dispatch) => {
+    const dataInicio = startOfMonth(new Date(dateRange))
+    const dataFim = new Date(dateRange)
 
+    const token = window.localStorage.getItem('jwt_access_token');
+
+    if (JwtService.isAuthTokenValid(token)) {
+        let config = {
+            method: 'get',
+            maxBodyLength: Infinity,
+            url: jwtServiceConfig.van24 + `?userId=${userId}`,
+            headers: { "Authorization": `Bearer ${token}` },
+            params: {
+                dataInicio: dataInicio,
+                dataFim: dataFim,
+            }
+        }
+        try {
+            const response = await api.request(config)
+            dispatch(setList24(response.data))
+        } catch (error) {
+            console.error(error);
+        } finally {
+            dispatch(setLoadingPrevious(false))
+        }
+    }
+
+}
 
 
 

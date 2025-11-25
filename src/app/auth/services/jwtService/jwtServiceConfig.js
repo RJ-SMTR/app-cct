@@ -32,6 +32,7 @@ const jwtServiceConfig = {
   agendamento: '/agendamentoPagamento/',
   aprovacao: '/aprovacaoPagamento/',
   
+  van24: '/cnab/relatorio/detalhadoVanzeiro',
 
 };
 

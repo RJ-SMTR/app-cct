@@ -152,14 +152,59 @@ export default function BasicEditingGrid() {
           fullName: user.fullName,
           userId: user.id
 
-        }
-      }));
-      const sortedOptions = options.sort((a, b) => {
+export default function BasicEditingGrid() {
+    const synthData = useSelector(state => state.report.synthData)
+    const totalSynth = useSelector(state => state.report.totalSynth)
+    const reportType = useSelector(state => state.report.reportType);
+    const userList = useSelector(state => state.admin.userList) || []
+    const [isLoading, setIsLoading] = useState(false)
+    const [loadingUsers, setLoadingUsers] = useState(false)
+    const [userOptions, setUserOptions] = useState([])
+    const [showClearMin, setShowClearMin] = useState(false)
+    const [showClearMax, setShowClearMax] = useState(false)
+    const [rows, setRows] = useState([])
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [whichStatusShow, setWhichStatus] = useState([])
+    const [selected, setSelected] = useState(null)
+
+
+    useEffect(() => {
+        setRows(synthData)
+    }, [synthData])
+
+    const consorcios = [
+        { label: 'Todos', value: "Todos" },
+        { label: 'Internorte', value: "Internorte" },
+        { label: 'Intersul', value: "Intersul" },
+        { label: 'MobiRio', value: "MobiRio" },
+        { label: 'Santa Cruz', value: "Santa Cruz" },
+        { label: 'STPC', value: "STPC", disabled: selected === 'name' ? true : false },
+        { label: 'STPL', value: "STPL", disabled: selected === 'name' ? true : false },
+        { label: 'Transcarioca', value: "Transcarioca" },
+        { label: 'VLT', value: "VLT" },
+        { label: 'TEC', value: "TEC", disabled: selected === 'name' ? true : false }
 
         return a.value.fullName.localeCompare(b.value.fullName);
 
 
-      });
+    const onSubmit = (data) => {
+        if (data.name.length === 0 && data.consorcioName.length === 0) {
+            dispatch(showMessage({ message: 'Erro na busca, selecione favorecidos ou consórcios.' }))
+        } else {
+            dispatch(setTotalSynth(''))
+
+            setIsLoading(true)
+
+        
+            dispatch(handleReportInfo(data, reportType))
+                .then((response) => {
+                    setIsLoading(false)
+                })
+                .catch((error) => {
+                    dispatch(showMessage({ message: 'Erro na busca, verifique os campos e tente novamente.' }))
+                    setIsLoading(false)
+                });
+        }
 
       setUserOptions([{ label: "Todos", value: { fullName: 'Todos' } }, ...sortedOptions]);
     } else {
@@ -178,62 +223,9 @@ export default function BasicEditingGrid() {
       setSelectedEspecificos(especificosSelecionados);
     }
 
-    setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
-  };
-
-  const valueProps = {
-    startAdornment: <InputAdornment position='start'>R$</InputAdornment>
-  };
-
-  const formatter = new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  });
-
-  // Export CSV
-  const status = getValues('status')
-  const whichStatus = status?.join(',')
-
-  const reportListData = reportList.count > 0
-    ? reportList.data?.map(report => ({
-      Nome: report.nomefavorecido,
-      Valor: formatter.format(report.valor),
-      Status: "",
-    }))
-    : [];
-
-  const valorTotal = {
-    Nome: "Valor Total",
-    Valor: "",
-    Status: formatter.format(reportList?.valor),
-  }
-
-  const statusRow = {
-    Nome: "Status selecionado",
-    Valor: "",
-    Status: whichStatus || "Todos",
-  };
-
-  const csvData = [
-    statusRow,
-    ...reportListData,
-    valorTotal
-  ]
-  let dateInicio;
-  let dateFim;
-  const selectedDate = getValues('dateRange');
-
-  if (selectedDate !== null) {
-    dateInicio = selectedDate[0];
-    dateFim = selectedDate[1];
-  }
-
-  const csvFilename = useMemo(() => {
-    if (dateInicio && dateFim) {
-      return `relatorio_${format(dateInicio, 'dd-MM-yyyy')}_${format(dateFim, 'dd-MM-yyyy')}.csv`;
-    }
-    return `relatorio_${format(new Date(), 'dd-MM-yyyy')}.csv`;
-  }, [dateInicio, dateFim])
+    useEffect(() => {
+        fetchUsers()
+    }, []);
 
   // Export PDF
   const exportPDF = () => {
@@ -366,150 +358,328 @@ export default function BasicEditingGrid() {
     setShowButton(false)
   };
 
-  const handleSelection = (field, newValue) => {
-    setSelected(newValue.length > 0 ? field : null);
-    if (field === 'consorcioName') {
-      setSelectedConsorcios(newValue);
-    }
-    handleAutocompleteChange(field, newValue);
-  };
+    const showStatus = (status) => {
+        switch (status) {
+            case 'pago':
+                return 'Pago';
+            case 'a pagar':
+                return 'A pagar';
+            case 'naopago':
+                return 'Erro';
+            default:
+                return status;
+        }
+    };
 
-  const sortedData = Array.isArray(reportList.data)
-    ? [...reportList.data].sort((a, b) =>
-      a.nomefavorecido.localeCompare(b.nomefavorecido)
-    )
-    : [];
+    const clearSelect = (button) => {
+        setValue(button, '');
+    };
 
-
-
-
-  return (
-    <>
-      <Paper>
-        <Box className="w-full md:mx-9 p-24 relative mt-32">
-          <header>Filtros de Pesquisa</header>
-
-          <Box className="flex items-center py-10 gap-10">
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <Box className="flex gap-10 flex-wrap mb-20">
+    const handleSelection = (field, newValue) => {
+        setSelected(newValue.length > 0 ? field : null);
+        handleAutocompleteChange(field, newValue);
+    };
 
 
-                <Autocomplete
-                  id="favorecidos"
-                  multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                  getOptionLabel={(option) => option.value.fullName}
-                  filterSelectedOptions
-                  options={userOptions}
-                  filterOptions={(options, state) =>
-                    options.filter((option) =>
-                      option.value?.cpfCnpj?.includes(state.inputValue) ||
-                      option.value?.permitCode?.includes(state.inputValue) ||
-                      option.value?.fullName?.toLowerCase().includes(state.inputValue.toLowerCase())
-                    )
-                  }
-                  loading={loadingUsers}
-                  onChange={(_, newValue) => handleSelection('name', newValue)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Selecionar Favorecido"
-                      variant="outlined"
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: (
-                          <>
-                            {loadingUsers ? <CircularProgress color="inherit" size={20} /> : null}
-                            {params.InputProps.endAdornment}
-                          </>
-                        ),
-                      }}
-                    />
-                  )}
-                />
+    return (
+        <>
+            <Paper>
+                <Box className="w-full md:mx-9 p-24 relative mt-32">
+                    <header>Filtros de Pesquisa</header>
+                    <Box className="flex items-center py-10 gap-10">
+                        <form onSubmit={handleSubmit(onSubmit)}>
+                            <Box className="flex gap-10 flex-wrap mb-20">
 
 
-                <Autocomplete
-                  id="consorcio"
-                  multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                  getOptionLabel={(option) => option.label}
-                  filterSelectedOptions
-                  options={consorcios}
-                  value={selectedConsorcios}
-                  getOptionDisabled={(option) => option.disabled}
-                  isOptionEqualToValue={(option, value) => option.value === value.value}
-                  onChange={(_, newValue) => handleSelection('consorcioName', newValue)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Selecionar Consórcios"
-                      variant="outlined"
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: <>{params.InputProps.endAdornment}</>,
-                      }}
-                    />
-                  )}
-                />
+                                <Autocomplete
+                                    id="favorecidos"
+                                    multiple
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                                    getOptionLabel={(option) => option.value.fullName}
+                                    filterSelectedOptions
+                                    options={userOptions}
+                                    filterOptions={(options, state) =>
+                                        options.filter((option) =>
+                                            option.value?.cpfCnpj?.includes(state.inputValue) ||
+                                            option.value?.permitCode?.includes(state.inputValue) ||
+                                            option.value?.fullName?.toLowerCase().includes(state.inputValue.toLowerCase())
+                                        )
+                                    }
+                                    loading={loadingUsers}
+                                    onChange={(_, newValue) => handleSelection('name', newValue)}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="Selecionar Favorecido"
+                                            variant="outlined"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                endAdornment: (
+                                                    <>
+                                                        {loadingUsers ? <CircularProgress color="inherit" size={20} /> : null}
+                                                        {params.InputProps.endAdornment}
+                                                    </>
+                                                ),
+                                            }}
+                                        />
+                                    )}
+                                />
 
-                <Autocomplete
-                  id="status"
-                  multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                  options={específicos}
-                  getOptionLabel={(option) => option.label}
-                  filterSelectedOptions
-                  onChange={(_, newValue) =>
-                    handleAutocompleteChange("especificos", newValue)
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Selecionar Específicos"
-                      variant="outlined"
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: (
-                          <>
-                            {params.InputProps.endAdornment}
-                          </>
-                        ),
-                      }}
-                    />
-                  )}
-                />
+                                <Autocomplete
+                                    id="consorcio"
+                                    multiple
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                                    getOptionLabel={(option) => option.label}
+                                    filterSelectedOptions
+                                    options={consorcios}
+                                    getOptionDisabled={(option) => option.disabled}
+                                    onChange={(_, newValue) => handleSelection('consorcioName', newValue)}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="Selecionar Consórcios"
+                                            variant="outlined"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                endAdornment: <>{params.InputProps.endAdornment}</>,
+                                            }}
+                                        />
+                                    )}
+                                />
+                                <Autocomplete
+                                    id="status"
+                                    multiple
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                                    options={específicos}
+                                    getOptionLabel={(option) => option.label}
+                                    filterSelectedOptions
+                                    // onChange={(_, newValue) => {
+                                    //     if (newValue.length === 0) {
+                                    //         dispatch(setSpecificValue(false));
+                                    //     } else {
+                                    //         dispatch(setSpecificValue(true));
+                                    //     }
+                                    // }}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="Selecionar Específicos"
+                                            variant="outlined"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                endAdornment: (
+                                                    <>
+                                                        {params.InputProps.endAdornment}
+                                                    </>
+                                                ),
+                                            }}
+                                        />
+                                    )}
+                                />
+                          
+                            </Box>
 
-              </Box>
+                            <Box className="flex items-center gap-10 flex-wrap">
+                                <Autocomplete
+                                    id="status"
+                                    multiple
+                                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
+                                    getOptionLabel={(option) => option.label}
+                                    filterSelectedOptions
+                                    options={consorciosStatus}
+                                    onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="Selecionar Status"
+                                            variant="outlined"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                endAdornment: (
+                                                    <>
+                                                        {params.InputProps.endAdornment}
+                                                    </>
+                                                ),
+                                            }}
+                                        />
+                                    )}
+                                />
+                                <Box>
+                                    <CustomProvider locale={ptBR}>
+                                        <Controller
+                                            name="dateRange"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <DateRangePicker
+                                                    {...field}
+                                                    id="custom-date-input"
+                                                    showOneCalendar
+                                                    showHeader={false}
+                                                    placement="auto"
+                                                    placeholder="Selecionar Data"
+                                                    format="dd/MM/yy"
+                                                    character=" - "
+                                                    className="custom-date-range-picker"
+                                                />)}
+                                        />
+                                    </CustomProvider>
+                                    <br />
+                                    <span className='absolute text-xs text-red-600'>Campo data obrigatório*</span>
+                                </Box>
+                            </Box>
+                            <Box className="flex items-center my-20 gap-10 flex-wrap">
+                                <Controller
+                                    name="valorMin"
+                                    control={control}
+                                    rules={{
+                                        validate: (value) => {
+                                            if (!value) return true;
+                                            const valorMin = parseFloat(value.replace(',', '.'));
+                                            const valorMax = parseFloat(getValues("valorMax").replace(',', '.'));
+                                            return valorMin <= valorMax || "Valor Mínimo não pode ser maior que o Valor Máximo";
+                                        }
+                                    }}
 
-              <Box className="flex items-center gap-10 flex-wrap">
-                <Box>
+                                    render={({ field, fieldState: { error } }) => (
+                                        <NumericFormat
+                                            {...field}
+                                            thousandSeparator="."
+                                            decimalSeparator=","
+                                            fixedDecimalScale
+                                            decimalScale={2}
+                                            customInput={TextField}
+                                            label="Valor Mínimo"
+                                            value={field.value}
+                                            onChange={(e) => {
+                                                field.onChange(e);
+                                                const valorMin = parseFloat(e.target.value.replace(',', '.'));
+                                                const valorMax = parseFloat(getValues("valorMax").replace(',', '.'));
+
+                                                if (valorMin <= valorMax) {
+                                                    clearErrors("valorMin");
+                                                    clearErrors("valorMax");
+                                                } else {
+                                                    trigger("valorMax");
+                                                }
+                                            }}
+                                            error={!!error}
+                                            helperText={error ? error.message : null}
+                                            onMouseEnter={() => {
+                                                if (field.value) setShowClearMin(true);
+
+                                            }}
+                                            onMouseLeave={() => setShowClearMin(false)}
+                                            FormHelperTextProps={{
+                                                sx: { color: 'red', fontSize: '1rem', position: 'absolute', bottom: '-3.5rem' }
+                                            }}
+                                            InputProps={{
+                                                endAdornment: showClearMin && field.value && (
+                                                    <InputAdornment sx={{ position: "absolute", right: '1rem' }} position="end">
+                                                        <IconButton onClick={() => clearSelect('valorMin')} sx={{ height: '2rem', width: '2rem' }}>
+                                                            <ClearIcon sx={{ height: '2rem' }} />
+                                                        </IconButton>
+                                                    </InputAdornment>
+                                                ),
+                                                ...valueProps,
+                                            }}
+                                        />
+                                    )}
+                                />
+                                <Controller
+                                    name="valorMax"
+                                    control={control}
+                                    rules={{
+                                        validate: (value) => {
+                                            if (!value) return true;
+                                            const valorMax = parseFloat(value.replace(',', '.'));
+                                            const valorMin = parseFloat(getValues("valorMin").replace(',', '.'));
+                                            return valorMax >= valorMin || "Valor Máximo não pode ser menor que o Valor Mínimo";
+                                        }
+                                    }}
+                                    render={({ field, fieldState: { error } }) => (
+                                        <NumericFormat
+                                            {...field}
+                                            thousandSeparator="."
+                                            decimalSeparator=","
+                                            fixedDecimalScale
+                                            decimalScale={2}
+                                            customInput={TextField}
+                                            label="Valor Máximo"
+                                            value={field.value}
+                                            onChange={(e) => {
+                                                field.onChange(e);
+                                                const valorMax = parseFloat(e.target.value.replace(',', '.'));
+                                                const valorMin = parseFloat(getValues("valorMin").replace(',', '.'));
+
+                                                if (valorMax >= valorMin) {
+                                                    clearErrors("valorMax");
+                                                    clearErrors("valorMin");
+                                                } else {
+                                                    trigger("valorMin");
+                                                }
+                                            }}
+                                            onMouseEnter={() => {
+                                                if (field.value) setShowClearMax(true);
+                                            }}
+                                            onMouseLeave={() => setShowClearMax(false)}
+                                            error={!!error}
+                                            helperText={error ? error.message : null}
+                                            FormHelperTextProps={{
+                                                sx: { color: 'red', fontSize: '1rem', position: 'absolute', bottom: '-3.5rem' }
+                                            }}
+                                            InputProps={{
+                                                endAdornment: showClearMax && field.value && (
+                                                    <InputAdornment sx={{ position: "absolute", right: '1rem' }} position="end">
+                                                        <IconButton onClick={() => clearSelect('valorMax')} sx={{ height: '2rem', width: '2rem' }}>
+                                                            <ClearIcon sx={{ height: '2rem' }} />
+                                                        </IconButton>
+                                                    </InputAdornment>
+                                                ),
+
+                                                ...valueProps,
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </Box>
 
 
-                  <Autocomplete
-                    id="status"
-                    multiple
-                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
-                    getOptionLabel={(option) => option.label}
-                    filterSelectedOptions
-                    options={consorciosStatus}
-                    onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Selecionar Status"
-                        variant="outlined"
-                        InputProps={{
-                          ...params.InputProps,
-                          endAdornment: (
-                            <>
-                              {params.InputProps.endAdornment}
-                            </>
-                          ),
-                        }}
-                      />
-                    )}
-                  />
+
+                            <Box>
+
+                            </Box>
+                            {whichStatusShow.includes("A pagar") && (
+                                <span className="text-sm text-red-600">
+
+                                    Atenção: Para o status "a pagar", a data escolhida deve ser referente a Data Ordem de Pagamento (sexta a quinta-feira).
+
+                                </span>
+                            )}
+                            <Box>
+                                <Button
+                                    variant="contained"
+                                    color="secondary"
+                                    className=" w-35% mt-16 z-10"
+                                    aria-label="Pesquisar"
+                                    type="submit"
+                                    size="medium"
+                                >
+                                    Pesquisar
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    className=" w-35% mt-16 mx-10 z-10"
+                                    aria-label="Limpar Filtros"
+                                    type="button"
+                                    size="medium"
+                                    onClick={() => handleClear()}
+                                >
+                                    Limpar Filtros
+                                </Button>
+                            </Box>
+                        </form>
+
+                    </Box>
                 </Box>
 
                 <Box>
