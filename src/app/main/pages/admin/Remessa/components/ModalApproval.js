@@ -1,5 +1,5 @@
-import { useForm } from 'react-hook-form';
-import { Modal, Box, Typography, TextField } from '@mui/material';
+import { Controller, useForm } from 'react-hook-form';
+import { Modal, Box, Typography, TextField, InputAdornment } from '@mui/material';
 import dayjs from 'dayjs';
 import { useDispatch } from 'react-redux';
 import {  approveBooking, editPayment, getBookings } from 'app/store/automationSlice';
@@ -7,6 +7,7 @@ import { showMessage } from 'app/store/fuse/messageSlice';
 import { useState } from 'react';
 import { format, parse } from 'date-fns';
 import { utcToZonedTime, formatInTimeZone } from "date-fns-tz";
+import { NumericFormat } from 'react-number-format';
 
 const style = {
     position: 'absolute',
@@ -23,6 +24,10 @@ const style = {
 
 export const ModalApproval = ({ openApproval, handleCloseApproval, row, setOpenApproval  }) => {
      const [password, setPassword] = useState('');
+     const [valorAprovado, setValorAprovado] = useState('');  
+     const valuePropsValor = {
+         startAdornment: <InputAdornment position='start'>R$</InputAdornment>
+       }  
     
 
     function formatHorario(horario) {
@@ -58,8 +63,8 @@ export const ModalApproval = ({ openApproval, handleCloseApproval, row, setOpenA
    
 
     const onSubmit = () => {
-        console.log(row)
-        dispatch(approveBooking(row.aprovacaoPagamento.id, password))
+            console.log('valorAprovado', valorAprovado)
+        dispatch(approveBooking(row.aprovacaoPagamento.id, password, valorAprovado))
             .then((response) => {
 
                 if (response.status === 204) {
@@ -134,15 +139,38 @@ export const ModalApproval = ({ openApproval, handleCloseApproval, row, setOpenA
                     </div>
                 </div>
                     <div >
+
+                    <p className="font-semibold my-10">Valor a ser aprovado:</p>
+                    <NumericFormat
+                        // defaultValue={releaseData.algoritmo}
+                        labelId="algoritmo-label"
+                        thousandSeparator={'.'}
+                        decimalSeparator={','}
+                        className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                        fixedDecimalScale
+                        decimalScale={2}
+                        label="Valor a ser pago"
+                        customInput={TextField}
+                        InputProps={valuePropsValor}
+                        onValueChange={(values) => {
+                            const { value } = values;
+                            setValorAprovado(value);
+                        }}
+                    />
+
+                    </div>
+                    <div >
+                        
                     <p className="font-semibold my-10">Digite sua senha para aprovar:</p>
                     <TextField
                         id="motivoPagamentoUnico"
-                        label="Senha"
+                        label="Senha:"
                         variant="outlined"
                         type='password'
                         className="w-full p-1"
                         onChange={(e) => setPassword(e.target.value)}
                     />
+                          
 
                     </div>
                      

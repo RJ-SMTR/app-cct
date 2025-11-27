@@ -1,6 +1,32 @@
 import { createSlice } from '@reduxjs/toolkit';
 import jwtServiceConfig from '../auth/services/jwtService/jwtServiceConfig';
 import { api } from 'app/configs/api/api';
+import accounting from 'accounting';
+
+function parseCurrency(raw) {
+    if (raw === null || raw === undefined) return null;
+    if (typeof raw === 'number') return Number(Number(raw).toFixed(2));
+    let s = String(raw).trim();
+    if (s === '') return null;
+
+    s = s.replace(/\s/g, '');
+    const hasDot = s.indexOf('.') !== -1;
+    const hasComma = s.indexOf(',') !== -1;
+    let normalized;
+    if (hasDot && hasComma) {
+        if (s.lastIndexOf(',') > s.lastIndexOf('.')) {
+            normalized = s.replace(/\./g, '').replace(',', '.');
+        } else {
+            normalized = s.replace(/,/g, '');
+        }
+    } else if (hasComma) {
+        normalized = s.replace(/\./g, '').replace(',', '.');
+    } else {
+        normalized = s.replace(/,/g, '');
+    }
+    const num = Number(normalized);
+    return Number.isFinite(num) ? Number(num.toFixed(2)) : null;
+}
 
 
 const initialState = {
@@ -30,36 +56,65 @@ export const {
 export default automationSlice.reducer;
 
 function handleData(data) {
-  let requestData = {};
+    // eslint-disable-next-line no-console
+    const requestData = {};
 
-    if (data.consorcioName && data.consorcioName.length > 0) {
-        requestData.tipoBeneficiario = 'Consorcio'
+    if (Array.isArray(data?.consorcioName) && data.consorcioName.length > 0) {
+        requestData.tipoBeneficiario = 'Consorcio';
         requestData.beneficiarioUsuario = data.consorcioName[0];
-
+    } else if (Array.isArray(data?.name) && data.name.length > 0) {
+        requestData.tipoBeneficiario = 'Modal';
+        requestData.beneficiarioUsuario = data.name[0];
     } else {
-        requestData.tipoBeneficiario = 'Modal'
-        requestData.beneficiarioUsuario = data.name[0]
+        requestData.tipoBeneficiario = data?.tipoBeneficiario ?? null;
+        requestData.beneficiarioUsuario = data?.beneficiarioUsuario ?? null;
     }
 
-    requestData.aprovacao = data.aprovacao.includes('Necessita') ? true : false;
-
-    if(data.valorPagamentoUnico){
-        requestData.valorPagamentoUnico = parseFloat(data.valorPagamentoUnico);
-    }
-    if(data.dataPagamentoUnico){
-        requestData.dataPagamentoUnico = data.dataPagamentoUnico;
-    }
-    if(data.motivoPagamentoUnico){
-        requestData.motivoPagamentoUnico = data.motivoPagamentoUnico;
+    const aprovacaoValue = data?.aprovacao;
+    if (typeof aprovacaoValue === 'string') {
+        requestData.aprovacao = aprovacaoValue.includes('Necessita');
+    } else if (typeof aprovacaoValue === 'boolean') {
+        requestData.aprovacao = aprovacaoValue;
+    } else {
+        requestData.aprovacao = false;
     }
 
-    requestData.tipoPagamento = data.tipoPagamento;
-    requestData.horario = data.horario.toTimeString().split(' ')[0];
-    requestData.diaSemana = data.diaSemana;
+    const rawValor = data?.valorPagamentoUnico ?? data?.dataPagamentoUnico ?? data?.data?.valorPagamentoUnico;
+    if (rawValor !== undefined && rawValor !== null && rawValor !== '') {
+        const parsed = parseCurrency(rawValor);
+        if (parsed !== null) {
+            requestData.valorPagamentoUnico = parsed;
+        } else {
+            requestData.valorPagamentoUnico = rawValor;
+        }
+    }
+
+    if (data?.dataPagamentoUnico) requestData.dataPagamentoUnico = data.dataPagamentoUnico;
+    if (data?.motivoPagamentoUnico) requestData.motivoPagamentoUnico = data.motivoPagamentoUnico;
+
+    requestData.tipoPagamento = data?.tipoPagamento ?? null;
+
+    const horarioRaw = data?.horario;
+    if (horarioRaw) {
+        if (typeof horarioRaw === 'string') {
+            const m = horarioRaw.match(/(\d{1,2}:\d{2}(?::\d{2})?)/);
+            requestData.horario = m ? m[1] : horarioRaw;
+        } else if (horarioRaw instanceof Date || typeof horarioRaw?.toTimeString === 'function') {
+            try {
+                requestData.horario = horarioRaw.toTimeString().split(' ')[0];
+            } catch (e) {
+                requestData.horario = String(horarioRaw);
+            }
+        } else {
+            requestData.horario = String(horarioRaw);
+        }
+    }
+
+    requestData.diaSemana = data?.diaSemana ?? null;
     requestData.status = false;
-  
 
-  return requestData;
+    // eslint-disable-next-line no-console
+    return requestData;
 }
 
 export const bookPayment = (data) => async (dispatch) => {
@@ -81,7 +136,6 @@ export const bookPayment = (data) => async (dispatch) => {
 
     try{
         const response = await api(config);
-        console.log(response)
         if(response.status == 201){
             dispatch(getBookings())
         }
@@ -237,13 +291,21 @@ export const getApproval = (data) => async (dispatch) => {
         });
 
     }
-export const approveBooking = (id, password) => async (dispatch) => {
+export const approveBooking = (id, password, valorAprovado) => async (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
 
+    let rawValor = valorAprovado
+        if (rawValor !== undefined && rawValor !== null && rawValor !== '') {
+                const parsed = parseCurrency(rawValor);
+                rawValor = parsed !== null ? parsed : rawValor;
+        }
+     
     return new Promise((resolve, reject) => {
         api.put(
             `${jwtServiceConfig.aprovacao}aprovar/${id}`,
-            { password: password }, 
+            { password: password,
+                valorAprovado: rawValor
+             }, 
             {
                 headers: {
                     "Authorization": `Bearer ${token}` 
