@@ -67,3 +67,12 @@ table.simple.borderless tbody tr td{
 table.simple.borderless thead tr th{
     border: none;
 }
+
+.MuiBadge-badge.MuiBadge-standard.MuiBadge-invisible.MuiBadge-anchorOriginTopRight.MuiBadge-anchorOriginTopRightCircular.MuiBadge-overlapCircular.muiltr-rqcs84-MuiBadge-badge{
+    display: none;
+}
+ .muiltr-1uj2axd{
+    height: 5.5rem;
+    background-color: #fff;
+ }
+/* MuiButtonBase-root MuiIconButton-root.MuiIconButton-sizeMedium.muiltr-aem3qp-MuiButtonBase-root-MuiIconButton-root */

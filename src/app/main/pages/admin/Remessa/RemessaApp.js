@@ -37,18 +37,18 @@ function RemessaApp() {
 
 
   const weekdays = [
-    { label: 'Segunda-feira' },
-    { label: 'Terça-feira' },
-    { label: 'Quarta-feira' },
-    { label: 'Quinta-feira' },
-    { label: 'Sexta-feira' },
+    { label: 'Segunda-feira', value: 1 },
+    { label: 'Terça-feira', value: 2 },
+    { label: 'Quarta-feira', value: 3 },
+    { label: 'Quinta-feira', value: 4 },
+    { label: 'Sexta-feira', value: 5 },
 
   ];
 
 
 
   const consorcios = [
-    { label: 'Todos', value: "Todos" },
+    { label: 'Todos', value: [2079, 2078, 2081, 2082, 2199, 2198, 2080, 2077, 2200] },
     { label: 'Internorte', value: 2079 },
     { label: 'Intersul', value: 2078 },
     { label: 'MobiRio', value: 2081 },
@@ -111,6 +111,17 @@ function RemessaApp() {
   const handleSelection = (field, newValue) => {
     setSelected(newValue?.length > 0 ? field : null);
     if (field === 'consorcioName') {
+      const hasTodos = Array.isArray(newValue) && newValue.some((o) => o.label === 'Todos');
+      if (hasTodos) {
+        const allWithoutTodos = consorcios.filter((o) => o.label !== 'Todos');
+        setSelectedConsorcios(allWithoutTodos);
+        const allIds = consorcios
+          .filter((o) => o.label !== 'Todos')
+          .map((o) => o.value)
+          .flat();
+        setValue('consorcioName', [...new Set(allIds)]);
+        return;
+      }
       setSelectedConsorcios(newValue);
     }
     handleAutocompleteChange(field, newValue);
@@ -120,7 +131,11 @@ function RemessaApp() {
   const handleAutocompleteChange = (field, newValue) => {
     if (Array.isArray(newValue)) {
       if (field === 'consorcioName') {
-        setValue(field, newValue.map(item => item.value));
+        const ids = newValue
+          .map((item) => item.value)
+          .reduce((acc, v) => acc.concat(v), []);
+        const uniqueIds = [...new Set(ids)];
+        setValue(field, uniqueIds);
       } else {
         setValue(field, newValue.map(item => item.value.userId));
       }
@@ -133,7 +148,6 @@ function RemessaApp() {
   };
 
   const onSubmit = (data) => {
-
     const hasNameOrConsorcio = data.name.length > 0 || data.consorcioName.length > 0;
     if (!hasNameOrConsorcio) {
       dispatch(
@@ -143,7 +157,6 @@ function RemessaApp() {
       );
     } else {
       setIsLoading(true)
-
       dispatch(bookPayment(data))
         .then((response) => {
           setIsLoading(false)
@@ -331,7 +344,6 @@ function RemessaApp() {
                     render={({ field }) =>
                       <NumericFormat
                         {...field}
-                        // defaultValue={releaseData.algoritmo}
                         labelId="algoritmo-label"
                         thousandSeparator={'.'}
                         decimalSeparator={','}
@@ -503,9 +515,9 @@ function RemessaApp() {
         <br />
       </div>
       <div className="p-1 pt-10">
-        <Box className='flex flex-col  justify-around'>
+        <Box className='flex flex-col  justify-around w-full md:mx-9 p-24 relative mt-16'>
           <Card className="w-full md:mx-9 p-24 relative mt-16">
-            <header className="flex justify-between items-center">
+            <header className="flex justify-between items-center mb-24">
               <h3 className="font-semibold">
                 Agendamentos
               </h3>
