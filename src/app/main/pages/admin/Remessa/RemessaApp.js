@@ -118,6 +118,26 @@ function RemessaApp() {
       }
       setSelectedConsorcios(newValue);
     }
+    if (field === 'tipoPagamento') {
+      const nextTipo = newValue?.label || '';
+
+      setValue(field, nextTipo);
+      setSelectedWeekDays(nextTipo);
+      if (nextTipo === 'Único') {
+
+        setValue('intervaloDias', '');
+        setValue('diaSemana', '');
+        setValue('weekdays', []);
+        setValue('horario', '');
+      } else if (nextTipo === 'Recorrente') {
+
+        setValue('valorPagamentoUnico', '');
+        setValue('dataPagamentoUnico', '');
+        setValue('motivoPagamentoUnico', '');
+        setValue('horario', '');
+      }
+      return;
+    }
     handleAutocompleteChange(field, newValue);
   };
 
@@ -142,27 +162,76 @@ function RemessaApp() {
   };
 
   const onSubmit = (data) => {
-    const hasNameOrConsorcio = data.name.length > 0 || data.consorcioName.length > 0;
+    const hasNameOrConsorcio = Array.isArray(data.name) && data.name.length > 0 || Array.isArray(data.consorcioName) && data.consorcioName.length > 0;
+    const tipoPagamento = getValues('tipoPagamento');
+    const aprovacao = getValues('aprovacao');
+
     if (!hasNameOrConsorcio) {
-      dispatch(
-        showMessage({
-          message: "Erro no agendamento, selecione favorecidos ou consórcios",
-        }),
-      );
-    } else {
-      setIsLoading(true)
-      dispatch(bookPayment(data))
-        .then((response) => {
-          setIsLoading(false)
-        })
-        .catch((error) => {
-          dispatch(showMessage({ message: 'Erro no agendamento, verifique os campos e tente novamente.' }))
-          setIsLoading(false)
-        });
+      dispatch(showMessage({ message: 'Erro: selecione favorecidos ou consórcios.' }));
+      return;
     }
 
+    if (!tipoPagamento) {
+      dispatch(showMessage({ message: 'Erro: selecione o Tipo de Pagamento.' }));
+      return;
+    }
+
+    if (!aprovacao) {
+      dispatch(showMessage({ message: 'Erro: selecione o Status de Aprovação.' }));
+      return;
+    }
+
+    if (tipoPagamento === 'Único') {
+      const valor = getValues('valorPagamentoUnico');
+      const dataUnica = getValues('dataPagamentoUnico');
+      const horario = getValues('horario');
 
 
+      if (!valor || String(valor).trim() === '') {
+        dispatch(showMessage({ message: 'Erro: informe o Valor a ser pago.' }));
+        return;
+      }
+      if (!dataUnica) {
+        dispatch(showMessage({ message: 'Erro: informe a Data de Pagamento.' }));
+        return;
+      }
+      if (!horario) {
+        dispatch(showMessage({ message: 'Erro: informe o Horário.' }));
+        return;
+      }
+    } else if (tipoPagamento === 'Recorrente') {
+      const intervalo = getValues('intervaloDias');
+      const diaSemana = getValues('diaSemana');
+      const weekdaysSel = getValues('weekdays');
+      const horario = getValues('horario');
+
+      if (!intervalo && !diaSemana || String(intervalo).trim() === '' && !diaSemana) {
+        dispatch(showMessage({ message: 'Erro: informe o intervalo de dias (Pagar a cada).' }));
+        return;
+      }
+      if (!diaSemana && !intervalo) {
+        dispatch(showMessage({ message: 'Erro: selecione o dia da semana (Agendado Para).' }));
+        return;
+      }
+      if (!Array.isArray(weekdaysSel) || weekdaysSel.length === 0) {
+        dispatch(showMessage({ message: 'Erro: selecione ao menos um dia em "Dias a serem pagos".' }));
+        return;
+      }
+      if (!horario) {
+        dispatch(showMessage({ message: 'Erro: informe o Horário.' }));
+        return;
+      }
+    }
+
+    setIsLoading(true);
+    dispatch(bookPayment(data))
+      .then(() => {
+        setIsLoading(false);
+      })
+      .catch(() => {
+        dispatch(showMessage({ message: 'Erro no agendamento, verifique os campos e tente novamente.' }));
+        setIsLoading(false);
+      });
   };
 
   const handleValueChange = (name, value) => {
