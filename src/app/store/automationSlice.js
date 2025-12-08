@@ -111,6 +111,79 @@ function handleData(data) {
     requestData.diaSemana = data?.diaSemana ?? null;
     requestData.status = false;
 
+  
+        const dayNameToNum = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+        const normalizeWeekdays = (arr) => {
+            if (!Array.isArray(arr)) return [];
+            const out = arr
+                .map((v) => {
+                    if (typeof v === 'number') return v;
+                    if (typeof v === 'string') {
+                        const trimmed = v.trim().toLowerCase();
+                        if (trimmed in dayNameToNum) return dayNameToNum[trimmed];
+                        const n = Number(trimmed);
+                        return Number.isFinite(n) ? n : null;
+                    }
+                    return null;
+                })
+                .filter((v) => v !== null)
+                .map((v) => ((v % 7) + 7) % 7); // ensure 0..6
+            return Array.from(new Set(out)).sort((a, b) => a - b);
+        };
+
+        const normalizeDiaSemanaToJS = (val) => {
+            if (val === undefined || val === null || val === '') return null;
+            if (typeof val === 'number') {
+                // If ISO 1..7 (Mon..Sun), convert to JS 0..6 (Sun..Sat)
+                if (val >= 1 && val <= 7) return val % 7; // 7->0
+                // If already 0..6, pass through
+                if (val >= 0 && val <= 6) return val;
+                return null;
+            }
+            if (typeof val === 'string') {
+                const n = Number(val);
+                if (Number.isFinite(n)) return normalizeDiaSemanaToJS(n);
+                return null;
+            }
+            return null;
+        };
+
+        const selectedDays = normalizeWeekdays(data?.weekdays);
+        console.log(selectedDays)
+        const anchorJS = normalizeDiaSemanaToJS(data?.diaSemana);
+    console.log(anchorJS)
+
+        if (selectedDays.length > 0 && anchorJS !== null) {
+            const next = (() => {
+                for (let i = 0; i < selectedDays.length; i++) {
+                    if (selectedDays[i] > anchorJS) return selectedDays[i];
+                }
+                return selectedDays[0];
+            })();
+
+            const prev = (() => {
+                for (let i = selectedDays.length - 1; i >= 0; i--) {
+                    if (selectedDays[i] < anchorJS) return selectedDays[i];
+                }
+                return selectedDays[selectedDays.length - 1];
+            })();
+            console.log(next)
+            console.log(prev)
+
+            // Backend expects 'diaInicioPagar' and 'diaFinalPagar'
+            requestData.diaInicioPagar = next;
+            requestData.diaFinalPagar = prev;
+
+            // If an interval (days between payments) is provided, normalize to number
+            const intervaloRaw = data?.intervaloDias ?? data?.diaIntervalo;
+            if (intervaloRaw !== undefined && intervaloRaw !== null && intervaloRaw !== '') {
+                const n = Number(intervaloRaw);
+                if (Number.isFinite(n)) {
+                    requestData.diaIntervalo = n;
+                }
+            }
+        }
+
     // eslint-disable-next-line no-console
     return requestData;
 }
@@ -144,7 +217,6 @@ export const bookPayment = (data) => async (dispatch) => {
 
     try {
         if (allIds.length <= 1) {
-            // Single create
             const id = allIds[0] ?? base.beneficiarioUsuario;
             const response = await createOne(id);
             if ([200, 201].includes(response.status)) {

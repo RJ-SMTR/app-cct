@@ -24,14 +24,8 @@ function RemessaApp() {
   const [isLoading, setIsLoading] = useState(false)
   const [loadingUsers, setLoadingUsers] = useState(false)
   const [userOptions, setUserOptions] = useState([])
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [showClearMin, setShowClearMin] = useState(false)
-  const [showClearMax, setShowClearMax] = useState(false)
-  const [showButton, setShowButton] = useState(false)
-  const [whichStatusShow, setWhichStatus] = useState([])
   const [selected, setSelected] = useState(null)
   const [selectedConsorcios, setSelectedConsorcios] = useState([]);
-  const [selectedEspecificos, setSelectedEspecificos] = useState([]);
 
   const [selectedWeekdays, setSelectedWeekDays] = useState([])
 
@@ -62,7 +56,7 @@ function RemessaApp() {
   ];
 
 
-  const { reset, handleSubmit, setValue, control, getValues, trigger, clearErrors } = useForm({
+  const { reset, handleSubmit, setValue, control, getValues, watch, trigger, clearErrors } = useForm({
     defaultValues: {
       name: [],
       consorcioName: []
@@ -439,19 +433,29 @@ function RemessaApp() {
                         render={({ field }) => (
                           <Box display="flex" gap={1}>
                             {[
-                              { label: "Dom", value: "sun" },
-                              { label: "Seg", value: "mon" },
-                              { label: "Ter", value: "tue" },
-                              { label: "Qua", value: "wed" },
-                              { label: "Qui", value: "thu" },
-                              { label: "Sex", value: "fri" },
-                              { label: "Sab", value: "sat" },
+                              { label: "Dom", value: "0" },
+                              { label: "Seg", value: "1" },
+                              { label: "Ter", value: "2" },
+                              { label: "Qua", value: "3" },
+                              { label: "Qui", value: "4" },
+                              { label: "Sex", value: "5" },
+                              { label: "Sab", value: "6" },
                             ].map((day) => {
                               const isSelected = field.value.includes(day.value);
+                              const selectedDia = watch('diaSemana');
+                              const selectedDiaJS = (
+                                selectedDia === '' || selectedDia === null || selectedDia === undefined
+                                  ? null
+                                  : (typeof selectedDia === 'number' && selectedDia >= 1 && selectedDia <= 7)
+                                      ? (selectedDia % 7)
+                                      : (Number.isFinite(Number(selectedDia)) ? Number(selectedDia) : null)
+                              );
+                              const isDisabled = selectedDiaJS !== null && Number(day.value) === selectedDiaJS;
                               return (
                                 <Box
                                   key={day.value}
                                   onClick={() => {
+                                    if (isDisabled) return;
                                     const newValue = isSelected
                                       ? field.value.filter((v) => v !== day.value)
                                       : [...field.value, day.value];
@@ -459,14 +463,15 @@ function RemessaApp() {
                                   }}
                                   sx={{
                                     borderRadius: "6px",
-                                    backgroundColor: isSelected ? "#2AD705" : "#ddd",
-                                    color: isSelected ? "#fff" : "#000",
+                                    backgroundColor: isDisabled ? '#bbb' : (isSelected ? "#2AD705" : "#ddd"),
+                                    color: isDisabled ? '#666' : (isSelected ? "#fff" : "#000"),
                                     height: 40,
                                     width: 40,
                                     lineHeight: "40px",
                                     textAlign: "center",
-                                    cursor: "pointer",
+                                    cursor: isDisabled ? 'not-allowed' : "pointer",
                                     userSelect: "none",
+                                    opacity: isDisabled ? 0.7 : 1,
                                   }}
                                 >
                                   {day.label}
