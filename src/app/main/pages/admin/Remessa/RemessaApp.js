@@ -133,7 +133,7 @@ function RemessaApp() {
       } else if (nextTipo === 'Recorrente') {
 
         setValue('valorPagamentoUnico', '');
-        setValue('dataPagamentoUnico', '');
+        setValue('dataPagamentoUnico', null);
         setValue('motivoPagamentoUnico', '');
         setValue('horario', null);
       }
@@ -185,9 +185,6 @@ function RemessaApp() {
     if (tipoPagamento === 'Único') {
       const valor = getValues('valorPagamentoUnico');
       const dataUnica = getValues('dataPagamentoUnico');
-      const horario = getValues('horario');
-
-
       if (!valor || String(valor).trim() === '') {
         dispatch(showMessage({ message: 'Erro: informe o Valor a ser pago.' }));
         return;
@@ -196,10 +193,11 @@ function RemessaApp() {
         dispatch(showMessage({ message: 'Erro: informe a Data de Pagamento.' }));
         return;
       }
-      if (!horario) {
-        dispatch(showMessage({ message: 'Erro: informe o Horário.' }));
-        return;
+      // Não enviar diaSemana quando pagamento único está selecionado
+      if (dataUnica) {
+        delete data.diaSemana;
       }
+      // Para pagamento único, horário não é obrigatório.
     } else if (tipoPagamento === 'Recorrente') {
       const intervalo = getValues('intervaloDias');
       const diaSemana = getValues('diaSemana');
@@ -432,7 +430,6 @@ function RemessaApp() {
                     control={control}
                     render={({ field }) => (
                       <DatePicker
-                        {...field}
                         id="custom-date-input"
                         showOneCalendar
                         showHeader={false}
@@ -441,6 +438,8 @@ function RemessaApp() {
                         format="dd/MM/yy"
                         character=" - "
                         className="custom-date-range-picker"
+                        value={field.value ?? null}
+                        onChange={(val) => field.onChange(val ?? null)}
                       />)}
                   />
 
