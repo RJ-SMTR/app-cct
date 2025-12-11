@@ -59,7 +59,8 @@ function RemessaApp() {
   const { reset, handleSubmit, setValue, control, getValues, watch, trigger, clearErrors } = useForm({
     defaultValues: {
       name: [],
-      consorcioName: []
+      consorcioName: [],
+      horario: null
     }
 
   });
@@ -128,13 +129,13 @@ function RemessaApp() {
         setValue('intervaloDias', '');
         setValue('diaSemana', '');
         setValue('weekdays', []);
-        setValue('horario', '');
+        setValue('horario', null);
       } else if (nextTipo === 'Recorrente') {
 
         setValue('valorPagamentoUnico', '');
         setValue('dataPagamentoUnico', '');
         setValue('motivoPagamentoUnico', '');
-        setValue('horario', '');
+        setValue('horario', null);
       }
       return;
     }
@@ -559,7 +560,6 @@ function RemessaApp() {
                       control={control}
                       render={({ field }) => (
                         <DatePicker
-                          {...field}
                           id="custom-date-input"
                           showOneCalendar
                           showHeader={false}
@@ -568,7 +568,10 @@ function RemessaApp() {
                           format="HH:mm"
                           character=" - "
                           className="custom-date-range-picker"
-                        />)}
+                          value={field.value ?? null}
+                          onChange={(val) => field.onChange(val ?? null)}
+                        />
+                      )}
                     />
                   </Box>
 

@@ -60,8 +60,10 @@ function handleData(data) {
     const requestData = {};
 
     if (Array.isArray(data?.consorcioName) && data.consorcioName.length > 0) {
+        requestData.tipoBeneficiario = 'Consorcio';
         requestData.beneficiarioUsuario = data.consorcioName;
     } else if (Array.isArray(data?.name) && data.name.length > 0) {
+        requestData.tipoBeneficiario = 'Modal';
         requestData.beneficiarioUsuario = data.name;
     } else {
         requestData.tipoBeneficiario = data?.tipoBeneficiario ?? null;
@@ -204,8 +206,10 @@ export const bookPayment = (data) => async (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
 
     const createOne = (id) => {
-        const tipoBeneficiario = modalIds.has(Number(id)) ? 'Modal' : 'Consorcio';
+        const computedTipo = modalIds.has(Number(id)) ? 'Modal' : 'Consorcio';
+        const tipoBeneficiario = base.tipoBeneficiario ?? computedTipo;
         const payload = { ...base, beneficiarioUsuario: id, tipoBeneficiario };
+        console.log(payload)
         return api({
             method: 'post',
             maxBodyLength: Infinity,
