@@ -8,20 +8,20 @@ i18next.addResourceBundle('tr', 'navigation', tr);
 i18next.addResourceBundle('ar', 'navigation', ar);
 
 const masterConfig = [
-    {
-        id: 'Administrativo',
-        title: 'Administrativo',
-        subtitle: '',
-        type: 'group',
-        icon: '',
-        children: [
-            {
-                id: 'Home-component',
-                title: 'Home',
-                translate: 'Home',
-                type: 'item',
-                icon: 'heroicons-outline:home',
-                url: 'admin',
+  {
+    id: 'Administrativo',
+    title: 'Administrativo',
+    subtitle: '',
+    type: 'group',
+    icon: '',
+    children: [
+      {
+        id: 'Home-component',
+        title: 'Home',
+        translate: 'Home',
+        type: 'item',
+        icon: 'heroicons-outline:home',
+        url: 'admin',
 
             },
             {
