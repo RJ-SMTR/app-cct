@@ -41,6 +41,14 @@ const navigationConfig = [
     url: 'relatorio-vanzeiro',
   },
   {
+    id: 'extract',
+    title: 'Extrato 2024',
+    translate: 'Extrato 2024',
+    type: 'item',
+    icon: 'heroicons-outline:currency-dollar',
+    url: 'extrato-24',
+  },
+  {
     id: 'support',
     title: 'Suporte',
     translate: 'Suporte',
@@ -49,6 +57,7 @@ const navigationConfig = [
     target: '_blank',
     url: 'https://transportes.prefeitura.rio/atendimentodigital/',
   },
+
 ];
 
 export default navigationConfig;
