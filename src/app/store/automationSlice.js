@@ -59,10 +59,19 @@ function handleData(data) {
     // eslint-disable-next-line no-console
     const requestData = {};
 
-    if (Array.isArray(data?.consorcioName) && data.consorcioName.length > 0) {
+    const hasConsorcioArr = Array.isArray(data?.consorcioName) && data.consorcioName.length > 0;
+    const hasNameArr = Array.isArray(data?.name) && data.name.length > 0;
+
+    if (hasConsorcioArr && hasNameArr) {
+        // Preserve sources to classify per ID later
+        requestData.consorcioIds = data.consorcioName;
+        requestData.favorecidoIds = data.name;
+        requestData.beneficiarioUsuario = [...data.consorcioName, ...data.name];
+        requestData.tipoBeneficiario = null;
+    } else if (hasConsorcioArr) {
         requestData.tipoBeneficiario = 'Consorcio';
         requestData.beneficiarioUsuario = data.consorcioName;
-    } else if (Array.isArray(data?.name) && data.name.length > 0) {
+    } else if (hasNameArr) {
         requestData.tipoBeneficiario = 'Modal';
         requestData.beneficiarioUsuario = data.name;
     } else {
@@ -194,7 +203,9 @@ export const bookPayment = (data) => async (dispatch) => {
 
     const base = handleData(data);
 
-    const modalIds = new Set([2198, 2199, 2200]);
+    // Build membership sets from preserved arrays
+    const consorcioSet = new Set(Array.isArray(base.consorcioIds) ? base.consorcioIds.map((x) => Number(x)) : []);
+    const favorecidoSet = new Set(Array.isArray(base.favorecidoIds) ? base.favorecidoIds.map((x) => Number(x)) : []);
 
     const allIds = Array.isArray(base.beneficiarioUsuario)
         ? base.beneficiarioUsuario
@@ -206,9 +217,14 @@ export const bookPayment = (data) => async (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
 
     const createOne = (id) => {
-        const computedTipo = modalIds.has(Number(id)) ? 'Modal' : 'Consorcio';
+        const numericId = Number(id);
+        // Favor favorecido -> Modal; consorcio -> Consorcio
+        let computedTipo = 'Consorcio';
+        if (favorecidoSet.has(numericId)) computedTipo = 'Modal';
+        else if (consorcioSet.has(numericId)) computedTipo = 'Consorcio';
         const tipoBeneficiario = base.tipoBeneficiario ?? computedTipo;
-        const payload = { ...base, beneficiarioUsuario: id, tipoBeneficiario };
+        const { consorcioIds, favorecidoIds, ...rest } = base;
+        const payload = { ...rest, beneficiarioUsuario: id, tipoBeneficiario };
         console.log(payload)
         return api({
             method: 'post',
@@ -250,7 +266,8 @@ export const bookPayment = (data) => async (dispatch) => {
 export const editPayment = (data) => async (dispatch) => {
     console.log(data)
     const apiRoute = `${jwtServiceConfig.agendamento}${data.id}`; 
-    const token = window.localStorage.getItem('jwt_access_token');
+        const consorcioSet = new Set(Array.isArray(base.consorcioIds) ? base.consorcioIds.map((x) => Number(x)) : []);
+        const favorecidoSet = new Set(Array.isArray(base.favorecidoIds) ? base.favorecidoIds.map((x) => Number(x)) : []);
 
     const config = {
         method: 'put',
@@ -262,9 +279,13 @@ export const editPayment = (data) => async (dispatch) => {
     try {
         const response = await api(config);
         if ([200, 201, 202, 204].includes(response.status)) { 
-            dispatch(getBookings());
+            const numericId = Number(id);
+            let computedTipo = 'Consorcio';
+            if (favorecidoSet.has(numericId)) computedTipo = 'Modal';
+            else if (consorcioSet.has(numericId)) computedTipo = 'Consorcio';
         }
-        return response; 
+            const { consorcioIds, favorecidoIds, ...rest } = base;
+            const payload = { ...rest, beneficiarioUsuario: id, tipoBeneficiario };
     } catch (error) {
         console.error(error);
         throw error;
