@@ -91,7 +91,7 @@ function handleData(data) {
   if (data.status && data.status.length > 0) {
     const statusSet = new Set(data.status);
 
-    const hasAllStatuses = statusSet.has('Pago') && statusSet.has('Erro') && statusSet.has('Aguardando Pagamento') && statusSet.has('Pendencia Paga');
+    const hasAllStatuses = statusSet.has('Pago') && statusSet.has('Erro') && statusSet.has('Aguardando Pagamento') && statusSet.has('Pendencia Paga') && statusSet.has('A pagar');
 
     if (!hasAllStatuses) {
       data.status.forEach(status => {
@@ -117,10 +117,10 @@ function handleData(data) {
           case 'Pendentes':
             requestData.pendentes = true
             break;
-          case 'Todos':
-            break;
           case 'A pagar':
             requestData.apagar = true
+            break;
+          case 'Todos':
             break;
           default:
             requestData.aPagar = true;

@@ -77,21 +77,6 @@ function ExtractApp() {
 
         <br />
       </div>
-      <Modal
-        open={modal}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style} className="overflow-scroll text-center">
-          <Typography id="modal-modal-title" variant="h6" component="h3">
-           Comunicado:
-          </Typography>
-          <p>As informações anteriores ao dia 31/01/24 estão temporariamente indisponíveis.
-            Qualquer dúvida, por favor, contacte o suporte!</p>
-         
-        </Box>
-      </Modal>
     </>
   );
 }

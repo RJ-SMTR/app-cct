@@ -24,31 +24,25 @@ function RemessaApp() {
   const [isLoading, setIsLoading] = useState(false)
   const [loadingUsers, setLoadingUsers] = useState(false)
   const [userOptions, setUserOptions] = useState([])
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [showClearMin, setShowClearMin] = useState(false)
-  const [showClearMax, setShowClearMax] = useState(false)
-  const [showButton, setShowButton] = useState(false)
-  const [whichStatusShow, setWhichStatus] = useState([])
   const [selected, setSelected] = useState(null)
   const [selectedConsorcios, setSelectedConsorcios] = useState([]);
-  const [selectedEspecificos, setSelectedEspecificos] = useState([]);
 
   const [selectedWeekdays, setSelectedWeekDays] = useState([])
 
 
   const weekdays = [
-    { label: 'Segunda-feira' },
-    { label: 'Terça-feira' },
-    { label: 'Quarta-feira' },
-    { label: 'Quinta-feira' },
-    { label: 'Sexta-feira' },
+    { label: 'Segunda-feira', value: 1 },
+    { label: 'Terça-feira', value: 2 },
+    { label: 'Quarta-feira', value: 3 },
+    { label: 'Quinta-feira', value: 4 },
+    { label: 'Sexta-feira', value: 5 },
 
   ];
 
 
 
   const consorcios = [
-    { label: 'Todos', value: "Todos" },
+    { label: 'Todos', value: [2079, 2078, 2081, 2082, 2199, 2198, 2080, 2077, 2200] },
     { label: 'Internorte', value: 2079 },
     { label: 'Intersul', value: 2078 },
     { label: 'MobiRio', value: 2081 },
@@ -62,10 +56,11 @@ function RemessaApp() {
   ];
 
 
-  const { reset, handleSubmit, setValue, control, getValues, trigger, clearErrors } = useForm({
+  const { reset, handleSubmit, setValue, control, getValues, watch, trigger, clearErrors } = useForm({
     defaultValues: {
       name: [],
-      consorcioName: []
+      consorcioName: [],
+      horario: null
     }
 
   });
@@ -111,7 +106,38 @@ function RemessaApp() {
   const handleSelection = (field, newValue) => {
     setSelected(newValue?.length > 0 ? field : null);
     if (field === 'consorcioName') {
+      const hasTodos = Array.isArray(newValue) && newValue.some((o) => o.label === 'Todos');
+      if (hasTodos) {
+        const allWithoutTodos = consorcios.filter((o) => o.label !== 'Todos');
+        setSelectedConsorcios(allWithoutTodos);
+        const allIds = consorcios
+          .filter((o) => o.label !== 'Todos')
+          .map((o) => o.value)
+          .flat();
+        setValue('consorcioName', [...new Set(allIds)]);
+        return;
+      }
       setSelectedConsorcios(newValue);
+    }
+    if (field === 'tipoPagamento') {
+      const nextTipo = newValue?.label || '';
+
+      setValue(field, nextTipo);
+      setSelectedWeekDays(nextTipo);
+      if (nextTipo === 'Único') {
+
+        setValue('intervaloDias', '');
+        setValue('diaSemana', '');
+        setValue('weekdays', []);
+        setValue('horario', null);
+      } else if (nextTipo === 'Recorrente') {
+
+        setValue('valorPagamentoUnico', '');
+        setValue('dataPagamentoUnico', '');
+        setValue('motivoPagamentoUnico', '');
+        setValue('horario', null);
+      }
+      return;
     }
     handleAutocompleteChange(field, newValue);
   };
@@ -120,7 +146,11 @@ function RemessaApp() {
   const handleAutocompleteChange = (field, newValue) => {
     if (Array.isArray(newValue)) {
       if (field === 'consorcioName') {
-        setValue(field, newValue.map(item => item.value));
+        const ids = newValue
+          .map((item) => item.value)
+          .reduce((acc, v) => acc.concat(v), []);
+        const uniqueIds = [...new Set(ids)];
+        setValue(field, uniqueIds);
       } else {
         setValue(field, newValue.map(item => item.value.userId));
       }
@@ -133,29 +163,76 @@ function RemessaApp() {
   };
 
   const onSubmit = (data) => {
+    const hasNameOrConsorcio = Array.isArray(data.name) && data.name.length > 0 || Array.isArray(data.consorcioName) && data.consorcioName.length > 0;
+    const tipoPagamento = getValues('tipoPagamento');
+    const aprovacao = getValues('aprovacao');
 
-    const hasNameOrConsorcio = data.name.length > 0 || data.consorcioName.length > 0;
     if (!hasNameOrConsorcio) {
-      dispatch(
-        showMessage({
-          message: "Erro no agendamento, selecione favorecidos ou consórcios",
-        }),
-      );
-    } else {
-      setIsLoading(true)
-
-      dispatch(bookPayment(data))
-        .then((response) => {
-          setIsLoading(false)
-        })
-        .catch((error) => {
-          dispatch(showMessage({ message: 'Erro no agendamento, verifique os campos e tente novamente.' }))
-          setIsLoading(false)
-        });
+      dispatch(showMessage({ message: 'Erro: selecione favorecidos ou consórcios.' }));
+      return;
     }
 
+    if (!tipoPagamento) {
+      dispatch(showMessage({ message: 'Erro: selecione o Tipo de Pagamento.' }));
+      return;
+    }
+
+    if (!aprovacao) {
+      dispatch(showMessage({ message: 'Erro: selecione o Status de Aprovação.' }));
+      return;
+    }
+
+    if (tipoPagamento === 'Único') {
+      const valor = getValues('valorPagamentoUnico');
+      const dataUnica = getValues('dataPagamentoUnico');
+      const horario = getValues('horario');
 
 
+      if (!valor || String(valor).trim() === '') {
+        dispatch(showMessage({ message: 'Erro: informe o Valor a ser pago.' }));
+        return;
+      }
+      if (!dataUnica) {
+        dispatch(showMessage({ message: 'Erro: informe a Data de Pagamento.' }));
+        return;
+      }
+      if (!horario) {
+        dispatch(showMessage({ message: 'Erro: informe o Horário.' }));
+        return;
+      }
+    } else if (tipoPagamento === 'Recorrente') {
+      const intervalo = getValues('intervaloDias');
+      const diaSemana = getValues('diaSemana');
+      const weekdaysSel = getValues('weekdays');
+      const horario = getValues('horario');
+
+      if (!intervalo && !diaSemana || String(intervalo).trim() === '' && !diaSemana) {
+        dispatch(showMessage({ message: 'Erro: informe o intervalo de dias (Pagar a cada).' }));
+        return;
+      }
+      if (!diaSemana && !intervalo) {
+        dispatch(showMessage({ message: 'Erro: selecione o dia da semana (Agendado Para).' }));
+        return;
+      }
+      if (!Array.isArray(weekdaysSel) || weekdaysSel.length === 0) {
+        dispatch(showMessage({ message: 'Erro: selecione ao menos um dia em "Dias a serem pagos".' }));
+        return;
+      }
+      if (!horario) {
+        dispatch(showMessage({ message: 'Erro: informe o Horário.' }));
+        return;
+      }
+    }
+
+    setIsLoading(true);
+    dispatch(bookPayment(data))
+      .then(() => {
+        setIsLoading(false);
+      })
+      .catch(() => {
+        dispatch(showMessage({ message: 'Erro no agendamento, verifique os campos e tente novamente.' }));
+        setIsLoading(false);
+      });
   };
 
   const handleValueChange = (name, value) => {
@@ -331,7 +408,6 @@ function RemessaApp() {
                     render={({ field }) =>
                       <NumericFormat
                         {...field}
-                        // defaultValue={releaseData.algoritmo}
                         labelId="algoritmo-label"
                         thousandSeparator={'.'}
                         decimalSeparator={','}
@@ -427,19 +503,29 @@ function RemessaApp() {
                         render={({ field }) => (
                           <Box display="flex" gap={1}>
                             {[
-                              { label: "Dom", value: "sun" },
-                              { label: "Seg", value: "mon" },
-                              { label: "Ter", value: "tue" },
-                              { label: "Qua", value: "wed" },
-                              { label: "Qui", value: "thu" },
-                              { label: "Sex", value: "fri" },
-                              { label: "Sab", value: "sat" },
+                              { label: "Dom", value: "0" },
+                              { label: "Seg", value: "1" },
+                              { label: "Ter", value: "2" },
+                              { label: "Qua", value: "3" },
+                              { label: "Qui", value: "4" },
+                              { label: "Sex", value: "5" },
+                              { label: "Sab", value: "6" },
                             ].map((day) => {
                               const isSelected = field.value.includes(day.value);
+                              const selectedDia = watch('diaSemana');
+                              const selectedDiaJS = (
+                                selectedDia === '' || selectedDia === null || selectedDia === undefined
+                                  ? null
+                                  : (typeof selectedDia === 'number' && selectedDia >= 1 && selectedDia <= 7)
+                                      ? (selectedDia % 7)
+                                      : (Number.isFinite(Number(selectedDia)) ? Number(selectedDia) : null)
+                              );
+                              const isDisabled = selectedDiaJS !== null && Number(day.value) === selectedDiaJS;
                               return (
                                 <Box
                                   key={day.value}
                                   onClick={() => {
+                                    if (isDisabled) return;
                                     const newValue = isSelected
                                       ? field.value.filter((v) => v !== day.value)
                                       : [...field.value, day.value];
@@ -447,14 +533,15 @@ function RemessaApp() {
                                   }}
                                   sx={{
                                     borderRadius: "6px",
-                                    backgroundColor: isSelected ? "#2AD705" : "#ddd",
-                                    color: isSelected ? "#fff" : "#000",
+                                    backgroundColor: isDisabled ? '#bbb' : (isSelected ? "#2AD705" : "#ddd"),
+                                    color: isDisabled ? '#666' : (isSelected ? "#fff" : "#000"),
                                     height: 40,
                                     width: 40,
                                     lineHeight: "40px",
                                     textAlign: "center",
-                                    cursor: "pointer",
+                                    cursor: isDisabled ? 'not-allowed' : "pointer",
                                     userSelect: "none",
+                                    opacity: isDisabled ? 0.7 : 1,
                                   }}
                                 >
                                   {day.label}
@@ -473,7 +560,6 @@ function RemessaApp() {
                       control={control}
                       render={({ field }) => (
                         <DatePicker
-                          {...field}
                           id="custom-date-input"
                           showOneCalendar
                           showHeader={false}
@@ -482,7 +568,10 @@ function RemessaApp() {
                           format="HH:mm"
                           character=" - "
                           className="custom-date-range-picker"
-                        />)}
+                          value={field.value ?? null}
+                          onChange={(val) => field.onChange(val ?? null)}
+                        />
+                      )}
                     />
                   </Box>
 
@@ -503,9 +592,9 @@ function RemessaApp() {
         <br />
       </div>
       <div className="p-1 pt-10">
-        <Box className='flex flex-col  justify-around'>
+        <Box className='flex flex-col  justify-around w-full md:mx-9 p-24 relative mt-16'>
           <Card className="w-full md:mx-9 p-24 relative mt-16">
-            <header className="flex justify-between items-center">
+            <header className="flex justify-between items-center mb-24">
               <h3 className="font-semibold">
                 Agendamentos
               </h3>

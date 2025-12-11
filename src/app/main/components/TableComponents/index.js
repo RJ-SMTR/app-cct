@@ -113,7 +113,7 @@ export function CustomTable(data) {
     )
   }
 
- 
+
 
   return (
     data ? <TableRow key={data.data.ordemPagamentoAgrupadoId} className="hover:bg-gray-100 cursor-pointer">
@@ -149,15 +149,6 @@ export function CustomTable(data) {
         </TableCell>
       )}
 
-      {/* Valor */}
-      {searchingDay ? (
-        <>
-        </>
-      ) : (
-        <TableCell component="th" scope="row">
-          <>  {formatter.format(data.data.valorTotal ?? data.data.valor ?? 0)}</>
-        </TableCell>
-      )}
 
 
 
@@ -167,7 +158,8 @@ export function CustomTable(data) {
             <Typography className="whitespace-nowrap">
               {
                 (() => {
-                  
+                  console.log("🔍 statusRemessa:", data.data.statusRemessa);
+                  console.log("📅 dataPagamento:", data.dataPagamento);
                   return data.data.statusRemessa === 5 ? data.dataPagamento : <></>;
                 })()
               }

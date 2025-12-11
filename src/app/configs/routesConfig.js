@@ -27,6 +27,7 @@ import ReportConfig from '../main/pages/admin/Report/ReportConfig';
 import ReportReleaseConfig from '../main/pages/admin/ReportRelease/ReportReleaseConfig';
 import ReportVanzeiroConfig from '../main/pages/report/reportConfig';
 import RemessaConfig from '../main/pages/admin/Remessa/RemessaConfig';
+import AprovarRemessaConfig from '../main/pages/admin/Remessa/ApproveRemessaConfig';
 const routeConfigs = [
   // HomeConifg,
   SignOutConfig,
@@ -52,8 +53,9 @@ const routeConfigs = [
   StatementsConfig,
   ReportVanzeiroConfig,
   ReportConfig,
+  ReportReleaseConfig,
+  AprovarRemessaConfig
   ReportVanzeiroConfig,
-  ReportReleaseConfig
 ];
 
 const routes = [
