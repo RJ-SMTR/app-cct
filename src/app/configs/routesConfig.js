@@ -54,8 +54,8 @@ const routeConfigs = [
   ReportVanzeiroConfig,
   ReportConfig,
   ReportReleaseConfig,
-  AprovarRemessaConfig
-  ReportVanzeiroConfig,
+  AprovarRemessaConfig,
+  ReportVanzeiroConfig
 ];
 
 const routes = [

@@ -90,7 +90,7 @@ function TableTransactions({ data }) {
 
     const handleSelectedDate = (newValue) => {
         setSelectedDate(newValue)
-        dispatch(get24(newValue, data.id))
+        // dispatch(get24(newValue, data.id))
     }
 
     
