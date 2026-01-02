@@ -172,9 +172,9 @@ export function TableRemessa() {
                 onClick={handleAtivar(row)}
                 // disabled={row.aprovacao === false || row.aprovacaoPagamento?.status === 1}
                 sx={{ fontSize: '1.1rem',
-                    backgroundColor: '#0DB1E3',
+                    backgroundColor: 'green',
                     color: '#fff',
-                    '&:hover': { backgroundColor: '#0DB1E3' }
+                    '&:hover': { backgroundColor: 'green' }
                 }}
             >
                 {row?.status ? 'Desativar' : 'Ativar'}
@@ -185,9 +185,9 @@ export function TableRemessa() {
                 onClick={handleApprovalClick(row)}
                 disabled={row.aprovacao === false || row.aprovacaoPagamento?.status === 1}
                 sx={{ fontSize: '1.1rem',
-                    backgroundColor: 'green',
+                    backgroundColor: '#0DB1E3',
                     color: '#fff',
-                    '&:hover': { backgroundColor: 'green' }
+                    '&:hover': { backgroundColor: '#0DB1E3' }
                 }}
             >
                 {row.aprovacaoPagamento?.status === 1 ? 'Aprovado' : 'Aprovar'}
