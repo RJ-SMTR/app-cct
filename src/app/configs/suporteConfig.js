@@ -7,7 +7,7 @@ i18next.addResourceBundle('en', 'navigation', en);
 i18next.addResourceBundle('tr', 'navigation', tr);
 i18next.addResourceBundle('ar', 'navigation', ar);
 
-const navigationConfig = [
+const suporteConfig = [
   // {
   //   id: 'Home-component',
   //   title: 'Home',
@@ -16,31 +16,7 @@ const navigationConfig = [
   //   icon: 'heroicons-outline:home',
   //   url: '/',
   // },
-  {
-    id: 'profile',
-    title: 'Perfil',
-    translate: 'Perfil',
-    type: 'item',
-    icon: 'heroicons-outline:user-circle',
-    url: 'profile',
-  },
-  {
-    id: 'extract',
-    title: 'Financeiro',
-    translate: 'Financeiro',
-    type: 'item',
-    icon: 'heroicons-outline:currency-dollar',
-    url: 'extrato',
-  },
-  {
-    id: 'trigger-component',
-    title: 'report',
-    translate: 'Relatório',
-    type: 'item',
-    icon: 'heroicons-outline:document-report',
-    url: 'relatorio-vanzeiro',
-  },
-  {
+   {
     id: 'support',
     title: 'Suporte',
     translate: 'Suporte',
@@ -49,7 +25,6 @@ const navigationConfig = [
     target: '_blank',
     url: 'https://transportes.prefeitura.rio/atendimentodigital/',
   },
-
 ];
 
-export default navigationConfig;
+export default suporteConfig;

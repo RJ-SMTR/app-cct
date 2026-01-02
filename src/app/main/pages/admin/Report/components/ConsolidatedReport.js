@@ -23,7 +23,6 @@ import {
   Menu,
   IconButton
 } from '@mui/material';
-import { ptBR as pt } from '@mui/x-data-grid';
 import { format } from 'date-fns';
 import { useDispatch, useSelector } from 'react-redux';
 import { DateRangePicker } from 'rsuite';
