@@ -12,9 +12,10 @@ const masterConfig = [
         id: 'Administrativo',
         title: 'Administrativo',
         subtitle: '',
-        type: 'group',
+        type: 'collapse',
         icon: '',
         children: [
+     
             {
                 id: 'Home-component',
                 title: 'Home',
@@ -22,6 +23,7 @@ const masterConfig = [
                 type: 'item',
                 icon: 'heroicons-outline:home',
                 url: 'admin',
+                
 
             },
             {
@@ -31,6 +33,7 @@ const masterConfig = [
                 type: 'item',
                 icon: 'heroicons-outline:upload',
                 url: 'upload',
+                
             },
             // {
             //     id: 'trigger-component',
@@ -49,43 +52,32 @@ const masterConfig = [
                 icon: 'material-outline:contact_support',
                 target: '_blank',
                 url: 'https://transportes.prefeitura.rio/atendimentodigital/',
+                
             },
         ]
 
     },
 
+    // GRUPO FINANCEIRO
     {
-        id: 'Visão Financeira',
-        title: 'Visão Financeira',
+        id: 'Financeiro',
+        title: 'Financeiro',
         subtitle: '',
-        type: 'group',
+        type: 'collapse',
         icon: '',
+        url: 'group-finan-pai',
         children: [
             {
-                id: 'trigger-component',
-                title: 'report',
-                translate: 'Relatório ',
+                id: 'Agendamento',
+                title: 'Agendar Pagamentos',
+                subtitle: '',
                 type: 'item',
-                icon: 'heroicons-outline:document-report',
-                url: 'relatorio',
+                icon: '',
+                url: 'group-finan',
+
+
             },
-            {
-                id: 'trigger-component',
-                title: 'balance',
-                translate: 'Extrato ',
-                type: 'item',
-                icon: 'heroicons-outline:currency-dollar',
-                url: 'extrato-contas',
-            },
-        ]
-    },
-    {
-        id: 'Agendamento',
-        title: 'Agendamento',
-        subtitle: '',
-        type: 'group',
-        icon: '',
-        children: [
+
             {
                 id: 'trigger-component',
                 title: 'report',
@@ -102,20 +94,46 @@ const masterConfig = [
                 icon: 'heroicons-outline:currency-dollar',
                 url: 'aprovacao-remessa',
             },
-        ]
-    },
-
+            {
+                id: 'Visão Financeira',
+                title: 'Visão Financeira',
+                subtitle: '',
+                type: 'item',
+                icon: '',
+                url: 'group-finan',
+               
+            },
     {
-        id: 'Financeiro',
-        title: 'Financeiro',
-        subtitle: '',
-        type: 'group',
-        icon: '',
-        children: [
+        id: 'trigger-component',
+        title: 'report',
+        translate: 'Relatórios ',
+        type: 'item',
+        icon: 'material-outline:ballot',
+        url: 'relatorio',
+    },
+    {
+        id: 'trigger-component',
+        title: 'balance',
+        translate: 'Extrato ',
+        type: 'item',
+        icon: 'heroicons-outline:currency-dollar',
+        url: 'extrato-contas',
+    },
+     
+
+            {
+                id: 'Financeiro',
+                title: 'Lançamentos Financeiro',
+                subtitle: '',
+                type: 'item',
+                icon: '',
+                url: 'group-finan',
+          
+            },
             {
                 id: 'trigger-component',
                 title: 'trigger',
-                translate: 'Lançamentos Financeiros',
+                translate: 'Lançamentos',
                 type: 'item',
                 icon: 'heroicons-outline:plus-circle',
                 url: 'lancamentos',
@@ -137,7 +155,10 @@ const masterConfig = [
                 url: 'relatorio-lançamento',
             },
         ]
+
     },
+
+
 
 
 
