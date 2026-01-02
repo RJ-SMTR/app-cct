@@ -569,6 +569,7 @@ function TableTransactions({ id }) {
       >
         <Box sx={style} className="overflow-scroll text-center">
           <Typography id="modal-modal-title" variant="h6" component="h3">
+          
             Comunicado:
           </Typography>
             <p>Transações estão temporariamente em manutenção!</p>
