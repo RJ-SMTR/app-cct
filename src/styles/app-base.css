@@ -299,3 +299,25 @@ color: #6C7482;
  .rs-picker-daterange .rs-picker-toggle.rs-btn .rs-picker-toggle-clean{
     top: 30% !important;
  }
+
+  a.fuse-list-item[href="/group-finan"] {
+      background-color: rgba(11,74,128, 0) !important;
+      pointer-events: none;
+      cursor: default;
+      color: white;
+  }
+
+  a.fuse-list-item[href="/group-finan-pai"] {
+      background-color: rgba(11,74,128, 0) !important;
+      color: white;
+      font-size: 12px;
+      color: #ffffff;
+      font-weight: bolder;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      line-height: 20px;
+  }
+
+  .MuiButtonBase-root.MuiIconButton-root.MuiIconButton-sizeLarge.w-20.h-20.-mx-12.p-0.focus\:bg-transparent.hover\:bg-transparent.muiltr-mlfgea-MuiButtonBase-root-MuiIconButton-root {
+      display: none;
+  }
