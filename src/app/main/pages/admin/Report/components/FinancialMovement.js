@@ -1037,10 +1037,17 @@ export default function BasicEditingGrid() {
                     <TableRow>
                       <TableCell />
                       <TableCell
-                        colSpan={7}
-                        className="text-right font-bold text-black text-base pt-16"
+                        colSpan={10}
+                      className="text-right font-bold text-black text-base pt-16 whitespace-nowrap
+"
                       >
                         {(() => {
+                          const apenasPendencia = whichStatusShow.length === 1 && 
+                            whichStatusShow.includes("Pendência de Pagamento");
+                          
+                          const multipleFiltrosComPendencia = whichStatusShow.length > 1 && 
+                            whichStatusShow.includes("Pendência de Pagamento");
+
                           const totalGeral =
                             reportList.valorPendenciaPaga > 0
                               ? reportList.valor - reportList.valorPendenciaPaga
@@ -1062,12 +1069,21 @@ export default function BasicEditingGrid() {
                               reportList.valorAguardandoPagamento
                             )}`,
                             reportList.valorPendente > 0 &&
-                            `Total Pendencia de Pagamento: ${formatter.format(reportList.valorPendente)}`,
+                            `${
+                              apenasPendencia 
+                                ? "Total de OPs Atrasadas" 
+                                : "Total Pendencia de Pagamento"
+                            }: ${formatter.format(reportList.valorPendente)}`,
 
                             totalGeral > 0 &&
-                            `${reportList.valorPendenciaPaga > 0
-                              ? "Saldo a Pagar"
-                              : "Total Geral"
+                            `${
+                              reportList.valorPendenciaPaga > 0
+                                ? "Saldo a Pagar"
+                                : apenasPendencia
+                                ? "Total de Pendência de Pagamento"
+                                : multipleFiltrosComPendencia
+                                ? "Total Geral"
+                                : "Total Geral"
                             }: ${formatter.format(totalGeral)}`
                           ]
                             .filter(Boolean)
@@ -1077,7 +1093,7 @@ export default function BasicEditingGrid() {
                       <TableCell />
                       <TableCell />
                     </TableRow>
-                  )}
+                  )}             
               </TableFooter>
             </Table>
           </div>

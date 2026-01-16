@@ -63,9 +63,8 @@ export default function BasicEditingGrid() {
   const consorciosStatus = [
     { label: 'Todos' },
     { label: 'A pagar' },
-    { label: 'Pago' },
     { label: 'Aguardando Pagamento' },
-    { label: 'Erro' },
+    { label: 'Pago' },
     {label: 'Pendência de Pagamento'},
     {label: 'Pendencia Paga'}
   ];
@@ -80,9 +79,7 @@ export default function BasicEditingGrid() {
 
   const específicos = [
     { label: 'Todos' },
-    { label: 'Eleição' },
-    { label: 'Desativados' },
-    { label: 'Pendentes' }
+    { label: 'Eleição' }
   ];
 
 
