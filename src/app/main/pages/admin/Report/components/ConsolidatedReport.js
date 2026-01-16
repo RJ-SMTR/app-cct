@@ -66,7 +66,8 @@ export default function BasicEditingGrid() {
     { label: 'Pago' },
     { label: 'Aguardando Pagamento' },
     { label: 'Erro' },
-    {label: 'Pendência de Pagamento'}
+    {label: 'Pendência de Pagamento'},
+    {label: 'Pendencia Paga'}
   ];
 
   const erroStatus = [
@@ -135,6 +136,7 @@ export default function BasicEditingGrid() {
       } else if (selectedErroStatus.label === "OPs atrasadas") {
         requestData.status = [...requestData.status, "Pendentes"];
       }
+     
     }
 
 
