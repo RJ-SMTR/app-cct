@@ -112,13 +112,19 @@ export default function BasicEditingGrid() {
   });
 
   const onSubmit = (data) => {
-    console.log(data, selectedErroStatus)
-
     setIsLoading(true);
 
     const requestData = { ...data };
 
-    if (whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus) {
+    if (whichStatusShow.includes("Pendência de Pagamento")) {
+      if (!selectedErroStatus) {
+        setIsLoading(false)
+        dispatch(showMessage({
+          message: "Selecione um motivo para a Pendência de Pagamento.",
+        }),);
+        return;
+      }
+
       requestData.status = requestData.status.filter(status => status !== "Pendência de Pagamento");
 
       if (selectedErroStatus.label === "Todos") {
@@ -133,8 +139,9 @@ export default function BasicEditingGrid() {
       } else if (selectedErroStatus.label === "OPs atrasadas") {
         requestData.status = [...requestData.status, "Pendentes"];
       }
-     
     }
+
+    setIsLoading(true);
 
 
     if (data.especificos.includes("Eleição")) {
@@ -218,6 +225,10 @@ export default function BasicEditingGrid() {
       setWhichStatus(status)
       if(status.includes?.('Pendência de Pagamento')){
         setShowMotivos(true)
+      } else {
+        setShowMotivos(false)
+        setSelectedErroStatus(null)
+        setValue("erroStatus", null)
       }
     }
 
