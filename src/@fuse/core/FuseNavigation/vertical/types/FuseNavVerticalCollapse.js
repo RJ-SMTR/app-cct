@@ -61,7 +61,7 @@ function isUrlInChildren(parent, url) {
 }
 
 function FuseNavVerticalCollapse(props) {
-  const [open, setOpen] = useState(() => needsToBeOpened(props.location, props.item));
+  const [open, setOpen] = useState(true);
   const { item, nestedLevel, onItemClick } = props;
   const itempadding = nestedLevel > 0 ? 38 + nestedLevel * 16 : 16;
 
@@ -74,17 +74,17 @@ function FuseNavVerticalCollapse(props) {
       }
     }
     // eslint-disable-next-line
-	}, [location, props.item]);
+  }, [location, props.item]);
+  const isCollapsible = item.children && item.children.length > 0;
 
   return useMemo(
     () => (
       <Root className={clsx(open && 'open')} itempadding={itempadding} sx={item.sx}>
         <ListItem
-          component={item.url ? NavLinkAdapter : 'li'}
+          component={isCollapsible ? 'li' : NavLinkAdapter}
+          to={!isCollapsible ? item.url : undefined}
           button
           className="fuse-list-item"
-          onClick={() => setOpen(!open)}
-          to={item.url}
           end={item.end}
           role="button"
           disabled={item.disabled}

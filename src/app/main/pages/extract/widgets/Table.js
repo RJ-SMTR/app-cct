@@ -242,6 +242,7 @@ function TableTransactions({ id }) {
     if (idOrder === null || idOrder === undefined) {
       dispatch(showMessage({ message: 'Não há valores para serem apresentados.' }))
     } else {
+      dispatch(setLoading(true))
       dispatch(setLoadingWeek(true))
       const start = event.target.innerText;
       const [day, month, year] = start.split('/');
@@ -251,14 +252,12 @@ function TableTransactions({ id }) {
       setDataOrderDay(start)
       if (fullReport) {
         if (searchingWeek) {
-          dispatch(setLoading(false))
           dispatch(setValorAcumuladoLabel('Valor Operação - Detalhado'));
           dispatch(setValorPagoLabel('Valor - Detalhado'));
-          // dispatch(setDateRange([transformedDate, transformedDate]));
+          dispatch(setDateRange([transformedDate, transformedDate]));
           dispatch(setOrdemPgto(idOrder))
-          // dispatch(setSearchingDay(true))
+          dispatch(setSearchingDay(true))
           setPage(0)
-            setModalOpen(true)
 
         } else {
           if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
@@ -332,7 +331,10 @@ function TableTransactions({ id }) {
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
-    if (statements.length === 0 && searchingDay) {
+    if (searchingDay &&
+      statements?.length === 0 
+    ) {
+      setLoading(false);
       setModalOpen(true);
     }
   }, [statements]);
@@ -472,32 +474,61 @@ function TableTransactions({ id }) {
               </TableHead>
               <TableBody>
 
-                {isLoading ?
+                {isLoading ? (
                   <TableCell colSpan={4}>
                     <Box className="flex justify-center items-center m-10">
                       <CircularProgress />
                     </Box>
                   </TableCell>
-                  : statements?.length > 0 ?
-                    statements?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
-                      const tz = 'UTC'
-                      const date = parseISO(i.data ?? i.dataCaptura ?? i.datetime_processamento);
-                      const zonedDate = utcToZonedTime(date, tz)
-                      const formattedDate = format(zonedDate, 'dd/MM/yyyy');
-                      const idOrdem = searchingWeek ? i.ids : i.ordemPagamentoAgrupadoId
+                ) : statements?.length > 0  ? (
+                  statements
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((i) => {
+                      const tz = 'UTC';
+                      const date = i.data ?? i.dataCaptura ?? i.datetime_processamento;
+
+                      const rawDate = date ? parseISO(date) : null;
+                      const formattedDate = rawDate
+                        ? format(utcToZonedTime(rawDate, tz), 'dd/MM/yyyy')
+                        : '--';
+
+                      const idOrdem = searchingWeek ? i.ids : i.ordemPagamentoAgrupadoId;
+
                       let dataPagamento = '-';
                       if (i.dataPagamento) {
                         const zonedEffectiveDate = utcToZonedTime(parseISO(i.dataPagamento), tz);
                         const formattedEffectiveDate = format(zonedEffectiveDate, 'dd/MM/yyyy');
-                        dataPagamento = formattedEffectiveDate === formattedDate ? '-' : formattedEffectiveDate;
+                        dataPagamento =
+                          formattedEffectiveDate === formattedDate ? '-' : formattedEffectiveDate;
                       }
-                      const valorDia = i.valorTotal ?? i.valorTotalPago ?? sumInfo
-                      return <MemoizedCustomTable data={i} c={c} date={formattedDate} handleClickRow={(event) => handleClickRow(idOrdem, event, valorDia)} lastDate={dataOrderDay} dataPagamento={dataPagamento} />
-                    }) :
-                    <TableCell colSpan={4}>
-                      <p>Não há dados para sem exibidos</p>
-                    </TableCell>
-                }
+
+                      const valorDia = i.valorTotal ?? i.valorTotalPago ?? sumInfo;
+                      // if (
+                      //   searchingDay &&
+                      //   statements?.length > 0 &&
+                      //   statements.every(i => !i.data && !i.dataCaptura && !i.datetime_processamento)
+                      // ) {
+                      //   return null
+                      // }
+
+                      return (
+                        <MemoizedCustomTable
+                          key={idOrdem ?? `${formattedDate}-${Math.random()}`}
+                          data={i}
+                          c={c}
+                          date={formattedDate}
+                          handleClickRow={(event) => handleClickRow(idOrdem, event, valorDia)}
+                          lastDate={dataOrderDay}
+                          dataPagamento={dataPagamento}
+                        />
+                      );
+                    })
+                ) : (
+                  <TableCell colSpan={4}>
+                    <p>Não há dados para serem exibidos</p>
+                  </TableCell>
+                )}
+
               </TableBody>
             </Table>
           </TableContainer>
@@ -530,7 +561,7 @@ function TableTransactions({ id }) {
         </Box>
       </Paper>
 
-      <Modal
+      {/* <Modal
         open={modalOpen}
         onClose={handleClose}
         aria-labelledby="modal-modal-title"
@@ -540,10 +571,10 @@ function TableTransactions({ id }) {
           <Typography id="modal-modal-title" variant="h6" component="h3">
             Comunicado:
           </Typography>
-          <p>As transações estão temporariamente em manutenção.
-            Qualquer dúvida, por favor, contacte o suporte!</p>
+            <p>Transações estão temporariamente em manutenção!</p>
+            <p>Qualquer dúvida, por favor, contacte o suporte!</p>
         </Box>
-      </Modal>
+      </Modal> */}
 
     </>
   );

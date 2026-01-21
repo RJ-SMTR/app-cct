@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography';
 import { useSelector } from 'react-redux';
 // import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
-import { utcToZonedTime } from 'date-fns-tz';
+import { utcToZonedTime, formatInTimeZone } from 'date-fns-tz';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 
@@ -22,10 +22,8 @@ export function CustomTable(data) {
     currency: 'BRL',
   });
   const dateUTC = (i) => {
-    // const tz = 'UTC'
-    const parsed = new Date(i)
-    const formattedDate = format(parsed, 'dd/MM/yyyy HH:mm:ss');
-    return formattedDate
+
+    return formatInTimeZone(new Date(i), 'UTC', 'dd/MM/yyyy HH:mm:ss');
   }
   const dateUTCMonth = (i) => {
     const tz = 'UTC'
@@ -120,7 +118,13 @@ export function CustomTable(data) {
       <TableCell component="th" scope="row" onClick={searchingDay ? null : data.handleClickRow}>
         <Typography className={searchingDay ? "whitespace-nowrap " : "whitespace-nowrap underline"}>
 
-          {searchingDay ? dateUTC(data.data.datetime_transacao) : searchingWeek ? dateUTCMonth(data.data.dataCaptura) : dateUTCMonth(data.data.data)}
+          {
+            searchingDay
+              ? (data.data?.datetime_transacao ? dateUTC(data.data.datetime_transacao) : "--")
+              : searchingWeek
+                ? (data.data?.dataCaptura ? dateUTCMonth(data.data.dataCaptura) : "--")
+                : (data.data?.data ? dateUTCMonth(data.data.data) : "--")
+          }
 
         </Typography>
       </TableCell>

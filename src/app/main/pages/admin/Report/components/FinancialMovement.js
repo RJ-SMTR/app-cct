@@ -55,11 +55,11 @@ export default function BasicEditingGrid() {
 
 
   const consorciosStatusBase = [
-    { label: "Pago" },
     { label: "A Pagar" },
     { label: "Aguardando Pagamento" },
-    { label: "Pendencia Paga" },
-    { label: "Pendência de Pagamento" }
+    { label: "Pago" },
+    { label: "Pendência de Pagamento" },
+    { label: "Pendencia Paga" }
   ];
 
   const erroStatus = [
@@ -732,8 +732,8 @@ export default function BasicEditingGrid() {
                     validate: (value) => {
                       if (!value) return true;
 
-                      const valorMin = Number. parseFloat(value.replace(/\./g, '').replace(',', '.'))
-                      const valorMax = Number. parseFloat(getValues("valorMax").replace(/\./g, '').replace(',', '.'));
+                      const valorMin = Number.parseFloat(value.replace(/\./g, '').replace(',', '.'))
+                      const valorMax = Number.parseFloat(getValues("valorMax").replace(/\./g, '').replace(',', '.'));
 
                       return (
                         valorMin <= valorMax ||
@@ -754,8 +754,8 @@ export default function BasicEditingGrid() {
                       onChange={(e) => {
                         field.onChange(e);
 
-                        const valorMin = Number. parseFloat(e?.target.value.replace(/\./g, '').replace(',', '.'))
-                        const valorMax = Number. parseFloat(getValues("valorMax").replace(/\./g, '').replace(',', '.'));
+                        const valorMin = Number.parseFloat(e?.target.value.replace(/\./g, '').replace(',', '.'))
+                        const valorMax = Number.parseFloat(getValues("valorMax").replace(/\./g, '').replace(',', '.'));
 
                         if (valorMin <= valorMax) {
                           clearErrors("valorMin");
@@ -1059,7 +1059,7 @@ export default function BasicEditingGrid() {
 
                           const totalGeral =
                             reportList.valorPendenciaPaga > 0
-                              ? reportList.valor - reportList.valorPendenciaPaga
+                              ? (reportList.valorRejeitado || 0) + (reportList.valorEstornado || 0)
                               : reportList.valor;
 
                           return [
