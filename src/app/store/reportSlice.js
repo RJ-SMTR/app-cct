@@ -118,7 +118,7 @@ function handleData(data) {
             requestData.pendentes = true
             break;
           case 'A pagar':
-            requestData.apagar = true
+            requestData.aPagar = true
             break;
           case 'Todos':
             break;
