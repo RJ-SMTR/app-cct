@@ -54,27 +54,32 @@ export default function BasicEditingGrid() {
   const [showButton, setShowButton] = useState(false)
   const [whichStatusShow, setWhichStatus] = useState([])
   const [selected, setSelected] = useState(null)
+  const [motivos, setShowMotivos] = useState(false)
   const [selectedConsorcios, setSelectedConsorcios] = useState([]);
+  const [selectedErroStatus, setSelectedErroStatus] = useState(null);
   const [selectedEspecificos, setSelectedEspecificos] = useState([]);
 
 
-  const consorciosStatusBase = [
+  const consorciosStatus = [
     { label: 'Todos' },
     { label: 'A pagar' },
-    { label: 'Pago' },
     { label: 'Aguardando Pagamento' },
-    { label: 'Erro' },
+    { label: 'Pago' },
+    {label: 'Pendência de Pagamento'},
+    {label: 'Pendencia Paga'}
   ];
 
-  const consorciosStatus = selectedEspecificos.includes("Pendentes")
-    ? [{ label: "Erro" }]
-    : consorciosStatusBase;
+  const erroStatus = [
+    { label: "Todos" },
+    { label: "Estorno" },
+    { label: "Rejeitado" },
+    { label: "OPs atrasadas" },
+  ];
+
 
   const específicos = [
     { label: 'Todos' },
-    { label: 'Eleição' },
-    { label: 'Desativados' },
-    { label: 'Pendentes' }
+    { label: 'Eleição' }
   ];
 
 
@@ -107,20 +112,49 @@ export default function BasicEditingGrid() {
   });
 
   const onSubmit = (data) => {
+    setIsLoading(true);
 
-    const isPendentes = selectedEspecificos.includes("Pendentes");
-    const hasNameOrConsorcio = data.name.length > 0 || data.consorcioName.length > 0;
+    const requestData = { ...data };
 
-    if (!isPendentes && !hasNameOrConsorcio) {
-      dispatch(
-        showMessage({
-          message: "Erro na busca, selecione favorecidos ou consórcios | modais.",
-        }),
-      );
-    } else {
+    if (whichStatusShow.includes("Pendência de Pagamento")) {
+      if (!selectedErroStatus) {
+        setIsLoading(false)
+        dispatch(showMessage({
+          message: "Selecione um motivo para a Pendência de Pagamento.",
+        }),);
+        return;
+      }
+
+      requestData.status = requestData.status.filter(status => status !== "Pendência de Pagamento");
+
+      if (selectedErroStatus.label === "Todos") {
+        requestData.status = [...requestData.status, "Erro", "Pendentes"];
+        requestData.erro = true;
+      } else if (selectedErroStatus.label === "Estorno") {
+        requestData.status = [...requestData.status, "Estorno"];
+        requestData.estorno = true;
+      } else if (selectedErroStatus.label === "Rejeitado") {
+        requestData.status = [...requestData.status, "Rejeitado"];
+        requestData.rejeitado = true;
+      } else if (selectedErroStatus.label === "OPs atrasadas") {
+        requestData.status = [...requestData.status, "Pendentes"];
+      }
+    }
+
+    setIsLoading(true);
+
+
+    if (data.especificos.includes("Eleição")) {
+      requestData.eleicao = true
+    }
+    if (data.especificos.includes("Desativados")) {
+      requestData.desativados = true
+    }
+
+
       setIsLoading(true)
 
-      dispatch(handleReportInfo(data, reportType))
+      dispatch(handleReportInfo(requestData, reportType))
         .then((response) => {
           setIsLoading(false)
         })
@@ -128,7 +162,6 @@ export default function BasicEditingGrid() {
           dispatch(showMessage({ message: 'Erro na busca, verifique os campos e tente novamente.' }))
           setIsLoading(false)
         });
-    }
 
   };
 
@@ -190,6 +223,13 @@ export default function BasicEditingGrid() {
     if (field === 'status') {
       const status = newValue.map(i => i.label)
       setWhichStatus(status)
+      if(status.includes?.('Pendência de Pagamento')){
+        setShowMotivos(true)
+      } else {
+        setShowMotivos(false)
+        setSelectedErroStatus(null)
+        setValue("erroStatus", null)
+      }
     }
 
     if (field === "especificos") {
@@ -504,7 +544,7 @@ export default function BasicEditingGrid() {
               </Box>
 
               <Box className="flex items-center gap-10 flex-wrap">
-                <Box>
+                
 
 
                   {!selectedEspecificos.includes("Pendentes") && (
@@ -533,7 +573,27 @@ export default function BasicEditingGrid() {
                       )}
                     />
                   )}
-                </Box>
+                     {motivos && (
+                                    <Autocomplete
+                                      id="erroStatus"
+                                      className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                                      options={erroStatus}
+                                      getOptionLabel={(option) => option.label}
+                                      value={selectedErroStatus}
+                                      onChange={(_, newValue) => {
+                                        setSelectedErroStatus(newValue);
+                                        setValue("erroStatus", newValue ? newValue.label : null);
+                                      }}
+                                      renderInput={(params) => (
+                                        <TextField
+                                          {...params}
+                                          label="Motivos"
+                                          variant="outlined"
+                                        />
+                                      )}
+                                    />
+                                  )}
+                
 
                 <Box>
                   <Controller
