@@ -175,7 +175,7 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
 
       try {
         const response = await api.request(config);
-        let responseData = response.data;
+        const responseData = response.data;
 
         if (reportType == 'sintetico') {
           const mergedData = responseData.reduce((acc, curr) => {
@@ -190,21 +190,6 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
           };
           dispatch(handleSynthData(combinedResponse))
         } else {
-          if (requestData.pendentes && responseData.data && Array.isArray(responseData.data)) {
-            const mergedMap = responseData.data.reduce((acc, item) => {
-              const key = item.nomefavorecido;
-              if (acc[key]) {
-                acc[key].valor += item.valor;
-              } else {
-                acc[key] = { ...item };
-              }
-              return acc;
-            }, {});
-            
-            responseData.data = Object.values(mergedMap);
-            responseData.valor = responseData.data.reduce((sum, item) => sum + item.valor, 0);
-          }
-          
           dispatch(setReportList(responseData));
         }
         resolve(responseData);
