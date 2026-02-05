@@ -1002,7 +1002,12 @@ export default function BasicEditingGrid() {
                           )}
                         </TableCell>
                         <TableCell className="text-xs py-1 ">{report.consorcio}</TableCell>
-                        <TableCell className="text-xs py-1 ">{report.status == 'Pendencia Paga' ? report.dataPagamento : '-'}</TableCell>
+                        <TableCell className="text-xs py-1 ">
+                          {['Pendencia Paga', 'Pago'].includes(report.status) &&
+                            report.dataReferencia !== report.dataPagamento
+                            ? report.dataPagamento
+                            : '-'}
+                        </TableCell>
                         <TableCell className="text-xs py-6 px-1 ">{formatter.format(report.valor)}</TableCell>
                         <TableCell className="text-xs py-6 px-1 ">
                           <span
