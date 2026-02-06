@@ -151,8 +151,7 @@ export default function BasicEditingGrid() {
     { label: 'MANUT CTA', value: 'MANUT CTA' },
     { label: 'DEVOLUCAO DE TED', value: 'DEVOLUCAO DE TED' },
     { label: 'DOC/TED INTERNET', value: 'DOC/TED INTERNET' },
-    { label: 'ENVIO DE TED', value: 'ENVIO DE TED' },
-    { label: 'ENVIO TED', value: 'ENVIO TED' },
+    { label: 'ENVIO TED', value: ['ENVIO DE TED', 'ENVIO TED'] },
     { label: 'PIX RECEBIDO', value: 'PIX RECEBIDO' },
     { label: 'RECEBIMENTO TED', value: 'RECEBIMENTO TED' },
     { label: 'RESGATE AUTOMAT - CLIENTE', value: 'RESGATE AUTOMAT - CLIENTE' }
@@ -194,8 +193,18 @@ export default function BasicEditingGrid() {
           multiple
           options={operacaoOptions}
           getOptionLabel={(option) => option.label}
-          value={operacaoOptions.filter((opt) => operacao.includes(opt.value))}
-          onChange={(e, newValues) => setOperacao(newValues.map((val) => val.value))}
+          value={operacaoOptions.filter((opt) => {
+            if (Array.isArray(opt.value)) {
+              return opt.value.some(v => operacao.includes(v));
+            }
+            return operacao.includes(opt.value);
+          })}
+          onChange={(e, newValues) => {
+            const flatValues = newValues.flatMap(val =>
+              Array.isArray(val.value) ? val.value : [val.value]
+            );
+            setOperacao(flatValues);
+          }}
           renderInput={(params) => <TextField {...params} label="Operação" />}
           className="min-w-[22%] sm:w-auto w-full"
         />
