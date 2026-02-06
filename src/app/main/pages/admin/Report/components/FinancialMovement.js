@@ -1038,12 +1038,8 @@ export default function BasicEditingGrid() {
                         {
                           !showErroStatus && (
                             <TableCell className="text-xs py-1 ">
-                              {['Pendencia Paga', 'Pago'].includes(report.status) &&
-                                report.dataReferencia !== report.dataPagamento
-                                ? report.dataPagamento
-                                : '-'}
+                              {getTablePaymentDate(report)}
                             </TableCell>
-
                           )
                         }
                         <TableCell className="text-xs py-6 px-1 ">{formatter.format(report.valor)}</TableCell>
