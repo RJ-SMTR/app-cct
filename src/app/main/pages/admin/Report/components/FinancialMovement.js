@@ -1035,9 +1035,13 @@ export default function BasicEditingGrid() {
                           )}
                         </TableCell>
                         <TableCell className="text-xs py-1 ">{report.consorcio}</TableCell>
-                        <TableCell className="text-xs py-1">
-                          {getTablePaymentDate(report)}
-                        </TableCell>
+                        {
+                          !showErroStatus && (
+                            <TableCell className="text-xs py-1 ">
+                              {getTablePaymentDate(report)}
+                            </TableCell>
+                          )
+                        }
                         <TableCell className="text-xs py-6 px-1 ">{formatter.format(report.valor)}</TableCell>
                         <TableCell className="text-xs py-6 px-1 ">
                           <span
