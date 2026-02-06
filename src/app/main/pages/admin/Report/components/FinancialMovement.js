@@ -105,18 +105,11 @@ export default function BasicEditingGrid() {
     });
 
   const onSubmit = (data) => {
-     setIsLoading(true);
- 
-     const requestData = { ...data };
- 
-     if (whichStatusShow.includes("Pendência de Pagamento")) {
-       if (!selectedErroStatus) {
-         setIsLoading(false)
-         dispatch(showMessage({
-           message: "Selecione um motivo para a Pendência de Pagamento.",
-         }),);
-         return;
-       }
+    setIsLoading(true);
+
+    const requestData = { ...data };
+
+    if (whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus) {
       requestData.status = requestData.status.filter(status => status !== "Pendência de Pagamento");
 
       if (selectedErroStatus.label === "Todos") {
@@ -132,8 +125,6 @@ export default function BasicEditingGrid() {
         requestData.status = [...requestData.status, "Pendentes"];
       }
     }
-
-    setIsLoading(true);
 
 
     if (data.especificos.includes("Eleição")) {
@@ -558,6 +549,8 @@ export default function BasicEditingGrid() {
         return "bg-gray-400 text-black";
       case "Pendencia Paga":
         return "bg-blue-400 text-black";
+      case "A Pagar":
+        return "bg-gray-400 text-black";
       default:
         return "bg-red-300 text-black";
     }
@@ -970,7 +963,11 @@ export default function BasicEditingGrid() {
                   <TableCell className="font-semibold p-1 text-sm ">Banco</TableCell>
                   <TableCell className="font-semibold p-1 text-sm ">CPF/CNPJ</TableCell>
                   <TableCell className="font-semibold py-1 text-sm leading-none">Consórcios | Modais</TableCell>
-                  <TableCell className="font-semibold py-1 text-sm leading-none">Data Efetiva Pagamento</TableCell>
+                  {
+                    !showErroStatus && (
+                      <TableCell className="font-semibold py-1 text-sm leading-none">Data Efetiva Pagamento</TableCell>
+                    )
+                  }
                   <TableCell className="font-semibold p-1 text-sm ">Valor</TableCell>
                   <TableCell className="font-semibold p-1 text-sm ">Status</TableCell>
                 </TableRow>
@@ -1005,7 +1002,12 @@ export default function BasicEditingGrid() {
                           )}
                         </TableCell>
                         <TableCell className="text-xs py-1 ">{report.consorcio}</TableCell>
-                        <TableCell className="text-xs py-1 ">{report.status == 'Pendencia Paga' ? report.dataPagamento : '-'}</TableCell>
+                        <TableCell className="text-xs py-1 ">
+                          {['Pendencia Paga', 'Pago'].includes(report.status) &&
+                            report.dataReferencia !== report.dataPagamento
+                            ? report.dataPagamento
+                            : '-'}
+                        </TableCell>
                         <TableCell className="text-xs py-6 px-1 ">{formatter.format(report.valor)}</TableCell>
                         <TableCell className="text-xs py-6 px-1 ">
                           <span
@@ -1046,17 +1048,10 @@ export default function BasicEditingGrid() {
                     <TableRow>
                       <TableCell />
                       <TableCell
-                        colSpan={10}
-                      className="text-right font-bold text-black text-base pt-16 whitespace-nowrap
-"
+                        colSpan={7}
+                        className="text-right font-bold text-black text-base pt-16"
                       >
                         {(() => {
-                          const apenasPendencia = whichStatusShow.length === 1 && 
-                            whichStatusShow.includes("Pendência de Pagamento");
-                          
-                          const multipleFiltrosComPendencia = whichStatusShow.length > 1 && 
-                            whichStatusShow.includes("Pendência de Pagamento");
-
                           const totalGeral =
                             reportList.valorPendenciaPaga > 0
                               ? (reportList.valorRejeitado || 0) + (reportList.valorEstornado || 0)
@@ -1078,22 +1073,10 @@ export default function BasicEditingGrid() {
                               reportList.valorAguardandoPagamento
                             )}`,
                             reportList.valorPendente > 0 &&
-                            `${
-                              apenasPendencia 
-                                ? "Total de OPs Atrasadas" 
-                                : "Total Pendencia de Pagamento"
-                            }: ${formatter.format(reportList.valorPendente)}`,
+                            `Total Pendencia de Pagamento: ${formatter.format(reportList.valorPendente)}`,
 
-                            totalGeral > 0 &&
-                            `${
-                              reportList.valorPendenciaPaga > 0
-                                ? "Saldo a Pagar"
-                                : apenasPendencia
-                                ? "Total de Pendência de Pagamento"
-                                : multipleFiltrosComPendencia
-                                ? "Total Geral"
-                                : "Total Geral"
-                            }: ${formatter.format(totalGeral)}`
+                            (totalGeral ?? 0) >= 0 &&
+                            `${reportList.valorPendenciaPaga > 0 ? "Saldo a Pagar" : "Total Geral"}: ${formatter.format(totalGeral)}`
                           ]
                             .filter(Boolean)
                             .join("    |    ");
@@ -1102,7 +1085,7 @@ export default function BasicEditingGrid() {
                       <TableCell />
                       <TableCell />
                     </TableRow>
-                  )}             
+                  )}
               </TableFooter>
             </Table>
           </div>
