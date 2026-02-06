@@ -89,6 +89,32 @@ export default function BasicEditingGrid() {
     { label: 'Desativados' },
   ];
 
+  const getDisplayPaymentDate = (report) => {
+    const shouldHidePaymentDate =
+      report.dataPagamento === report.dataReferencia ||
+      new Date(report.dataPagamento).getFullYear() > 2024;
+
+    return shouldHidePaymentDate ? '-' : report.dataPagamento;
+  };
+
+  const getTablePaymentDate = (report) => {
+    // Converter data BR (dd/MM/yyyy) para ano
+    const getYearFromBRDate = (dataBR) => {
+      if (!dataBR) return null;
+      const parts = dataBR.split('/');
+      return parts.length === 3 ? parseInt(parts[2], 10) : null;
+    };
+
+    const ano = getYearFromBRDate(report.dataPagamento);
+
+    const shouldShowPaymentDate =
+      ['Pendencia Paga', 'Pago'].includes(report.status) &&
+      report.dataReferencia !== report.dataPagamento &&
+      ano && ano < 2025;
+
+    return shouldShowPaymentDate ? report.dataPagamento : '-';
+  };
+
   const dispatch = useDispatch();
 
   const { handleSubmit, setValue, control, getValues, trigger, clearErrors } =
@@ -146,6 +172,7 @@ export default function BasicEditingGrid() {
         );
         setIsLoading(false);
       });
+
 
   };
 
@@ -250,24 +277,26 @@ export default function BasicEditingGrid() {
 
   const reportListData =
     reportList.count > 0
-      ? reportList.data?.map((report) => ({
-        Data: report.dataPagamento,
-        Nome: report.nomes,
-        Email: report.email,
-        'Cód Banco': report.codBanco,
-        Banco: report.nomeBanco,
-        'CPF/CNPJ': report.cpfCnpj,
-        Consórcio: report.consorcio,
-        Valor: formatter.format(report.valor),
-        Status: report.status,
-      }))
-      : [];
+      ? reportList.data?.map((report) => {
 
-  const valorPago = {
-    Nome: "Total Pago",
-    Valor: "",
-    Status: reportList.valorPago > 0 ? formatter.format(reportList.valorPago) : "",
-  };
+        return {
+          'Data Tentativa Pagamento': report.dataReferencia,
+          Nome: report.nomes,
+          Email: report.email,
+          'Cód Banco': report.codBanco,
+          Banco: report.nomeBanco,
+          'CPF/CNPJ': report.cpfCnpj,
+          Consórcio: report.consorcio,
+          'Data Efetiva Pagamento': getDisplayPaymentDate(report),
+          Valor: formatter.format(report.valor),
+          Status: report.status,
+        };
+      })
+      : []; const valorPago = {
+        Nome: "Total Pago",
+        Valor: "",
+        Status: reportList.valorPago > 0 ? formatter.format(reportList.valorPago) : "",
+      };
 
   const valorEstornado = {
     Nome: "Total Estorno",
@@ -338,18 +367,19 @@ export default function BasicEditingGrid() {
     const doc = new jsPDF({
       orientation: "landscape",
     });
-    const tableColumn = ["Data", "Nome", "Email", "Cod Banco", "Banco", "CPF/CNPJ", "Consórcio", "Valor", "Status"];
+    const tableColumn = ["Data Tentativa Pagamento", "Nome", "Email", "Cod Banco", "Banco", "CPF/CNPJ", "Consórcio", "Data Efetiva Pagamento", "Valor", "Status"];
     const tableRows = [];
 
     for (const report of reportList.data) {
       const reportData = [
-        report.dataPagamento,
+        report.dataReferencia,
         report.nomes,
         report.email,
         report.codBanco,
         truncateText(report.nomeBanco, 15),
         report.cpfCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'),
         report.consorcio,
+        getDisplayPaymentDate(report),
         formatter.format(report.valor),
         report.status
       ];
@@ -455,18 +485,21 @@ export default function BasicEditingGrid() {
     }
     const data = [
       ["Status selecionado", "", "", "", whichStatus || "Todos"],
-      ["Data", "Nome", "Email", "Cod Banco", "Banco", "CPF/CNPJ", "Consórcio", "Valor", "Status"],
-      ...reportList.data.map((report) => [
-        report.dataPagamento,
-        report.nomes,
-        report.email,
-        report.codBanco,
-        report.nomeBanco,
-        report.cpfCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'),
-        report.consorcio,
-        formatter.format(report.valor),
-        report.status
-      ]),
+      ["Data Tentativa Pagamento", "Nome", "Email", "Cod Banco", "Banco", "CPF/CNPJ", "Consórcio", "Data Efetiva Pagamento", "Valor", "Status"],
+      ...reportList.data.map((report) => {
+        return [
+          report.dataReferencia,
+          report.nomes,
+          report.email,
+          report.codBanco,
+          report.nomeBanco,
+          report.cpfCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'),
+          report.consorcio,
+          getDisplayPaymentDate(report),
+          formatter.format(report.valor),
+          report.status
+        ];
+      }),
       ...(reportList.valorPago > 0
         ? [["Total Pago:", "", "", ` ${formatter.format(reportList.valorPago)}`, ""]]
         : []),
@@ -1002,11 +1035,8 @@ export default function BasicEditingGrid() {
                           )}
                         </TableCell>
                         <TableCell className="text-xs py-1 ">{report.consorcio}</TableCell>
-                        <TableCell className="text-xs py-1 ">
-                          {['Pendencia Paga', 'Pago'].includes(report.status) &&
-                            report.dataReferencia !== report.dataPagamento
-                            ? report.dataPagamento
-                            : '-'}
+                        <TableCell className="text-xs py-1">
+                          {getTablePaymentDate(report)}
                         </TableCell>
                         <TableCell className="text-xs py-6 px-1 ">{formatter.format(report.valor)}</TableCell>
                         <TableCell className="text-xs py-6 px-1 ">
