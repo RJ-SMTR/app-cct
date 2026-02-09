@@ -69,6 +69,7 @@ export default function BasicEditingGrid() {
 
   const handleSearch = () => {
     setIsLoading(true);
+
     dispatch(
       handleExtract({
         conta: 'cb',
@@ -150,7 +151,7 @@ export default function BasicEditingGrid() {
     { label: 'RSG FUNDO', value: 'RSG FUNDO' },
     { label: 'MANUT CTA', value: 'MANUT CTA' },
     { label: 'DEVOLUCAO DE TED', value: 'DEVOLUCAO DE TED' },
-    { label: 'DOC/TED INTERNET', value: 'DOC/TED INTERNET' },
+    { label: 'DOC/TED INTERNET', value: 'DOC TED INTERNET' },
     { label: 'ENVIO TED', value: ['ENVIO DE TED', 'ENVIO TED'] },
     { label: 'PIX RECEBIDO', value: 'PIX RECEBIDO' },
     { label: 'RECEBIMENTO TED', value: 'RECEBIMENTO TED' },
