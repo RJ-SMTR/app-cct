@@ -190,7 +190,7 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
           };
           dispatch(handleSynthData(combinedResponse))
         } else {
-          if (requestData.pendentes && responseData.data && Array.isArray(responseData.data)) {
+          if (requestData.pendentes && responseData.data && Array.isArray(responseData.data) && reportType === 'consolidado' && requestData.consorcioNome.length > 0) {
             const mergedMap = responseData.data.reduce((acc, item) => {
               const key = item.nomefavorecido;
               if (acc[key]) {

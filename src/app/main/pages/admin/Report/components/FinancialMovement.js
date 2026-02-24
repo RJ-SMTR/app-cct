@@ -52,14 +52,21 @@ export default function BasicEditingGrid() {
   const [selectedErroStatus, setSelectedErroStatus] = useState(null);
   const [selectedConsorcios, setSelectedConsorcios] = useState([]);
   const [selectedEspecificos, setSelectedEspecificos] = useState([]);
+  const [selectedPendencia, setSelectedPendencia] = useState(null);
+  const [showPendenciaDropdown, setShowPendenciaDropdown] = useState(false);
 
 
   const consorciosStatusBase = [
     { label: "A Pagar" },
     { label: "Aguardando Pagamento" },
     { label: "Pago" },
+    { label: "Pendência" }
+  ];
+
+  const pendenciaOptions = [
     { label: "Pendência de Pagamento" },
-    { label: "Pendencia Paga" }
+    { label: "Pendência Paga" },
+    { label: "Todos" }
   ];
 
   const erroStatus = [
@@ -105,31 +112,46 @@ export default function BasicEditingGrid() {
     });
 
   const onSubmit = (data) => {
-     setIsLoading(true);
- 
-     const requestData = { ...data };
- 
-     if (whichStatusShow.includes("Pendência de Pagamento")) {
-       if (!selectedErroStatus) {
-         setIsLoading(false)
-         dispatch(showMessage({
-           message: "Selecione um motivo para a Pendência de Pagamento.",
-         }),);
-         return;
-       }
-      requestData.status = requestData.status.filter(status => status !== "Pendência de Pagamento");
+    setIsLoading(true);
 
-      if (selectedErroStatus.label === "Todos") {
+    const requestData = { ...data };
+
+    if (whichStatusShow.includes("Pendência")) {
+      if (!selectedPendencia) {
+        setIsLoading(false)
+        dispatch(showMessage({
+          message: "Selecione um tipo de pendência.",
+        }),);
+        return;
+      }
+
+      requestData.status = requestData.status.filter(status => status !== "Pendência");
+
+      if (selectedPendencia.label === "Pendência de Pagamento") {
+        if (!selectedErroStatus) {
+          setIsLoading(false)
+          dispatch(showMessage({
+            message: "Selecione um motivo para a Pendência de Pagamento.",
+          }),);
+          return;
+        }
         requestData.status = [...requestData.status, "Erro", "Pendentes"];
         requestData.erro = true;
-      } else if (selectedErroStatus.label === "Estorno") {
-        requestData.status = [...requestData.status, "Estorno"];
-        requestData.estorno = true;
-      } else if (selectedErroStatus.label === "Rejeitado") {
-        requestData.status = [...requestData.status, "Rejeitado"];
-        requestData.rejeitado = true;
-      } else if (selectedErroStatus.label === "OPs atrasadas") {
-        requestData.status = [...requestData.status, "Pendentes"];
+        
+        if (selectedErroStatus.label === "Estorno") {
+          requestData.status = [...requestData.status, "Estorno"];
+          requestData.estorno = true;
+        } else if (selectedErroStatus.label === "Rejeitado") {
+          requestData.status = [...requestData.status, "Rejeitado"];
+          requestData.rejeitado = true;
+        } else if (selectedErroStatus.label === "OPs atrasadas") {
+          requestData.status = [...requestData.status, "Pendentes"];
+        }
+      } else if (selectedPendencia.label === "Pendência Paga") {
+        requestData.status = [...requestData.status, "Pendencia Paga"];
+      } else if (selectedPendencia.label === "Todos") {
+        requestData.status = [...requestData.status, "Pendencia Paga", "Erro", "Pendentes"];
+        requestData.erro = true;
       }
     }
 
@@ -143,17 +165,16 @@ export default function BasicEditingGrid() {
       requestData.desativados = true
     }
 
+
+    setIsLoading(true)
+
     dispatch(handleReportInfo(requestData, reportType))
       .then((response) => {
-        setIsLoading(false);
+        setIsLoading(false)
       })
       .catch((error) => {
-        dispatch(
-          showMessage({
-            message: "Erro na busca, verifique os campos e tente novamente.",
-          }),
-        );
-        setIsLoading(false);
+        dispatch(showMessage({ message: 'Erro na busca, verifique os campos e tente novamente.' }))
+        setIsLoading(false)
       });
 
   };
@@ -169,6 +190,8 @@ export default function BasicEditingGrid() {
     setValue("erroStatus", null);
     setSelectedErroStatus(null);
     setShowErroStatus(false);
+    setShowPendenciaDropdown(false);
+    setSelectedPendencia(null);
     setWhichStatus([]);
 
     for (const button of document.querySelectorAll(
@@ -223,11 +246,13 @@ export default function BasicEditingGrid() {
       const status = newValue.map((i) => i.label);
       setWhichStatus(status);
 
-      const hasErro = status.includes("Pendência de Pagamento");
-      setShowErroStatus(hasErro);
+      const hasPendencia = status.includes("Pendência");
+      setShowPendenciaDropdown(hasPendencia);
 
-      if (!hasErro) {
+      if (!hasPendencia) {
+        setSelectedPendencia(null);
         setSelectedErroStatus(null);
+        setShowErroStatus(false);
         setValue("erroStatus", []);
       }
     }
@@ -683,6 +708,34 @@ export default function BasicEditingGrid() {
                   )}
                 />
 
+                {showPendenciaDropdown && (
+                  <Autocomplete
+                    id="pendencia"
+                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                    options={pendenciaOptions}
+                    getOptionLabel={(option) => option.label}
+                    value={selectedPendencia}
+                    onChange={(_, newValue) => {
+                      setSelectedPendencia(newValue);
+
+                      const hasPagamento = newValue?.label === "Pendência de Pagamento";
+                      setShowErroStatus(hasPagamento);
+
+                      if (!hasPagamento) {
+                        setSelectedErroStatus(null);
+                        setValue("erroStatus", null);
+                      }
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Tipo de Pendência"
+                        variant="outlined"
+                      />
+                    )}
+                  />
+                )}
+
                 {showErroStatus && (
                   <Autocomplete
                     id="erroStatus"
@@ -970,7 +1023,9 @@ export default function BasicEditingGrid() {
                   <TableCell className="font-semibold p-1 text-sm ">Banco</TableCell>
                   <TableCell className="font-semibold p-1 text-sm ">CPF/CNPJ</TableCell>
                   <TableCell className="font-semibold py-1 text-sm leading-none">Consórcios | Modais</TableCell>
-                  <TableCell className="font-semibold py-1 text-sm leading-none">Data Efetiva Pagamento</TableCell>
+                  {selectedPendencia?.label === "Pendência Paga" && (
+                    <TableCell className="font-semibold py-1 text-sm leading-none">Data Efetiva Pagamento</TableCell>
+                  )}
                   <TableCell className="font-semibold p-1 text-sm ">Valor</TableCell>
                   <TableCell className="font-semibold p-1 text-sm ">Status</TableCell>
                 </TableRow>
@@ -1005,7 +1060,9 @@ export default function BasicEditingGrid() {
                           )}
                         </TableCell>
                         <TableCell className="text-xs py-1 ">{report.consorcio}</TableCell>
-                        <TableCell className="text-xs py-1 ">{report.status == 'Pendencia Paga' ? report.dataPagamento : '-'}</TableCell>
+                        {selectedPendencia?.label === "Pendência Paga" && (
+                          <TableCell className="text-xs py-1 ">{report.dataPagamento}</TableCell>
+                        )}
                         <TableCell className="text-xs py-6 px-1 ">{formatter.format(report.valor)}</TableCell>
                         <TableCell className="text-xs py-6 px-1 ">
                           <span
@@ -1047,14 +1104,14 @@ export default function BasicEditingGrid() {
                       <TableCell />
                       <TableCell
                         colSpan={10}
-                      className="text-right font-bold text-black text-base pt-16 whitespace-nowrap
+                        className="text-right font-bold text-black text-base pt-16 whitespace-nowrap
 "
                       >
                         {(() => {
-                          const apenasPendencia = whichStatusShow.length === 1 && 
+                          const apenasPendencia = whichStatusShow.length === 1 &&
                             whichStatusShow.includes("Pendência de Pagamento");
-                          
-                          const multipleFiltrosComPendencia = whichStatusShow.length > 1 && 
+
+                          const multipleFiltrosComPendencia = whichStatusShow.length > 1 &&
                             whichStatusShow.includes("Pendência de Pagamento");
 
                           const totalGeral =
@@ -1078,21 +1135,19 @@ export default function BasicEditingGrid() {
                               reportList.valorAguardandoPagamento
                             )}`,
                             reportList.valorPendente > 0 &&
-                            `${
-                              apenasPendencia 
-                                ? "Total de OPs Atrasadas" 
-                                : "Total Pendencia de Pagamento"
+                            `${apenasPendencia
+                              ? "Total de OPs Atrasadas"
+                              : "Total Pendencia de Pagamento"
                             }: ${formatter.format(reportList.valorPendente)}`,
 
                             totalGeral > 0 &&
-                            `${
-                              reportList.valorPendenciaPaga > 0
-                                ? "Saldo a Pagar"
-                                : apenasPendencia
+                            `${reportList.valorPendenciaPaga > 0
+                              ? "Saldo a Pagar"
+                              : apenasPendencia
                                 ? "Total de Pendência de Pagamento"
                                 : multipleFiltrosComPendencia
-                                ? "Total Geral"
-                                : "Total Geral"
+                                  ? "Total Geral"
+                                  : "Total Geral"
                             }: ${formatter.format(totalGeral)}`
                           ]
                             .filter(Boolean)
@@ -1102,7 +1157,7 @@ export default function BasicEditingGrid() {
                       <TableCell />
                       <TableCell />
                     </TableRow>
-                  )}             
+                  )}
               </TableFooter>
             </Table>
           </div>
