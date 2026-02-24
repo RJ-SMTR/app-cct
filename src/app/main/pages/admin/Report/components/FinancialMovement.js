@@ -1002,12 +1002,15 @@ export default function BasicEditingGrid() {
                           )}
                         </TableCell>
                         <TableCell className="text-xs py-1 ">{report.consorcio}</TableCell>
-                        <TableCell className="text-xs py-1 ">
-                          {['Pendencia Paga', 'Pago'].includes(report.status) &&
-                            report.dataReferencia !== report.dataPagamento
-                            ? report.dataPagamento
-                            : '-'}
-                        </TableCell>
+
+                        {(!showErroStatus && (
+                          <TableCell className="text-xs py-1 ">
+                            {['Pendencia Paga', 'Pago'].includes(report.status) &&
+                              report.dataReferencia !== report.dataPagamento
+                              ? report.dataPagamento
+                              : '-'}
+                          </TableCell>
+                        ))}
                         <TableCell className="text-xs py-6 px-1 ">{formatter.format(report.valor)}</TableCell>
                         <TableCell className="text-xs py-6 px-1 ">
                           <span
@@ -1053,30 +1056,33 @@ export default function BasicEditingGrid() {
                       >
                         {(() => {
                           const totalGeral =
-                            reportList.valorPendenciaPaga > 0
-                              ? (reportList.valorRejeitado || 0) + (reportList.valorEstornado || 0)
+                            (reportList.valorPendenciaPaga > 0 ||
+                              reportList.valorEstornado > 0 ||
+                              reportList.valorRejeitado > 0 ||
+                              reportList.valorPendente > 0)
+                              ? (reportList.valorRejeitado || 0) + (reportList.valorEstornado || 0) + (reportList.valorPendente || 0)
                               : reportList.valor;
-
                           return [
                             reportList.valorPago > 0 &&
                             `Total Pago: ${formatter.format(reportList.valorPago)}`,
                             reportList.valorPendenciaPaga > 0 &&
-                            `Total Pendencia Paga: ${formatter.format(
-                              reportList.valorPendenciaPaga
-                            )}`,
+                            `Total Pendencia de Pagamento: ${formatter.format(reportList.valorPendenciaPaga)}`,
                             reportList.valorEstornado > 0 &&
                             `Total Estorno: ${formatter.format(reportList.valorEstornado)}`,
                             reportList.valorRejeitado > 0 &&
                             `Total Rejeitado: ${formatter.format(reportList.valorRejeitado)}`,
                             reportList.valorAguardandoPagamento > 0 &&
-                            `Total Aguardando Pagamento: ${formatter.format(
-                              reportList.valorAguardandoPagamento
-                            )}`,
+                            `Total Aguardando Pagamento: ${formatter.format(reportList.valorAguardandoPagamento)}`,
                             reportList.valorPendente > 0 &&
-                            `Total Pendencia de Pagamento: ${formatter.format(reportList.valorPendente)}`,
-
+                            `Total OPs atrasadas: ${formatter.format(reportList.valorPendente)}`,
                             (totalGeral ?? 0) >= 0 &&
-                            `${reportList.valorPendenciaPaga > 0 ? "Saldo a Pagar" : "Total Geral"}: ${formatter.format(totalGeral)}`
+                            `${(reportList.valorPendenciaPaga > 0 ||
+                              reportList.valorEstornado > 0 ||
+                              reportList.valorRejeitado > 0 ||
+                              reportList.valorPendente > 0)
+                              ? "Total Pendencia de Pagamento"
+                              : "Total Geral"
+                            }: ${formatter.format(totalGeral)}`
                           ]
                             .filter(Boolean)
                             .join("    |    ");
