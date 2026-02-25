@@ -49,6 +49,20 @@ export default reportSlice.reducer;
 function handleData(data) {
   let requestData = {};
 
+  if (data?.page !== undefined && data?.page !== null) {
+    const page = Number(data.page);
+    if (!Number.isNaN(page) && page > 0) {
+      requestData.page = page;
+    }
+  }
+
+  if (data?.pageSize !== undefined && data?.pageSize !== null) {
+    const pageSize = Number(data.pageSize);
+    if (!Number.isNaN(pageSize) && pageSize > 0) {
+      requestData.pageSize = pageSize;
+    }
+  }
+
   if (data.consorcioName && data.consorcioName.length > 0) {
     if (data.consorcioName.includes('Todos')) {
       requestData.todosConsorcios = true
