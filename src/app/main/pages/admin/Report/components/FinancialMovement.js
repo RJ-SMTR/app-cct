@@ -15,7 +15,8 @@ import {
   InputAdornment,
   Menu,
   IconButton,
-  TableFooter
+  TableFooter,
+  TablePagination
 } from "@mui/material";
 
 import { format } from "date-fns";
@@ -52,6 +53,9 @@ export default function BasicEditingGrid() {
   const [selectedErroStatus, setSelectedErroStatus] = useState(null);
   const [selectedConsorcios, setSelectedConsorcios] = useState([]);
   const [selectedEspecificos, setSelectedEspecificos] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [hasSearched, setHasSearched] = useState(false);
 
 
   const consorciosStatusBase = [
@@ -104,9 +108,7 @@ export default function BasicEditingGrid() {
       },
     });
 
-  const onSubmit = (data) => {
-    setIsLoading(true);
-
+  const buildRequestData = (data, pageIndex, pageSize) => {
     const requestData = { ...data };
 
     if (whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus) {
@@ -126,19 +128,28 @@ export default function BasicEditingGrid() {
       }
     }
 
-
     if (data.especificos.includes("Eleição")) {
-      requestData.eleicao = true
+      requestData.eleicao = true;
     }
     if (data.especificos.includes("Desativados")) {
-      requestData.desativados = true
+      requestData.desativados = true;
     }
 
-    dispatch(handleReportInfo(requestData, reportType))
-      .then((response) => {
+    requestData.page = pageIndex + 1;
+    requestData.pageSize = pageSize;
+
+    return requestData;
+  };
+
+  const submitReport = (data, pageIndex, pageSize) => {
+    setIsLoading(true);
+    const requestData = buildRequestData(data, pageIndex, pageSize);
+
+    return dispatch(handleReportInfo(requestData, reportType))
+      .then(() => {
         setIsLoading(false);
       })
-      .catch((error) => {
+      .catch(() => {
         dispatch(
           showMessage({
             message: "Erro na busca, verifique os campos e tente novamente.",
@@ -146,7 +157,12 @@ export default function BasicEditingGrid() {
         );
         setIsLoading(false);
       });
+  };
 
+  const onSubmit = (data) => {
+    setHasSearched(true);
+    setPage(0);
+    submitReport(data, 0, rowsPerPage);
   };
 
   const handleClear = () => {
@@ -161,6 +177,8 @@ export default function BasicEditingGrid() {
     setSelectedErroStatus(null);
     setShowErroStatus(false);
     setWhichStatus([]);
+    setPage(0);
+    setHasSearched(false);
 
     for (const button of document.querySelectorAll(
       ".MuiAutocomplete-clearIndicator",
@@ -234,6 +252,20 @@ export default function BasicEditingGrid() {
     );
   };
 
+  const handleChangePage = (_event, newPage) => {
+    setPage(newPage);
+    if (!hasSearched) return;
+    submitReport(getValues(), newPage, rowsPerPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    const newRowsPerPage = Number.parseInt(event.target.value, 10);
+    setRowsPerPage(newRowsPerPage);
+    setPage(0);
+    if (!hasSearched) return;
+    submitReport(getValues(), 0, newRowsPerPage);
+  };
+
 
   const valueProps = {
     startAdornment: <InputAdornment position="start">R$</InputAdornment>,
@@ -243,6 +275,43 @@ export default function BasicEditingGrid() {
     style: "currency",
     currency: "BRL",
   });
+  const toNumber = (value) => {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value !== "string") return 0;
+
+    const trimmed = value.trim();
+    if (!trimmed) return 0;
+
+    const cleaned = trimmed.replace(/\s/g, "").replace(/^R\$\s?/, "");
+    const hasComma = cleaned.includes(",");
+    const hasDot = cleaned.includes(".");
+
+    if (hasComma && hasDot) {
+      const normalized = cleaned.replace(/\./g, "").replace(",", ".");
+      const parsed = Number.parseFloat(normalized);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    if (hasComma) {
+      const normalized = cleaned.replace(/\./g, "").replace(",", ".");
+      const parsed = Number.parseFloat(normalized);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    if (hasDot) {
+      const parts = cleaned.split(".");
+      if (parts.length === 2 && parts[1].length === 3) {
+        const parsed = Number.parseFloat(parts.join(""));
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+      const parsed = Number.parseFloat(cleaned.replace(/,/g, ""));
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    const parsed = Number.parseFloat(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+  const formatCurrency = (value) => formatter.format(toNumber(value));
 
   // Export CSV
   const status = getValues("status");
@@ -258,7 +327,7 @@ export default function BasicEditingGrid() {
         Banco: report.nomeBanco,
         'CPF/CNPJ': report.cpfCnpj,
         Consórcio: report.consorcio,
-        Valor: formatter.format(report.valor),
+        Valor: formatCurrency(report.valor),
         Status: report.status,
       }))
       : [];
@@ -266,31 +335,31 @@ export default function BasicEditingGrid() {
   const valorPago = {
     Nome: "Total Pago",
     Valor: "",
-    Status: reportList.valorPago > 0 ? formatter.format(reportList.valorPago) : "",
+    Status: reportList.valorPago > 0 ? formatCurrency(reportList.valorPago) : "",
   };
 
   const valorEstornado = {
     Nome: "Total Estorno",
     Valor: "",
-    Status: reportList.valorEstornado > 0 ? formatter.format(reportList.valorEstornado) : "",
+    Status: reportList.valorEstornado > 0 ? formatCurrency(reportList.valorEstornado) : "",
   };
 
   const valorRejeitado = {
     Nome: "Total Rejeitado",
     Valor: "",
-    Status: reportList.valorRejeitado > 0 ? formatter.format(reportList.valorRejeitado) : "",
+    Status: reportList.valorRejeitado > 0 ? formatCurrency(reportList.valorRejeitado) : "",
   };
 
   const valorAguardandoPagamento = {
     Nome: "Total Aguardando Pagamento",
     Valor: "",
-    Status: reportList.valorAguardandoPagamento > 0 ? formatter.format(reportList.valorAguardandoPagamento) : "",
+    Status: reportList.valorAguardandoPagamento > 0 ? formatCurrency(reportList.valorAguardandoPagamento) : "",
   };
 
   const valorTotal = {
     Nome: "Valor Total",
     Valor: "",
-    Status: formatter.format(reportList?.valor ?? 0),
+    Status: formatCurrency(reportList?.valor ?? 0),
   };
 
 
@@ -350,7 +419,7 @@ export default function BasicEditingGrid() {
         truncateText(report.nomeBanco, 15),
         report.cpfCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'),
         report.consorcio,
-        formatter.format(report.valor),
+        formatCurrency(report.valor),
         report.status
       ];
       tableRows.push(reportData);
@@ -407,26 +476,30 @@ export default function BasicEditingGrid() {
     doc.setFontSize(10);
 
     if (reportList.valorPago > 0) {
-      doc.text(`Total Pago: ${formatter.format(reportList.valorPago)}`, 14, yPosition);
+      doc.text(`Total Pago: ${formatCurrency(reportList.valorPago)}`, 14, yPosition);
       yPosition += 5;
     }
 
     if (reportList.valorEstornado > 0) {
-      doc.text(`Total Estorno: ${formatter.format(reportList.valorEstornado)}`, 14, yPosition);
+      doc.text(`Total Estorno: ${formatCurrency(reportList.valorEstornado)}`, 14, yPosition);
       yPosition += 5;
     }
 
     if (reportList.valorRejeitado > 0) {
-      doc.text(`Total Rejeitado: ${formatter.format(reportList.valorRejeitado)}`, 14, yPosition);
+      doc.text(`Total Rejeitado: ${formatCurrency(reportList.valorRejeitado)}`, 14, yPosition);
       yPosition += 5;
     }
 
     if (reportList.valorAguardandoPagamento > 0) {
-      doc.text(`Total Aguardando Pagamento: ${formatter.format(reportList.valorAguardandoPagamento)}`, 14, yPosition);
+      doc.text(
+        `Total Aguardando Pagamento: ${formatCurrency(reportList.valorAguardandoPagamento)}`,
+        14,
+        yPosition,
+      );
       yPosition += 5;
     }
 
-    doc.text(`Valor total: ${formatter.format(reportList.valor ?? 0)}`, 14, yPosition);
+    doc.text(`Valor total: ${formatCurrency(reportList.valor ?? 0)}`, 14, yPosition);
 
     const pageCount = doc.internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
@@ -464,22 +537,22 @@ export default function BasicEditingGrid() {
         report.nomeBanco,
         report.cpfCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'),
         report.consorcio,
-        formatter.format(report.valor),
+        formatCurrency(report.valor),
         report.status
       ]),
       ...(reportList.valorPago > 0
-        ? [["Total Pago:", "", "", ` ${formatter.format(reportList.valorPago)}`, ""]]
+        ? [["Total Pago:", "", "", ` ${formatCurrency(reportList.valorPago)}`, ""]]
         : []),
       ...(reportList.valorEstornado > 0
-        ? [["Total Estorno:", "", "", ` ${formatter.format(reportList.valorEstornado)}`, ""]]
+        ? [["Total Estorno:", "", "", ` ${formatCurrency(reportList.valorEstornado)}`, ""]]
         : []),
       ...(reportList.valorRejeitado > 0
-        ? [["Total Rejeitado:", "", "", ` ${formatter.format(reportList.valorRejeitado)}`, ""]]
+        ? [["Total Rejeitado:", "", "", ` ${formatCurrency(reportList.valorRejeitado)}`, ""]]
         : []),
       ...(reportList.valorAguardandoPagamento > 0
-        ? [["Total Aguardando Pagamento:", "", "", ` ${formatter.format(reportList.valorAguardandoPagamento)}`, ""]]
+        ? [["Total Aguardando Pagamento:", "", "", ` ${formatCurrency(reportList.valorAguardandoPagamento)}`, ""]]
         : []),
-      ["Valor Total", "", "", formatter.format(reportList.valor ?? 0), ""],
+      ["Valor Total", "", "", formatCurrency(reportList.valor ?? 0), ""],
     ];
 
     const wb = utils.book_new();
@@ -947,6 +1020,18 @@ export default function BasicEditingGrid() {
             />
           </header>
 
+          <TablePagination
+            component="div"
+            count={reportList?.count ?? 0}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            labelRowsPerPage="Linhas por página"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+            rowsPerPageOptions={[10, 25, 50, 100, 250]}
+          />
+
           <div
             style={{ height: "50vh", width: "100%" }}
             className="overflow-scroll"
@@ -1011,7 +1096,9 @@ export default function BasicEditingGrid() {
                               : '-'}
                           </TableCell>
                         ))}
-                        <TableCell className="text-xs py-6 px-1 ">{formatter.format(report.valor)}</TableCell>
+                        <TableCell className="text-xs py-6 px-1 ">
+                          {formatCurrency(report.valor)}
+                        </TableCell>
                         <TableCell className="text-xs py-6 px-1 ">
                           <span
                             className={`px-3 py-1 rounded-full text-xs ${getStatusStyles(
@@ -1043,11 +1130,11 @@ export default function BasicEditingGrid() {
 
               <TableFooter className="sticky bottom-0 bg-white z-10">
                 <TableRow></TableRow>
-                {(reportList.valorPago > 0 ||
+                {((reportList.valorPago > 0 ||
                   reportList.valorEstornado > 0 ||
                   reportList.valorRejeitado > 0 ||
                   reportList.valor > 0 ||
-                  reportList.valorPendente > 0) && (
+                  reportList.valorPendente > 0) || showErroStatus) && (
                     <TableRow>
                       <TableCell />
                       <TableCell
@@ -1055,35 +1142,60 @@ export default function BasicEditingGrid() {
                         className="text-right font-bold text-black text-base pt-16"
                       >
                         {(() => {
-                          const totalGeral =
-                            (reportList.valorPendenciaPaga > 0 ||
-                              reportList.valorEstornado > 0 ||
-                              reportList.valorRejeitado > 0 ||
-                              reportList.valorPendente > 0)
-                              ? (reportList.valorRejeitado || 0) + (reportList.valorEstornado || 0) + (reportList.valorPendente || 0)
-                              : reportList.valor;
-                          return [
-                            reportList.valorPago > 0 &&
-                            `Total Pago: ${formatter.format(reportList.valorPago)}`,
-                            reportList.valorPendenciaPaga > 0 &&
-                            `Total Pendencia de Pagamento: ${formatter.format(reportList.valorPendenciaPaga)}`,
-                            reportList.valorEstornado > 0 &&
-                            `Total Estorno: ${formatter.format(reportList.valorEstornado)}`,
-                            reportList.valorRejeitado > 0 &&
-                            `Total Rejeitado: ${formatter.format(reportList.valorRejeitado)}`,
-                            reportList.valorAguardandoPagamento > 0 &&
-                            `Total Aguardando Pagamento: ${formatter.format(reportList.valorAguardandoPagamento)}`,
-                            reportList.valorPendente > 0 &&
-                            `Total OPs atrasadas: ${formatter.format(reportList.valorPendente)}`,
-                            (totalGeral ?? 0) >= 0 &&
-                            `${(reportList.valorPendenciaPaga > 0 ||
-                              reportList.valorEstornado > 0 ||
-                              reportList.valorRejeitado > 0 ||
-                              reportList.valorPendente > 0)
-                              ? "Total Pendencia de Pagamento"
-                              : "Total Geral"
-                            }: ${formatter.format(totalGeral)}`
-                          ]
+                          const isErrorReport = showErroStatus;
+                          const valorPago = toNumber(reportList.valorPago);
+                          const valorPendenciaPaga = toNumber(reportList.valorPendenciaPaga);
+                          const valorEstornado = toNumber(reportList.valorEstornado);
+                          const valorRejeitado = toNumber(reportList.valorRejeitado);
+                          const valorAguardandoPagamento = toNumber(reportList.valorAguardandoPagamento);
+                          const valorPendente = toNumber(reportList.valorPendente);
+                          const totalPendenciaPagamento = valorEstornado + valorRejeitado;
+                          const totalGeral = toNumber(reportList.valor);
+                          const totalLabel = isErrorReport ? "Total Pendencia de Pagamento" : "Total Geral";
+                          const totalValue = isErrorReport ? totalPendenciaPagamento : totalGeral;
+                          const totals = [];
+
+                          if (valorPago > 0) {
+                            totals.push(`Total Pago: ${formatCurrency(valorPago)}`);
+                          }
+
+                          if (!showErroStatus && valorPendenciaPaga > 0) {
+                            totals.push(
+                              `Total Pendencia de Pagamento: ${formatCurrency(valorPendenciaPaga)}`,
+                            );
+                          }
+
+                          if (showErroStatus) {
+                            if (valorEstornado > 0) {
+                              totals.push(`Total Estorno: ${formatCurrency(valorEstornado)}`);
+                            }
+                            if (valorRejeitado > 0) {
+                              totals.push(`Total Rejeitado: ${formatCurrency(valorRejeitado)}`);
+                            }
+                          } else {
+                            if (valorEstornado > 0) {
+                              totals.push(`Total Estorno: ${formatCurrency(valorEstornado)}`);
+                            }
+                            if (valorRejeitado > 0) {
+                              totals.push(`Total Rejeitado: ${formatCurrency(valorRejeitado)}`);
+                            }
+                          }
+
+                          if (valorAguardandoPagamento > 0) {
+                            totals.push(
+                              `Total Aguardando Pagamento: ${formatCurrency(valorAguardandoPagamento)}`,
+                            );
+                          }
+
+                          if (valorPendente > 0) {
+                            totals.push(`Total OPs atrasadas: ${formatCurrency(valorPendente)}`);
+                          }
+
+                          if ((totalValue ?? 0) >= 0) {
+                            totals.push(`${totalLabel}: ${formatCurrency(totalValue)}`);
+                          }
+
+                          return totals
                             .filter(Boolean)
                             .join("    |    ");
                         })()}

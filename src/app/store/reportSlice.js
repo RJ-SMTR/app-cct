@@ -145,6 +145,16 @@ function handleData(data) {
   addIfValid('valorMax', data.valorMax);
   addIfValid('valorMin', data.valorMin);
 
+  const pageNumber = Number(data.page);
+  if (Number.isInteger(pageNumber) && pageNumber > 0) {
+    requestData.page = pageNumber;
+  }
+
+  const pageSizeNumber = Number(data.pageSize);
+  if (Number.isInteger(pageSizeNumber) && pageSizeNumber > 0) {
+    requestData.pageSize = pageSizeNumber;
+  }
+
   return requestData;
 }
 
