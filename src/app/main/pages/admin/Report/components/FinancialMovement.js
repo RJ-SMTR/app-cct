@@ -1144,12 +1144,12 @@ export default function BasicEditingGrid() {
                         {(() => {
                           const isErrorReport = showErroStatus;
                           const valorPago = toNumber(reportList.valorPago);
-                          const valorPendenciaPaga = toNumber(reportList.valorPendenciaPaga);
                           const valorEstornado = toNumber(reportList.valorEstornado);
                           const valorRejeitado = toNumber(reportList.valorRejeitado);
                           const valorAguardandoPagamento = toNumber(reportList.valorAguardandoPagamento);
                           const valorPendente = toNumber(reportList.valorPendente);
-                          const totalPendenciaPagamento = valorEstornado + valorRejeitado;
+                          const totalPendenciaPagamento =
+                            valorEstornado + valorRejeitado + valorPendente;
                           const totalGeral = toNumber(reportList.valor);
                           const totalLabel = isErrorReport ? "Total Pendencia de Pagamento" : "Total Geral";
                           const totalValue = isErrorReport ? totalPendenciaPagamento : totalGeral;
@@ -1159,9 +1159,9 @@ export default function BasicEditingGrid() {
                             totals.push(`Total Pago: ${formatCurrency(valorPago)}`);
                           }
 
-                          if (!showErroStatus && valorPendenciaPaga > 0) {
+                          if (!showErroStatus && totalPendenciaPagamento > 0) {
                             totals.push(
-                              `Total Pendencia de Pagamento: ${formatCurrency(valorPendenciaPaga)}`,
+                              `Total Pendencia de Pagamento: ${formatCurrency(totalPendenciaPagamento)}`,
                             );
                           }
 
