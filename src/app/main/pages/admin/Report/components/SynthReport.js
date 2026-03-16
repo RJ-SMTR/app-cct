@@ -71,6 +71,7 @@ export default function BasicEditingGrid() {
     { label: 'Internorte', value: "Internorte" },
     { label: 'Intersul', value: "Intersul" },
     { label: 'MobiRio', value: "MobiRio" },
+    { label: 'MOBI-Rio BUM', value: "MOBI-Rio BUM" },
     { label: 'Santa Cruz', value: "Santa Cruz" },
     { label: 'STPC', value: "STPC", disabled: selected === 'name' ? true : false },
     { label: 'STPL', value: "STPL", disabled: selected === 'name' ? true : false },
