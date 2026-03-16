@@ -15,7 +15,8 @@ import {
   InputAdornment,
   Menu,
   IconButton,
-  TableFooter
+  TableFooter,
+  TablePagination
 } from "@mui/material";
 
 import { format } from "date-fns";
@@ -54,19 +55,17 @@ export default function BasicEditingGrid() {
   const [selectedEspecificos, setSelectedEspecificos] = useState([]);
   const [selectedPendencia, setSelectedPendencia] = useState(null);
   const [showPendenciaDropdown, setShowPendenciaDropdown] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [lastRequestData, setLastRequestData] = useState(null);
 
 
   const consorciosStatusBase = [
     { label: "A Pagar" },
     { label: "Aguardando Pagamento" },
     { label: "Pago" },
-    { label: "Pendência" }
-  ];
-
-  const pendenciaOptions = [
     { label: "Pendência de Pagamento" },
-    { label: "Pendência Paga" },
-    { label: "Todos" }
+    { label: "Pendencia Paga" }
   ];
 
   const erroStatus = [
@@ -113,49 +112,26 @@ export default function BasicEditingGrid() {
 
   const onSubmit = (data) => {
     setIsLoading(true);
+    setPage(0);
 
     const requestData = { ...data };
 
-    if (whichStatusShow.includes("Pendência")) {
-      if (!selectedPendencia) {
-        setIsLoading(false)
-        dispatch(showMessage({
-          message: "Selecione um tipo de pendência.",
-        }),);
-        return;
-      }
+    if (whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus) {
+      requestData.status = requestData.status.filter(status => status !== "Pendência de Pagamento");
 
-      requestData.status = requestData.status.filter(status => status !== "Pendência");
-
-      if (selectedPendencia.label === "Pendência de Pagamento") {
-        if (!selectedErroStatus) {
-          setIsLoading(false)
-          dispatch(showMessage({
-            message: "Selecione um motivo para a Pendência de Pagamento.",
-          }),);
-          return;
-        }
+      if (selectedErroStatus.label === "Todos") {
         requestData.status = [...requestData.status, "Erro", "Pendentes"];
         requestData.erro = true;
-        
-        if (selectedErroStatus.label === "Estorno") {
-          requestData.status = [...requestData.status, "Estorno"];
-          requestData.estorno = true;
-        } else if (selectedErroStatus.label === "Rejeitado") {
-          requestData.status = [...requestData.status, "Rejeitado"];
-          requestData.rejeitado = true;
-        } else if (selectedErroStatus.label === "OPs atrasadas") {
-          requestData.status = [...requestData.status, "Pendentes"];
-        }
-      } else if (selectedPendencia.label === "Pendência Paga") {
-        requestData.status = [...requestData.status, "Pendencia Paga"];
-      } else if (selectedPendencia.label === "Todos") {
-        requestData.status = [...requestData.status, "Pendencia Paga", "Erro", "Pendentes"];
-        requestData.erro = true;
+      } else if (selectedErroStatus.label === "Estorno") {
+        requestData.status = [...requestData.status, "Estorno"];
+        requestData.estorno = true;
+      } else if (selectedErroStatus.label === "Rejeitado") {
+        requestData.status = [...requestData.status, "Rejeitado"];
+        requestData.rejeitado = true;
+      } else if (selectedErroStatus.label === "OPs atrasadas") {
+        requestData.status = [...requestData.status, "Pendentes"];
       }
     }
-
-    setIsLoading(true);
 
 
     if (data.especificos.includes("Eleição")) {
@@ -168,19 +144,30 @@ export default function BasicEditingGrid() {
 
     setIsLoading(true)
 
-    dispatch(handleReportInfo(requestData, reportType))
+    setLastRequestData(requestData);
+
+    dispatch(handleReportInfo({ ...requestData, page: 1, pageSize: rowsPerPage }, reportType))
       .then((response) => {
+        if (response?.currentPage) {
+          setPage(Math.max(0, response.currentPage - 1));
+        }
         setIsLoading(false)
       })
       .catch((error) => {
-        dispatch(showMessage({ message: 'Erro na busca, verifique os campos e tente novamente.' }))
-        setIsLoading(false)
+        dispatch(
+          showMessage({
+            message: "Erro na busca, verifique os campos e tente novamente.",
+          }),
+        );
+        setIsLoading(false);
       });
 
   };
 
   const handleClear = () => {
     dispatch(setReportList([]));
+    setPage(0);
+    setLastRequestData(null);
     setValue("name", []);
     setValue("dateRange", []);
     setValue("valorMax", "");
@@ -190,8 +177,6 @@ export default function BasicEditingGrid() {
     setValue("erroStatus", null);
     setSelectedErroStatus(null);
     setShowErroStatus(false);
-    setShowPendenciaDropdown(false);
-    setSelectedPendencia(null);
     setWhichStatus([]);
 
     for (const button of document.querySelectorAll(
@@ -246,13 +231,11 @@ export default function BasicEditingGrid() {
       const status = newValue.map((i) => i.label);
       setWhichStatus(status);
 
-      const hasPendencia = status.includes("Pendência");
-      setShowPendenciaDropdown(hasPendencia);
+      const hasErro = status.includes("Pendência de Pagamento");
+      setShowErroStatus(hasErro);
 
-      if (!hasPendencia) {
-        setSelectedPendencia(null);
+      if (!hasErro) {
         setSelectedErroStatus(null);
-        setShowErroStatus(false);
         setValue("erroStatus", []);
       }
     }
@@ -273,17 +256,56 @@ export default function BasicEditingGrid() {
     startAdornment: <InputAdornment position="start">R$</InputAdornment>,
   };
 
-  const formatter = new Intl.NumberFormat("pt-BR", {
+  const formatter = useMemo(() => new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-  });
+  }), []);
+
+  const reportRows = useMemo(() => reportList?.data || [], [reportList?.data]);
+
+  const handleChangePage = (_, newPage) => {
+    if (!lastRequestData) {
+      setPage(newPage);
+      return;
+    }
+
+    setIsLoading(true);
+    dispatch(handleReportInfo({ ...lastRequestData, page: newPage + 1, pageSize: rowsPerPage }, reportType))
+      .then((response) => {
+        setPage(Math.max(0, (response?.currentPage || newPage + 1) - 1));
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setIsLoading(false);
+      });
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    const newRowsPerPage = parseInt(event.target.value, 10);
+    setRowsPerPage(newRowsPerPage);
+
+    if (!lastRequestData) {
+      setPage(0);
+      return;
+    }
+
+    setIsLoading(true);
+    dispatch(handleReportInfo({ ...lastRequestData, page: 1, pageSize: newRowsPerPage }, reportType))
+      .then((response) => {
+        setPage(Math.max(0, (response?.currentPage || 1) - 1));
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setIsLoading(false);
+      });
+  };
 
   // Export CSV
   const status = getValues("status");
   const whichStatus = status?.join(",");
 
-  const reportListData =
-    reportList.count > 0
+  const reportListData = useMemo(
+    () => (reportList.count > 0
       ? reportList.data?.map((report) => ({
         Data: report.dataPagamento,
         Nome: report.nomes,
@@ -295,56 +317,57 @@ export default function BasicEditingGrid() {
         Valor: formatter.format(report.valor),
         Status: report.status,
       }))
-      : [];
+      : []),
+    [reportList, formatter],
+  );
 
-  const valorPago = {
-    Nome: "Total Pago",
-    Valor: "",
-    Status: reportList.valorPago > 0 ? formatter.format(reportList.valorPago) : "",
-  };
+  const csvData = useMemo(() => {
+    const valorPago = {
+      Nome: "Total Pago",
+      Valor: "",
+      Status: reportList.valorPago > 0 ? formatter.format(reportList.valorPago) : "",
+    };
 
-  const valorEstornado = {
-    Nome: "Total Estorno",
-    Valor: "",
-    Status: reportList.valorEstornado > 0 ? formatter.format(reportList.valorEstornado) : "",
-  };
+    const valorEstornado = {
+      Nome: "Total Estorno",
+      Valor: "",
+      Status: reportList.valorEstornado > 0 ? formatter.format(reportList.valorEstornado) : "",
+    };
 
-  const valorRejeitado = {
-    Nome: "Total Rejeitado",
-    Valor: "",
-    Status: reportList.valorRejeitado > 0 ? formatter.format(reportList.valorRejeitado) : "",
-  };
+    const valorRejeitado = {
+      Nome: "Total Rejeitado",
+      Valor: "",
+      Status: reportList.valorRejeitado > 0 ? formatter.format(reportList.valorRejeitado) : "",
+    };
 
-  const valorAguardandoPagamento = {
-    Nome: "Total Aguardando Pagamento",
-    Valor: "",
-    Status: reportList.valorAguardandoPagamento > 0 ? formatter.format(reportList.valorAguardandoPagamento) : "",
-  };
+    const valorAguardandoPagamento = {
+      Nome: "Total Aguardando Pagamento",
+      Valor: "",
+      Status: reportList.valorAguardandoPagamento > 0 ? formatter.format(reportList.valorAguardandoPagamento) : "",
+    };
 
-  const valorTotal = {
-    Nome: "Valor Total",
-    Valor: "",
-    Status: formatter.format(reportList?.valor ?? 0),
-  };
+    const valorTotal = {
+      Nome: "Valor Total",
+      Valor: "",
+      Status: formatter.format(reportList?.valor ?? 0),
+    };
 
+    const statusRow = {
+      Nome: "Status selecionado",
+      Valor: "",
+      Status: whichStatus || "Todos",
+    };
 
-
-
-  const statusRow = {
-    Nome: "Status selecionado",
-    Valor: "",
-    Status: whichStatus || "Todos",
-  };
-
-  const csvData = [
-    statusRow,
-    ...reportListData,
-    ...(reportList.valorPago > 0 ? [valorPago] : []),
-    ...(reportList.valorEstornado > 0 ? [valorEstornado] : []),
-    ...(reportList.valorRejeitado > 0 ? [valorRejeitado] : []),
-    ...(reportList.valorAguardandoPagamento > 0 ? [valorAguardandoPagamento] : []),
-    valorTotal,
-  ];
+    return [
+      statusRow,
+      ...reportListData,
+      ...(reportList.valorPago > 0 ? [valorPago] : []),
+      ...(reportList.valorEstornado > 0 ? [valorEstornado] : []),
+      ...(reportList.valorRejeitado > 0 ? [valorRejeitado] : []),
+      ...(reportList.valorAguardandoPagamento > 0 ? [valorAguardandoPagamento] : []),
+      valorTotal,
+    ];
+  }, [whichStatus, reportListData, reportList, formatter]);
   let dateInicio;
   let dateFim;
   const selectedDate = getValues("dateRange");
@@ -583,6 +606,8 @@ export default function BasicEditingGrid() {
         return "bg-gray-400 text-black";
       case "Pendencia Paga":
         return "bg-blue-400 text-black";
+      case "A Pagar":
+        return "bg-gray-400 text-black";
       default:
         return "bg-red-300 text-black";
     }
@@ -707,34 +732,6 @@ export default function BasicEditingGrid() {
                     />
                   )}
                 />
-
-                {showPendenciaDropdown && (
-                  <Autocomplete
-                    id="pendencia"
-                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                    options={pendenciaOptions}
-                    getOptionLabel={(option) => option.label}
-                    value={selectedPendencia}
-                    onChange={(_, newValue) => {
-                      setSelectedPendencia(newValue);
-
-                      const hasPagamento = newValue?.label === "Pendência de Pagamento";
-                      setShowErroStatus(hasPagamento);
-
-                      if (!hasPagamento) {
-                        setSelectedErroStatus(null);
-                        setValue("erroStatus", null);
-                      }
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Tipo de Pendência"
-                        variant="outlined"
-                      />
-                    )}
-                  />
-                )}
 
                 {showErroStatus && (
                   <Autocomplete
@@ -1023,9 +1020,11 @@ export default function BasicEditingGrid() {
                   <TableCell className="font-semibold p-1 text-sm ">Banco</TableCell>
                   <TableCell className="font-semibold p-1 text-sm ">CPF/CNPJ</TableCell>
                   <TableCell className="font-semibold py-1 text-sm leading-none">Consórcios | Modais</TableCell>
-                  {selectedPendencia?.label === "Pendência Paga" && (
-                    <TableCell className="font-semibold py-1 text-sm leading-none">Data Efetiva Pagamento</TableCell>
-                  )}
+                  {
+                    !showErroStatus && (
+                      <TableCell className="font-semibold py-1 text-sm leading-none">Data Efetiva Pagamento</TableCell>
+                    )
+                  }
                   <TableCell className="font-semibold p-1 text-sm ">Valor</TableCell>
                   <TableCell className="font-semibold p-1 text-sm ">Status</TableCell>
                 </TableRow>
@@ -1034,7 +1033,7 @@ export default function BasicEditingGrid() {
               <TableBody className="overflow-scroll">
                 {!isLoading ? (
                   reportList.count > 0 ? (
-                    reportList.data?.map((report, index) => (
+                    reportRows.map((report, index) => (
                       <TableRow key={index} className="hover:bg-gray-50">
                         <TableCell className="text-xs py-1">{report.dataReferencia}</TableCell>
                         <TableCell className="text-xs py-6 px-1 text-nowrap" style={{ whiteSpace: 'nowrap' }}>
@@ -1060,9 +1059,15 @@ export default function BasicEditingGrid() {
                           )}
                         </TableCell>
                         <TableCell className="text-xs py-1 ">{report.consorcio}</TableCell>
-                        {selectedPendencia?.label === "Pendência Paga" && (
-                          <TableCell className="text-xs py-1 ">{report.dataPagamento}</TableCell>
-                        )}
+
+                        {(!showErroStatus && (
+                          <TableCell className="text-xs py-1 ">
+                            {['Pendencia Paga', 'Pago'].includes(report.status) &&
+                              report.dataReferencia !== report.dataPagamento
+                              ? report.dataPagamento
+                              : '-'}
+                          </TableCell>
+                        ))}
                         <TableCell className="text-xs py-6 px-1 ">{formatter.format(report.valor)}</TableCell>
                         <TableCell className="text-xs py-6 px-1 ">
                           <span
@@ -1094,6 +1099,22 @@ export default function BasicEditingGrid() {
               </TableBody>
 
               <TableFooter className="sticky bottom-0 bg-white z-10">
+                {reportList.count > 0 && (
+                  <TableRow>
+                    <TableCell colSpan={selectedPendencia?.label === "Pendência Paga" ? 10 : 9}>
+                      <TablePagination
+                        rowsPerPageOptions={[25, 50, 100, 1000]}
+                        count={reportList?.count || 0}
+                        rowsPerPage={rowsPerPage}
+                        page={page}
+                        onPageChange={handleChangePage}
+                        onRowsPerPageChange={handleChangeRowsPerPage}
+                        labelRowsPerPage="Linhas por página"
+                        component="div"
+                      />
+                    </TableCell>
+                  </TableRow>
+                )}
                 <TableRow></TableRow>
                 {(reportList.valorPago > 0 ||
                   reportList.valorEstornado > 0 ||
@@ -1103,51 +1124,37 @@ export default function BasicEditingGrid() {
                     <TableRow>
                       <TableCell />
                       <TableCell
-                        colSpan={10}
-                        className="text-right font-bold text-black text-base pt-16 whitespace-nowrap
-"
+                        colSpan={7}
+                        className="text-right font-bold text-black text-base pt-16"
                       >
                         {(() => {
-                          const apenasPendencia = whichStatusShow.length === 1 &&
-                            whichStatusShow.includes("Pendência de Pagamento");
-
-                          const multipleFiltrosComPendencia = whichStatusShow.length > 1 &&
-                            whichStatusShow.includes("Pendência de Pagamento");
-
                           const totalGeral =
-                            reportList.valorPendenciaPaga > 0
-                              ? (reportList.valorRejeitado || 0) + (reportList.valorEstornado || 0)
+                            (reportList.valorPendenciaPaga > 0 ||
+                              reportList.valorEstornado > 0 ||
+                              reportList.valorRejeitado > 0 ||
+                              reportList.valorPendente > 0)
+                              ? (reportList.valorRejeitado || 0) + (reportList.valorEstornado || 0) + (reportList.valorPendente || 0)
                               : reportList.valor;
-
                           return [
                             reportList.valorPago > 0 &&
                             `Total Pago: ${formatter.format(reportList.valorPago)}`,
                             reportList.valorPendenciaPaga > 0 &&
-                            `Total Pendencia Paga: ${formatter.format(
-                              reportList.valorPendenciaPaga
-                            )}`,
+                            `Total Pendencia de Pagamento: ${formatter.format(reportList.valorPendenciaPaga)}`,
                             reportList.valorEstornado > 0 &&
                             `Total Estorno: ${formatter.format(reportList.valorEstornado)}`,
                             reportList.valorRejeitado > 0 &&
                             `Total Rejeitado: ${formatter.format(reportList.valorRejeitado)}`,
                             reportList.valorAguardandoPagamento > 0 &&
-                            `Total Aguardando Pagamento: ${formatter.format(
-                              reportList.valorAguardandoPagamento
-                            )}`,
+                            `Total Aguardando Pagamento: ${formatter.format(reportList.valorAguardandoPagamento)}`,
                             reportList.valorPendente > 0 &&
-                            `${apenasPendencia
-                              ? "Total de OPs Atrasadas"
-                              : "Total Pendencia de Pagamento"
-                            }: ${formatter.format(reportList.valorPendente)}`,
-
-                            totalGeral > 0 &&
-                            `${reportList.valorPendenciaPaga > 0
-                              ? "Saldo a Pagar"
-                              : apenasPendencia
-                                ? "Total de Pendência de Pagamento"
-                                : multipleFiltrosComPendencia
-                                  ? "Total Geral"
-                                  : "Total Geral"
+                            `Total OPs atrasadas: ${formatter.format(reportList.valorPendente)}`,
+                            (totalGeral ?? 0) >= 0 &&
+                            `${(reportList.valorPendenciaPaga > 0 ||
+                              reportList.valorEstornado > 0 ||
+                              reportList.valorRejeitado > 0 ||
+                              reportList.valorPendente > 0)
+                              ? "Total Pendencia de Pagamento"
+                              : "Total Geral"
                             }: ${formatter.format(totalGeral)}`
                           ]
                             .filter(Boolean)
