@@ -24,7 +24,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { DateRangePicker } from "rsuite";
 import { useForm, Controller } from "react-hook-form";
 
-import { handleReportInfo, setReportList } from "app/store/reportSlice";
+import { handleFinancialMovementPage, handleFinancialMovementSummary, setReportList } from "app/store/reportSlice";
 
 import { getUser } from "app/store/adminSlice";
 import { NumericFormat } from "react-number-format";
@@ -36,7 +36,6 @@ import { ClearIcon } from "@mui/x-date-pickers";
 import { utils, writeFile as writeFileXLSX } from "xlsx";
 
 export default function BasicEditingGrid() {
-  const reportType = useSelector((state) => state.report.reportType);
   const reportList = useSelector((state) => state.report.reportList);
   const userList = useSelector((state) => state.admin.userList) || [];
   const specificValue = useSelector((state) => state.report.specificValue);
@@ -56,6 +55,8 @@ export default function BasicEditingGrid() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [hasSearched, setHasSearched] = useState(false);
+  const [pageCursors, setPageCursors] = useState([null]);
+  const hasNextPage = Boolean(pageCursors[page + 1]);
 
 
   const consorciosStatusBase = [
@@ -108,7 +109,7 @@ export default function BasicEditingGrid() {
       },
     });
 
-  const buildRequestData = (data, pageIndex, pageSize) => {
+  const buildRequestData = (data, pageIndex, pageSize, options = {}) => {
     const requestData = { ...data };
 
     if (whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus) {
@@ -135,33 +136,81 @@ export default function BasicEditingGrid() {
       requestData.desativados = true;
     }
 
-    requestData.page = pageIndex + 1;
-    requestData.pageSize = pageSize;
+    if (options.includePagination !== false) {
+      requestData.page = pageIndex + 1;
+      requestData.pageSize = pageSize;
+    }
 
     return requestData;
   };
 
-  const submitReport = (data, pageIndex, pageSize) => {
+  const submitReport = async (data, pageIndex, pageSize) => {
     setIsLoading(true);
-    const requestData = buildRequestData(data, pageIndex, pageSize);
+    const summaryRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: false });
+    const pageRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: true });
 
-    return dispatch(handleReportInfo(requestData, reportType))
-      .then(() => {
-        setIsLoading(false);
-      })
-      .catch(() => {
-        dispatch(
-          showMessage({
-            message: "Erro na busca, verifique os campos e tente novamente.",
-          }),
-        );
-        setIsLoading(false);
+    try {
+      await dispatch(handleFinancialMovementSummary(summaryRequestData, { resetData: true }));
+      const pageResponse = await dispatch(handleFinancialMovementPage(pageRequestData));
+      const newNextCursor = pageResponse?.nextCursor ?? null;
+      setPageCursors([null, newNextCursor]);
+      setIsLoading(false);
+    } catch {
+      dispatch(
+        showMessage({
+          message: "Erro na busca, verifique os campos e tente novamente.",
+        }),
+      );
+      setIsLoading(false);
+    }
+  };
+
+  const submitPage = async (data, pageIndex, pageSize) => {
+    setIsLoading(true);
+    const pageRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: true });
+
+    const cursor = pageCursors[pageIndex] ?? null;
+    if (pageIndex > 0 && !cursor) {
+      dispatch(
+        showMessage({
+          message: "Cursor inválido para a página solicitada. Refaça a busca.",
+        }),
+      );
+      setIsLoading(false);
+      return;
+    }
+
+    if (cursor) {
+      pageRequestData.cursorDataReferencia = cursor.dataReferencia;
+      pageRequestData.cursorNome = cursor.nomes;
+      pageRequestData.cursorStatus = cursor.status;
+      pageRequestData.cursorCpfCnpj = cursor.cpfCnpj;
+    }
+
+    try {
+      const pageResponse = await dispatch(handleFinancialMovementPage(pageRequestData));
+      const newNextCursor = pageResponse?.nextCursor ?? null;
+      setPageCursors((prev) => {
+        const updated = [...prev];
+        updated[pageIndex + 1] = newNextCursor;
+        return updated;
       });
+      setPage(pageIndex);
+      setIsLoading(false);
+    } catch {
+      dispatch(
+        showMessage({
+          message: "Erro na busca, verifique os campos e tente novamente.",
+        }),
+      );
+      setIsLoading(false);
+    }
   };
 
   const onSubmit = (data) => {
     setHasSearched(true);
     setPage(0);
+    setPageCursors([null]);
     submitReport(data, 0, rowsPerPage);
   };
 
@@ -179,6 +228,7 @@ export default function BasicEditingGrid() {
     setWhichStatus([]);
     setPage(0);
     setHasSearched(false);
+    setPageCursors([null]);
 
     for (const button of document.querySelectorAll(
       ".MuiAutocomplete-clearIndicator",
@@ -196,10 +246,6 @@ export default function BasicEditingGrid() {
   useEffect(() => {
     fetchUsers();
   }, []);
-
-  useEffect(() => {
-    setIsLoading(false);
-  }, [reportList]);
 
   // Handle AutoComplete
   useEffect(() => {
@@ -253,17 +299,17 @@ export default function BasicEditingGrid() {
   };
 
   const handleChangePage = (_event, newPage) => {
-    setPage(newPage);
     if (!hasSearched) return;
-    submitReport(getValues(), newPage, rowsPerPage);
+    submitPage(getValues(), newPage, rowsPerPage);
   };
 
   const handleChangeRowsPerPage = (event) => {
     const newRowsPerPage = Number.parseInt(event.target.value, 10);
     setRowsPerPage(newRowsPerPage);
     setPage(0);
+    setPageCursors([null]);
     if (!hasSearched) return;
-    submitReport(getValues(), 0, newRowsPerPage);
+    submitPage(getValues(), 0, newRowsPerPage);
   };
 
 
@@ -359,7 +405,7 @@ export default function BasicEditingGrid() {
   const valorTotal = {
     Nome: "Valor Total",
     Valor: "",
-    Status: formatCurrency(reportList?.valor ?? 0),
+    Status: formatCurrency(reportList?.valorTotal ?? 0),
   };
 
 
@@ -499,7 +545,7 @@ export default function BasicEditingGrid() {
       yPosition += 5;
     }
 
-    doc.text(`Valor total: ${formatCurrency(reportList.valor ?? 0)}`, 14, yPosition);
+    doc.text(`Valor total: ${formatCurrency(reportList.valorTotal ?? 0)}`, 14, yPosition);
 
     const pageCount = doc.internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
@@ -552,7 +598,7 @@ export default function BasicEditingGrid() {
       ...(reportList.valorAguardandoPagamento > 0
         ? [["Total Aguardando Pagamento:", "", "", ` ${formatCurrency(reportList.valorAguardandoPagamento)}`, ""]]
         : []),
-      ["Valor Total", "", "", formatCurrency(reportList.valor ?? 0), ""],
+      ["Valor Total", "", "", formatCurrency(reportList.valorTotal ?? 0), ""],
     ];
 
     const wb = utils.book_new();
@@ -1030,6 +1076,7 @@ export default function BasicEditingGrid() {
             labelRowsPerPage="Linhas por página"
             labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
             rowsPerPageOptions={[10, 25, 50, 100, 250]}
+            nextIconButtonProps={{ disabled: !hasNextPage }}
           />
 
           <div
@@ -1133,7 +1180,7 @@ export default function BasicEditingGrid() {
                 {((reportList.valorPago > 0 ||
                   reportList.valorEstornado > 0 ||
                   reportList.valorRejeitado > 0 ||
-                  reportList.valor > 0 ||
+                  reportList.valorTotal > 0 ||
                   reportList.valorPendente > 0) || showErroStatus) && (
                     <TableRow>
                       <TableCell />
@@ -1150,7 +1197,7 @@ export default function BasicEditingGrid() {
                           const valorPendente = toNumber(reportList.valorPendente);
                           const totalPendenciaPagamento =
                             valorEstornado + valorRejeitado + valorPendente;
-                          const totalGeral = toNumber(reportList.valor);
+                          const totalGeral = toNumber(reportList.valorTotal);
                           const totalLabel = isErrorReport ? "Total Pendencia de Pagamento" : "Total Geral";
                           const totalValue = isErrorReport ? totalPendenciaPagamento : totalGeral;
                           const totals = [];

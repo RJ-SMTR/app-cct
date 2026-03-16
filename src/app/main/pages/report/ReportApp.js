@@ -15,13 +15,12 @@ import { selectUser } from 'app/store/userSlice';
 
 import { useDispatch, useSelector } from "react-redux";
 
-import { handleReportInfo } from "app/store/reportSlice";
+import { handleFinancialMovementPage, handleFinancialMovementSummary } from "app/store/reportSlice";
 
 import "jspdf-autotable";
 import { showMessage } from "app/store/fuse/messageSlice";
 
 export default function ReportVanzeiro() {
-  const reportType = 'financial-movement'
   const reportList = useSelector((state) => state.report.reportList);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -49,10 +48,12 @@ export default function ReportVanzeiro() {
     requestData.valorMax = ''
     requestData.valorMin = ''
     requestData.status = ['Pendencia Paga', 'Erro']
-    dispatch(handleReportInfo(requestData, reportType)).then((response) => {
-      setIsLoading(false);
-    })
-      .catch((error) => {
+    dispatch(handleFinancialMovementSummary(requestData, { resetData: true }))
+      .then(() => dispatch(handleFinancialMovementPage(requestData)))
+      .then(() => {
+        setIsLoading(false);
+      })
+      .catch(() => {
         dispatch(
           showMessage({
             message: "Erro na busca, verifique os campos e tente novamente.",
@@ -61,10 +62,6 @@ export default function ReportVanzeiro() {
         setIsLoading(false);
       });
   };
-
-  useEffect(() => {
-    setIsLoading(false);
-  }, [reportList]);
 
 
 
@@ -162,7 +159,7 @@ export default function ReportVanzeiro() {
                 {(reportList.valorPago > 0 ||
                   reportList.valorEstornado > 0 ||
                   reportList.valorRejeitado > 0 ||
-                  reportList.valor > 0 ||
+                  reportList.valorTotal > 0 ||
                   reportList.valorPendente > 0) && (
                     <TableRow>
                       <TableCell />
