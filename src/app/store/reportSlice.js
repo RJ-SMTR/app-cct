@@ -12,6 +12,7 @@ const initialState = {
   reportList: [],
   totalSynth: '',
 };
+
 const reportSlice = createSlice({
   name: 'report',
   initialState,
@@ -24,6 +25,16 @@ const reportSlice = createSlice({
     },
     setReportList: (state, action) => {
       state.reportList = action.payload;
+    },
+    mergeReportList: (state, action) => {
+      const current =
+        state.reportList && typeof state.reportList === 'object' && !Array.isArray(state.reportList)
+          ? state.reportList
+          : {};
+      state.reportList = {
+        ...current,
+        ...action.payload,
+      };
     },
     setTotalSynth: (state, action) => {
       state.totalSynth = action.payload;
@@ -39,6 +50,7 @@ export const {
   setReportType,
   reportList,
   setReportList,
+  mergeReportList,
   totalSynth,
   setTotalSynth
 } = reportSlice.actions;
@@ -48,20 +60,6 @@ export default reportSlice.reducer;
 
 function handleData(data) {
   let requestData = {};
-
-  if (data?.page !== undefined && data?.page !== null) {
-    const page = Number(data.page);
-    if (!Number.isNaN(page) && page > 0) {
-      requestData.page = page;
-    }
-  }
-
-  if (data?.pageSize !== undefined && data?.pageSize !== null) {
-    const pageSize = Number(data.pageSize);
-    if (!Number.isNaN(pageSize) && pageSize > 0) {
-      requestData.pageSize = pageSize;
-    }
-  }
 
   if (data.consorcioName && data.consorcioName.length > 0) {
     if (data.consorcioName.includes('Todos')) {
@@ -159,10 +157,46 @@ function handleData(data) {
   addIfValid('valorMax', data.valorMax);
   addIfValid('valorMin', data.valorMin);
 
+  const pageNumber = Number(data.page);
+  if (Number.isInteger(pageNumber) && pageNumber > 0) {
+    requestData.page = pageNumber;
+  }
+
+  const pageSizeNumber = Number(data.pageSize);
+  if (Number.isInteger(pageSizeNumber) && pageSizeNumber > 0) {
+    requestData.pageSize = pageSizeNumber;
+  }
+
+  if (data.cursorDataReferencia) {
+    requestData.cursorDataReferencia = data.cursorDataReferencia;
+  }
+  if (data.cursorNome) {
+    requestData.cursorNome = data.cursorNome;
+  }
+  if (data.cursorStatus) {
+    requestData.cursorStatus = data.cursorStatus;
+  }
+  if (data.cursorCpfCnpj) {
+    requestData.cursorCpfCnpj = data.cursorCpfCnpj;
+  }
+
   return requestData;
 }
 
+const buildGetConfig = (url, token, params) => ({
+  method: 'get',
+  maxBodyLength: Infinity,
+  url,
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+  params,
+});
 
+const requestReport = async (url, params, token) => {
+  const response = await api.request(buildGetConfig(url, token, params));
+  return response.data;
+};
 
 
 export const handleReportInfo = (data, reportType) => async (dispatch) => {
@@ -177,19 +211,8 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
 
       const reportTypeUrl = reportType === 'sintetico' ? '/cnab/relatorio/sintetico' : jwtServiceConfig.report + `/${reportType}`;
 
-      let config = {
-        method: 'get',
-        maxBodyLength: Infinity,
-        url: reportTypeUrl,
-        headers: {
-          "Authorization": `Bearer ${token}`
-        },
-        params: requestData
-      };
-
       try {
-        const response = await api.request(config);
-        const responseData = response.data;
+        const responseData = await requestReport(reportTypeUrl, requestData, token);
 
         if (reportType == 'sintetico') {
           const mergedData = responseData.reduce((acc, curr) => {
@@ -228,6 +251,48 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
         }
         resolve(responseData);
 
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+};
+
+export const handleFinancialMovementSummary = (data, options = {}) => async (dispatch) => {
+  const token = window.localStorage.getItem('jwt_access_token');
+
+  if (JwtService.isAuthTokenValid(token)) {
+    return new Promise(async (resolve, reject) => {
+      const requestData = handleData(data);
+      const reportTypeUrl = `${jwtServiceConfig.report}/report/summary`;
+
+      try {
+        const responseData = await requestReport(reportTypeUrl, requestData, token);
+        if (options.resetData) {
+          dispatch(setReportList({ ...responseData, data: [] }));
+        } else {
+          dispatch(mergeReportList(responseData));
+        }
+        resolve(responseData);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+};
+
+export const handleFinancialMovementPage = (data) => async (dispatch) => {
+  const token = window.localStorage.getItem('jwt_access_token');
+
+  if (JwtService.isAuthTokenValid(token)) {
+    return new Promise(async (resolve, reject) => {
+      const requestData = handleData(data);
+      const reportTypeUrl = `${jwtServiceConfig.report}/report/page`;
+
+      try {
+        const responseData = await requestReport(reportTypeUrl, requestData, token);
+        dispatch(mergeReportList(responseData));
+        resolve(responseData);
       } catch (error) {
         reject(error);
       }
