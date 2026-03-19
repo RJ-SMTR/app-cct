@@ -481,9 +481,10 @@ function TableTransactions({ id }) {
                     </Box>
                   </TableCell>
                 ) : statements?.length > 0  ? (
-                  statements
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((i) => {
+                  (searchingDay || searchingWeek
+                    ? statements.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    : statements
+                  ).map((i) => {
                       const tz = 'UTC';
                       const date = i.data ?? i.dataCaptura ?? i.datetime_processamento;
 
