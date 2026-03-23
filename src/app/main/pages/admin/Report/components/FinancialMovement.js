@@ -34,6 +34,7 @@ import "jspdf-autotable";
 import { showMessage } from "app/store/fuse/messageSlice";
 import { ClearIcon } from "@mui/x-date-pickers";
 import { utils, writeFile as writeFileXLSX } from "xlsx";
+import { normalizeErroStatusSelection } from "./reportUtils";
 
 export default function BasicEditingGrid() {
   const reportList = useSelector((state) => state.report.reportList);
@@ -308,13 +309,6 @@ export default function BasicEditingGrid() {
       field,
       newValue ? newValue.map((item) => item.value ?? item.label) : [],
     );
-  };
-
-  const normalizeErroStatusSelection = (newValue) => {
-    if (!Array.isArray(newValue) || newValue.length === 0) return [];
-    const hasTodos = newValue.some((option) => option.label === "Todos");
-    if (!hasTodos) return newValue;
-    return [newValue.find((option) => option.label === "Todos")].filter(Boolean);
   };
 
   const handleChangePage = (_event, newPage) => {
