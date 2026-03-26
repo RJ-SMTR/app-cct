@@ -866,13 +866,13 @@ export default function BasicEditingGrid() {
                     </TableCell>
                   </TableRow>
                 )}
-                <TableRow key={Math.random()}>
-                  <TableCell className='font-bold'>Valor Total: </TableCell>
-                  <TableCell className='font-bold'> {formatter.format(reportList.valor ?? 0)}</TableCell>
-                </TableRow>
               </TableBody>
             </Table>
           </div>
+          <Box className="flex justify-end mt-16">
+            <span className="font-bold mr-8">Valor Total:</span>
+            <span className="font-bold">{formatter.format(reportList.valor ?? 0)}</span>
+          </Box>
         </Box>
       </Paper>
     </>
