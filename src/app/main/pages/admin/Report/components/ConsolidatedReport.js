@@ -43,7 +43,7 @@ import { normalizeErroStatusSelection } from './reportUtils';
 
 
 export default function BasicEditingGrid() {
-  const minSelectableDate = new Date(1900, 3, 30);
+  const minSelectableDate = new Date(2024, 3, 30);
   const reportType = useSelector(state => state.report.reportType);
   const reportList = useSelector(state => state.report.reportList)
   const userList = useSelector(state => state.admin.userList) || []
