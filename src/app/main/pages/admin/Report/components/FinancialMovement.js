@@ -37,7 +37,7 @@ import { utils, writeFile as writeFileXLSX } from "xlsx";
 import { normalizeErroStatusSelection } from "./reportUtils";
 
 export default function BasicEditingGrid() {
-  const minSelectableDate = new Date(2024, 3, 30);
+  const minSelectableDate = new Date(2024, 4, 30);
   const reportList = useSelector((state) => state.report.reportList);
   const userList = useSelector((state) => state.admin.userList) || [];
   const specificValue = useSelector((state) => state.report.specificValue);
