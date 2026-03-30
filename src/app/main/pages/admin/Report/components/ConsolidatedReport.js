@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useMemo } from 'react';
 import {
   Box,
@@ -39,6 +38,7 @@ import 'jspdf-autotable';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import { ClearIcon } from '@mui/x-date-pickers';
 import { utils, writeFile as writeFileXLSX } from 'xlsx';
+import { normalizeErroStatusSelection } from './reportUtils';
 
 
 export default function BasicEditingGrid() {
@@ -56,7 +56,7 @@ export default function BasicEditingGrid() {
   const [selected, setSelected] = useState(null)
   const [motivos, setShowMotivos] = useState(false)
   const [selectedConsorcios, setSelectedConsorcios] = useState([]);
-  const [selectedErroStatus, setSelectedErroStatus] = useState(null);
+  const [selectedErroStatus, setSelectedErroStatus] = useState([]);
   const [selectedEspecificos, setSelectedEspecificos] = useState([]);
 
 
@@ -88,6 +88,7 @@ export default function BasicEditingGrid() {
     { label: 'Internorte', value: "Internorte" },
     { label: 'Intersul', value: "Intersul" },
     { label: 'MobiRio', value: "MobiRio" },
+    { label: 'MOBI-Rio BUM', value: "MOBI-Rio BUM" },
     { label: 'Santa Cruz', value: "Santa Cruz" },
     { label: 'STPC', value: "STPC", disabled: selected === 'name' ? true : false },
     { label: 'STPL', value: "STPL", disabled: selected === 'name' ? true : false },
@@ -107,7 +108,8 @@ export default function BasicEditingGrid() {
       valorMin: '',
       consorcioName: [],
       especificos: [],
-      status: []
+      status: [],
+      erroStatus: []
     }
   });
 
@@ -117,7 +119,7 @@ export default function BasicEditingGrid() {
     const requestData = { ...data };
 
     if (whichStatusShow.includes("Pendência de Pagamento")) {
-      if (!selectedErroStatus) {
+      if (selectedErroStatus.length === 0) {
         setIsLoading(false)
         dispatch(showMessage({
           message: "Selecione um motivo para a Pendência de Pagamento.",
@@ -127,18 +129,28 @@ export default function BasicEditingGrid() {
 
       requestData.status = requestData.status.filter(status => status !== "Pendência de Pagamento");
 
-      if (selectedErroStatus.label === "Todos") {
-        requestData.status = [...requestData.status, "Erro", "Pendentes"];
+      const selectedErroLabels = selectedErroStatus.map((status) => status.label);
+      const statusSet = new Set(requestData.status);
+
+      if (selectedErroLabels.includes("Todos")) {
+        statusSet.add("Erro");
+        statusSet.add("Pendentes");
         requestData.erro = true;
-      } else if (selectedErroStatus.label === "Estorno") {
-        requestData.status = [...requestData.status, "Estorno"];
-        requestData.estorno = true;
-      } else if (selectedErroStatus.label === "Rejeitado") {
-        requestData.status = [...requestData.status, "Rejeitado"];
-        requestData.rejeitado = true;
-      } else if (selectedErroStatus.label === "OPs atrasadas") {
-        requestData.status = [...requestData.status, "Pendentes"];
+      } else {
+        if (selectedErroLabels.includes("Estorno")) {
+          statusSet.add("Estorno");
+          requestData.estorno = true;
+        }
+        if (selectedErroLabels.includes("Rejeitado")) {
+          statusSet.add("Rejeitado");
+          requestData.rejeitado = true;
+        }
+        if (selectedErroLabels.includes("OPs atrasadas")) {
+          statusSet.add("Pendentes");
+        }
       }
+
+      requestData.status = Array.from(statusSet);
     }
 
     setIsLoading(true);
@@ -227,8 +239,8 @@ export default function BasicEditingGrid() {
         setShowMotivos(true)
       } else {
         setShowMotivos(false)
-        setSelectedErroStatus(null)
-        setValue("erroStatus", null)
+        setSelectedErroStatus([])
+        setValue("erroStatus", [])
       }
     }
 
@@ -576,13 +588,19 @@ export default function BasicEditingGrid() {
                 {motivos && (
                   <Autocomplete
                     id="erroStatus"
+                    multiple
                     className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
                     options={erroStatus}
                     getOptionLabel={(option) => option.label}
+                    filterSelectedOptions
                     value={selectedErroStatus}
                     onChange={(_, newValue) => {
-                      setSelectedErroStatus(newValue);
-                      setValue("erroStatus", newValue ? newValue.label : null);
+                      const normalizedValue = normalizeErroStatusSelection(newValue);
+                      setSelectedErroStatus(normalizedValue);
+                      setValue(
+                        "erroStatus",
+                        normalizedValue.map((option) => option.label),
+                      );
                     }}
                     renderInput={(params) => (
                       <TextField
@@ -847,13 +865,13 @@ export default function BasicEditingGrid() {
                     </TableCell>
                   </TableRow>
                 )}
-                <TableRow key={Math.random()}>
-                  <TableCell className='font-bold'>Valor Total: </TableCell>
-                  <TableCell className='font-bold'> {formatter.format(reportList.valor ?? 0)}</TableCell>
-                </TableRow>
               </TableBody>
             </Table>
           </div>
+          <Box className="flex justify-end mt-16">
+            <span className="font-bold mr-8">Valor Total:</span>
+            <span className="font-bold">{formatter.format(reportList.valor ?? 0)}</span>
+          </Box>
         </Box>
       </Paper>
     </>

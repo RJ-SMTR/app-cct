@@ -34,6 +34,7 @@ import "jspdf-autotable";
 import { showMessage } from "app/store/fuse/messageSlice";
 import { ClearIcon } from "@mui/x-date-pickers";
 import { utils, writeFile as writeFileXLSX } from "xlsx";
+import { normalizeErroStatusSelection } from "./reportUtils";
 
 export default function BasicEditingGrid() {
   const reportList = useSelector((state) => state.report.reportList);
@@ -49,7 +50,7 @@ export default function BasicEditingGrid() {
   const [whichStatusShow, setWhichStatus] = useState([]);
   const [selected, setSelected] = useState(null);
   const [showErroStatus, setShowErroStatus] = useState(false);
-  const [selectedErroStatus, setSelectedErroStatus] = useState(null);
+  const [selectedErroStatus, setSelectedErroStatus] = useState([]);
   const [selectedConsorcios, setSelectedConsorcios] = useState([]);
   const [selectedEspecificos, setSelectedEspecificos] = useState([]);
   const [page, setPage] = useState(0);
@@ -81,6 +82,7 @@ export default function BasicEditingGrid() {
     { label: "Internorte", value: "Internorte" },
     { label: "Intersul", value: "Intersul" },
     { label: "MobiRio", value: "MobiRio" },
+    { label: 'MOBI-Rio BUM', value: "MOBI-Rio BUM" },
     { label: "Santa Cruz", value: "Santa Cruz" },
     { label: "STPC", value: "STPC", disabled: selected === "name" },
     { label: "STPL", value: "STPL", disabled: selected === "name" },
@@ -106,27 +108,38 @@ export default function BasicEditingGrid() {
         consorcioName: [],
         especificos: [],
         status: [],
+        erroStatus: [],
       },
     });
 
   const buildRequestData = (data, pageIndex, pageSize, options = {}) => {
     const requestData = { ...data };
 
-    if (whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus) {
+    if (whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus.length > 0) {
       requestData.status = requestData.status.filter(status => status !== "Pendência de Pagamento");
 
-      if (selectedErroStatus.label === "Todos") {
-        requestData.status = [...requestData.status, "Erro", "Pendentes"];
+      const selectedErroLabels = selectedErroStatus.map((status) => status.label);
+      const statusSet = new Set(requestData.status);
+
+      if (selectedErroLabels.includes("Todos")) {
+        statusSet.add("Erro");
+        statusSet.add("Pendentes");
         requestData.erro = true;
-      } else if (selectedErroStatus.label === "Estorno") {
-        requestData.status = [...requestData.status, "Estorno"];
-        requestData.estorno = true;
-      } else if (selectedErroStatus.label === "Rejeitado") {
-        requestData.status = [...requestData.status, "Rejeitado"];
-        requestData.rejeitado = true;
-      } else if (selectedErroStatus.label === "OPs atrasadas") {
-        requestData.status = [...requestData.status, "Pendentes"];
+      } else {
+        if (selectedErroLabels.includes("Estorno")) {
+          statusSet.add("Estorno");
+          requestData.estorno = true;
+        }
+        if (selectedErroLabels.includes("Rejeitado")) {
+          statusSet.add("Rejeitado");
+          requestData.rejeitado = true;
+        }
+        if (selectedErroLabels.includes("OPs atrasadas")) {
+          statusSet.add("Pendentes");
+        }
       }
+
+      requestData.status = Array.from(statusSet);
     }
 
     if (data.especificos.includes("Eleição")) {
@@ -222,8 +235,8 @@ export default function BasicEditingGrid() {
     setValue("valorMin", "");
     setValue("consorcioName", []);
     setValue("status", []);
-    setValue("erroStatus", null);
-    setSelectedErroStatus(null);
+    setValue("erroStatus", []);
+    setSelectedErroStatus([]);
     setShowErroStatus(false);
     setWhichStatus([]);
     setPage(0);
@@ -282,7 +295,7 @@ export default function BasicEditingGrid() {
       setShowErroStatus(hasErro);
 
       if (!hasErro) {
-        setSelectedErroStatus(null);
+        setSelectedErroStatus([]);
         setValue("erroStatus", []);
       }
     }
@@ -798,13 +811,19 @@ export default function BasicEditingGrid() {
                 {showErroStatus && (
                   <Autocomplete
                     id="erroStatus"
+                    multiple
                     className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
                     options={erroStatus}
                     getOptionLabel={(option) => option.label}
+                    filterSelectedOptions
                     value={selectedErroStatus}
                     onChange={(_, newValue) => {
-                      setSelectedErroStatus(newValue);
-                      setValue("erroStatus", newValue ? newValue.label : null);
+                      const normalizedValue = normalizeErroStatusSelection(newValue);
+                      setSelectedErroStatus(normalizedValue);
+                      setValue(
+                        "erroStatus",
+                        normalizedValue.map((option) => option.label),
+                      );
                     }}
                     renderInput={(params) => (
                       <TextField
@@ -1075,7 +1094,7 @@ export default function BasicEditingGrid() {
             onRowsPerPageChange={handleChangeRowsPerPage}
             labelRowsPerPage="Linhas por página"
             labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-            rowsPerPageOptions={[10, 25, 50, 100, 250]}
+            rowsPerPageOptions={[10, 50, 100, 500, 1000]}
             nextIconButtonProps={{ disabled: !hasNextPage }}
           />
 
@@ -1137,8 +1156,7 @@ export default function BasicEditingGrid() {
 
                         {(!showErroStatus && (
                           <TableCell className="text-xs py-1 ">
-                            {['Pendencia Paga', 'Pago'].includes(report.status) &&
-                              report.dataReferencia !== report.dataPagamento
+                            {report.status === 'Pendencia Paga'
                               ? report.dataPagamento
                               : '-'}
                           </TableCell>
