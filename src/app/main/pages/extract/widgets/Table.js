@@ -332,7 +332,7 @@ function TableTransactions({ id }) {
 
   useEffect(() => {
     if (searchingDay &&
-      statements?.length === 0 
+      statements?.length === 0
     ) {
       setLoading(false);
       setModalOpen(true);
@@ -480,50 +480,50 @@ function TableTransactions({ id }) {
                       <CircularProgress />
                     </Box>
                   </TableCell>
-                ) : statements?.length > 0  ? (
+                ) : statements?.length > 0 ? (
                   (searchingDay || searchingWeek
                     ? statements.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     : statements
                   ).map((i) => {
-                      const tz = 'UTC';
-                      const date = i.data ?? i.dataCaptura ?? i.datetime_processamento;
+                    const tz = 'UTC';
+                    const date = i.data ?? i.dataCaptura ?? i.datetime_processamento;
 
-                      const rawDate = date ? parseISO(date) : null;
-                      const formattedDate = rawDate
-                        ? format(utcToZonedTime(rawDate, tz), 'dd/MM/yyyy')
-                        : '--';
+                    const rawDate = date ? parseISO(date) : null;
+                    const formattedDate = rawDate
+                      ? format(utcToZonedTime(rawDate, tz), 'dd/MM/yyyy')
+                      : '--';
 
-                      const idOrdem = searchingWeek ? i.ids : i.ordemPagamentoAgrupadoId;
+                    const idOrdem = searchingWeek ? i.ids : i.ordemPagamentoAgrupadoId;
 
-                      let dataPagamento = '-';
-                      if (i.dataPagamento) {
-                        const zonedEffectiveDate = utcToZonedTime(parseISO(i.dataPagamento), tz);
-                        const formattedEffectiveDate = format(zonedEffectiveDate, 'dd/MM/yyyy');
-                        dataPagamento =
-                          formattedEffectiveDate === formattedDate ? '-' : formattedEffectiveDate;
-                      }
+                    let dataPagamento = '-';
+                    if (i.dataPagamento) {
+                      const zonedEffectiveDate = utcToZonedTime(parseISO(i.dataPagamento), tz);
+                      const formattedEffectiveDate = format(zonedEffectiveDate, 'dd/MM/yyyy');
+                      dataPagamento =
+                        formattedEffectiveDate === formattedDate ? '-' : formattedEffectiveDate;
+                    }
 
-                      const valorDia = i.valorTotal ?? i.valorTotalPago ?? sumInfo;
-                      // if (
-                      //   searchingDay &&
-                      //   statements?.length > 0 &&
-                      //   statements.every(i => !i.data && !i.dataCaptura && !i.datetime_processamento)
-                      // ) {
-                      //   return null
-                      // }
+                    const valorDia = i.valorTotal ?? i.valorTotalPago ?? sumInfo;
+                    // if (
+                    //   searchingDay &&
+                    //   statements?.length > 0 &&
+                    //   statements.every(i => !i.data && !i.dataCaptura && !i.datetime_processamento)
+                    // ) {
+                    //   return null
+                    // }
 
-                      return (
-                        <MemoizedCustomTable
-                          key={idOrdem ?? `${formattedDate}-${Math.random()}`}
-                          data={i}
-                          c={c}
-                          date={formattedDate}
-                          handleClickRow={(event) => handleClickRow(idOrdem, event, valorDia)}
-                          lastDate={dataOrderDay}
-                          dataPagamento={dataPagamento}
-                        />
-                      );
-                    })
+                    return (
+                      <MemoizedCustomTable
+                        key={idOrdem ?? `${formattedDate}-${Math.random()}`}
+                        data={i}
+                        c={c}
+                        date={formattedDate}
+                        handleClickRow={(event) => handleClickRow(idOrdem, event, valorDia)}
+                        lastDate={dataOrderDay}
+                        dataPagamento={dataPagamento}
+                      />
+                    );
+                  })
                 ) : (
                   <TableCell colSpan={4}>
                     <p>Não há dados para serem exibidos</p>
