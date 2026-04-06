@@ -56,17 +56,33 @@ export default function ReportVanzeiro() {
       },
     });
 
+  const normalizeStatus = (statusList = []) =>
+    statusList.map((status) => (status === "A Pagar" ? "A pagar" : status));
+
+  const normalizeEspecificos = (especificosList = []) =>
+    especificosList.map((item) => (item === "Eleicao" ? "Eleição" : item));
+
   const buildRequestData = (data) => {
     const hasDateRange =
       Array.isArray(data?.dateRange) && data.dateRange.length === 2;
     const userId = user?.id;
     const fullName = user?.fullName ?? "";
+    const providedStatus = Array.isArray(data?.status) ? data.status : [];
+    const providedEspecificos = Array.isArray(data?.especificos) ? data.especificos : [];
+    const status = providedStatus.length > 0
+      ? normalizeStatus(providedStatus)
+      : hasDateRange
+        ? allStatus
+        : [];
+    const especificos = providedEspecificos.length > 0
+      ? normalizeEspecificos(providedEspecificos)
+      : ["Eleição"];
     const requestData = {
       consorcioName: [],
       name: userId ? [{ userId, fullName }] : [],
-      status: hasDateRange ? allStatus : [],
+      status,
       dateRange: Array.isArray(data?.dateRange) ? data.dateRange : [],
-      especificos: [],
+      especificos,
       valorMax: "",
       valorMin: "",
     };
