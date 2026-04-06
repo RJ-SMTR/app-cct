@@ -4,8 +4,6 @@ import {
   Table,
   TableHead,
   TableBody,
-  Autocomplete,
-  TextField,
   Button,
   TableRow,
   TableCell,
@@ -23,10 +21,9 @@ import { handleFinancialMovementPage, handleFinancialMovementSummary, setReportL
 
 import "jspdf-autotable";
 import { showMessage } from "app/store/fuse/messageSlice";
-import { normalizeErroStatusSelection } from "./reportUtils";
 
 export default function ReportVanzeiro() {
-  const minSelectableDate = new Date(2024, 4, 30);
+  const minSelectableDate = new Date(2024, 3, 30);
   const reportList = useSelector((state) => state.report.reportList);
   const reportData = Array.isArray(reportList?.data)
     ? reportList.data
@@ -35,26 +32,17 @@ export default function ReportVanzeiro() {
       : [];
   const reportCount =
     Number.isFinite(reportList?.count) ? reportList.count : reportData.length;
-  const [whichStatusShow, setWhichStatus] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [showErroStatus, setShowErroStatus] = useState(false);
-  const [selectedErroStatus, setSelectedErroStatus] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
-
-  const consorciosStatusBase = [
-    { label: "A Pagar" },
-    { label: "Aguardando Pagamento" },
-    { label: "Pago" },
-    { label: "Pendência de Pagamento" },
-    { label: "Pendencia Paga" }
-  ];
-
-  const erroStatus = [
-    { label: "Todos" },
-    { label: "Estorno" },
-    { label: "Rejeitado" },
-    { label: "OPs atrasadas" },
+  const allStatus = [
+    "Pago",
+    "Erro",
+    "Aguardando Pagamento",
+    "Estorno",
+    "Rejeitado",
+    "Pendencia Paga",
+    "Pendentes",
+    "A pagar",
   ];
 
   const dispatch = useDispatch();
@@ -63,45 +51,21 @@ export default function ReportVanzeiro() {
     useForm({
       defaultValues: {
         dateRange: [],
-        status: [],
-        erroStatus: [],
       },
     });
 
   const buildRequestData = (data) => {
+    const hasDateRange =
+      Array.isArray(data?.dateRange) && data.dateRange.length === 2;
     const requestData = {
       consorcioName: [],
-      name: [{ userId: 2245, fullName: "User 2270" }],
-      status: Array.isArray(data?.status) ? data.status : [],
+      name: [{ userId: 1378, fullName: "User 2270" }],
+      status: hasDateRange ? allStatus : [],
       dateRange: Array.isArray(data?.dateRange) ? data.dateRange : [],
       especificos: [],
       valorMax: "",
       valorMin: "",
     };
-
-    if (whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus.length > 0) {
-      requestData.status = requestData.status.filter(status => status !== "Pendência de Pagamento");
-
-      const selectedErroLabels = selectedErroStatus.map((status) => status.label);
-      const statusSet = new Set(requestData.status);
-
-      if (selectedErroLabels.includes("Todos")) {
-        statusSet.add("Erro");
-        statusSet.add("Pendentes");
-      } else {
-        if (selectedErroLabels.includes("Estorno")) {
-          statusSet.add("Estorno");
-        }
-        if (selectedErroLabels.includes("Rejeitado")) {
-          statusSet.add("Rejeitado");
-        }
-        if (selectedErroLabels.includes("OPs atrasadas")) {
-          statusSet.add("Pendentes");
-        }
-      }
-
-      requestData.status = Array.from(statusSet);
-    }
 
     return requestData;
   };
@@ -110,6 +74,8 @@ export default function ReportVanzeiro() {
     setIsLoading(true);
     const summaryRequestData = buildRequestData(data);
     const pageRequestData = buildRequestData(data);
+    pageRequestData.page = 1;
+    pageRequestData.pageSize = 9999;
 
     try {
       await dispatch(handleFinancialMovementSummary(summaryRequestData, { resetData: true }));
@@ -136,44 +102,7 @@ export default function ReportVanzeiro() {
     setValue("valorMax", "");
     setValue("valorMin", "");
     setValue("consorcioName", []);
-    setValue("status", []);
-    setValue("erroStatus", []);
-    setSelectedErroStatus([]);
-    setShowErroStatus(false);
-    setWhichStatus([]);
-
-    for (const button of document.querySelectorAll(
-      ".MuiAutocomplete-clearIndicator",
-    )) {
-      button.click();
-    }
   };
-
-  const handleAutocompleteChange = (field, newValue) => {
-    if (field === "status") {
-      const status = newValue.map((i) => i.label);
-      setWhichStatus(status);
-
-      const hasErro = status.includes("Pendência de Pagamento");
-      setShowErroStatus(hasErro);
-
-      if (!hasErro) {
-        setSelectedErroStatus([]);
-        setValue("erroStatus", []);
-      }
-    }
-
-    if (field === "especificos") {
-      const especificosSelecionados = newValue.map((i) => i.label);
-      setSelectedEspecificos(especificosSelecionados);
-    }
-
-    setValue(
-      field,
-      newValue ? newValue.map((item) => item.value ?? item.label) : [],
-    );
-  };
-
 
   const formatter = new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -218,14 +147,6 @@ export default function ReportVanzeiro() {
   };
   const formatCurrency = (value) => formatter.format(toNumber(value));
 
-  const handleSelection = (field, newValue) => {
-    setSelected(newValue.length > 0 ? field : null);
-    if (field === 'consorcioName') {
-      setSelectedConsorcios(newValue);
-    }
-    handleAutocompleteChange(field, newValue);
-  };
-
   const getStatusStyles = (status) => {
     switch (status) {
       case "Pago":
@@ -254,51 +175,6 @@ export default function ReportVanzeiro() {
           <Box className="flex items-center py-10 gap-10">
             <form onSubmit={handleSubmit(onSubmit)}>
               <Box className="flex items-center gap-10 flex-wrap">
-                <Autocomplete
-                  id="status"
-                  multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                  getOptionLabel={(option) => option.label}
-                  filterSelectedOptions
-                  options={consorciosStatusBase}
-                  onChange={(_, newValue) =>
-                    handleAutocompleteChange("status", newValue)
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Selecionar Status"
-                      variant="outlined"
-                    />
-                  )}
-                />
-
-                {showErroStatus && (
-                  <Autocomplete
-                    id="erroStatus"
-                    multiple
-                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                    options={erroStatus}
-                    getOptionLabel={(option) => option.label}
-                    filterSelectedOptions
-                    value={selectedErroStatus}
-                    onChange={(_, newValue) => {
-                      const normalizedValue = normalizeErroStatusSelection(newValue);
-                      setSelectedErroStatus(normalizedValue);
-                      setValue(
-                        "erroStatus",
-                        normalizedValue.map((option) => option.label),
-                      );
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Motivos"
-                        variant="outlined"
-                      />
-                    )}
-                  />
-                )}
                 <Box>
                   <Controller
                     name="dateRange"
@@ -366,11 +242,7 @@ export default function ReportVanzeiro() {
               <TableHead>
                 <TableRow className="sticky top-0 bg-white z-10">
                   <TableCell className="font-semibold py-1 text-sm leading-none">Data Tentativa Pagamento</TableCell>
-                  {
-                    !showErroStatus && (
-                      <TableCell className="font-semibold py-1 text-sm leading-none">Data Efetiva Pagamento</TableCell>
-                    )
-                  }
+                  <TableCell className="font-semibold py-1 text-sm leading-none">Data Efetiva Pagamento</TableCell>
                   <TableCell className="font-semibold p-1 text-sm ">Valor</TableCell>
                   <TableCell className="font-semibold p-1 text-sm ">Status</TableCell>
                 </TableRow>
