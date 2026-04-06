@@ -39,48 +39,31 @@ export default function ReportVanzeiro() {
   const allStatus = [
     "Pago",
     "Erro",
-    "Aguardando Pagamento",
-    "Estorno",
-    "Rejeitado",
     "Pendencia Paga",
-    "Pendentes",
-    "A pagar",
   ];
 
   const dispatch = useDispatch();
 
-  const { handleSubmit, setValue, control } =
+  const { handleSubmit, setValue, control, watch } =
     useForm({
       defaultValues: {
         dateRange: [],
       },
     });
-
-  const normalizeStatus = (statusList = []) =>
-    statusList.map((status) => (status === "A Pagar" ? "A pagar" : status));
-
-  const normalizeEspecificos = (especificosList = []) =>
-    especificosList.map((item) => (item === "Eleicao" ? "Eleição" : item));
+  const selectedDateRange = watch("dateRange");
+  const isDateRangeSelected =
+    Array.isArray(selectedDateRange) && selectedDateRange.length === 2;
 
   const buildRequestData = (data) => {
     const hasDateRange =
       Array.isArray(data?.dateRange) && data.dateRange.length === 2;
     const userId = user?.id;
     const fullName = user?.fullName ?? "";
-    const providedStatus = Array.isArray(data?.status) ? data.status : [];
-    const providedEspecificos = Array.isArray(data?.especificos) ? data.especificos : [];
-    const status = providedStatus.length > 0
-      ? normalizeStatus(providedStatus)
-      : hasDateRange
-        ? allStatus
-        : [];
-    const especificos = providedEspecificos.length > 0
-      ? normalizeEspecificos(providedEspecificos)
-      : ["Eleição"];
+    const especificos = ["Eleição"];
     const requestData = {
       consorcioName: [],
       name: userId ? [{ userId, fullName }] : [],
-      status,
+      status: allStatus,
       dateRange: Array.isArray(data?.dateRange) ? data.dateRange : [],
       especificos,
       valorMax: "",
@@ -228,6 +211,7 @@ export default function ReportVanzeiro() {
                   aria-label="Pesquisar"
                   type="submit"
                   size="medium"
+                  disabled={!isDateRangeSelected}
                 >
                   Pesquisar
                 </Button>
