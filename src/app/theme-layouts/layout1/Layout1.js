@@ -46,7 +46,7 @@ function Layout1(props) {
             <ToolbarLayout1 className={config.toolbar.style === 'fixed' && 'sticky top-0'} />
           )}
 
-        
+
 
           <div className="flex flex-col flex-auto min-h-0 relative z-10">
             <FuseDialog />
