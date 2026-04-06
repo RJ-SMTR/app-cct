@@ -18,12 +18,14 @@ import { DateRangePicker } from "rsuite";
 import { useForm, Controller } from "react-hook-form";
 
 import { handleFinancialMovementPage, handleFinancialMovementSummary, setReportList } from "app/store/reportSlice";
+import { selectUser } from "app/store/userSlice";
 
 import "jspdf-autotable";
 import { showMessage } from "app/store/fuse/messageSlice";
 
 export default function ReportVanzeiro() {
   const minSelectableDate = new Date(2024, 3, 30);
+  const user = useSelector(selectUser);
   const reportList = useSelector((state) => state.report.reportList);
   const reportData = Array.isArray(reportList?.data)
     ? reportList.data
@@ -57,9 +59,11 @@ export default function ReportVanzeiro() {
   const buildRequestData = (data) => {
     const hasDateRange =
       Array.isArray(data?.dateRange) && data.dateRange.length === 2;
+    const userId = user?.id;
+    const fullName = user?.fullName ?? "";
     const requestData = {
       consorcioName: [],
-      name: [{ userId: 1378, fullName: "User 2270" }],
+      name: userId ? [{ userId, fullName }] : [],
       status: hasDateRange ? allStatus : [],
       dateRange: Array.isArray(data?.dateRange) ? data.dateRange : [],
       especificos: [],
