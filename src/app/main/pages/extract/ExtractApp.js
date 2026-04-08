@@ -45,6 +45,18 @@ function ExtractApp() {
       setModal(true);
       sessionStorage.setItem('modalShown', 'true');
     }
+
+    const html = document.documentElement;
+    const prevTranslate = html.getAttribute('translate');
+    html.setAttribute('translate', 'no');
+
+    return () => {
+      if (prevTranslate === null) {
+        html.removeAttribute('translate');
+      } else {
+        html.setAttribute('translate', prevTranslate);
+      }
+    };
   }, [])
   const handleClose = () => {
     setModal(false);
@@ -81,4 +93,3 @@ function ExtractApp() {
 }
 
 export default ExtractApp
-
