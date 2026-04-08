@@ -8,8 +8,7 @@ import { connect } from 'react-redux';
 import history from '@history';
 import withRouterAndRef from '../withRouterAndRef/withRouterAndRef';
 
-const Root = styled('div')(({ theme }) => ({
-  overscrollBehavior: 'contain',
+const Root = styled('div')(() => ({
   minHeight: '100%',
 }));
 
@@ -36,6 +35,7 @@ const FuseScrollbars = forwardRef((props, ref) => {
   const handlerByEvent = useRef(new Map());
 
   const { customScrollbars } = props;
+  const scrollbarEnabled = customScrollbars && props.enable && !isMobile;
 
   const hookUpEvents = useCallback(() => {
     Object.keys(handlerNameByEvent).forEach((key) => {
@@ -73,14 +73,14 @@ const FuseScrollbars = forwardRef((props, ref) => {
   const createPs = useCallback(() => {
     // console.info("create::ps");
 
-    if (isMobile || !ref || ps.current) {
+    if (isMobile || !ref || !props.enable || ps.current) {
       return;
     }
 
     ps.current = new PerfectScrollbar(ref.current, props.option);
 
     hookUpEvents();
-  }, [hookUpEvents, props.option, ref]);
+  }, [hookUpEvents, props.enable, props.option, ref]);
 
   useEffect(() => {
     function updatePs() {
@@ -94,12 +94,12 @@ const FuseScrollbars = forwardRef((props, ref) => {
   });
 
   useEffect(() => {
-    if (customScrollbars) {
+    if (customScrollbars && props.enable) {
       createPs();
     } else {
       destroyPs();
     }
-  }, [createPs, customScrollbars, destroyPs]);
+  }, [createPs, customScrollbars, destroyPs, props.enable]);
 
   const scrollToTop = useCallback(() => {
     if (ref && ref.current) {
@@ -135,14 +135,16 @@ const FuseScrollbars = forwardRef((props, ref) => {
     <Root
       id={props.id}
       className={props.className}
-      style={
-        props.customScrollbars && (props.enable || true) && !isMobile
+      style={{
+        overscrollBehavior: scrollbarEnabled ? 'contain' : 'auto',
+        ...(scrollbarEnabled
           ? {
               position: 'relative',
-              overflow: 'hidden!important',
+              overflow: 'hidden',
             }
-          : {}
-      }
+          : {}),
+        ...props.style,
+      }}
       ref={ref}
     >
       {props.children}
