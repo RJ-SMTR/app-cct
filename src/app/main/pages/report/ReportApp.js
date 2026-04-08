@@ -239,9 +239,9 @@ export default function ReportVanzeiro() {
           </header>
           <div
             style={{ height: "50vh", width: "100%" }}
-            className="overflow-scroll"
+            className="overflow-x-auto overflow-y-auto"
           >
-            <Table size="small">
+            <Table size="small" sx={{ minWidth: 600 }}>
               <TableHead>
                 <TableRow className="sticky top-0 bg-white z-10">
                   <TableCell className="font-semibold py-1 text-sm leading-none">Data Tentativa Pagamento</TableCell>
