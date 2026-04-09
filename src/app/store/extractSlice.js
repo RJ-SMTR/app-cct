@@ -154,15 +154,34 @@ function handleRequestData(previousDays, dateRange) {
 
 }
 
+function normalizeOrderIds(ids) {
+    if (Array.isArray(ids)) {
+        return ids
+            .map((value) => String(value).trim())
+            .filter(Boolean)
+            .join(',');
+    }
+
+    if (typeof ids === 'string') {
+        return ids
+            .split(',')
+            .map((value) => value.trim())
+            .filter(Boolean)
+            .join(',');
+    }
+
+    return ids;
+}
 
 export const  getPreviousDays = (idOrdem, userId) => async (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
+    const normalizedIdOrdem = normalizeOrderIds(idOrdem);
    
     if(JwtService.isAuthTokenValid(token)){
         let config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: userId ? jwtServiceConfig.odpAnteriores + `/${idOrdem}?userId=${userId}` : jwtServiceConfig.bankStatement + `/${idOrdem}`,
+            url: userId ? jwtServiceConfig.odpAnteriores + `/${normalizedIdOrdem}?userId=${userId}` : jwtServiceConfig.bankStatement + `/${normalizedIdOrdem}`,
             headers: { "Authorization": `Bearer ${token}` },
         }
         try {
@@ -214,22 +233,28 @@ export const  getPreviousDays = (idOrdem, userId) => async (dispatch) => {
 // };
 
 export const getStatements = (dateRange, searchingDay, searchingWeek, userId, idOrdem, mocked) => async (dispatch) => {
-    if (!idOrdem && (searchingDay || searchingWeek)) {
+    const normalizedIdOrdem = normalizeOrderIds(idOrdem);
+
+    if (!normalizedIdOrdem && (searchingDay || searchingWeek)) {
         console.warn("idOrdem está indefinido. Requisição não será feita.");
         return;
     }
 
     const requestData = searchingDay
-        ? { ordemPagamentoIds: idOrdem }
+        ? { ordemPagamentoIds: normalizedIdOrdem }
         : searchingWeek
-            ? null
+            ? {
+                ordemPagamentoAgrupadoIds: normalizedIdOrdem,
+                userId: userId,
+                endDate: format(dateRange[1], 'yyyy-MM-dd')
+                }
             : handleRequestData(null, dateRange, searchingDay, searchingWeek);
 
     let apiRoute = '';
     apiRoute = searchingWeek && searchingDay
         ? jwtServiceConfig.odpDiario + `/?userId=${userId}`
         : searchingWeek
-            ? jwtServiceConfig.odpSemanal + `/${idOrdem}?userId=${userId}&endDate=${format(dateRange[1], 'yyyy-MM-dd')}`
+            ? jwtServiceConfig.odpSemanal 
             : jwtServiceConfig.odpMensal + `?userId=${userId}`;
 
     const method = 'get';
@@ -269,7 +294,7 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
 
 
             } else if (searchingWeek) {
-                dispatch(getPreviousDays(idOrdem, userId));
+                dispatch(getPreviousDays(normalizedIdOrdem, userId));
 
                 const statementsSort = response.data.sort((a, b) =>
                     compareDesc(parseISO(a.dataCaptura), parseISO(b.dataCaptura))

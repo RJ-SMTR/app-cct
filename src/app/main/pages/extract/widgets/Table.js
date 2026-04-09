@@ -505,7 +505,7 @@ function TableTransactions({ id }) {
                       ? format(utcToZonedTime(rawDate, tz), 'dd/MM/yyyy')
                       : '--';
 
-                    const idOrdem = searchingWeek ? i.ids : i.ordemPagamentoAgrupadoId;
+                    const idOrdem = searchingWeek ? i.ids : i.ordemPagamentoAgrupadoIds;
 
                     let dataPagamento = '-';
                     if (i.dataPagamento) {
