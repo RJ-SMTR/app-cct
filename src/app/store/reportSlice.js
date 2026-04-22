@@ -193,8 +193,23 @@ const buildGetConfig = (url, token, params) => ({
   params,
 });
 
+const buildPostConfig = (url, token, data) => ({
+  method: 'post',
+  maxBodyLength: Infinity,
+  url,
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+  data,
+});
+
 const requestReport = async (url, params, token) => {
   const response = await api.request(buildGetConfig(url, token, params));
+  return response.data;
+};
+
+const requestReportPost = async (url, data, token) => {
+  const response = await api.request(buildPostConfig(url, token, data));
   return response.data;
 };
 
@@ -292,6 +307,27 @@ export const handleFinancialMovementPage = (data) => async (dispatch) => {
       try {
         const responseData = await requestReport(reportTypeUrl, requestData, token);
         dispatch(mergeReportList(responseData));
+        resolve(responseData);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+};
+
+export const handleFinancialMovementExport = (data) => async () => {
+  const token = window.localStorage.getItem('jwt_access_token');
+
+  if (JwtService.isAuthTokenValid(token)) {
+    return new Promise(async (resolve, reject) => {
+      const requestData = handleData(data);
+      const reportTypeUrl = `${jwtServiceConfig.report}/report/export`;
+
+      try {
+        const responseData = await requestReportPost(reportTypeUrl, {
+          ...requestData,
+          format: data.format,
+        }, token);
         resolve(responseData);
       } catch (error) {
         reject(error);
