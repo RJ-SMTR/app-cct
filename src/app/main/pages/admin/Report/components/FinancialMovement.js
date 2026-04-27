@@ -374,6 +374,20 @@ export default function BasicEditingGrid() {
     setAnchorEl(event.currentTarget);
   };
 
+  const triggerBrowserDownload = ({ blob, filename }) => {
+    const fileBlob = blob instanceof Blob ? blob : new Blob([blob]);
+    const objectUrl = window.URL.createObjectURL(fileBlob);
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = filename || "financial-report";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => {
+      window.URL.revokeObjectURL(objectUrl);
+    }, 0);
+  };
+
   const handleMenuClose = async (option) => {
     setAnchorEl(null);
     if (!option) {
@@ -383,21 +397,29 @@ export default function BasicEditingGrid() {
     setIsExporting(true);
 
     try {
+      dispatch(
+        showMessage({
+          message: "Preparando download do relatório. Aguarde...",
+        }),
+      );
+
       const exportRequestData = buildRequestData(getValues(), page, rowsPerPage, { includePagination: false });
       const response = await dispatch(handleFinancialMovementExport({
         ...exportRequestData,
         format: option,
       }));
 
+      triggerBrowserDownload(response || {});
+
       dispatch(
         showMessage({
-          message: response?.message || "Your report is being generated and will be sent to your email.",
+          message: "Download do relatório iniciado.",
         }),
       );
     } catch {
       dispatch(
         showMessage({
-          message: "Erro ao solicitar exportação. Tente novamente.",
+          message: "Erro ao baixar o relatório. Tente novamente.",
         }),
       );
     } finally {
@@ -824,18 +846,27 @@ export default function BasicEditingGrid() {
               aria-haspopup="true"
               onClick={handleMenuClick}
               disabled={isExporting}
-              style={{ marginTop: "20px" }}
+              style={{ marginTop: "20px", minWidth: "150px" }}
             >
-              <svg
-                className="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium muiltr-hgpioi-MuiSvgIcon-root h-[2rem]"
-                focusable="false"
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                data-testid="SaveAltIcon"
-              >
-                <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z" />
-              </svg>{" "}
-              Exportar
+              {isExporting ? (
+                <Box className="flex items-center gap-8">
+                  <CircularProgress size={18} color="inherit" />
+                  <span>Baixando...</span>
+                </Box>
+              ) : (
+                <>
+                  <svg
+                    className="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium muiltr-hgpioi-MuiSvgIcon-root h-[2rem]"
+                    focusable="false"
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    data-testid="SaveAltIcon"
+                  >
+                    <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z" />
+                  </svg>{" "}
+                  Exportar
+                </>
+              )}
             </Button>
             <Menu
               id="simple-menu"

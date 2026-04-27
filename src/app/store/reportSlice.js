@@ -213,6 +213,31 @@ const requestReportPost = async (url, data, token) => {
   return response.data;
 };
 
+const requestReportDownload = async (url, data, token) => {
+  return api.request({
+    ...buildPostConfig(url, token, data),
+    responseType: 'blob',
+  });
+};
+
+const extractFilenameFromDisposition = (contentDisposition, fallbackFilename) => {
+  if (!contentDisposition) {
+    return fallbackFilename;
+  }
+
+  const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match && utf8Match[1]) {
+    try {
+      return decodeURIComponent(utf8Match[1]);
+    } catch (error) {
+      return utf8Match[1];
+    }
+  }
+
+  const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/i);
+  return filenameMatch?.[1] || fallbackFilename;
+};
+
 
 export const handleReportInfo = (data, reportType) => async (dispatch) => {
   const token = window.localStorage.getItem('jwt_access_token');
@@ -321,14 +346,21 @@ export const handleFinancialMovementExport = (data) => async () => {
   if (JwtService.isAuthTokenValid(token)) {
     return new Promise(async (resolve, reject) => {
       const requestData = handleData(data);
-      const reportTypeUrl = `${jwtServiceConfig.report}/report/export`;
+      const reportTypeUrl = `${jwtServiceConfig.report}/report/export/download`;
 
       try {
-        const responseData = await requestReportPost(reportTypeUrl, {
+        const response = await requestReportDownload(reportTypeUrl, {
           ...requestData,
           format: data.format,
         }, token);
-        resolve(responseData);
+        resolve({
+          blob: response.data,
+          filename: extractFilenameFromDisposition(
+            response.headers?.['content-disposition'],
+            `financial-report.${data.format}`,
+          ),
+          contentType: response.headers?.['content-type'],
+        });
       } catch (error) {
         reject(error);
       }
