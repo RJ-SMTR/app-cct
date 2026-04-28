@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   MenuItem,
@@ -24,16 +24,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { DateRangePicker } from "rsuite";
 import { useForm, Controller } from "react-hook-form";
 
-import { handleFinancialMovementPage, handleFinancialMovementSummary, setReportList } from "app/store/reportSlice";
+import { handleFinancialMovementExport, handleFinancialMovementPage, handleFinancialMovementSummary, setReportList } from "app/store/reportSlice";
 
 import { getUser } from "app/store/adminSlice";
 import { NumericFormat } from "react-number-format";
-import { CSVLink } from "react-csv";
-import jsPDF from "jspdf";
-import "jspdf-autotable";
 import { showMessage } from "app/store/fuse/messageSlice";
 import { ClearIcon } from "@mui/x-date-pickers";
-import { utils, writeFile as writeFileXLSX } from "xlsx";
 import { normalizeErroStatusSelection } from "./reportUtils";
 
 export default function BasicEditingGrid() {
@@ -54,6 +50,7 @@ export default function BasicEditingGrid() {
   const [selectedErroStatus, setSelectedErroStatus] = useState([]);
   const [selectedConsorcios, setSelectedConsorcios] = useState([]);
   const [selectedEspecificos, setSelectedEspecificos] = useState([]);
+  const [isExporting, setIsExporting] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [hasSearched, setHasSearched] = useState(false);
@@ -373,268 +370,60 @@ export default function BasicEditingGrid() {
   };
   const formatCurrency = (value) => formatter.format(toNumber(value));
 
-  // Export CSV
-  const status = getValues("status");
-  const whichStatus = status?.join(",");
-
-  const reportListData =
-    reportList.count > 0
-      ? reportList.data?.map((report) => ({
-        Data: report.dataPagamento,
-        Nome: report.nomes,
-        Email: report.email,
-        'Cód Banco': report.codBanco,
-        Banco: report.nomeBanco,
-        'CPF/CNPJ': report.cpfCnpj,
-        Consórcio: report.consorcio,
-        Valor: formatCurrency(report.valor),
-        Status: report.status,
-      }))
-      : [];
-
-  const valorPago = {
-    Nome: "Total Pago",
-    Valor: "",
-    Status: reportList.valorPago > 0 ? formatCurrency(reportList.valorPago) : "",
-  };
-
-  const valorEstornado = {
-    Nome: "Total Estorno",
-    Valor: "",
-    Status: reportList.valorEstornado > 0 ? formatCurrency(reportList.valorEstornado) : "",
-  };
-
-  const valorRejeitado = {
-    Nome: "Total Rejeitado",
-    Valor: "",
-    Status: reportList.valorRejeitado > 0 ? formatCurrency(reportList.valorRejeitado) : "",
-  };
-
-  const valorAguardandoPagamento = {
-    Nome: "Total Aguardando Pagamento",
-    Valor: "",
-    Status: reportList.valorAguardandoPagamento > 0 ? formatCurrency(reportList.valorAguardandoPagamento) : "",
-  };
-
-  const valorTotal = {
-    Nome: "Valor Total",
-    Valor: "",
-    Status: formatCurrency(reportList?.valorTotal ?? 0),
-  };
-
-
-
-
-  const statusRow = {
-    Nome: "Status selecionado",
-    Valor: "",
-    Status: whichStatus || "Todos",
-  };
-
-  const csvData = [
-    statusRow,
-    ...reportListData,
-    ...(reportList.valorPago > 0 ? [valorPago] : []),
-    ...(reportList.valorEstornado > 0 ? [valorEstornado] : []),
-    ...(reportList.valorRejeitado > 0 ? [valorRejeitado] : []),
-    ...(reportList.valorAguardandoPagamento > 0 ? [valorAguardandoPagamento] : []),
-    valorTotal,
-  ];
-  let dateInicio;
-  let dateFim;
-  const selectedDate = getValues("dateRange");
-
-  if (selectedDate !== null) {
-    dateInicio = selectedDate[0];
-    dateFim = selectedDate[1];
-  }
-
-  const csvFilename = useMemo(() => {
-    if (dateInicio && dateFim) {
-      return `relatorio_${format(dateInicio, "dd-MM-yyyy")}_${format(dateFim, "dd-MM-yyyy")}.csv`;
-    }
-    return `relatorio_${format(new Date(), "dd-MM-yyyy")}.csv`;
-  }, [dateInicio, dateFim]);
-
-  // Export PDF
-  const exportPDF = () => {
-
-    const truncateText = (text, maxLength) => {
-      if (!text) return '';
-      return text.length > maxLength ? text.slice(0, maxLength - 3) + "..." : text;
-    };
-
-    const doc = new jsPDF({
-      orientation: "landscape",
-    });
-    const tableColumn = ["Data", "Nome", "Email", "Cod Banco", "Banco", "CPF/CNPJ", "Consórcio", "Valor", "Status"];
-    const tableRows = [];
-
-    for (const report of reportList.data) {
-      const reportData = [
-        report.dataPagamento,
-        report.nomes,
-        report.email,
-        report.codBanco,
-        truncateText(report.nomeBanco, 15),
-        report.cpfCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'),
-        report.consorcio,
-        formatCurrency(report.valor),
-        report.status
-      ];
-      tableRows.push(reportData);
-    }
-
-    let dateInicio;
-    let dateFim;
-    const selectedDate = getValues("dateRange");
-    if (selectedDate !== null) {
-      dateInicio = selectedDate[0];
-      dateFim = selectedDate[1];
-    }
-
-    const status = getValues("status");
-    const selectedStatus = status.join(",");
-
-    const logoImg = "assets/icons/logoPrefeitura.png";
-    const logoH = 15;
-    const logoW = 30;
-
-    doc.autoTable({
-      head: [tableColumn],
-      body: tableRows,
-      margin: { left: 14, right: 14, top: 60 },
-      styles: {
-        fontSize: 6,
-        cellPadding: 2,
-      },
-      columnStyles: {
-        1: { cellWidth: 30 },
-      },
-      startY: 60,
-      didDrawPage: () => {
-        doc.addImage(logoImg, "PNG", 14, 10, logoW, logoH);
-
-        const hrYPosition = 30;
-        doc.setLineWidth(0.3);
-        doc.line(14, hrYPosition, 196, hrYPosition);
-
-        doc.setFontSize(10);
-        doc.text(
-          `Relatório dos dias: ${format(dateInicio, "dd/MM/yyyy")} a ${format(dateFim, "dd/MM/yyyy")}`,
-          14,
-          45,
-        );
-        doc.text(`Status observado: ${selectedStatus || "Todos"}`, 14, 50);
-      },
-    });
-
-    const pageHeight = doc.internal.pageSize.height;
-    const bottomMargin = 40;
-    let yPosition = pageHeight - bottomMargin;
-
-    doc.setFontSize(10);
-
-    if (reportList.valorPago > 0) {
-      doc.text(`Total Pago: ${formatCurrency(reportList.valorPago)}`, 14, yPosition);
-      yPosition += 5;
-    }
-
-    if (reportList.valorEstornado > 0) {
-      doc.text(`Total Estorno: ${formatCurrency(reportList.valorEstornado)}`, 14, yPosition);
-      yPosition += 5;
-    }
-
-    if (reportList.valorRejeitado > 0) {
-      doc.text(`Total Rejeitado: ${formatCurrency(reportList.valorRejeitado)}`, 14, yPosition);
-      yPosition += 5;
-    }
-
-    if (reportList.valorAguardandoPagamento > 0) {
-      doc.text(
-        `Total Aguardando Pagamento: ${formatCurrency(reportList.valorAguardandoPagamento)}`,
-        14,
-        yPosition,
-      );
-      yPosition += 5;
-    }
-
-    doc.text(`Valor total: ${formatCurrency(reportList.valorTotal ?? 0)}`, 14, yPosition);
-
-    const pageCount = doc.internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(10);
-      const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
-      const text = `Página ${currentPage} de ${pageCount}`;
-      doc.text(text, 14, doc.internal.pageSize.height - 5);
-    }
-
-    doc.save(
-      `relatorio_${format(dateInicio, "dd/MM/yyyy")}_${format(dateFim, "dd/MM/yyyy")}.pdf`,
-    );
-  };
-
-
-  // Export XLSX
-  const exportXLSX = () => {
-    let dateInicio;
-    let dateFim;
-    const selectedDate = getValues("dateRange");
-
-    if (selectedDate !== null) {
-      dateInicio = selectedDate[0];
-      dateFim = selectedDate[1];
-    }
-    const data = [
-      ["Status selecionado", "", "", "", whichStatus || "Todos"],
-      ["Data", "Nome", "Email", "Cod Banco", "Banco", "CPF/CNPJ", "Consórcio", "Valor", "Status"],
-      ...reportList.data.map((report) => [
-        report.dataPagamento,
-        report.nomes,
-        report.email,
-        report.codBanco,
-        report.nomeBanco,
-        report.cpfCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'),
-        report.consorcio,
-        formatCurrency(report.valor),
-        report.status
-      ]),
-      ...(reportList.valorPago > 0
-        ? [["Total Pago:", "", "", ` ${formatCurrency(reportList.valorPago)}`, ""]]
-        : []),
-      ...(reportList.valorEstornado > 0
-        ? [["Total Estorno:", "", "", ` ${formatCurrency(reportList.valorEstornado)}`, ""]]
-        : []),
-      ...(reportList.valorRejeitado > 0
-        ? [["Total Rejeitado:", "", "", ` ${formatCurrency(reportList.valorRejeitado)}`, ""]]
-        : []),
-      ...(reportList.valorAguardandoPagamento > 0
-        ? [["Total Aguardando Pagamento:", "", "", ` ${formatCurrency(reportList.valorAguardandoPagamento)}`, ""]]
-        : []),
-      ["Valor Total", "", "", formatCurrency(reportList.valorTotal ?? 0), ""],
-    ];
-
-    const wb = utils.book_new();
-    utils.book_append_sheet(wb, utils.json_to_sheet(data));
-    writeFileXLSX(
-      wb,
-      `relatorio_${format(dateInicio, "dd/MM/yyyy")}_${format(dateFim, "dd/MM/yyyy")}.xlsx`,
-    );
-  };
-
   const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleMenuClose = (option) => {
+  const triggerBrowserDownload = ({ blob, filename }) => {
+    const fileBlob = blob instanceof Blob ? blob : new Blob([blob]);
+    const objectUrl = window.URL.createObjectURL(fileBlob);
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = filename || "financial-report";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => {
+      window.URL.revokeObjectURL(objectUrl);
+    }, 0);
+  };
+
+  const handleMenuClose = async (option) => {
     setAnchorEl(null);
-    if (option === "csv") {
-      document.getElementById("csv-export-link").click();
-    } else if (option === "pdf") {
-      exportPDF();
-    } else if (option === "xlsx") {
-      exportXLSX();
+    if (!option) {
+      return;
+    }
+
+    setIsExporting(true);
+
+    try {
+      dispatch(
+        showMessage({
+          message: "Preparando download do relatório. Aguarde...",
+        }),
+      );
+
+      const exportRequestData = buildRequestData(getValues(), page, rowsPerPage, { includePagination: false });
+      const response = await dispatch(handleFinancialMovementExport({
+        ...exportRequestData,
+        format: option,
+      }));
+
+      triggerBrowserDownload(response || {});
+
+      dispatch(
+        showMessage({
+          message: "Download do relatório iniciado.",
+        }),
+      );
+    } catch {
+      dispatch(
+        showMessage({
+          message: "Erro ao baixar o relatório. Tente novamente.",
+        }),
+      );
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -1056,18 +845,28 @@ export default function BasicEditingGrid() {
               aria-controls="simple-menu"
               aria-haspopup="true"
               onClick={handleMenuClick}
-              style={{ marginTop: "20px" }}
+              disabled={isExporting}
+              style={{ marginTop: "20px", minWidth: "150px" }}
             >
-              <svg
-                className="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium muiltr-hgpioi-MuiSvgIcon-root h-[2rem]"
-                focusable="false"
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                data-testid="SaveAltIcon"
-              >
-                <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z" />
-              </svg>{" "}
-              Exportar
+              {isExporting ? (
+                <Box className="flex items-center gap-8">
+                  <CircularProgress size={18} color="inherit" />
+                  <span>Baixando...</span>
+                </Box>
+              ) : (
+                <>
+                  <svg
+                    className="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium muiltr-hgpioi-MuiSvgIcon-root h-[2rem]"
+                    focusable="false"
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    data-testid="SaveAltIcon"
+                  >
+                    <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z" />
+                  </svg>{" "}
+                  Exportar
+                </>
+              )}
             </Button>
             <Menu
               id="simple-menu"
@@ -1080,13 +879,6 @@ export default function BasicEditingGrid() {
               <MenuItem onClick={() => handleMenuClose("pdf")}>PDF</MenuItem>
               <MenuItem onClick={() => handleMenuClose("xlsx")}>XLSX</MenuItem>
             </Menu>
-
-            <CSVLink
-              id="csv-export-link"
-              data={csvData}
-              filename={csvFilename}
-              className="hidden"
-            />
           </header>
 
           <TablePagination

@@ -193,9 +193,49 @@ const buildGetConfig = (url, token, params) => ({
   params,
 });
 
+const buildPostConfig = (url, token, data) => ({
+  method: 'post',
+  maxBodyLength: Infinity,
+  url,
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+  data,
+});
+
 const requestReport = async (url, params, token) => {
   const response = await api.request(buildGetConfig(url, token, params));
   return response.data;
+};
+
+const requestReportPost = async (url, data, token) => {
+  const response = await api.request(buildPostConfig(url, token, data));
+  return response.data;
+};
+
+const requestReportDownload = async (url, data, token) => {
+  return api.request({
+    ...buildPostConfig(url, token, data),
+    responseType: 'blob',
+  });
+};
+
+const extractFilenameFromDisposition = (contentDisposition, fallbackFilename) => {
+  if (!contentDisposition) {
+    return fallbackFilename;
+  }
+
+  const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match && utf8Match[1]) {
+    try {
+      return decodeURIComponent(utf8Match[1]);
+    } catch (error) {
+      return utf8Match[1];
+    }
+  }
+
+  const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/i);
+  return filenameMatch?.[1] || fallbackFilename;
 };
 
 
@@ -293,6 +333,34 @@ export const handleFinancialMovementPage = (data) => async (dispatch) => {
         const responseData = await requestReport(reportTypeUrl, requestData, token);
         dispatch(mergeReportList(responseData));
         resolve(responseData);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+};
+
+export const handleFinancialMovementExport = (data) => async () => {
+  const token = window.localStorage.getItem('jwt_access_token');
+
+  if (JwtService.isAuthTokenValid(token)) {
+    return new Promise(async (resolve, reject) => {
+      const requestData = handleData(data);
+      const reportTypeUrl = `${jwtServiceConfig.report}/report/export/download`;
+
+      try {
+        const response = await requestReportDownload(reportTypeUrl, {
+          ...requestData,
+          format: data.format,
+        }, token);
+        resolve({
+          blob: response.data,
+          filename: extractFilenameFromDisposition(
+            response.headers?.['content-disposition'],
+            `financial-report.${data.format}`,
+          ),
+          contentType: response.headers?.['content-type'],
+        });
       } catch (error) {
         reject(error);
       }

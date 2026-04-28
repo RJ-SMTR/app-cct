@@ -58,7 +58,7 @@ export default function ReportVanzeiro() {
   const buildRequestData = (data) => {
     const userId = user?.id;
     const fullName = user?.fullName ?? "";
-    const especificos = ["Eleição"];
+    const especificos = [];
     const requestData = {
       consorcioName: [],
       name: userId ? [{ userId, fullName }] : [],
