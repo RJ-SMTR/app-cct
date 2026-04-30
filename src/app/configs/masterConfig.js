@@ -95,12 +95,12 @@ const masterConfig = [
                 url: 'agendar',
             },
             {
-                id: 'trigger-component',
-                title: 'balance',
-                translate: 'Aprovação Remessa ',
+                id: 'historico-remessa-component',
+                title: 'historico-remessa',
+                translate: 'Historico de Remessas',
                 type: 'item',
-                icon: 'heroicons-outline:currency-dollar',
-                url: 'aprovacao-remessa',
+                icon: 'heroicons-outline:clock',
+                url: 'historico-remessa',
             },
         ]
     },

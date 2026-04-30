@@ -49,6 +49,14 @@ const navAdminConfig = [
                 url: 'relatorio',
             },
             {
+                id: 'historico-remessa-component',
+                title: 'historico-remessa',
+                translate: 'Historico de Remessas',
+                type: 'item',
+                icon: 'heroicons-outline:clock',
+                url: 'historico-remessa',
+            },
+            {
                 id: 'support',
                 title: 'Suporte',
                 translate: 'Suporte',

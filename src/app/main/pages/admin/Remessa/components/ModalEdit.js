@@ -43,14 +43,87 @@ export const ModalEdit = ({ openEdit, handleCloseEdit, row, setOpenEdit }) => {
     const [account, setAccount] = useState('');
     const [aprovacao, setAprovacao] = useState('');
 
+    const parseCurrencyToNumber = (raw) => {
+        if (raw === null || raw === undefined || raw === '') return null;
+        if (typeof raw === 'number') return Number.isFinite(raw) ? raw : null;
+
+        let s = String(raw).trim().replace(/\s/g, '');
+        if (!s) return null;
+
+        const hasDot = s.includes('.');
+        const hasComma = s.includes(',');
+        if (hasDot && hasComma) {
+            if (s.lastIndexOf(',') > s.lastIndexOf('.')) {
+                s = s.replace(/\./g, '').replace(',', '.');
+            } else {
+                s = s.replace(/,/g, '');
+            }
+        } else if (hasComma) {
+            s = s.replace(/\./g, '').replace(',', '.');
+        } else {
+            s = s.replace(/,/g, '');
+        }
+
+        const n = Number(s);
+        return Number.isFinite(n) ? n : null;
+    };
+
+    const normalizeDataPagamento = (raw) => {
+        if (raw === null || raw === undefined || raw === '') return '';
+
+        if (raw instanceof Date && !Number.isNaN(raw.getTime())) {
+            return format(raw, 'dd/MM/yyyy');
+        }
+
+        if (typeof raw === 'string') {
+            const trimmed = raw.trim();
+            if (!trimmed) return '';
+
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
+                return trimmed;
+            }
+
+            const isoDateMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (isoDateMatch) {
+                const [, y, m, d] = isoDateMatch;
+                return `${d}/${m}/${y}`;
+            }
+
+            const parsed = new Date(trimmed);
+            if (!Number.isNaN(parsed.getTime())) {
+                return format(parsed, 'dd/MM/yyyy');
+            }
+
+            return trimmed;
+        }
+
+        return '';
+    };
+
+    const parseDataPagamentoToDate = (value) => {
+        if (!value) return null;
+        if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+
+        if (typeof value === 'string') {
+            const parsedPtBr = parse(value, 'dd/MM/yyyy', new Date());
+            if (!Number.isNaN(parsedPtBr.getTime())) return parsedPtBr;
+
+            const parsedGeneric = new Date(value);
+            if (!Number.isNaN(parsedGeneric.getTime())) return parsedGeneric;
+        }
+
+        return null;
+    };
+
     useEffect(() => {
         if (row) {
-            if (typeof row?.valorPagamentoUnico === 'number') {
-                setValor(new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(row.valorPagamentoUnico));
+            const valorNormalizado = parseCurrencyToNumber(row?.valorPagamentoUnico);
+            if (valorNormalizado !== null) {
+                setValor(new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(valorNormalizado));
             } else {
                 setValor(row?.valorPagamentoUnico ?? '');
             }
-            setDataPagamento(row?.dataPagamentoUnico ?? '');
+            setDataPagamento(normalizeDataPagamento(row?.dataPagamentoUnico));
             setMotivo(row?.motivoPagamentoUnico ?? '');
             setDiaSemana(normalizeDiaSemana(row?.diaSemana ?? ''));
             setTipoPagamento(row?.tipoPagamento ?? '');
@@ -84,11 +157,31 @@ export const ModalEdit = ({ openEdit, handleCloseEdit, row, setOpenEdit }) => {
         startAdornment: <InputAdornment position='start'>R$</InputAdornment>
     };
 
+    const formatDataToISO = (value) => {
+        if (!value) return null;
+        // Already ISO yyyy-MM-dd
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+        // pt-BR dd/MM/yyyy
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+            const [d, m, y] = value.split('/');
+            return `${y}-${m}-${d}`;
+        }
+        // Date object or other parseable string
+        const dt = value instanceof Date ? value : new Date(value);
+        if (!Number.isNaN(dt.getTime())) return format(dt, 'yyyy-MM-dd');
+        return null;
+    };
+
     const onSubmit = async () => {
+        const resolvedAprovacao = aprovacao !== ''
+            ? aprovacao.includes('Necessita')
+            : (row?.aprovacao ?? false);
+
         const basePayload = {
             id: row?.id,
             tipoPagamento: tipoPagamento || row?.tipoPagamento || null,
             account: account || row?.account || null,
+            aprovacao: resolvedAprovacao,
         };
 
         let horarioOut = horario;
@@ -107,8 +200,8 @@ export const ModalEdit = ({ openEdit, handleCloseEdit, row, setOpenEdit }) => {
         if ((tipoPagamento || row?.tipoPagamento) === 'Único') {
             payload = {
                 ...payload,
-                valorPagamentoUnico: valor ? Number(String(valor).replace(/\./g, '').replace(',', '.')) : null,
-                dataPagamentoUnico: dataPagamento || null,
+                valorPagamentoUnico: parseCurrencyToNumber(valor),
+                dataPagamentoUnico: formatDataToISO(dataPagamento),
                 motivoPagamentoUnico: motivo || null,
                 horario: horarioOut || null,
                 diaSemana: typeof diaSemana === 'number' ? diaSemana : normalizeDiaSemana(diaSemana) || null,
@@ -124,8 +217,8 @@ export const ModalEdit = ({ openEdit, handleCloseEdit, row, setOpenEdit }) => {
         } else {
             payload = {
                 ...payload,
-                valorPagamentoUnico: valor ? Number(String(valor).replace(/\./g, '').replace(',', '.')) : null,
-                dataPagamentoUnico: dataPagamento || null,
+                valorPagamentoUnico: parseCurrencyToNumber(valor),
+                dataPagamentoUnico: formatDataToISO(dataPagamento),
                 motivoPagamentoUnico: motivo || null,
                 intervaloDias: intervaloDias || null,
                 weekdays: weekdays || [],
@@ -136,7 +229,7 @@ export const ModalEdit = ({ openEdit, handleCloseEdit, row, setOpenEdit }) => {
 
         try {
             const response = await dispatch(editPayment(payload));
-            if (response && [200, 201, 204].includes(response.status)) {
+            if (response?.status >= 200 && response?.status < 300) {
                 dispatch(showMessage({ message: 'Editado com sucesso!' }));
                 dispatch(getBookings());
                 setOpenEdit(false);
@@ -170,7 +263,7 @@ export const ModalEdit = ({ openEdit, handleCloseEdit, row, setOpenEdit }) => {
                     </div>
                     <div className="flex gap-2">
                         <span className="font-semibold">Valor atual:</span>
-                        <span>{typeof row?.valorPagamentoUnico === 'number' ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(row?.valorPagamentoUnico) : row?.valorPagamentoUnico}</span>
+                        <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(row?.valorPagamentoUnico)}</span>
                     </div>
                 </div>
 
@@ -204,11 +297,15 @@ export const ModalEdit = ({ openEdit, handleCloseEdit, row, setOpenEdit }) => {
                         </div>
                         <div>
                             <p className="font-semibold my-2">Data Pagamento (dd/mm/aaaa):</p>
-                            <TextField
-                                value={dataPagamento ? (typeof dataPagamento === 'string' ? dataPagamento : format(new Date(dataPagamento), 'dd/MM/yyyy')) : ''}
-                                onChange={(e) => setDataPagamento(e.target.value)}
-                                placeholder="dd/mm/aaaa"
-                                className="w-full"
+                            <DatePicker
+                                value={parseDataPagamentoToDate(dataPagamento)}
+                                onChange={(val) => setDataPagamento(val ? format(val, 'dd/MM/yyyy') : '')}
+                                showOneCalendar
+                                placement="auto"
+                                placeholder="Selecionar Data"
+                                format="dd/MM/yyyy"
+                                character=" - "
+                                className="custom-date-range-picker w-full"
                             />
                         </div>
                         <div>

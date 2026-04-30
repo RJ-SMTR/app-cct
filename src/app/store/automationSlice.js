@@ -2,7 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import jwtServiceConfig from '../auth/services/jwtService/jwtServiceConfig';
 import { api } from 'app/configs/api/api';
 import accounting from 'accounting';
-
+import { showMessage } from 'app/store/fuse/messageSlice';
 function parseCurrency(raw) {
     if (raw === null || raw === undefined) return null;
     if (typeof raw === 'number') return Number(Number(raw).toFixed(2));
@@ -264,28 +264,59 @@ export const bookPayment = (data) => async (dispatch) => {
 }
 
 export const editPayment = (data) => async (dispatch) => {
-    console.log(data)
-    const apiRoute = `${jwtServiceConfig.agendamento}${data.id}`; 
-        const consorcioSet = new Set(Array.isArray(base.consorcioIds) ? base.consorcioIds.map((x) => Number(x)) : []);
-        const favorecidoSet = new Set(Array.isArray(base.favorecidoIds) ? base.favorecidoIds.map((x) => Number(x)) : []);
+    const bookingId = data?.id;
+    if (bookingId === undefined || bookingId === null) {
+        throw new Error('ID do agendamento nao informado para edicao.');
+    }
+    const apiRoute = `${jwtServiceConfig.agendamento}${bookingId}`;
+    const token = window.localStorage.getItem('jwt_access_token');
+
+    // Partial update path used by toggle actions (Ativar/Desativar).
+    // Avoid handleData defaults that would overwrite unrelated fields.
+    const keys = Object.keys(data || {}).filter((k) => k !== 'id');
+    const isStatusOnlyUpdate = keys.length === 1 && keys[0] === 'status';
+    if (isStatusOnlyUpdate) {
+        const response = await api({
+            method: 'put',
+            url: apiRoute,
+            headers: { "Authorization": `Bearer ${token}` },
+            data: { status: data.status },
+        });
+
+        if ([200, 201, 202, 204].includes(response.status)) {
+            dispatch(getBookings());
+        }
+        return response;
+    }
+
+    const base = handleData(data);
+
+    const consorcioSet = new Set(Array.isArray(base.consorcioIds) ? base.consorcioIds.map((x) => Number(x)) : []);
+    const favorecidoSet = new Set(Array.isArray(base.favorecidoIds) ? base.favorecidoIds.map((x) => Number(x)) : []);
+
+    const beneficiarioId = base?.beneficiarioUsuario ?? data?.beneficiarioUsuario;
+    const numericId = Number(beneficiarioId);
+    let computedTipo = 'Consorcio';
+    if (favorecidoSet.has(numericId)) computedTipo = 'Modal';
+    else if (consorcioSet.has(numericId)) computedTipo = 'Consorcio';
+
+    const tipoBeneficiario = base.tipoBeneficiario ?? computedTipo;
+    const { consorcioIds, favorecidoIds, ...rest } = base;
+    const payload = { ...rest, beneficiarioUsuario: beneficiarioId, tipoBeneficiario };
 
     const config = {
         method: 'put',
         url: apiRoute,
         headers: { "Authorization": `Bearer ${token}` },
-        data
+        data: payload
     };
 
     try {
         const response = await api(config);
         if ([200, 201, 202, 204].includes(response.status)) { 
-            const numericId = Number(id);
-            let computedTipo = 'Consorcio';
-            if (favorecidoSet.has(numericId)) computedTipo = 'Modal';
-            else if (consorcioSet.has(numericId)) computedTipo = 'Consorcio';
+            dispatch(getBookings());
         }
-            const { consorcioIds, favorecidoIds, ...rest } = base;
-            const payload = { ...rest, beneficiarioUsuario: id, tipoBeneficiario };
+        return response;
     } catch (error) {
         console.error(error);
         throw error;

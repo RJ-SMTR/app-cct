@@ -1,54 +1,41 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { utils, writeFile as writeFileXLSX } from 'xlsx';
 
 import { MaterialReactTable, useMaterialReactTable } from 'material-react-table';
 import { MRT_Localization_PT_BR } from 'material-react-table/locales/pt-BR';
 import {
     MRT_ToggleDensePaddingButton,
     MRT_ShowHideColumnsButton,
-    MRT_ToggleFiltersButton,
 } from 'material-react-table';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import accounting from 'accounting';
+
 import {
     Box,
     MenuItem,
-    Paper,
     Button,
     IconButton,
     FormGroup,
     Menu,
-    InputLabel,
-    Select,
     FormControlLabel,
     Checkbox,
     Badge,
-    FormControl,
-    Typography
 } from '@mui/material';
 import Tooltip from '@mui/material/Tooltip';
-import dayjs from 'dayjs';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { parseISO, format, getISODay } from 'date-fns';
 import { useDispatch, useSelector } from 'react-redux';
-import JwtService from 'src/app/auth/services/jwtService';
 import { useForm } from 'react-hook-form';
-import { getData, selectedYear, setSelectedDate, setSelectedYear } from 'app/store/releaseSlice';
+import {setSelectedYear } from 'app/store/releaseSlice';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import ptBR from 'date-fns/locale/pt-BR';
-import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { editPayment, getBookings } from 'app/store/automationSlice';
+import { editPayment } from 'app/store/automationSlice';
 import { ModalDelete } from './ModalDelete';
 import { ModalApproval } from './ModalApproval';
 import { ModalEdit } from './ModalEdit';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { ColumnVisibility } from '@tanstack/react-table';
+import { showMessage } from 'app/store/fuse/messageSlice';
 
 
 
@@ -102,9 +89,6 @@ const predefinedFiltersDay = [
 
 export function TableRemessa() {
 
-    const location = useLocation();
-    const navigate = useNavigate();
-
     const dispatch = useDispatch()
     const bookings = useSelector((state) => state.automation.bookings)
 
@@ -123,10 +107,6 @@ export function TableRemessa() {
     const [expandedGroupIds, setExpandedGroupIds] = useState([]);
     const openConsorcioMenu = Boolean(consorcioAnchorEl);
     const openStatusMenu = Boolean(statusAnchorEl);
-    const [errors, setErrors] = useState({
-        mes: false,
-        periodo: false,
-    });
     const { register } = useForm()
 
 
@@ -135,25 +115,6 @@ export function TableRemessa() {
         setRows(bookings)
 
     }, [bookings])
-
-
-    const CellLink = () => (
-        <Button
-            variant="contained"
-            size="small"
-            onClick={() => navigate('/aprovar')}
-            sx={{
-                backgroundColor: '#0DB1E3',
-                color: '#fff',
-               
-                '&:hover': { backgroundColor: '#0CA0CC' },
-            }}
-        >
-            Ver Mais
-        </Button>
-    );
-
-
     const CellActions = ({ row }) => (
         <Box className="flex items-center gap-6">
             <Tooltip title="Editar" arrow>
@@ -215,8 +176,8 @@ export function TableRemessa() {
             id: row.id,
             status: status
         } ))
-        if (response && [200, 201, 204].includes(response.status)) {
-            dispatch(showMessage({ message: 'Ativado com sucesso!' }));
+        if (response && [200, 201, 202, 204].includes(response.status)) {
+            dispatch(showMessage({ message: status ? 'Ativado com sucesso!' : 'Desativado com sucesso!' }));
         }
         } catch (err) {
                   console.error(err);
@@ -318,7 +279,7 @@ export function TableRemessa() {
             Cell: ({ row }) => (
                 row?.original?.isGroup
                     ? null
-                    : (location.pathname === '/agendar' ? <CellLink /> : <CellActions row={row.original} />)
+                    : <CellActions row={row.original} />
             ),
         },
     ];
@@ -608,19 +569,8 @@ export function TableRemessa() {
 
 
 const columnVisibility = useMemo(() => {
-    const base = { grupoKey: false };
-    if (location.pathname === '/agendar') {
-        return {
-            ...base,
-            valorPagamentoUnico: false,
-            dataPagamentoUnico: false,
-            tipoPagamento: false,
-            aprovacao: false,
-            status: false,
-        };
-    }
-    return base;
-}, [location.pathname]);
+    return { grupoKey: false };
+}, []);
 
     const table = useMaterialReactTable({
         columns,

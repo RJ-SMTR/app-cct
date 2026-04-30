@@ -2,6 +2,7 @@ import { lazy } from 'react';
 import { authRoles } from 'src/app/auth';
 
 const ReportLazy = lazy(() => import('./RemessaApp'));
+const HistoryLazy = lazy(() => import('./RemessaHistoricoApp'));
 
 const RemessaConfig = {
     settings: {
@@ -18,6 +19,10 @@ const RemessaConfig = {
         {
             path: 'agendar',
             element: <ReportLazy />,
+        },
+        {
+            path: 'historico-remessa',
+            element: <HistoryLazy />,
         },
     ],
 };

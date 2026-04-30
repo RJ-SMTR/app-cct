@@ -1,6 +1,6 @@
-import React, { useContext, useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { getUser } from 'app/store/adminSlice';
-import { Card, Select, TextField, Typography, MenuItem, InputLabel, InputAdornment } from '@mui/material';
+import { Card, Select, TextField, Typography, MenuItem, InputLabel, InputAdornment, CircularProgress } from '@mui/material';
 import { Box } from '@mui/system';
 import { Controller, useForm } from 'react-hook-form';
 import { FormControl, Autocomplete } from "@mui/material";
@@ -15,7 +15,7 @@ import { AuthContext } from 'src/app/auth/AuthContext';
 import _ from '@lodash';
 
 import { bookPayment, getBookings } from 'app/store/automationSlice';
-import { TableRemessa } from './components/TableRemessa';
+import { RemessaApprovalTableCard } from './components/RemessaApprovalTableCard';
 
 
 
@@ -590,20 +590,7 @@ function RemessaApp() {
         </Box>
         <br />
       </div>
-      <div className="p-1 pt-10">
-        <Box className='flex flex-col  justify-around w-full md:mx-9 p-24 relative mt-16'>
-          <Card className="w-full md:mx-9 p-24 relative mt-16">
-            <header className="flex justify-between items-center mb-24">
-              <h3 className="font-semibold">
-                Agendamentos
-              </h3>
-            </header>
-            <TableRemessa />
-
-          </Card>
-        </Box>
-        <br />
-      </div>
+      <RemessaApprovalTableCard />
     </>
   );
 }
