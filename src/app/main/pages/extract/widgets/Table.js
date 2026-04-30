@@ -38,7 +38,8 @@ import {
   setOrdemPgto,
   setMocked,
   setSumInfo,
-  setStatements
+  setStatements,
+  setSumInfoDay
 } from 'app/store/extractSlice';
 
 import { showMessage } from 'app/store/fuse/messageSlice';
@@ -269,6 +270,7 @@ function TableTransactions({ id }) {
           dispatch(setDateRange([transformedDate, transformedDate]));
           dispatch(setOrdemPgto(idOrder))
           dispatch(setSearchingDay(true))
+          dispatch(setSumInfoDay(valor))
           setPage(0)
 
         } else {
@@ -515,14 +517,7 @@ function TableTransactions({ id }) {
                         formattedEffectiveDate === formattedDate ? '-' : formattedEffectiveDate;
                     }
 
-                    const valorDia = i.valorTotal ?? i.valorTotalPago ?? sumInfo;
-                    // if (
-                    //   searchingDay &&
-                    //   statements?.length > 0 &&
-                    //   statements.every(i => !i.data && !i.dataCaptura && !i.datetime_processamento)
-                    // ) {
-                    //   return null
-                    // }
+                    const valorDia = i.valorTotal ?? i.valorTotalPago ?? i.valor;
 
                     return (
                       <MemoizedCustomTable
