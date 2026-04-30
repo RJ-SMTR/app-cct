@@ -285,12 +285,6 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
                 dispatch(setStatements(statementsSort));
                 
 
-                const sum = response.data.reduce(
-                    (acc, statement) => acc + Number(statement.valor_pagamento.replace(",", ".")),
-                    0
-                );
-
-                dispatch(setSumInfoDay(sum));
 
 
             } else if (searchingWeek) {
@@ -300,6 +294,7 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
                     compareDesc(parseISO(a.dataCaptura), parseISO(b.dataCaptura))
                 );
                 dispatch(setStatements(statementsSort));
+                
 
             } else {
                 const statementsSort = response.data.ordens.sort((a, b) =>
