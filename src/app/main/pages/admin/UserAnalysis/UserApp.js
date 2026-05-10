@@ -116,7 +116,7 @@ function UserApp() {
                  <Typography className="text-lg font-bold leading-none">{user?.fullName}</Typography>
                  <Typography color="text.secondary">#{id}</Typography>
                 {user?.bloqueado ? 
-                <p className='text-red-600 mb-0'>Usuário desativado</p>
+                <p className='text-red-600 mb-0'>Usuário Bloqueado</p>
                   : <></>}
             
              </div>
