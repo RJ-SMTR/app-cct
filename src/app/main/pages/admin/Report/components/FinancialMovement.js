@@ -155,10 +155,44 @@ export default function BasicEditingGrid() {
     return requestData;
   };
 
+  const hasMissingErroStatusSelection =
+    whichStatusShow.includes("Pendência de Pagamento") &&
+    selectedErroStatus.length === 0;
+
+  const validateErroStatusSelection = () => {
+    if (!hasMissingErroStatusSelection) {
+      return true;
+    }
+
+    dispatch(
+      showMessage({
+        message: "Selecione um motivo para a Pendência de Pagamento.",
+      }),
+    );
+    return false;
+  };
+
+  const getValidatedRequestData = (data, pageIndex, pageSize, options = {}) => {
+    if (!validateErroStatusSelection()) {
+      return null;
+    }
+
+    return buildRequestData(data, pageIndex, pageSize, options);
+  };
+
   const submitReport = async (data, pageIndex, pageSize) => {
+    if (!validateErroStatusSelection()) {
+      return;
+    }
+
+    const summaryRequestData = buildRequestData(data, pageIndex, pageSize, {
+      includePagination: false,
+    });
+    const pageRequestData = buildRequestData(data, pageIndex, pageSize, {
+      includePagination: true,
+    });
+
     setIsLoading(true);
-    const summaryRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: false });
-    const pageRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: true });
 
     try {
       await dispatch(handleFinancialMovementSummary(summaryRequestData, { resetData: true }));
@@ -177,8 +211,15 @@ export default function BasicEditingGrid() {
   };
 
   const submitPage = async (data, pageIndex, pageSize) => {
+    const pageRequestData = getValidatedRequestData(data, pageIndex, pageSize, {
+      includePagination: true,
+    });
+
+    if (!pageRequestData) {
+      return;
+    }
+
     setIsLoading(true);
-    const pageRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: true });
 
     const cursor = pageCursors[pageIndex] ?? null;
     if (pageIndex > 0 && !cursor) {
@@ -394,6 +435,17 @@ export default function BasicEditingGrid() {
       return;
     }
 
+    const exportRequestData = getValidatedRequestData(
+      getValues(),
+      page,
+      rowsPerPage,
+      { includePagination: false },
+    );
+
+    if (!exportRequestData) {
+      return;
+    }
+
     setIsExporting(true);
 
     try {
@@ -403,7 +455,6 @@ export default function BasicEditingGrid() {
         }),
       );
 
-      const exportRequestData = buildRequestData(getValues(), page, rowsPerPage, { includePagination: false });
       const response = await dispatch(handleFinancialMovementExport({
         ...exportRequestData,
         format: option,
