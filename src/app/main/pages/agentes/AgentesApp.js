@@ -1,10 +1,10 @@
 import FusePageSimple from '@fuse/core/FusePageSimple';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import Avatar from '@mui/material/Avatar';
 import { styled } from '@mui/material/styles';
 import {
   Alert,
   Box,
+  Badge,
   Button,
   Paper,
   Skeleton,
@@ -16,7 +16,6 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { motion } from 'framer-motion';
 import { MobileDatePicker } from '@mui/x-date-pickers';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -25,10 +24,14 @@ import ptBR from 'date-fns/locale/pt-BR';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, Navigate, useParams } from 'react-router-dom';
+import { api } from 'app/configs/api/api';
 import { selectUser } from 'app/store/userSlice';
 import { showMessage } from 'app/store/fuse/messageSlice';
+import JwtService from 'src/app/auth/services/jwtService';
 import { isAdminUser } from 'src/app/auth/utils/accessUtils';
+import { BankInfo, PersonalInfo } from '../profile/formCards/formCards';
 import useThemeMediaQuery from '../../../../@fuse/hooks/useThemeMediaQuery';
+import MOCK_AGENT_USERS from './mocks/mockAgents';
 import { DEFAULT_AGENTES_DASHBOARD_MONTH, getAgentesDashboard } from './services/agentesService';
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
@@ -56,6 +59,20 @@ function formatCurrency(value) {
     style: 'currency',
     currency: 'BRL',
   }).format(value || 0);
+}
+
+function getAgentCpf(agentUser) {
+  return agentUser?.cpf || agentUser?.cpfCnpj || '-';
+}
+
+function getAgentAssociation(agentUser) {
+  return (
+    agentUser?.consorcio ||
+    agentUser?.consorcioName ||
+    agentUser?.association ||
+    agentUser?.associacao ||
+    '-'
+  );
 }
 
 function SummaryCard({ title, value, icon, loading }) {
@@ -90,6 +107,50 @@ function EmptyState({ message, colSpan = 5 }) {
   );
 }
 
+function normalizePaymentStatus(status) {
+  const normalizedStatus = String(status || '')
+    .trim()
+    .toLowerCase();
+
+  if (normalizedStatus === 'pago') {
+    return 'Pago';
+  }
+
+  if (normalizedStatus === 'rejeitado') {
+    return 'Rejeitado';
+  }
+
+  return '';
+}
+
+function getMonthlyPaymentStatus(day) {
+  const paymentStatuses = Array.isArray(day?.payments)
+    ? day.payments.map((payment) => normalizePaymentStatus(payment?.status)).filter(Boolean)
+    : [];
+
+  if (paymentStatuses.includes('Pago')) {
+    return 'Pago';
+  }
+
+  if (paymentStatuses.includes('Rejeitado')) {
+    return 'Rejeitado';
+  }
+
+  return normalizePaymentStatus(day?.paymentStatus) || 'Rejeitado';
+}
+
+function MonthlyStatusBadge({ day }) {
+  const status = getMonthlyPaymentStatus(day);
+
+  return (
+    <Badge
+      className="whitespace-nowrap"
+      color={status === 'Rejeitado' ? 'error' : 'success'}
+      badgeContent={status}
+    />
+  );
+}
+
 function AgentesApp() {
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
@@ -99,6 +160,7 @@ function AgentesApp() {
     buildMonthDate(DEFAULT_AGENTES_DASHBOARD_MONTH)
   );
   const [dashboard, setDashboard] = useState(null);
+  const [agentDetails, setAgentDetails] = useState(null);
   const [selectedDay, setSelectedDay] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -106,11 +168,49 @@ function AgentesApp() {
   const selectedDayData = useMemo(() => {
     return dashboard?.dailyPayments?.find((day) => day.date === selectedDay) || null;
   }, [dashboard, selectedDay]);
-  const canAccessSelectedAgent = isAdminUser(user) || String(user?.id) === String(id);
-  const dashboardOwnerName = String(user?.id) === String(id) ? user.fullName ?? 'Admin' : 'Agente';
+  const selectedMockAgent = MOCK_AGENT_USERS.find(
+    (mockAgent) => String(mockAgent.id) === String(id)
+  );
+  const isOwnDashboard = String(user?.id) === String(id);
+  const canAccessSelectedAgent = isAdminUser(user) || isOwnDashboard;
+  const dashboardOwnerName =
+    agentDetails?.fullName ||
+    (isOwnDashboard ? user.fullName : null) ||
+    selectedMockAgent?.fullName ||
+    'Agente';
   const selectedDayLabel = selectedDayData
     ? format(new Date(`${selectedDayData.date}T12:00:00`), 'dd/MM/yyyy')
     : '';
+
+  const loadAgentDetails = useCallback(async () => {
+    if (selectedMockAgent) {
+      setAgentDetails(selectedMockAgent);
+    }
+
+    const token = window.localStorage.getItem('jwt_access_token');
+
+    if (!JwtService.isAuthTokenValid(token)) {
+      return;
+    }
+
+    try {
+      const response = await api.get(`/users/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setAgentDetails(response.data);
+    } catch (requestError) {
+      if (!selectedMockAgent) {
+        dispatch(
+          showMessage({
+            message: 'Não foi possível carregar os dados do agente.',
+          })
+        );
+      }
+    }
+  }, [dispatch, id, selectedMockAgent]);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
@@ -143,8 +243,9 @@ function AgentesApp() {
       return;
     }
 
+    loadAgentDetails();
     loadDashboard();
-  }, [canAccessSelectedAgent, loadDashboard]);
+  }, [canAccessSelectedAgent, loadAgentDetails, loadDashboard]);
 
   const handleSelectedMonth = (newValue) => {
     if (!newValue) {
@@ -180,8 +281,10 @@ function AgentesApp() {
           <TableCell>{format(new Date(`${day.date}T12:00:00`), 'dd/MM/yyyy')}</TableCell>
           <TableCell>{day.validPhotosCount}</TableCell>
           <TableCell>{day.rejectedPhotosCount}</TableCell>
-          <TableCell>{day.payments.length}</TableCell>
           <TableCell>{formatCurrency(day.totalPaymentValue)}</TableCell>
+          <TableCell>
+            <MonthlyStatusBadge day={day} />
+          </TableCell>
         </TableRow>
       );
     });
@@ -219,12 +322,14 @@ function AgentesApp() {
       </TableRow>
     ));
   } else if (selectedDayData?.payments?.length) {
-    selectedDayPaymentRows = selectedDayData.payments.map((payment) => (
-      <TableRow key={payment.id}>
-        <TableCell>{payment.id}</TableCell>
+    selectedDayPaymentRows = selectedDayData.payments.map((payment, index) => (
+      <TableRow key={payment.id || `${payment.description}-${payment.date}-${index}`}>
+        <TableCell>
+          {payment.date ? format(new Date(`${payment.date}T12:00:00`), 'dd/MM/yyyy') : '-'}
+        </TableCell>
         <TableCell>{payment.description}</TableCell>
-        <TableCell>{payment.status}</TableCell>
         <TableCell>{formatCurrency(payment.amount)}</TableCell>
+        <TableCell>{payment.status}</TableCell>
         <TableCell>{payment.rejectionReason || '-'}</TableCell>
       </TableRow>
     ));
@@ -244,19 +349,8 @@ function AgentesApp() {
             alt="Profile Cover"
           />
 
-          <div className="flex flex-col flex-0 lg:flex-row items-center max-w-[95%] w-full mx-auto px-32 lg:h-72">
-            <div className="-mt-96 lg:-mt-88 rounded-full">
-              <motion.div initial={{ scale: 0 }} animate={{ scale: 1, transition: { delay: 0.1 } }}>
-                <Avatar
-                  sx={{ borderColor: 'background.white' }}
-                  className="w-128 h-128 border-4 bg-[#004A80] text-white"
-                >
-                  <FuseSvgIcon size={48}>heroicons-outline:user</FuseSvgIcon>
-                </Avatar>
-              </motion.div>
-            </div>
-
-            <div className="flex flex-col items-center lg:items-start my-16 lg:mt-0 lg:ml-32">
+          <div className="flex flex-col justify-center max-w-[95%] w-full mx-auto px-32 py-24 lg:h-72">
+            <div className="flex flex-col items-start my-16">
               <Typography className="text-lg font-bold leading-none">
                 {dashboardOwnerName}
               </Typography>
@@ -282,7 +376,14 @@ function AgentesApp() {
             </Link>
           </div>
 
-          <Box className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-16">
+          {agentDetails ? (
+            <div className="flex flex-col md:flex-row">
+              <PersonalInfo user={agentDetails} />
+              <BankInfo user={agentDetails} />
+            </div>
+          ) : null}
+
+          <Box className="grid grid-cols-1 md:grid-cols-3 gap-16">
             <SummaryCard
               title="Fotos válidas"
               value={dashboard?.validPhotosCount ?? 0}
@@ -299,12 +400,6 @@ function AgentesApp() {
               title="Valor consolidado"
               value={formatCurrency(dashboard?.consolidatedPaymentValue)}
               icon="heroicons-outline:currency-dollar"
-              loading={loading}
-            />
-            <SummaryCard
-              title="Dias com pagamento"
-              value={dashboard?.dailyPayments?.length ?? 0}
-              icon="heroicons-outline:calendar"
               loading={loading}
             />
           </Box>
@@ -355,8 +450,8 @@ function AgentesApp() {
                       <TableCell>Data</TableCell>
                       <TableCell>Fotos válidas</TableCell>
                       <TableCell>Fotos rejeitadas</TableCell>
-                      <TableCell>Pagamentos</TableCell>
                       <TableCell>Valor total</TableCell>
+                      <TableCell>Status sobre o pagamento</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>{dailyPaymentsRows}</TableBody>
@@ -390,12 +485,12 @@ function AgentesApp() {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
               <div>
                 <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
-                  Pagamentos do dia
+                  Registros do dia
                 </Typography>
                 <Typography color="text.secondary">
                   {selectedDayData
                     ? `Detalhamento de ${selectedDayLabel}.`
-                    : 'Clique em uma data na visão mensal para ver os pagamentos do dia.'}
+                    : 'Clique em uma data na visão mensal para ver os registros do dia.'}
                 </Typography>
               </div>
 
@@ -410,10 +505,10 @@ function AgentesApp() {
               <Table stickyHeader>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Identificador</TableCell>
+                    <TableCell>Data</TableCell>
                     <TableCell>Descrição</TableCell>
-                    <TableCell>Status</TableCell>
                     <TableCell>Valor</TableCell>
+                    <TableCell>Status sobre o pagamento</TableCell>
                     <TableCell>Motivo da rejeição</TableCell>
                   </TableRow>
                 </TableHead>

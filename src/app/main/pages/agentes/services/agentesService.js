@@ -21,10 +21,12 @@ const MOCKED_AGENTES_DASHBOARD = {
         date: '2026-05-03',
         validPhotosCount: 18,
         rejectedPhotosCount: 4,
+        paymentStatus: 'Pago parcialmente',
         totalPaymentValue: 1840.35,
         payments: [
           {
             id: 'PAG-0503-01',
+            date: '2026-05-03',
             description: 'Repasse manhã',
             status: 'Pago',
             amount: 420.15,
@@ -32,6 +34,7 @@ const MOCKED_AGENTES_DASHBOARD = {
           },
           {
             id: 'PAG-0503-02',
+            date: '2026-05-03',
             description: 'Repasse tarde',
             status: 'Pago',
             amount: 515.2,
@@ -39,6 +42,7 @@ const MOCKED_AGENTES_DASHBOARD = {
           },
           {
             id: 'PAG-0503-03',
+            date: '2026-05-03',
             description: 'Ajuste operacional',
             status: 'Rejeitado',
             amount: 0,
@@ -50,10 +54,12 @@ const MOCKED_AGENTES_DASHBOARD = {
         date: '2026-05-11',
         validPhotosCount: 24,
         rejectedPhotosCount: 3,
+        paymentStatus: 'Pago parcialmente',
         totalPaymentValue: 2690.8,
         payments: [
           {
             id: 'PAG-0511-01',
+            date: '2026-05-11',
             description: 'Repasse integral',
             status: 'Pago',
             amount: 1350.4,
@@ -61,6 +67,7 @@ const MOCKED_AGENTES_DASHBOARD = {
           },
           {
             id: 'PAG-0511-02',
+            date: '2026-05-11',
             description: 'Complemento',
             status: 'Pago',
             amount: 1340.4,
@@ -68,6 +75,7 @@ const MOCKED_AGENTES_DASHBOARD = {
           },
           {
             id: 'PAG-0511-03',
+            date: '2026-05-11',
             description: 'Conferência manual',
             status: 'Rejeitado',
             amount: 0,
@@ -79,10 +87,12 @@ const MOCKED_AGENTES_DASHBOARD = {
         date: '2026-05-19',
         validPhotosCount: 31,
         rejectedPhotosCount: 5,
+        paymentStatus: 'Pago parcialmente',
         totalPaymentValue: 4135.17,
         payments: [
           {
             id: 'PAG-0519-01',
+            date: '2026-05-19',
             description: 'Repasse início de semana',
             status: 'Pago',
             amount: 1635.17,
@@ -90,6 +100,7 @@ const MOCKED_AGENTES_DASHBOARD = {
           },
           {
             id: 'PAG-0519-02',
+            date: '2026-05-19',
             description: 'Repasse fim de semana',
             status: 'Pago',
             amount: 2500,
@@ -97,6 +108,7 @@ const MOCKED_AGENTES_DASHBOARD = {
           },
           {
             id: 'PAG-0519-03',
+            date: '2026-05-19',
             description: 'Reprocessamento',
             status: 'Rejeitado',
             amount: 0,
@@ -108,10 +120,12 @@ const MOCKED_AGENTES_DASHBOARD = {
         date: '2026-05-25',
         validPhotosCount: 20,
         rejectedPhotosCount: 2,
+        paymentStatus: 'Pago',
         totalPaymentValue: 2210.55,
         payments: [
           {
             id: 'PAG-0525-01',
+            date: '2026-05-25',
             description: 'Repasse consolidado',
             status: 'Pago',
             amount: 1080.25,
@@ -119,6 +133,7 @@ const MOCKED_AGENTES_DASHBOARD = {
           },
           {
             id: 'PAG-0525-02',
+            date: '2026-05-25',
             description: 'Complemento operacional',
             status: 'Pago',
             amount: 1130.3,
@@ -144,10 +159,12 @@ const MOCKED_AGENTES_DASHBOARD = {
         date: '2026-04-08',
         validPhotosCount: 21,
         rejectedPhotosCount: 3,
+        paymentStatus: 'Pago',
         totalPaymentValue: 2018.5,
         payments: [
           {
             id: 'PAG-0408-01',
+            date: '2026-04-08',
             description: 'Repasse semanal',
             status: 'Pago',
             amount: 980.25,
@@ -155,6 +172,7 @@ const MOCKED_AGENTES_DASHBOARD = {
           },
           {
             id: 'PAG-0408-02',
+            date: '2026-04-08',
             description: 'Complemento',
             status: 'Pago',
             amount: 1038.25,
@@ -166,10 +184,12 @@ const MOCKED_AGENTES_DASHBOARD = {
         date: '2026-04-16',
         validPhotosCount: 27,
         rejectedPhotosCount: 4,
+        paymentStatus: 'Pago parcialmente',
         totalPaymentValue: 3489.61,
         payments: [
           {
             id: 'PAG-0416-01',
+            date: '2026-04-16',
             description: 'Repasse quinzena',
             status: 'Pago',
             amount: 1989.61,
@@ -177,6 +197,7 @@ const MOCKED_AGENTES_DASHBOARD = {
           },
           {
             id: 'PAG-0416-02',
+            date: '2026-04-16',
             description: 'Complemento quinzena',
             status: 'Pago',
             amount: 1500,
@@ -184,6 +205,7 @@ const MOCKED_AGENTES_DASHBOARD = {
           },
           {
             id: 'PAG-0416-03',
+            date: '2026-04-16',
             description: 'Validação manual',
             status: 'Rejeitado',
             amount: 0,
@@ -195,10 +217,12 @@ const MOCKED_AGENTES_DASHBOARD = {
         date: '2026-04-28',
         validPhotosCount: 19,
         rejectedPhotosCount: 2,
+        paymentStatus: 'Pago',
         totalPaymentValue: 1877.9,
         payments: [
           {
             id: 'PAG-0428-01',
+            date: '2026-04-28',
             description: 'Repasse fechamento',
             status: 'Pago',
             amount: 877.9,
@@ -206,6 +230,7 @@ const MOCKED_AGENTES_DASHBOARD = {
           },
           {
             id: 'PAG-0428-02',
+            date: '2026-04-28',
             description: 'Complemento fechamento',
             status: 'Pago',
             amount: 1000,
@@ -232,10 +257,12 @@ function normalizeDashboardResponse(data, requestedMonth) {
         date: day?.date || '',
         validPhotosCount: normalizeNumber(day?.validPhotosCount),
         rejectedPhotosCount: normalizeNumber(day?.rejectedPhotosCount),
+        paymentStatus: day?.paymentStatus || '-',
         totalPaymentValue: normalizeNumber(day?.totalPaymentValue),
         payments: Array.isArray(day?.payments)
           ? day.payments.map((payment) => ({
               id: payment?.id || '',
+              date: payment?.date || day?.date || '',
               description: payment?.description || '-',
               status: payment?.status || '-',
               amount: normalizeNumber(payment?.amount),

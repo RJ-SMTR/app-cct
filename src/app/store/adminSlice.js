@@ -1,9 +1,11 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { api } from 'app/configs/api/api';
+import { isAgenteUser } from 'src/app/auth/utils/accessUtils';
 import { setStatements } from './extractSlice';
 import JwtService from '../auth/services/jwtService';
 
 const initialState = {
+    agentsList: [],
     userList: [],
     sendEmailValue: Boolean
 };
@@ -12,6 +14,9 @@ const stepSlice = createSlice({
     name: 'admin',
     initialState,
     reducers: {
+        setAgentsList: (state, action) => {
+            state.agentsList = action.payload;
+        },
         setUsersList: (state, action) => {
             state.userList = action.payload;
         },
@@ -21,8 +26,34 @@ const stepSlice = createSlice({
     },
 });
 
-export const { setUsersList, userList, sendEmailValue, setSendEmailValue } = stepSlice.actions;
+export const { setAgentsList, setUsersList, userList, sendEmailValue, setSendEmailValue } = stepSlice.actions;
 export default stepSlice.reducer;
+
+export const getAgentUsers = () => (dispatch) => {
+    const token = window.localStorage.getItem('jwt_access_token');
+    if(JwtService.isAuthTokenValid(token)){
+        return new Promise((resolve, reject) => {
+            api.get('/users', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+                .then((response) => {
+                    const filteredUsers = response.data.data
+                        .filter((user) => user.permitCode != null && isAgenteUser(user))
+                        .sort((firstUser, secondUser) => {
+                            return (firstUser.fullName || '').localeCompare(secondUser.fullName || '');
+                        });
+
+                    dispatch(setAgentsList(filteredUsers))
+                    resolve(filteredUsers)
+                })
+                .catch((error) => {
+                    reject(error)
+                })
+        })
+    }
+
+    return Promise.resolve([])
+}
 
 export const getUser = () => (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
