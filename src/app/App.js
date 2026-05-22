@@ -2,6 +2,7 @@ import BrowserRouter from '@fuse/core/BrowserRouter';
 import FuseLayout from '@fuse/core/FuseLayout';
 import FuseTheme from '@fuse/core/FuseTheme';
 import { SnackbarProvider } from 'notistack';
+import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import rtlPlugin from 'stylis-plugin-rtl';
 import createCache from '@emotion/cache';
@@ -12,14 +13,11 @@ import themeLayouts from 'app/theme-layouts/themeLayouts';
 import { selectMainTheme } from 'app/store/fuse/settingsSlice';
 import FuseAuthorization from '@fuse/core/FuseAuthorization';
 import settingsConfig from 'app/configs/settingsConfig';
+import { getUserAccessTokens } from './auth/utils/accessUtils';
 import withAppProviders from './withAppProviders';
 import { AuthProvider } from './auth/AuthContext';
 import 'leaflet/dist/leaflet.css';
-
-import "rsuite/dist/rsuite-no-reset.min.css";
-
-import { useEffect } from 'react';
-
+import 'rsuite/dist/rsuite-no-reset.min.css';
 
 // import axios from 'axios';
 /**
@@ -46,28 +44,27 @@ function App() {
   const user = useSelector(selectUser);
 
   useEffect(() => {
-    window.addEventListener("unload", () => {
+    window.addEventListener('unload', () => {
       sessionStorage.removeItem('modalShown');
     });
-  }, [])
+  }, []);
   const langDirection = useSelector(selectCurrentLanguageDirection);
   const mainTheme = useSelector(selectMainTheme);
-  const loginRedirectUrl = user.role?.name?.includes('Financeiro')
-    ? '/lancamentos'
-    : user.role?.name?.includes('Admin')
-      ? '/admin'
-      : settingsConfig.loginRedirectUrl;
+  let { loginRedirectUrl } = settingsConfig;
 
-  
+  if (user.role?.name?.includes('Financeiro')) {
+    loginRedirectUrl = '/lancamentos';
+  } else if (user.role?.name?.includes('Admin')) {
+    loginRedirectUrl = '/admin';
+  }
+  const userAccessTokens = getUserAccessTokens(user);
+
   return (
     <CacheProvider value={createCache(emotionCacheOptions[langDirection])}>
       <FuseTheme theme={mainTheme} direction={langDirection}>
         <AuthProvider>
           <BrowserRouter>
-            <FuseAuthorization
-              userRole={user.role?.name}
-              loginRedirectUrl={loginRedirectUrl}
-            >
+            <FuseAuthorization userRole={userAccessTokens} loginRedirectUrl={loginRedirectUrl}>
               <SnackbarProvider
                 maxSnack={5}
                 anchorOrigin={{

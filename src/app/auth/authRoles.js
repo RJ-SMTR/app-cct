@@ -3,10 +3,11 @@
  */
 const authRoles = {
   adminFinan: ['Admin Finan', 'Admin Master'],
-  commonFinan: [ 'Lançador financeiro', 'Aprovador financeiro', 'Admin Master', 'Admin Finan' ],
+  commonFinan: ['Lançador financeiro', 'Aprovador financeiro', 'Admin Master', 'Admin Finan'],
   releases: ['Lançador financeiro', 'Admin Master'],
   approval: ['Aprovador financeiro', 'Admin Master'],
   admin: ['Admin', 'Admin Master'],
+  agentes: ['Agentes', 'agentes', 'Admin', 'admin', 'Admin Master'],
   staff: ['Admin', 'staff', 'Admin Master'],
   user: ['User'],
   onlyGuest: [],

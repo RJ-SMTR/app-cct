@@ -19,6 +19,7 @@ import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import { showMessage } from 'app/store/fuse/messageSlice';
+import { isAgenteUser } from 'src/app/auth/utils/accessUtils';
 
 const style = {
     position: 'absolute',
@@ -173,6 +174,8 @@ export function TableUsers() {
                                                 break;
                                         }
                                     }
+                                    const detailsLink = isAgenteUser(i) ? `/agentes/${i.id}` : `/admin/user/${i.id}`;
+
                                     return <TableRow >
                                         <TableCell component="th" scope="row">
                                             <Typography className="" color="text.secondary">
@@ -200,7 +203,7 @@ export function TableUsers() {
                                         </TableCell>
                                         <TableCell component="th" scope="row">
                                             <Typography className="whitespace-nowrap flex items-center">
-                                                <Link to={`/admin/user/${i.id}`} className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10'>
+                                                <Link to={detailsLink} className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10'>
                                                     Detalhes
                                                 </Link>
                                             </Typography>

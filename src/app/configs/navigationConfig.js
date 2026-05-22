@@ -1,4 +1,5 @@
 import i18next from 'i18next';
+import { authRoles } from 'src/app/auth';
 import ar from './navigation-i18n/ar';
 import en from './navigation-i18n/en';
 import tr from './navigation-i18n/tr';
@@ -39,6 +40,15 @@ const navigationConfig = [
     type: 'item',
     icon: 'heroicons-outline:document-report',
     url: 'relatorio-vanzeiro',
+  },
+  {
+    id: 'agentes',
+    title: 'Agentes',
+    translate: 'Agentes',
+    type: 'item',
+    icon: 'heroicons-outline:chart-bar',
+    url: 'agentes',
+    auth: authRoles.agentes,
   },
   {
     id: 'support',
