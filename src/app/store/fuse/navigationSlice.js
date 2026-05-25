@@ -6,7 +6,7 @@ import i18next from 'i18next';
 import _ from '@lodash';
 import navFinanConfig from 'app/configs/navFinanConfig';
 import masterConfig from 'app/configs/masterConfig';
-import suporteConfig from 'app/configs/suporteConfig';
+import { getPrimaryUserRole, getUserAccessTokens } from '../../auth/utils/accessUtils';
 
 const navigationAdapter = createEntityAdapter();
 const emptyInitialState = navigationAdapter.getInitialState();
@@ -53,12 +53,12 @@ const navigationSlice = createSlice({
 
 export const { setNavigation, resetNavigation } = navigationSlice.actions;
 
-const getUserRole = (state) => state.user.role?.name;
-
+const getUserRole = (state) => getPrimaryUserRole(state.user);
+const getUserAccess = (state) => getUserAccessTokens(state.user);
 
 export const selectNavigation = createSelector(
-  [selectNavigationAll, ({ i18n }) => i18n.language, getUserRole],
-  (navigation, language, userRole) => {
+  [selectNavigationAll, ({ i18n }) => i18n.language, getUserRole, getUserAccess],
+  (navigation, language, userRole, userAccess) => {
     function setTranslationValues(data) {
       // loop through every object in the array
       return data.map((item) => {
@@ -76,7 +76,6 @@ export const selectNavigation = createSelector(
     }
     let configToUse;
     switch (userRole) {
-      
       case 'Admin Master':
         configToUse = masterConfig;
         break;
@@ -88,20 +87,14 @@ export const selectNavigation = createSelector(
       case 'Admin Finan':
         configToUse = navFinanConfig;
         break;
-        case 'User':
-        configToUse = navigationConfig;
-        break;
       default:
-      configToUse = suporteConfig;
-
+        configToUse = navigationConfig;
     }
-    
-
 
     return setTranslationValues(
       _.merge(
         [],
-        filterRecursively(configToUse, (item) => FuseUtils.hasPermission(item.auth, userRole))
+        filterRecursively(configToUse, (item) => FuseUtils.hasPermission(item.auth, userAccess))
       )
     );
   }

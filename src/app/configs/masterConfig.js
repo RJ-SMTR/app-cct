@@ -1,4 +1,5 @@
 import i18next from 'i18next';
+import { authRoles } from 'src/app/auth';
 import ar from './navigation-i18n/ar';
 import en from './navigation-i18n/en';
 import tr from './navigation-i18n/tr';
@@ -8,160 +9,153 @@ i18next.addResourceBundle('tr', 'navigation', tr);
 i18next.addResourceBundle('ar', 'navigation', ar);
 
 const masterConfig = [
-    {
-        id: 'Administrativo',
-        title: 'Administrativo',
+  {
+    id: 'Administrativo',
+    title: 'Administrativo',
+    subtitle: '',
+    type: 'collapse',
+    icon: '',
+    children: [
+      {
+        id: 'Home-component',
+        title: 'Home',
+        translate: 'Home',
+        type: 'item',
+        icon: 'heroicons-outline:home',
+        url: 'admin',
+      },
+      {
+        id: 'upload-component',
+        title: 'Upload',
+        translate: 'Upload',
+        type: 'item',
+        icon: 'heroicons-outline:upload',
+        url: 'upload',
+      },
+      // {
+      //     id: 'trigger-component',
+      //     title: 'trigger',
+      //     translate: 'Disparo',
+      //     type: 'item',
+      //     icon: 'heroicons-solid:mail',
+      //     url: 'disparo',
+      // },
+
+      {
+        id: 'support',
+        title: 'Suporte',
+        translate: 'Suporte',
+        type: 'item',
+        icon: 'material-outline:contact_support',
+        target: '_blank',
+        url: 'https://transportes.prefeitura.rio/atendimentodigital/',
+      },
+      {
+        id: 'agentes',
+        title: 'Agentes',
+        translate: 'Agentes',
+        type: 'item',
+        icon: 'heroicons-outline:chart-bar',
+        url: 'agentes',
+        auth: authRoles.agentes,
+      },
+    ],
+  },
+
+  // GRUPO FINANCEIRO
+  {
+    id: 'Financeiro',
+    title: 'Financeiro',
+    subtitle: '',
+    type: 'collapse',
+    icon: '',
+    url: 'group-finan-pai',
+    children: [
+      // {
+      //     id: 'Agendamento',
+      //     title: 'Agendar Pagamentos',
+      //     subtitle: '',
+      //     type: 'item',
+      //     icon: '',
+      //     url: 'group-finan',
+
+      // },
+
+      // {
+      //     id: 'trigger-component',
+      //     title: 'report',
+      //     translate: 'Agendar Remessa ',
+      //     type: 'item',
+      //     icon: 'heroicons-outline:document-report',
+      //     url: 'agendar',
+      // },
+      // {
+      //     id: 'trigger-component',
+      //     title: 'balance',
+      //     translate: 'Aprovação Remessa ',
+      //     type: 'item',
+      //     icon: 'heroicons-outline:currency-dollar',
+      //     url: 'aprovacao-remessa',
+      // },
+      {
+        id: 'Visão Financeira',
+        title: 'Visão Financeira',
         subtitle: '',
-        type: 'collapse',
+        type: 'item',
         icon: '',
-        children: [
-     
-            {
-                id: 'Home-component',
-                title: 'Home',
-                translate: 'Home',
-                type: 'item',
-                icon: 'heroicons-outline:home',
-                url: 'admin',
-                
-
-            },
-            {
-                id: 'upload-component',
-                title: 'Upload',
-                translate: 'Upload',
-                type: 'item',
-                icon: 'heroicons-outline:upload',
-                url: 'upload',
-                
-            },
-            // {
-            //     id: 'trigger-component',
-            //     title: 'trigger',
-            //     translate: 'Disparo',
-            //     type: 'item',
-            //     icon: 'heroicons-solid:mail',
-            //     url: 'disparo',
-            // },
-
-            {
-                id: 'support',
-                title: 'Suporte',
-                translate: 'Suporte',
-                type: 'item',
-                icon: 'material-outline:contact_support',
-                target: '_blank',
-                url: 'https://transportes.prefeitura.rio/atendimentodigital/',
-                
-            },
-        ]
-
-    },
-
-    // GRUPO FINANCEIRO
-    {
-        id: 'Financeiro',
-        title: 'Financeiro',
-        subtitle: '',
-        type: 'collapse',
-        icon: '',
-        url: 'group-finan-pai',
-        children: [
-            {
-                id: 'Agendamento',
-                title: 'Agendar Pagamentos',
-                subtitle: '',
-                type: 'item',
-                icon: '',
-                url: 'group-finan',
-
-
-            },
-
-            {
-                id: 'trigger-component',
-                title: 'report',
-                translate: 'Agendar Remessa ',
-                type: 'item',
-                icon: 'heroicons-outline:document-report',
-                url: 'agendar',
-            },
-            {
-                id: 'trigger-component',
-                title: 'balance',
-                translate: 'Aprovação Remessa ',
-                type: 'item',
-                icon: 'heroicons-outline:currency-dollar',
-                url: 'aprovacao-remessa',
-            },
-            {
-                id: 'Visão Financeira',
-                title: 'Visão Financeira',
-                subtitle: '',
-                type: 'item',
-                icon: '',
-                url: 'group-finan',
-               
-            },
-    {
+        url: 'group-finan',
+      },
+      {
         id: 'trigger-component',
         title: 'report',
         translate: 'Relatórios ',
         type: 'item',
         icon: 'material-outline:ballot',
         url: 'relatorio',
-    },
-    {
+      },
+      {
         id: 'trigger-component',
         title: 'balance',
         translate: 'Extrato ',
         type: 'item',
         icon: 'heroicons-outline:currency-dollar',
         url: 'extrato-contas',
-    },
-     
+      },
 
-            {
-                id: 'Financeiro',
-                title: 'Lançamentos Financeiro',
-                subtitle: '',
-                type: 'item',
-                icon: '',
-                url: 'group-finan',
-          
-            },
-            {
-                id: 'trigger-component',
-                title: 'trigger',
-                translate: 'Lançamentos',
-                type: 'item',
-                icon: 'heroicons-outline:plus-circle',
-                url: 'lancamentos',
-            },
-            {
-                id: 'trigger-component',
-                title: 'trigger',
-                translate: 'Alçada de Aprovação',
-                type: 'item',
-                icon: 'heroicons-outline:currency-dollar',
-                url: 'aprovação',
-            },
-            {
-                id: 'trigger-component',
-                title: 'report',
-                translate: 'Relatório Lançamentos',
-                type: 'item',
-                icon: 'heroicons-outline:document-report',
-                url: 'relatorio-lançamento',
-            },
-        ]
-
-    },
-
-
-
-
-
+      {
+        id: 'Financeiro',
+        title: 'Lançamentos Financeiro',
+        subtitle: '',
+        type: 'item',
+        icon: '',
+        url: 'group-finan',
+      },
+      {
+        id: 'trigger-component',
+        title: 'trigger',
+        translate: 'Lançamentos',
+        type: 'item',
+        icon: 'heroicons-outline:plus-circle',
+        url: 'lancamentos',
+      },
+      {
+        id: 'trigger-component',
+        title: 'trigger',
+        translate: 'Alçada de Aprovação',
+        type: 'item',
+        icon: 'heroicons-outline:currency-dollar',
+        url: 'aprovação',
+      },
+      {
+        id: 'trigger-component',
+        title: 'report',
+        translate: 'Relatório Lançamentos',
+        type: 'item',
+        icon: 'heroicons-outline:document-report',
+        url: 'relatorio-lançamento',
+      },
+    ],
+  },
 ];
 
 export default masterConfig;

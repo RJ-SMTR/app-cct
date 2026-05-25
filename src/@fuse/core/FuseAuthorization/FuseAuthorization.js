@@ -48,22 +48,35 @@ class FuseAuthorization extends Component {
 
     const userHasPermission = FuseUtils.hasPermission(matched.route.auth, userRole);
 
-    const ignoredPaths = ['/', '/callback', '/sign-in', '/sign-out', '/logout', '/404', matchedPath?.pathname, '/forgot-password'];
+    const ignoredPaths = [
+      '/',
+      '/callback',
+      '/sign-in',
+      '/sign-out',
+      '/logout',
+      '/404',
+      matchedPath?.pathname,
+      '/forgot-password',
+    ];
 
-    if (pathname === "/financeiro/sign-in" || pathname === "/admin/sign-in" || pathname === "/sign-in") {
+    if (
+      pathname === '/financeiro/sign-in' ||
+      pathname === '/admin/sign-in' ||
+      pathname === '/sign-in'
+    ) {
       localStorage.setItem('loginUrl', pathname);
     }
 
     if (matched && !userHasPermission && !ignoredPaths.includes(pathname)) {
       switch (pathname) {
-        case "/financeiro/sign-in":
-          setSessionRedirectUrl("/lancamentos");
+        case '/financeiro/sign-in':
+          setSessionRedirectUrl('/lancamentos');
           break;
-        case "/admin/sign-in":
-          setSessionRedirectUrl("/admin");
+        case '/admin/sign-in':
+          setSessionRedirectUrl('/admin');
           break;
         default:
-          setSessionRedirectUrl("/profile");
+          setSessionRedirectUrl('/profile');
       }
     }
 
@@ -75,7 +88,10 @@ class FuseAuthorization extends Component {
   redirectRoute() {
     const { userRole } = this.props;
     const redirectUrl = getSessionRedirectUrl() || this.props.loginRedirectUrl;
-    const lastUserRole = this.state.lastUserRole;
+    const normalizedUserRole = Array.isArray(userRole) ? userRole[0] : userRole;
+    const lastUserRole = Array.isArray(this.state.lastUserRole)
+      ? this.state.lastUserRole[0]
+      : this.state.lastUserRole;
 
     const savedLoginUrl = localStorage.getItem('loginUrl');
 
@@ -95,7 +111,7 @@ class FuseAuthorization extends Component {
       }
     } else {
       setTimeout(() => history.push(redirectUrl), 0);
-      this.setState({ lastUserRole: userRole });
+      this.setState({ lastUserRole: normalizedUserRole });
 
       resetSessionRedirectUrl();
     }
@@ -105,8 +121,6 @@ class FuseAuthorization extends Component {
     return this.state.accessGranted ? this.props.children : null;
   }
 }
-
-
 
 FuseAuthorization.contextType = AppContext;
 
