@@ -8,10 +8,10 @@ import {
   Select,
 } from "@mui/material";
 import { useState, useEffect } from "react";
-import DataGridInfos from "./components/DataGrid";
-import SynthReport from "./components/SynthReport";
-import ConsolidatedReport from "./components/ConsolidatedReport";
-import FinancialMovement from "././components/FinancialMovement"
+import DataGridInfos from "../admin/Report/components/DataGrid";
+import SynthReport from "../admin/Report/components/SynthReport";
+import ConsolidatedReport from "../admin/Report/components/ConsolidatedReport";
+import FinancialMovement from "../admin/Report/components/FinancialMovement";
 import { useDispatch } from "react-redux";
 
 import {
