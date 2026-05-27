@@ -81,6 +81,26 @@ class JwtService extends FuseUtils.EventEmitter {
     });
   };
 
+  signInWithCpfAndPassword = (cpf, password) => {
+    return new Promise((resolve, reject) => {
+      api
+        .post(jwtServiceConfig.cpfSignIn, {
+          cpf,
+          password,
+        })
+        .then((response) => {
+          if (response.data.user) {
+            this.setSession(response.data.token);
+            resolve(response.data.user);
+            this.emit('onLogin', response.data.user);
+          }
+        })
+        .catch((error) => {
+          reject(error.response?.data?.errors || error.response?.data?.details || error);
+        });
+    });
+  };
+
   signInWithToken = () => {
     const token = this.getAccessToken();
     return new Promise((resolve, reject) => {
