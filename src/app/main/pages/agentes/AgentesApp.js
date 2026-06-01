@@ -1,6 +1,6 @@
-import FusePageSimple from '@fuse/core/FusePageSimple';
-import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import { styled } from '@mui/material/styles';
+import FusePageSimple from "@fuse/core/FusePageSimple";
+import FuseSvgIcon from "@fuse/core/FuseSvgIcon";
+import { styled } from "@mui/material/styles";
 import {
   Alert,
   Box,
@@ -17,31 +17,34 @@ import {
   TableRow,
   TextField,
   Typography,
-} from '@mui/material';
-import { MobileDatePicker } from '@mui/x-date-pickers';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { format, parseISO } from 'date-fns';
-import ptBR from 'date-fns/locale/pt-BR';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Link, Navigate, useParams } from 'react-router-dom';
-import { api } from 'app/configs/api/api';
-import { selectUser } from 'app/store/userSlice';
-import { showMessage } from 'app/store/fuse/messageSlice';
-import JwtService from 'src/app/auth/services/jwtService';
-import { isAdminUser } from 'src/app/auth/utils/accessUtils';
-import { PersonalInfo } from '../profile/formCards/formCards';
-import { DEFAULT_AGENTES_DASHBOARD_MONTH, getAgentesDashboard } from './services/agentesService';
+} from "@mui/material";
+import { MobileDatePicker } from "@mui/x-date-pickers";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { format, parseISO } from "date-fns";
+import ptBR from "date-fns/locale/pt-BR";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Link, Navigate, useParams } from "react-router-dom";
+import { api } from "app/configs/api/api";
+import { selectUser } from "app/store/userSlice";
+import { showMessage } from "app/store/fuse/messageSlice";
+import JwtService from "src/app/auth/services/jwtService";
+import { isAdminUser } from "src/app/auth/utils/accessUtils";
+import { PersonalInfo } from "../profile/formCards/formCards";
+import {
+  DEFAULT_AGENTES_DASHBOARD_MONTH,
+  getAgentesDashboard,
+} from "./services/agentesService";
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
-  '& .FusePageSimple-header': {
+  "& .FusePageSimple-header": {
     backgroundColor: theme.palette.background.paper,
     borderBottomWidth: 1,
-    borderStyle: 'solid',
+    borderStyle: "solid",
     borderColor: theme.palette.divider,
-    '& > .container': {
-      maxWidth: '100%',
+    "& > .container": {
+      maxWidth: "100%",
     },
   },
 }));
@@ -55,9 +58,9 @@ function buildMonthDate(month) {
 }
 
 function formatCurrency(value) {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
   }).format(value || 0);
 }
 
@@ -71,7 +74,9 @@ function SummaryCard({ title, value, icon, loading }) {
         {loading ? (
           <Skeleton variant="text" width={140} height={42} />
         ) : (
-          <Typography className="mt-8 font-medium text-3xl leading-none">{value}</Typography>
+          <Typography className="mt-8 font-medium text-3xl leading-none">
+            {value}
+          </Typography>
         )}
       </div>
       <div className="absolute bottom-0 ltr:right-0 rtl:left-0 w-96 h-96 -m-24">
@@ -94,45 +99,54 @@ function EmptyState({ message, colSpan = 5 }) {
 }
 
 function normalizePaymentStatus(status) {
-  const normalizedStatus = String(status || '')
+  const normalizedStatus = String(status || "")
     .trim()
     .toLowerCase();
 
-  if (normalizedStatus === 'pago') {
-    return 'Pago';
+  if (normalizedStatus === "pago") {
+    return "Pago";
   }
 
-  if (normalizedStatus === 'rejeitado') {
-    return 'Rejeitado';
+  if (normalizedStatus === "rejeitado") {
+    return "Rejeitado";
   }
 
-  return '';
+  return "";
 }
 
-function getMonthlyPaymentStatus(day) {
-  const paymentStatuses = Array.isArray(day?.payments)
-    ? day.payments.map((payment) => normalizePaymentStatus(payment?.status)).filter(Boolean)
-    : [];
-
-  if (paymentStatuses.includes('Pago')) {
-    return 'Pago';
+function formatDateLabel(date) {
+  if (!date) {
+    return "-";
   }
 
-  if (paymentStatuses.includes('Rejeitado')) {
-    return 'Rejeitado';
-  }
-
-  return normalizePaymentStatus(day?.paymentStatus) || 'Rejeitado';
+  return format(new Date(`${date}T12:00:00`), "dd/MM/yyyy");
 }
 
-function MonthlyStatusBadge({ day }) {
-  const status = getMonthlyPaymentStatus(day);
+function formatDateTimeLabel(dateTime) {
+  if (!dateTime) {
+    return "-";
+  }
+
+  return format(parseISO(dateTime), "dd/MM/yyyy HH:mm");
+}
+
+function StatusBadge({ status }) {
+  const normalizedStatus = normalizePaymentStatus(status);
+  const badgeStatus = normalizedStatus || status || "Rejeitado";
+  const badgeColor =
+    normalizedStatus === "Rejeitado"
+      ? "error"
+      : String(badgeStatus || "")
+          .toLowerCase()
+          .includes("estorno")
+      ? "warning"
+      : "success";
 
   return (
     <Badge
       className="whitespace-nowrap"
-      color={status === 'Rejeitado' ? 'error' : 'success'}
-      badgeContent={status}
+      color={badgeColor}
+      badgeContent={badgeStatus}
     />
   );
 }
@@ -157,14 +171,18 @@ function AgentBankInfo({ user }) {
 
     async function fetchBanks() {
       try {
-        const response = await api.get('/banks');
+        const response = await api.get("/banks");
         const bankList = response.data;
 
         if (user.previousBankCode) {
-          const matchedPreviousBank = bankList?.find((bank) => bank.code === user.previousBankCode);
+          const matchedPreviousBank = bankList?.find(
+            (bank) => bank.code === user.previousBankCode
+          );
 
           if (matchedPreviousBank) {
-            setPreviousBank(`${user.previousBankCode} - ${matchedPreviousBank.name}`);
+            setPreviousBank(
+              `${user.previousBankCode} - ${matchedPreviousBank.name}`
+            );
           } else {
             setPreviousBank(user.previousBankCode);
           }
@@ -174,7 +192,7 @@ function AgentBankInfo({ user }) {
 
         setBankRm(bankCodes.includes(user.bankCode));
       } catch (requestError) {
-        console.error('Erro ao buscar bancos:', requestError);
+        console.error("Erro ao buscar bancos:", requestError);
       }
     }
 
@@ -186,9 +204,13 @@ function AgentBankInfo({ user }) {
       <header className="flex justify-between items-center">
         <h1 className="font-semibold">Dados Bancários</h1>
       </header>
-      <form name="Bank" noValidate className="flex flex-col justify-center w-full mt-32">
+      <form
+        name="Bank"
+        noValidate
+        className="flex flex-col justify-center w-full mt-32"
+      >
         <TextField
-          value={bankCode ?? user.bankCode ?? ''}
+          value={bankCode ?? user.bankCode ?? ""}
           disabled
           label="Banco"
           className=""
@@ -197,13 +219,13 @@ function AgentBankInfo({ user }) {
         />
         {bankRm ? (
           <span className="my-10 text-red-600">
-            Erro: Código do banco {user.bankCode} não é permitido. Por favor, contacte o
-            suporte!
+            Erro: Código do banco {user.bankCode} não é permitido. Por favor,
+            contacte o suporte!
           </span>
         ) : null}
 
         <TextField
-          value={user.bankAgency ?? ''}
+          value={user.bankAgency ?? ""}
           disabled
           className="my-24"
           label="Agência"
@@ -213,7 +235,7 @@ function AgentBankInfo({ user }) {
         />
         <Box className="flex justify-between">
           <TextField
-            value={user.bankAccount ?? ''}
+            value={user.bankAccount ?? ""}
             disabled
             className="mb-24 w-[68%]"
             label="Conta"
@@ -223,7 +245,7 @@ function AgentBankInfo({ user }) {
           />
 
           <TextField
-            value={user.bankAccountDigit ?? ''}
+            value={user.bankAccountDigit ?? ""}
             disabled
             className="mb-24 w-[30%]"
             label="Dígito"
@@ -234,13 +256,357 @@ function AgentBankInfo({ user }) {
         </Box>
       </form>
       <p className="text-red">
-        Última atualização:{' '}
-        {user?.updatedAt ? format(parseISO(user.updatedAt), 'dd/MM/yyyy HH:mm:ss') : '-'}
+        Última atualização:{" "}
+        {user?.updatedAt
+          ? format(parseISO(user.updatedAt), "dd/MM/yyyy HH:mm:ss")
+          : "-"}
       </p>
       {previousBank ? <p>Banco anterior: {previousBank}</p> : null}
     </Card>
   );
 }
+
+const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
+  agentId,
+  selectedMonth,
+  selectedMonthDate,
+  monthlyPayments,
+  monthlyLoading,
+  onMonthChange,
+}) {
+  const dispatch = useDispatch();
+  const [selectedPaymentDate, setSelectedPaymentDate] = useState("");
+  const [selectedWorkDate, setSelectedWorkDate] = useState("");
+  const [selectedPaymentWeek, setSelectedPaymentWeek] = useState(null);
+  const [selectedWorkDayPhotos, setSelectedWorkDayPhotos] = useState(null);
+  const [drilldownLoading, setDrilldownLoading] = useState(false);
+  const [drilldownError, setDrilldownError] = useState("");
+
+  useEffect(() => {
+    setSelectedPaymentDate("");
+    setSelectedWorkDate("");
+    setSelectedPaymentWeek(null);
+    setSelectedWorkDayPhotos(null);
+    setDrilldownLoading(false);
+    setDrilldownError("");
+  }, [selectedMonth]);
+
+  const handleDrilldownError = useCallback(
+    (message) => {
+      setDrilldownError(message);
+      dispatch(
+        showMessage({
+          message,
+        })
+      );
+    },
+    [dispatch]
+  );
+
+  const loadWeeklyView = useCallback(
+    async (paymentDate) => {
+      setDrilldownLoading(true);
+      setDrilldownError("");
+
+      try {
+        const response = await getAgentesDashboard(
+          agentId,
+          selectedMonth,
+          paymentDate
+        );
+
+        setSelectedPaymentDate(paymentDate);
+        setSelectedWorkDate("");
+        setSelectedPaymentWeek(response.selectedPaymentWeek || null);
+        setSelectedWorkDayPhotos(null);
+      } catch (requestError) {
+        handleDrilldownError(
+          "Não foi possível carregar a visão semanal deste pagamento."
+        );
+      } finally {
+        setDrilldownLoading(false);
+      }
+    },
+    [agentId, handleDrilldownError, selectedMonth]
+  );
+
+  const loadDailyView = useCallback(
+    async (paymentDate, workDate) => {
+      setDrilldownLoading(true);
+      setDrilldownError("");
+
+      try {
+        const response = await getAgentesDashboard(
+          agentId,
+          selectedMonth,
+          paymentDate,
+          workDate
+        );
+
+        setSelectedPaymentDate(paymentDate);
+        setSelectedWorkDate(workDate);
+        setSelectedPaymentWeek(response.selectedPaymentWeek || null);
+        setSelectedWorkDayPhotos(response.selectedWorkDayPhotos || null);
+      } catch (requestError) {
+        handleDrilldownError(
+          "Não foi possível carregar as fotos do dia selecionado."
+        );
+      } finally {
+        setDrilldownLoading(false);
+      }
+    },
+    [agentId, handleDrilldownError, selectedMonth]
+  );
+
+  const handleSelectMonthlyPayment = useCallback(
+    (paymentDate) => {
+      loadWeeklyView(paymentDate);
+    },
+    [loadWeeklyView]
+  );
+
+  const handleSelectWeeklyDay = useCallback(
+    (workDate) => {
+      if (!selectedPaymentDate) {
+        return;
+      }
+
+      loadDailyView(selectedPaymentDate, workDate);
+    },
+    [loadDailyView, selectedPaymentDate]
+  );
+
+  const handleBackToMonthly = useCallback(() => {
+    setSelectedPaymentDate("");
+    setSelectedWorkDate("");
+    setSelectedPaymentWeek(null);
+    setSelectedWorkDayPhotos(null);
+    setDrilldownLoading(false);
+    setDrilldownError("");
+  }, []);
+
+  const handleBackToWeekly = useCallback(() => {
+    setSelectedWorkDate("");
+    setSelectedWorkDayPhotos(null);
+    setDrilldownLoading(false);
+    setDrilldownError("");
+  }, []);
+
+  let monthlyPaymentsRows = (
+    <EmptyState
+      message="Não há pagamentos para o mês selecionado."
+      colSpan={5}
+    />
+  );
+
+  if (monthlyLoading) {
+    monthlyPaymentsRows = [...Array(4)].map((_, index) => (
+      <TableRow key={`loading-payment-cycle-${index}`}>
+        <TableCell colSpan={5}>
+          <Skeleton variant="text" height={28} />
+        </TableCell>
+      </TableRow>
+    ));
+  } else if (monthlyPayments?.length) {
+    monthlyPaymentsRows = monthlyPayments.map((payment) => {
+      const isSelected = selectedPaymentDate === payment.paymentDate;
+
+      return (
+        <TableRow
+          key={payment.paymentDate}
+          hover
+          selected={isSelected}
+          onClick={() => handleSelectMonthlyPayment(payment.paymentDate)}
+          className="cursor-pointer"
+        >
+          <TableCell>{formatDateLabel(payment.paymentDate)}</TableCell>
+          <TableCell>{payment.validPhotosCount}</TableCell>
+          <TableCell>{payment.rejectedPhotosCount}</TableCell>
+          <TableCell>{formatCurrency(payment.totalPaymentValue)}</TableCell>
+          <TableCell>
+            <StatusBadge status={payment.paymentStatus} />
+          </TableCell>
+        </TableRow>
+      );
+    });
+  }
+
+  let weeklyDayRows = (
+    <EmptyState
+      message="Nenhum dia encontrado para este pagamento."
+      colSpan={4}
+    />
+  );
+
+  if (drilldownLoading) {
+    weeklyDayRows = [...Array(4)].map((_, index) => (
+      <TableRow key={`loading-week-day-${index}`}>
+        <TableCell colSpan={4}>
+          <Skeleton variant="text" height={28} />
+        </TableCell>
+      </TableRow>
+    ));
+  } else if (selectedPaymentWeek?.days?.length) {
+    weeklyDayRows = selectedPaymentWeek.days.map((day) => {
+      const isSelected = selectedWorkDate === day.date;
+
+      return (
+        <TableRow
+          key={`${day.date}-${day.periodLabel}`}
+          hover
+          selected={isSelected}
+          onClick={() => handleSelectWeeklyDay(day.date)}
+          className="cursor-pointer"
+        >
+          <TableCell>{formatDateLabel(day.date)}</TableCell>
+          <TableCell>{day.validPhotosCount}</TableCell>
+          <TableCell>{day.rejectedPhotosCount}</TableCell>
+          <TableCell>{formatCurrency(day.totalPaymentValue)}</TableCell>
+        </TableRow>
+      );
+    });
+  }
+
+  let selectedWorkDayPhotoRows = (
+    <EmptyState message="Nenhuma foto encontrada para o dia selecionado." />
+  );
+
+  if (drilldownLoading) {
+    selectedWorkDayPhotoRows = [...Array(4)].map((_, index) => (
+      <TableRow key={`loading-photo-row-${index}`}>
+        <TableCell colSpan={5}>
+          <Skeleton variant="text" height={28} />
+        </TableCell>
+      </TableRow>
+    ));
+  } else if (selectedWorkDayPhotos?.photos?.length) {
+    selectedWorkDayPhotoRows = selectedWorkDayPhotos.photos.map(
+      (photo, index) => (
+        <TableRow
+          key={photo.id || `${photo.description}-${photo.capturedAt}-${index}`}
+        >
+          <TableCell>{formatDateTimeLabel(photo.capturedAt)}</TableCell>
+          <TableCell>{photo.description}</TableCell>
+          <TableCell>{formatCurrency(photo.amount)}</TableCell>
+          <TableCell>{photo.status}</TableCell>
+          <TableCell>{photo.rejectionReason || "-"}</TableCell>
+        </TableRow>
+      )
+    );
+  }
+
+  return (
+    <Paper className="xl:col-span-2 flex flex-col flex-auto p-16 rounded-2xl shadow overflow-hidden">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-16">
+        <div>
+          <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
+            {!selectedPaymentDate
+              ? "Visão mensal"
+              : selectedWorkDate
+              ? "Fotos do dia"
+              : "Visão semanal"}
+          </Typography>
+          <Typography color="text.secondary">
+            {!selectedPaymentDate
+              ? "Selecione um mês para ver os pagamentos diários consolidados."
+              : selectedWorkDate
+              ? `Detalhamento de ${formatDateLabel(selectedWorkDate)} (${
+                  selectedWorkDayPhotos?.periodLabel || "-"
+                }).`
+              : `Pagamento de ${formatDateLabel(selectedPaymentDate)} (${
+                  selectedPaymentWeek?.paymentDayType || "-"
+                }).`}
+          </Typography>
+        </div>
+
+        {!selectedPaymentDate ? (
+          <LocalizationProvider
+            dateAdapter={AdapterDateFns}
+            adapterLocale={ptBR}
+          >
+            <MobileDatePicker
+              label="Selecionar Mês"
+              openTo="month"
+              closeOnSelect
+              views={["year", "month"]}
+              value={selectedMonthDate}
+              onChange={onMonthChange}
+            />
+          </LocalizationProvider>
+        ) : (
+          <div className="flex flex-wrap gap-8">
+            {selectedWorkDate ? (
+              <Button color="secondary" onClick={handleBackToWeekly}>
+                Voltar para semana
+              </Button>
+            ) : null}
+
+            <Button color="secondary" onClick={handleBackToMonthly}>
+              Voltar para visão mensal
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {drilldownError ? (
+        <Alert severity="error" className="mt-16">
+          {drilldownError}
+        </Alert>
+      ) : null}
+
+      <TableContainer sx={{ maxHeight: 440 }} className="mt-24">
+        <Table stickyHeader>
+          {!selectedPaymentDate ? (
+            <>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Pagamento</TableCell>
+                  <TableCell>Fotos válidas</TableCell>
+                  <TableCell>Fotos rejeitadas</TableCell>
+                  <TableCell>Valor total</TableCell>
+                  <TableCell>Status </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>{monthlyPaymentsRows}</TableBody>
+            </>
+          ) : selectedWorkDate ? (
+            <>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Capturada em</TableCell>
+                  <TableCell>Descrição</TableCell>
+                  <TableCell>Valor</TableCell>
+                  <TableCell>Status </TableCell>
+                  <TableCell>Motivo da rejeição</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>{selectedWorkDayPhotoRows}</TableBody>
+            </>
+          ) : (
+            <>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Data</TableCell>
+                  <TableCell>Fotos válidas</TableCell>
+                  <TableCell>Fotos rejeitadas</TableCell>
+                  <TableCell>Valor total</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>{weeklyDayRows}</TableBody>
+            </>
+          )}
+        </Table>
+      </TableContainer>
+
+      {selectedPaymentDate && !selectedWorkDate ? (
+        <Typography className="font-medium text-base mt-16 self-end">
+          Total do pagamento:{" "}
+          {formatCurrency(selectedPaymentWeek?.totalPaymentValue)}
+        </Typography>
+      ) : null}
+    </Paper>
+  );
+});
 
 function AgentesApp() {
   const dispatch = useDispatch();
@@ -251,29 +617,25 @@ function AgentesApp() {
   );
   const [dashboard, setDashboard] = useState(null);
   const [agentDetails, setAgentDetails] = useState(null);
-  const [selectedDay, setSelectedDay] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const selectedMonth = useMemo(() => format(selectedMonthDate, 'yyyy-MM'), [selectedMonthDate]);
-  const selectedDayData = useMemo(() => {
-    return dashboard?.dailyPayments?.find((day) => day.date === selectedDay) || null;
-  }, [dashboard, selectedDay]);
+  const [error, setError] = useState("");
+  const selectedMonth = useMemo(
+    () => format(selectedMonthDate, "yyyy-MM"),
+    [selectedMonthDate]
+  );
   const isOwnDashboard = String(user?.id) === String(id);
   const canAccessSelectedAgent = isAdminUser(user) || isOwnDashboard;
   const dashboardOwnerName =
     agentDetails?.fullName ||
     (isOwnDashboard ? user.fullName : null) ||
-    'Agente';
-  const selectedDayLabel = selectedDayData
-    ? format(new Date(`${selectedDayData.date}T12:00:00`), 'dd/MM/yyyy')
-    : '';
+    "Agente";
 
   const loadAgentDetails = useCallback(async () => {
     if (isOwnDashboard) {
       setAgentDetails(user);
     }
 
-    const token = window.localStorage.getItem('jwt_access_token');
+    const token = window.localStorage.getItem("jwt_access_token");
 
     if (!JwtService.isAuthTokenValid(token)) {
       return;
@@ -290,7 +652,7 @@ function AgentesApp() {
     } catch (requestError) {
       dispatch(
         showMessage({
-          message: 'Não foi possível carregar os dados do agente.',
+          message: "Não foi possível carregar os dados do agente.",
         })
       );
     }
@@ -298,32 +660,33 @@ function AgentesApp() {
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
-      const response = await getAgentesDashboard(id, selectedMonth, selectedDay || undefined);
+      const response = await getAgentesDashboard(id, selectedMonth);
 
-      if (response.availableMonths.length > 0 && !response.availableMonths.includes(selectedMonth)) {
-        const latestAvailableMonth = response.availableMonths[response.availableMonths.length - 1];
+      if (
+        response.availableMonths.length > 0 &&
+        !response.availableMonths.includes(selectedMonth)
+      ) {
+        const latestAvailableMonth =
+          response.availableMonths[response.availableMonths.length - 1];
         setSelectedMonthDate(buildMonthDate(latestAvailableMonth));
         return;
       }
 
       setDashboard(response);
-      if (selectedDay && !response.dailyPayments.some((day) => day.date === selectedDay)) {
-        setSelectedDay('');
-      }
     } catch (requestError) {
-      setError('Não foi possível carregar o painel de agentes.');
+      setError("Não foi possível carregar o painel de agentes.");
       dispatch(
         showMessage({
-          message: 'Não foi possível carregar o painel de agentes.',
+          message: "Não foi possível carregar o painel de agentes.",
         })
       );
     } finally {
       setLoading(false);
     }
-  }, [dispatch, id, selectedDay, selectedMonth]);
+  }, [dispatch, id, selectedMonth]);
 
   useEffect(() => {
     if (!canAccessSelectedAgent) {
@@ -347,45 +710,13 @@ function AgentesApp() {
     }
 
     setSelectedMonthDate(newValue);
-    setSelectedDay('');
   };
 
-  let dailyPaymentsRows = <EmptyState message="Não há pagamentos para o mês selecionado." />;
-
-  if (loading) {
-    dailyPaymentsRows = [...Array(4)].map((_, index) => (
-      <TableRow key={`loading-day-${index}`}>
-        <TableCell colSpan={5}>
-          <Skeleton variant="text" height={28} />
-        </TableCell>
-      </TableRow>
-    ));
-  } else if (dashboard?.dailyPayments?.length) {
-    dailyPaymentsRows = dashboard.dailyPayments.map((day) => {
-      const isSelected = selectedDay === day.date;
-
-      return (
-        <TableRow
-          key={day.date}
-          hover
-          selected={isSelected}
-          onClick={() => setSelectedDay(day.date)}
-          className="cursor-pointer"
-        >
-          <TableCell>{format(new Date(`${day.date}T12:00:00`), 'dd/MM/yyyy')}</TableCell>
-          <TableCell>{day.validPhotosCount}</TableCell>
-          <TableCell>{day.rejectedPhotosCount}</TableCell>
-          <TableCell>{formatCurrency(day.totalPaymentValue)}</TableCell>
-          <TableCell>
-            <MonthlyStatusBadge day={day} />
-          </TableCell>
-        </TableRow>
-      );
-    });
-  }
-
   let rejectionReasonRows = (
-    <EmptyState message="Não há rejeições no período selecionado." colSpan={2} />
+    <EmptyState
+      message="Não há rejeições no período selecionado."
+      colSpan={2}
+    />
   );
 
   if (loading) {
@@ -401,30 +732,6 @@ function AgentesApp() {
       <TableRow key={reason.reason}>
         <TableCell>{reason.reason}</TableCell>
         <TableCell>{reason.count}</TableCell>
-      </TableRow>
-    ));
-  }
-
-  let selectedDayPaymentRows = <EmptyState message="Nenhum dia selecionado para detalhamento." />;
-
-  if (loading) {
-    selectedDayPaymentRows = [...Array(3)].map((_, index) => (
-      <TableRow key={`loading-payment-${index}`}>
-        <TableCell colSpan={5}>
-          <Skeleton variant="text" height={28} />
-        </TableCell>
-      </TableRow>
-    ));
-  } else if (dashboard?.selectedDayPayments?.length) {
-    selectedDayPaymentRows = dashboard.selectedDayPayments.map((payment, index) => (
-      <TableRow key={payment.id || `${payment.description}-${payment.date}-${index}`}>
-        <TableCell>
-          {payment.date ? format(new Date(`${payment.date}T12:00:00`), 'dd/MM/yyyy') : '-'}
-        </TableCell>
-        <TableCell>{payment.description}</TableCell>
-        <TableCell>{formatCurrency(payment.amount)}</TableCell>
-        <TableCell>{payment.status}</TableCell>
-        <TableCell>{payment.rejectionReason || '-'}</TableCell>
       </TableRow>
     ));
   }
@@ -508,44 +815,14 @@ function AgentesApp() {
           ) : null}
 
           <Box className="grid grid-cols-1 xl:grid-cols-3 gap-24">
-            <Paper className="xl:col-span-2 flex flex-col flex-auto p-16 rounded-2xl shadow overflow-hidden">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-16">
-                <div>
-                  <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
-                    Visão mensal
-                  </Typography>
-                  <Typography color="text.secondary">
-                    Selecione um mês para ver os pagamentos diários consolidados.
-                  </Typography>
-                </div>
-
-                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                  <MobileDatePicker
-                    label="Selecionar Mês"
-                    openTo="month"
-                    closeOnSelect
-                    views={['year', 'month']}
-                    value={selectedMonthDate}
-                    onChange={handleSelectedMonth}
-                  />
-                </LocalizationProvider>
-              </div>
-
-              <TableContainer sx={{ maxHeight: 440 }} className="mt-24">
-                <Table stickyHeader>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Data</TableCell>
-                      <TableCell>Fotos válidas</TableCell>
-                      <TableCell>Fotos rejeitadas</TableCell>
-                      <TableCell>Valor total</TableCell>
-                      <TableCell>Status </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>{dailyPaymentsRows}</TableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
+            <DashboardDrilldownCard
+              agentId={id}
+              selectedMonth={selectedMonth}
+              selectedMonthDate={selectedMonthDate}
+              monthlyPayments={dashboard?.monthlyPayments || []}
+              monthlyLoading={loading}
+              onMonthChange={handleSelectedMonth}
+            />
 
             <Paper className="flex flex-col flex-auto p-16 rounded-2xl shadow overflow-hidden">
               <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
@@ -568,42 +845,6 @@ function AgentesApp() {
               </TableContainer>
             </Paper>
           </Box>
-
-          <Paper className="flex flex-col flex-auto p-16 rounded-2xl shadow overflow-hidden">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
-              <div>
-                <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
-                  Registros do dia
-                </Typography>
-                <Typography color="text.secondary">
-                  {selectedDayData
-                    ? `Detalhamento de ${selectedDayLabel}.`
-                    : 'Clique em uma data na visão mensal para ver os registros do dia.'}
-                </Typography>
-              </div>
-
-              {selectedDayData ? (
-                <Typography className="font-medium text-base">
-                  Total do dia: {formatCurrency(selectedDayData.totalPaymentValue)}
-                </Typography>
-              ) : null}
-            </div>
-
-            <TableContainer sx={{ maxHeight: 420 }} className="mt-24">
-              <Table stickyHeader>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Data</TableCell>
-                    <TableCell>Descrição</TableCell>
-                    <TableCell>Valor</TableCell>
-                    <TableCell>Status </TableCell>
-                    <TableCell>Motivo da rejeição</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>{selectedDayPaymentRows}</TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
         </div>
       }
       scroll="normal"
