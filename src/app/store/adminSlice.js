@@ -7,7 +7,7 @@ import JwtService from '../auth/services/jwtService';
 const initialState = {
   agentsList: [],
   userList: [],
-  sendEmailValue: Boolean
+  sendEmailValue: Boolean,
 };
 
 const stepSlice = createSlice({
@@ -33,48 +33,49 @@ export const getAgentUsers = () => (dispatch) => {
   const token = window.localStorage.getItem('jwt_access_token');
   if (JwtService.isAuthTokenValid(token)) {
     return new Promise((resolve, reject) => {
-      api.get('/users', {
-        headers: { 'Authorization': `Bearer ${token}` }
+      api.get('/agentes/users', {
+        headers: { Authorization: `Bearer ${token}` },
       })
         .then((response) => {
-          const filteredUsers = response.data.data
+          const filteredUsers = response.data
             .filter((user) => user.permitCode != null && isAgenteUser(user))
             .sort((firstUser, secondUser) => {
               return (firstUser.fullName || '').localeCompare(secondUser.fullName || '');
             });
 
-          dispatch(setAgentsList(filteredUsers))
-          resolve(filteredUsers)
+          dispatch(setAgentsList(filteredUsers));
+          resolve(filteredUsers);
         })
         .catch((error) => {
-          reject(error)
-        })
-    })
+          reject(error);
+        });
+    });
   }
 
-  return Promise.resolve([])
-}
+  return Promise.resolve([]);
+};
 
 export const getUser = () => (dispatch) => {
   const token = window.localStorage.getItem('jwt_access_token');
   if (JwtService.isAuthTokenValid(token)) {
     return new Promise((resolve, reject) => {
       api.get('/users', {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       })
         .then((response) => {
-          const filteredUsers = response.data.data.filter(user =>
-            user.permitCode != null && user.role?.name != 'Admin'
-          )
-          dispatch(setUsersList(filteredUsers))
-          resolve(response.data)
+          const filteredUsers = response.data.data.filter(
+            (user) => user.permitCode != null && user.role?.name !== 'Admin'
+          );
+          dispatch(setUsersList(filteredUsers));
+          resolve(response.data);
         })
         .catch((error) => {
-          reject(error)
-        })
-    })
+          reject(error);
+        });
+    });
   }
-}
+  return Promise.resolve(null);
+};
 export const getInfo = () => (dispatch) => {
   const token = window.localStorage.getItem('jwt_access_token');
   const currentHostname = window.location.hostname;
@@ -85,46 +86,49 @@ export const getInfo = () => (dispatch) => {
     : 'https://api.cct.hmg.mobilidade.rio/';
   return new Promise((resolve, reject) => {
     api.get(`${baseUrl}api/settings`, {
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     })
       .then((response) => {
-        const targetObject = response.data.find(item => item.name === "activate_auto_send_invite")
-        dispatch(setSendEmailValue(targetObject))
-        resolve(response.data)
+        const targetObject = response.data.find(
+          (item) => item.name === 'activate_auto_send_invite'
+        );
+        dispatch(setSendEmailValue(targetObject));
+        resolve(response.data);
       })
       .catch((error) => {
-        reject(error)
-      })
-  })
-}
+        reject(error);
+      });
+  });
+};
 export const getUserByInfo = (selectedQuery, query, inviteStatus) => (dispatch) => {
   const token = window.localStorage.getItem('jwt_access_token');
   if (JwtService.isAuthTokenValid(token)) {
-    const queryKey = selectedQuery === "fullName" ? 'name' : selectedQuery
+    const queryKey = selectedQuery === 'fullName' ? 'name' : selectedQuery;
     return new Promise((resolve, reject) => {
       const requestData = {
         [queryKey]: query,
-        inviteStatus: inviteStatus
+        inviteStatus,
       };
 
       api.get('/users', {
         params: requestData,
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` },
       })
         .then((response) => {
-          const filteredUsers = response.data.data.filter(user =>
-            user.permitCode != null && user.role?.name != 'Admin'
-          )
-          dispatch(setUsersList(filteredUsers))
-          resolve(response)
+          const filteredUsers = response.data.data.filter(
+            (user) => user.permitCode != null && user.role?.name !== 'Admin'
+          );
+          dispatch(setUsersList(filteredUsers));
+          resolve(response);
         })
         .catch((error) => {
-          reject(error)
-        })
-    })
+          reject(error);
+        });
+    });
   }
 
-}
+  return Promise.resolve(null);
+};
 // function handleUserData(previousDays, dateRange, searchingDay, searchingWeek) {
 //     if (dateRange?.length > 0 && !searchingDay) {
 //         const separateDate = dateRange.map((i) => {
@@ -153,9 +157,9 @@ export const getUserStatements = (userId) => (dispatch) => {
   const token = window.localStorage.getItem('jwt_access_token');
   if (JwtService.isAuthTokenValid(token)) {
     return new Promise((resolve, reject) => {
-      const apiRoute = `bank-statements/me?userId=${userId}`
+      const apiRoute = `bank-statements/me?userId=${userId}`;
       api.get(apiRoute, {
-        headers: { "Authorization": `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` },
       })
         .then((response) => {
           dispatch(setStatements(response.data.data));
@@ -166,4 +170,5 @@ export const getUserStatements = (userId) => (dispatch) => {
         });
     });
   }
-}
+  return Promise.resolve(null);
+};

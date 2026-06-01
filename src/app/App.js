@@ -13,6 +13,7 @@ import themeLayouts from 'app/theme-layouts/themeLayouts';
 import { selectMainTheme } from 'app/store/fuse/settingsSlice';
 import FuseAuthorization from '@fuse/core/FuseAuthorization';
 import settingsConfig from 'app/configs/settingsConfig';
+import { hasAgentesAccess, isAdminUser } from 'src/app/auth/utils/accessUtils';
 import withAppProviders from './withAppProviders';
 import { AuthProvider } from './auth/AuthContext';
 import 'leaflet/dist/leaflet.css';
@@ -48,11 +49,15 @@ function App() {
     };
   }, []);
 
-  const loginRedirectUrl = user.role?.name?.includes('Financeiro')
-    ? '/lancamentos'
-    : user.role?.name?.includes('Admin')
-      ? '/admin'
-      : settingsConfig.loginRedirectUrl;
+  let loginRedirectUrl = settingsConfig.loginRedirectUrl;
+
+  if (user.role?.name?.includes('Financeiro')) {
+    loginRedirectUrl = '/lancamentos';
+  } else if (isAdminUser(user)) {
+    loginRedirectUrl = '/admin';
+  } else if (hasAgentesAccess(user)) {
+    loginRedirectUrl = '/agentes';
+  }
 
   return (
     <CacheProvider value={createCache(emotionCacheOptions[langDirection])}>

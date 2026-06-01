@@ -1,5 +1,6 @@
 const jwtServiceConfig = {
   signIn: `auth/licensee/login`,
+  cpfSignIn: 'auth/login/cpf',
   signUp: 'api/auth/sign-up',
   userInfo: `auth/me`,
   updateUser: 'api/auth/user/update',

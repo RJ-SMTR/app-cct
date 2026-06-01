@@ -5,40 +5,40 @@ import Checkbox from '@mui/material/Checkbox';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import TextField from '@mui/material/TextField';
-import Input from '@mui/material/Input';
-import InputLabel from '@mui/material/InputLabel';
-import FormHelperText from '@mui/material/FormHelperText';
 import Typography from '@mui/material/Typography';
 import { Link } from 'react-router-dom';
 import * as yup from 'yup';
 import _ from '@lodash';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
-import jwtService from '../../../../auth/services/jwtService';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { useState } from 'react';
+import jwtService from '../../../../auth/services/jwtService';
 
 /**
  * Form Validation Schema
  */
 
 const schema = yup.object().shape({
-  permitCode: yup.string().required('Insira seu código de permissão'),
+  credential: yup.string().required('Insira seu CPF ou código de permissão'),
   password: yup.string().required('Por favor insira sua senha.').min(4, 'Senha muito curta'),
 });
 
 const defaultValues = {
-  permitCode: '',
+  credential: '',
   password: '',
   remember: true,
 };
 
 function SignInPage() {
-  const isHmg = window.location.href.includes("hmg")
-  const { control, formState, handleSubmit, setError, setValue } = useForm({
+  const isHmg = window.location.href.includes("hmg");
+  const [loginMode, setLoginMode] = useState('permitCode');
+  const { control, formState, handleSubmit, setError, resetField } = useForm({
     mode: 'onChange',
     defaultValues,
     resolver: yupResolver(schema),
@@ -48,38 +48,51 @@ function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const handleClickShowPassword = () => {
     const input = document.getElementById('password');
-    if (input) input.blur(); 
+    if (input) input.blur();
     setShowPassword((show) => !show);
   };
-  
+
   const handleMouseDownPassword = (event) => event.preventDefault();
 
   const { isValid, dirtyFields, errors } = formState;
 
-  function onSubmit({ permitCode, password }) {
-    jwtService
-      .signInWithPermitCodeAndPasswrod(permitCode, password)
-      .then((user) => { })
+  function onSubmit({ credential, password }) {
+    const normalizedCredential = credential.trim();
+    const signInRequest = loginMode === 'cpf'
+      ? jwtService.signInWithCpfAndPassword(
+        normalizedCredential.replace(/\D/g, ''),
+        password
+      )
+      : jwtService.signInWithPermitCodeAndPasswrod(normalizedCredential, password);
+
+    signInRequest
+      .then(() => {})
       .catch((_errors) => {
         setError('password', {
-          message: 'Senha ou código de permissionário incorretos',
+          message:
+            loginMode === 'cpf'
+              ? 'CPF ou senha incorretos'
+              : 'Senha ou código de permissionário incorretos',
         });
       });
   }
+
+  const credentialLabel = loginMode === 'cpf' ? 'CPF' : 'Código de Permissão';
+  const credentialError = errors?.credential?.message;
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-center md:items-start sm:justify-center md:justify-start flex-1 min-w-0">
       <Paper className="h-full sm:h-auto flex items-center md:flex md:items-center md:justify-end w-full sm:w-auto md:h-full md:w-1/2 py-8 px-16 sm:p-48 md:p-64 sm:rounded-2xl md:rounded-none sm:shadow md:shadow-none ltr:border-r-1 rtl:border-l-1 relative">
         <div className="w-full max-w-320 h-5/6 md:h-1/2  sm:w-320 mx-auto sm:mx-0">
           <Typography className="mt-48 text-4xl font-extrabold tracking-tight leading-tight">
-            <img src="assets/icons/logoPrefeitura.png" width="155" className='mb-10' alt='logo CCT' />
+            <img src="assets/icons/logoPrefeitura.png" width="155" className="mb-10" alt="logo CCT" />
             Login
           </Typography>
 
           <div className="flex items-baseline mt-2 font-medium">
             <Typography>Não foi registrado?</Typography>
             <Link className="ml-4" to="https://transportes.prefeitura.rio/atendimentodigital/">
-              <span className='underline'> fale conosco!</span>
+              <span className="underline"> fale conosco!</span>
             </Link>
           </div>
           {isHmg && (
@@ -88,6 +101,20 @@ function SignInPage() {
             </Box>
           )}
 
+          <Tabs
+            value={loginMode}
+            onChange={(_event, value) => {
+              setLoginMode(value);
+              resetField('credential');
+              resetField('password');
+            }}
+            className="mt-24"
+            variant="fullWidth"
+          >
+            <Tab value="permitCode" label="Código" />
+            <Tab value="cpf" label="CPF" />
+          </Tabs>
+
           <form
             name="loginForm"
             noValidate
@@ -95,17 +122,17 @@ function SignInPage() {
             onSubmit={handleSubmit(onSubmit)}
           >
             <Controller
-              name="permitCode"
+              name="credential"
               control={control}
               render={({ field }) => (
                 <TextField
                   {...field}
                   className="mb-24"
-                  label="Código de Permissão"
+                  label={credentialLabel}
                   autoFocus
                   type="string"
-                  error={!!errors.permitCodeNotExists}
-                  helperText={errors?.permitCodeNotExists?.message}
+                  error={!!errors.credential}
+                  helperText={credentialError}
                   variant="outlined"
                   required
                   fullWidth

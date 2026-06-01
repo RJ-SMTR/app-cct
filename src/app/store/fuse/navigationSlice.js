@@ -1,5 +1,6 @@
 import { createEntityAdapter, createSelector, createSlice } from '@reduxjs/toolkit';
 import navigationConfig from 'app/configs/navigationConfig';
+import agentesNavigationConfig from 'app/configs/agentesNavigationConfig';
 import navAdminConfig from 'app/configs/navAdminConfig';
 import FuseUtils from '@fuse/utils';
 import i18next from 'i18next';
@@ -86,6 +87,10 @@ export const selectNavigation = createSelector(
       case 'Aprovador financeiro':
       case 'Admin Finan':
         configToUse = navFinanConfig;
+        break;
+      case 'Agentes':
+      case 'agentes':
+        configToUse = agentesNavigationConfig;
         break;
       default:
         configToUse = navigationConfig;

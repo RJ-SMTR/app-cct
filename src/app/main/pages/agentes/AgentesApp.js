@@ -32,7 +32,6 @@ import { showMessage } from 'app/store/fuse/messageSlice';
 import JwtService from 'src/app/auth/services/jwtService';
 import { isAdminUser } from 'src/app/auth/utils/accessUtils';
 import { PersonalInfo } from '../profile/formCards/formCards';
-import MOCK_AGENT_USERS from './mocks/mockAgents';
 import { DEFAULT_AGENTES_DASHBOARD_MONTH, getAgentesDashboard } from './services/agentesService';
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
@@ -60,20 +59,6 @@ function formatCurrency(value) {
     style: 'currency',
     currency: 'BRL',
   }).format(value || 0);
-}
-
-function getAgentCpf(agentUser) {
-  return agentUser?.cpf || agentUser?.cpfCnpj || '-';
-}
-
-function getAgentAssociation(agentUser) {
-  return (
-    agentUser?.consorcio ||
-    agentUser?.consorcioName ||
-    agentUser?.association ||
-    agentUser?.associacao ||
-    '-'
-  );
 }
 
 function SummaryCard({ title, value, icon, loading }) {
@@ -273,23 +258,19 @@ function AgentesApp() {
   const selectedDayData = useMemo(() => {
     return dashboard?.dailyPayments?.find((day) => day.date === selectedDay) || null;
   }, [dashboard, selectedDay]);
-  const selectedMockAgent = MOCK_AGENT_USERS.find(
-    (mockAgent) => String(mockAgent.id) === String(id)
-  );
   const isOwnDashboard = String(user?.id) === String(id);
   const canAccessSelectedAgent = isAdminUser(user) || isOwnDashboard;
   const dashboardOwnerName =
     agentDetails?.fullName ||
     (isOwnDashboard ? user.fullName : null) ||
-    selectedMockAgent?.fullName ||
     'Agente';
   const selectedDayLabel = selectedDayData
     ? format(new Date(`${selectedDayData.date}T12:00:00`), 'dd/MM/yyyy')
     : '';
 
   const loadAgentDetails = useCallback(async () => {
-    if (selectedMockAgent) {
-      setAgentDetails(selectedMockAgent);
+    if (isOwnDashboard) {
+      setAgentDetails(user);
     }
 
     const token = window.localStorage.getItem('jwt_access_token');
@@ -307,30 +288,31 @@ function AgentesApp() {
 
       setAgentDetails(response.data);
     } catch (requestError) {
-      if (!selectedMockAgent) {
-        dispatch(
-          showMessage({
-            message: 'Não foi possível carregar os dados do agente.',
-          })
-        );
-      }
+      dispatch(
+        showMessage({
+          message: 'Não foi possível carregar os dados do agente.',
+        })
+      );
     }
-  }, [dispatch, id, selectedMockAgent]);
+  }, [dispatch, id, isOwnDashboard, user]);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
     setError('');
 
     try {
-      const response = await getAgentesDashboard(id, selectedMonth);
-      setDashboard(response);
-      setSelectedDay((currentSelectedDay) => {
-        if (response.dailyPayments.some((day) => day.date === currentSelectedDay)) {
-          return currentSelectedDay;
-        }
+      const response = await getAgentesDashboard(id, selectedMonth, selectedDay || undefined);
 
-        return '';
-      });
+      if (response.availableMonths.length > 0 && !response.availableMonths.includes(selectedMonth)) {
+        const latestAvailableMonth = response.availableMonths[response.availableMonths.length - 1];
+        setSelectedMonthDate(buildMonthDate(latestAvailableMonth));
+        return;
+      }
+
+      setDashboard(response);
+      if (selectedDay && !response.dailyPayments.some((day) => day.date === selectedDay)) {
+        setSelectedDay('');
+      }
     } catch (requestError) {
       setError('Não foi possível carregar o painel de agentes.');
       dispatch(
@@ -341,7 +323,7 @@ function AgentesApp() {
     } finally {
       setLoading(false);
     }
-  }, [dispatch, id, selectedMonth]);
+  }, [dispatch, id, selectedDay, selectedMonth]);
 
   useEffect(() => {
     if (!canAccessSelectedAgent) {
@@ -349,8 +331,15 @@ function AgentesApp() {
     }
 
     loadAgentDetails();
+  }, [canAccessSelectedAgent, loadAgentDetails]);
+
+  useEffect(() => {
+    if (!canAccessSelectedAgent) {
+      return;
+    }
+
     loadDashboard();
-  }, [canAccessSelectedAgent, loadAgentDetails, loadDashboard]);
+  }, [canAccessSelectedAgent, loadDashboard]);
 
   const handleSelectedMonth = (newValue) => {
     if (!newValue) {
@@ -426,8 +415,8 @@ function AgentesApp() {
         </TableCell>
       </TableRow>
     ));
-  } else if (selectedDayData?.payments?.length) {
-    selectedDayPaymentRows = selectedDayData.payments.map((payment, index) => (
+  } else if (dashboard?.selectedDayPayments?.length) {
+    selectedDayPaymentRows = dashboard.selectedDayPayments.map((payment, index) => (
       <TableRow key={payment.id || `${payment.description}-${payment.date}-${index}`}>
         <TableCell>
           {payment.date ? format(new Date(`${payment.date}T12:00:00`), 'dd/MM/yyyy') : '-'}
@@ -448,12 +437,6 @@ function AgentesApp() {
     <Root
       header={
         <div className="flex flex-col">
-          <img
-            className="h-160 lg:h-320 object-cover w-full"
-            src="assets/images/pages/profile/cover.jpg"
-            alt="Profile Cover"
-          />
-
           <div className="flex flex-col justify-center max-w-[95%] w-full mx-auto px-32 py-24 lg:h-72">
             <div className="flex flex-col items-start my-16">
               <Typography className="text-lg font-bold leading-none">

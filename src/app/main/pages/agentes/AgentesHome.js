@@ -17,12 +17,11 @@ import {
   MenuItem,
 } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { selectUser } from 'app/store/userSlice';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import { getAgentUsers } from 'app/store/adminSlice';
 import { isAdminUser } from 'src/app/auth/utils/accessUtils';
-import MOCK_AGENT_USERS from './mocks/mockAgents';
 
 const style = {
   position: 'absolute',
@@ -88,14 +87,12 @@ function AgentesHome() {
 
     dispatch(getAgentUsers())
       .then((agentUsers) => {
-        const mergedAgents = [...MOCK_AGENT_USERS, ...agentUsers];
-
-        setAllAgents(mergedAgents);
-        setAgents(mergedAgents);
+        setAllAgents(agentUsers);
+        setAgents(agentUsers);
       })
       .catch(() => {
-        setAllAgents(MOCK_AGENT_USERS);
-        setAgents(MOCK_AGENT_USERS);
+        setAllAgents([]);
+        setAgents([]);
         dispatch(
           showMessage({
             message: 'Não foi possível carregar os agentes.',
@@ -112,11 +109,9 @@ function AgentesHome() {
       return;
     }
 
-    const mergedAgents = [...MOCK_AGENT_USERS, ...fetchedAgents];
-
-    setAllAgents(mergedAgents);
+    setAllAgents(fetchedAgents);
     if (!filtered) {
-      setAgents(mergedAgents);
+      setAgents(fetchedAgents);
     }
   }, [fetchedAgents, filtered]);
 
@@ -195,6 +190,10 @@ function AgentesHome() {
           </TableCell>
         </TableRow>
       ));
+  }
+
+  if (!isAdminUser(user)) {
+    return <Navigate to={`/agentes/${user?.id}`} replace />;
   }
 
   return (
