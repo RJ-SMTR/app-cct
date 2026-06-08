@@ -133,7 +133,6 @@ function formatDateTimeLabel(dateTime) {
 function getInviteSentAt(user) {
   return user.inviteAt || "";
 }
-
 function StatusBadge({ status }) {
   const normalizedStatus = normalizePaymentStatus(status);
   const badgeStatus = normalizedStatus || status || "Rejeitado";
