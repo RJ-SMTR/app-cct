@@ -25,11 +25,13 @@ import ReportConfig from '../main/pages/admin/Report/ReportConfig';
 import ReportReleaseConfig from '../main/pages/admin/ReportRelease/ReportReleaseConfig';
 import ReportVanzeiroConfig from '../main/pages/report/reportConfig';
 import agentesAppConfig from '../main/pages/agentes/agentesAppConfig';
+import AgentesSignInConfig from '../main/pages/agentes/sign-in/AgentesSignInConfig';
 
 const routeConfigs = [
   // HomeConifg,
   SignOutConfig,
   SignInConfig,
+  AgentesSignInConfig,
   ForgotPasswordConfig,
   ResetPasswordConfig,
   ConcludeConfig,
