@@ -31,7 +31,7 @@ import { selectUser } from "app/store/userSlice";
 import { showMessage } from "app/store/fuse/messageSlice";
 import JwtService from "src/app/auth/services/jwtService";
 import { isAdminUser } from "src/app/auth/utils/accessUtils";
-import { PersonalInfo } from "../profile/formCards/formCards";
+import { getUserCpf, PersonalInfo } from "../profile/formCards/formCards";
 import {
   DEFAULT_AGENTES_DASHBOARD_MONTH,
   getAgentesDashboard,
@@ -130,6 +130,9 @@ function formatDateTimeLabel(dateTime) {
   return format(parseISO(dateTime), "dd/MM/yyyy HH:mm");
 }
 
+function getInviteSentAt(user) {
+  return user.inviteAt || "";
+}
 function StatusBadge({ status }) {
   const normalizedStatus = normalizePaymentStatus(status);
   const badgeStatus = normalizedStatus || status || "Rejeitado";
@@ -137,10 +140,10 @@ function StatusBadge({ status }) {
     normalizedStatus === "Rejeitado"
       ? "error"
       : String(badgeStatus || "")
-          .toLowerCase()
-          .includes("estorno")
-      ? "warning"
-      : "success";
+        .toLowerCase()
+        .includes("estorno")
+        ? "warning"
+        : "success";
 
   return (
     <Badge
@@ -503,18 +506,16 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
             {!selectedPaymentDate
               ? "Visão mensal"
               : selectedWorkDate
-              ? "Fotos do dia"
-              : "Visão semanal"}
+                ? "Fotos do dia"
+                : "Visão semanal"}
           </Typography>
           <Typography color="text.secondary">
             {!selectedPaymentDate
               ? "Selecione um mês para ver os pagamentos diários consolidados."
               : selectedWorkDate
-              ? `Detalhamento de ${formatDateLabel(selectedWorkDate)} (${
-                  selectedWorkDayPhotos?.periodLabel || "-"
+                ? `Detalhamento de ${formatDateLabel(selectedWorkDate)} (${selectedWorkDayPhotos?.periodLabel || "-"
                 }).`
-              : `Pagamento de ${formatDateLabel(selectedPaymentDate)} (${
-                  selectedPaymentWeek?.paymentDayType || "-"
+                : `Pagamento de ${formatDateLabel(selectedPaymentDate)} (${selectedPaymentWeek?.paymentDayType || "-"
                 }).`}
           </Typography>
         </div>
@@ -629,6 +630,8 @@ function AgentesApp() {
     agentDetails?.fullName ||
     (isOwnDashboard ? user.fullName : null) ||
     "Agente";
+  const agentCpf = getUserCpf(agentDetails);
+  const inviteSentAt = getInviteSentAt(agentDetails);
 
   const loadAgentDetails = useCallback(async () => {
     if (isOwnDashboard) {
@@ -745,11 +748,22 @@ function AgentesApp() {
       header={
         <div className="flex flex-col">
           <div className="flex flex-col justify-center max-w-[95%] w-full mx-auto px-32 py-24 lg:h-72">
-            <div className="flex flex-col items-start my-16">
-              <Typography className="text-lg font-bold leading-none">
-                {dashboardOwnerName}
-              </Typography>
-              <Typography color="text.secondary">#{id}</Typography>
+            <div className="flex flex-col gap-12 my-16 md:flex-row md:items-start md:justify-between">
+              <div className="flex flex-col items-start">
+                <Typography className="text-lg font-bold leading-none">
+                  {dashboardOwnerName}
+                </Typography>
+                <Typography color="text.secondary">#{id}</Typography>
+              </div>
+
+              <div className="flex flex-col md:items-end">
+                <Typography className="text-sm font-medium">
+                  Convite enviado em
+                </Typography>
+                <Typography color="text.secondary">
+                  {formatDateTimeLabel(inviteSentAt)}
+                </Typography>
+              </div>
             </div>
           </div>
         </div>
@@ -773,7 +787,11 @@ function AgentesApp() {
 
           {agentDetails ? (
             <div className="flex flex-col md:flex-row">
-              <PersonalInfo user={agentDetails} />
+              <PersonalInfo
+                user={agentDetails}
+                primaryInfoLabel="CPF"
+                primaryInfoValue={agentCpf}
+              />
               <AgentBankInfo user={agentDetails} />
             </div>
           ) : null}

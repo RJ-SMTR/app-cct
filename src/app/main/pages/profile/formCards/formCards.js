@@ -28,15 +28,23 @@ const style = {
     p: 4,
 };
 
+export function getUserCpf(user) {
+    return user?.cpf || user?.cpfCnpj || '-';
+}
 
-export function PersonalInfo({ user }) {
+export function PersonalInfo({
+    user,
+    primaryInfoLabel = 'Código de Permissão',
+    primaryInfoValue,
+}) {
     const { patchInfo, success } = useContext(AuthContext)
     const [isEditable, setIsEditable] = useState(false)
     const [saved, setSaved] = useState(false)
+    const resolvedPrimaryInfoValue = primaryInfoValue ?? user?.permitCode ?? '';
 
     const { handleSubmit, control, setError, formState } = useForm({
         defaultValues: {
-            permitCode: user.permitCode,
+            permitCode: resolvedPrimaryInfoValue,
             email: user.email,
             fullName: user.fullName ?? '',
             phone: user.phone ?? '',
@@ -107,11 +115,11 @@ export function PersonalInfo({ user }) {
                             <TextField
                                 {...field}
                                 className="mb-24"
-                                label="Código de Permissão"
+                                label={primaryInfoLabel}
                                 type="string"
                                 variant="outlined"
                                 disabled
-                                value={user.permitCode}
+                                value={resolvedPrimaryInfoValue}
                                 fullWidth
                             />
                         )}
