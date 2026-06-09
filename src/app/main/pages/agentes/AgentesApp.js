@@ -21,7 +21,7 @@ import {
 import { MobileDatePicker } from "@mui/x-date-pickers";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { format, parseISO } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 import ptBR from "date-fns/locale/pt-BR";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -115,19 +115,58 @@ function normalizePaymentStatus(status) {
 }
 
 function formatDateLabel(date) {
-  if (!date) {
+  const parsedDate = parseDateValue(date);
+
+  if (!parsedDate) {
     return "-";
   }
 
-  return format(new Date(`${date}T12:00:00`), "dd/MM/yyyy");
+  return format(parsedDate, "dd/MM/yyyy");
 }
 
-function formatDateTimeLabel(dateTime) {
-  if (!dateTime) {
+function normalizeDateValue(dateValue) {
+  if (typeof dateValue !== "string") {
+    return "";
+  }
+
+  const normalizedDateValue = dateValue.trim();
+
+  if (!normalizedDateValue) {
+    return "";
+  }
+
+  const lowerCaseDateValue = normalizedDateValue.toLowerCase();
+
+  if (lowerCaseDateValue === "null" || lowerCaseDateValue === "undefined") {
+    return "";
+  }
+
+  return normalizedDateValue;
+}
+
+function parseDateValue(dateValue) {
+  const normalizedDateValue = normalizeDateValue(dateValue);
+
+  if (!normalizedDateValue) {
+    return null;
+  }
+
+  const isoDateValue = normalizedDateValue.includes("T")
+    ? normalizedDateValue
+    : `${normalizedDateValue}T12:00:00`;
+  const parsedDateValue = parseISO(isoDateValue);
+
+  return isValid(parsedDateValue) ? parsedDateValue : null;
+}
+
+function formatDateTimeLabel(dateTime, dateFormat = "dd/MM/yyyy HH:mm") {
+  const parsedDateTime = parseDateValue(dateTime);
+
+  if (!parsedDateTime) {
     return "-";
   }
 
-  return format(parseISO(dateTime), "dd/MM/yyyy HH:mm");
+  return format(parsedDateTime, dateFormat);
 }
 
 function getInviteSentAt(user) {
@@ -260,9 +299,7 @@ function AgentBankInfo({ user }) {
       </form>
       <p className="text-red">
         Última atualização:{" "}
-        {user?.updatedAt
-          ? format(parseISO(user.updatedAt), "dd/MM/yyyy HH:mm:ss")
-          : "-"}
+        {formatDateTimeLabel(user?.updatedAt, "dd/MM/yyyy HH:mm:ss")}
       </p>
       {previousBank ? <p>Banco anterior: {previousBank}</p> : null}
     </Card>
