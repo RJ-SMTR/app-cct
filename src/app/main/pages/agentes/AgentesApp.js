@@ -131,7 +131,7 @@ function formatDateTimeLabel(dateTime) {
 }
 
 function getInviteSentAt(user) {
-  return user.inviteAt || "";
+  return user?.inviteAt || "";
 }
 function StatusBadge({ status }) {
   const normalizedStatus = normalizePaymentStatus(status);
