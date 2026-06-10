@@ -77,13 +77,6 @@ function AgentesSignInPage() {
             Login de Agente
           </Typography>
 
-          <div className="flex items-baseline mt-2 font-medium">
-            <Typography>É permissionário?</Typography>
-            <Link className="ml-4 underline" to="/sign-in">
-              Use o login geral
-            </Link>
-          </div>
-
           {isHmg && (
             <Box className="mt-10 bg-red-500 uppercase text-white text-center p-10 rounded-4 text-xl">
               Homologação

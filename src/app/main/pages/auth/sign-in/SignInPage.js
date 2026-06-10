@@ -56,7 +56,7 @@ function SignInPage() {
   function onSubmit({ credential, password }) {
     jwtService
       .signInWithPermitCodeAndPasswrod(credential.trim(), password)
-      .then(() => {})
+      .then(() => { })
       .catch((_errors) => {
         setError('password', {
           message: 'Senha ou código de permissionário incorretos',
@@ -79,12 +79,6 @@ function SignInPage() {
             <Typography>Não foi registrado?</Typography>
             <Link className="ml-4" to="https://transportes.prefeitura.rio/atendimentodigital/">
               <span className="underline"> fale conosco!</span>
-            </Link>
-          </div>
-          <div className="flex items-baseline mt-8 font-medium">
-            <Typography>É agente?</Typography>
-            <Link className="ml-4 underline" to="/agentes/sign-in">
-              Use o login de agentes
             </Link>
           </div>
           {isHmg && (
