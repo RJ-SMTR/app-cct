@@ -42,6 +42,12 @@ const themesConfig = {
         dark: 'rgb(255, 255, 255, 0)',
         contrastText: lightPaletteText.seeT,
       },
+      wait: {
+        light: '#FFF7CC',
+        main: '#FFE78A',
+        dark: '#FFD54D',
+        contrastText: 'rgb(17, 24, 39)',
+      },
       background: {
         paper: '#FFFFFF',
         default: '#f1f5f9',

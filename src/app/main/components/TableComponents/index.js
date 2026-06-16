@@ -39,6 +39,8 @@ export function CustomTable(data) {
 
     const getStatus = (i) => {
       switch (i.statusRemessa) {
+        case 2:
+          return 'Aguardando Pgto.';
         case 3:
           return 'Pago';
         case 4:
@@ -59,7 +61,7 @@ export function CustomTable(data) {
         case 5:
           return 'info';
         case 2:
-          return 'warning';
+          return 'wait';
         case 1:
           return 'warning';
         case 0:
@@ -156,8 +158,6 @@ export function CustomTable(data) {
             <Typography className="whitespace-nowrap">
               {
                 (() => {
-                  console.log("🔍 statusRemessa:", data.data.statusRemessa);
-                  console.log("📅 dataPagamento:", data.dataPagamento);
                   return data.data.statusRemessa === 5 ? data.dataPagamento : <></>;
                 })()
               }
