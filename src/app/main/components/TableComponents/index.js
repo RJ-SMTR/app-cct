@@ -40,7 +40,7 @@ export function CustomTable(data) {
     const getStatus = (i) => {
       switch (i.statusRemessa) {
         case 2:
-          return 'Aguardando Pgto.';
+          return 'Aguardando Pagamento';
         case 3:
           return 'Pago';
         case 4:
