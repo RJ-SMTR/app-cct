@@ -57,7 +57,6 @@ const masterConfig = [
         ]
 
     },
-
     // GRUPO FINANCEIRO
     {
         id: 'Financeiro',
