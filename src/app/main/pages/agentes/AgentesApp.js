@@ -16,8 +16,10 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { MobileDatePicker } from "@mui/x-date-pickers";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -175,14 +177,13 @@ function getInviteSentAt(user) {
 function StatusBadge({ status }) {
   const normalizedStatus = normalizePaymentStatus(status);
   const badgeStatus = normalizedStatus || status || "Rejeitado";
-  const badgeColor =
-    normalizedStatus === "Rejeitado"
-      ? "error"
-      : String(badgeStatus || "")
-        .toLowerCase()
-        .includes("estorno")
-        ? "warning"
-        : "success";
+  let badgeColor = "success";
+
+  if (normalizedStatus === "Rejeitado") {
+    badgeColor = "error";
+  } else if (String(badgeStatus || "").toLowerCase().includes("estorno")) {
+    badgeColor = "warning";
+  }
 
   return (
     <Badge
@@ -190,6 +191,51 @@ function StatusBadge({ status }) {
       color={badgeColor}
       badgeContent={badgeStatus}
     />
+  );
+}
+
+function isPendingPaymentStatus(status) {
+  const normalizedStatus = String(status || "")
+    .trim()
+    .toLowerCase();
+
+  return normalizedStatus === "rejeitado" || normalizedStatus === "estorno";
+}
+
+function formatPhotoCount(count) {
+  const parsedCount = Number(count);
+
+  return Number.isFinite(parsedCount) ? parsedCount : 0;
+}
+
+function getTotalPhotosCount(validPhotosCount, rejectedPhotosCount) {
+  return (
+    formatPhotoCount(validPhotosCount) + formatPhotoCount(rejectedPhotosCount)
+  );
+}
+
+function ValidPhotosStatusBadge({ status, pendingReason }) {
+  if (!isPendingPaymentStatus(status)) {
+    return <StatusBadge status={status} />;
+  }
+
+  return (
+    <Tooltip
+      title={pendingReason || "Pendente"}
+      arrow
+      enterTouchDelay={10}
+      leaveTouchDelay={10000}
+    >
+      <Badge
+        className="whitespace-nowrap"
+        color="error"
+        badgeContent={
+          <span className="inline-flex items-center gap-4 underline">
+            Pendentes <InfoOutlinedIcon fontSize="small" />
+          </span>
+        }
+      />
+    </Tooltip>
   );
 }
 
@@ -435,14 +481,14 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   let monthlyPaymentsRows = (
     <EmptyState
       message="Não há pagamentos para o mês selecionado."
-      colSpan={5}
+      colSpan={6}
     />
   );
 
   if (monthlyLoading) {
     monthlyPaymentsRows = [...Array(4)].map((_, index) => (
       <TableRow key={`loading-payment-cycle-${index}`}>
-        <TableCell colSpan={5}>
+        <TableCell colSpan={6}>
           <Skeleton variant="text" height={28} />
         </TableCell>
       </TableRow>
@@ -450,6 +496,10 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   } else if (monthlyPayments?.length) {
     monthlyPaymentsRows = monthlyPayments.map((payment) => {
       const isSelected = selectedPaymentDate === payment.paymentDate;
+      const totalPhotosCount = getTotalPhotosCount(
+        payment.validPhotosCount,
+        payment.rejectedPhotosCount
+      );
 
       return (
         <TableRow
@@ -460,12 +510,16 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           className="cursor-pointer"
         >
           <TableCell>{formatDateLabel(payment.paymentDate)}</TableCell>
+          <TableCell>{totalPhotosCount}</TableCell>
           <TableCell>{payment.validPhotosCount}</TableCell>
-          <TableCell>{payment.rejectedPhotosCount}</TableCell>
           <TableCell>{formatCurrency(payment.totalPaymentValue)}</TableCell>
           <TableCell>
-            <StatusBadge status={payment.paymentStatus} />
+            <ValidPhotosStatusBadge
+              status={payment.paymentStatus}
+              pendingReason={payment.pendingReason}
+            />
           </TableCell>
+          <TableCell>{payment.rejectedPhotosCount}</TableCell>
         </TableRow>
       );
     });
@@ -474,14 +528,14 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   let weeklyDayRows = (
     <EmptyState
       message="Nenhum dia encontrado para este pagamento."
-      colSpan={4}
+      colSpan={6}
     />
   );
 
   if (drilldownLoading) {
     weeklyDayRows = [...Array(4)].map((_, index) => (
       <TableRow key={`loading-week-day-${index}`}>
-        <TableCell colSpan={4}>
+        <TableCell colSpan={6}>
           <Skeleton variant="text" height={28} />
         </TableCell>
       </TableRow>
@@ -489,6 +543,10 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   } else if (selectedPaymentWeek?.days?.length) {
     weeklyDayRows = selectedPaymentWeek.days.map((day) => {
       const isSelected = selectedWorkDate === day.date;
+      const totalPhotosCount = getTotalPhotosCount(
+        day.validPhotosCount,
+        day.rejectedPhotosCount
+      );
 
       return (
         <TableRow
@@ -499,9 +557,16 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           className="cursor-pointer"
         >
           <TableCell>{formatDateLabel(day.date)}</TableCell>
+          <TableCell>{totalPhotosCount}</TableCell>
           <TableCell>{day.validPhotosCount}</TableCell>
-          <TableCell>{day.rejectedPhotosCount}</TableCell>
           <TableCell>{formatCurrency(day.totalPaymentValue)}</TableCell>
+          <TableCell>
+            <ValidPhotosStatusBadge
+              status={day.paymentStatus}
+              pendingReason={day.pendingReason}
+            />
+          </TableCell>
+          <TableCell>{day.rejectedPhotosCount}</TableCell>
         </TableRow>
       );
     });
@@ -526,13 +591,73 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           key={photo.id || `${photo.description}-${photo.capturedAt}-${index}`}
         >
           <TableCell>{formatDateTimeLabel(photo.capturedAt)}</TableCell>
-          <TableCell>{photo.description}</TableCell>
           <TableCell>{formatCurrency(photo.amount)}</TableCell>
-          <TableCell>{photo.status}</TableCell>
+          <TableCell>
+            {normalizePaymentStatus(photo.status) === "Pago" ? "-" : photo.status}
+          </TableCell>
           <TableCell>{photo.rejectionReason || "-"}</TableCell>
         </TableRow>
       )
     );
+  }
+
+  let drilldownTitle = "Visão mensal";
+  let drilldownSubtitle =
+    "Selecione um mês para ver os pagamentos diários consolidados.";
+  let tableContent = (
+    <>
+      <TableHead>
+        <TableRow>
+          <TableCell>Data Pagamento</TableCell>
+          <TableCell>Total fotos</TableCell>
+          <TableCell>Fotos Válidas</TableCell>
+          <TableCell>Valor Fotos Válidas</TableCell>
+          <TableCell>Status Fotos Válidas</TableCell>
+          <TableCell>Fotos NÃO Válidas</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>{monthlyPaymentsRows}</TableBody>
+    </>
+  );
+
+  if (selectedPaymentDate) {
+    if (selectedWorkDate) {
+      drilldownTitle = "Fotos do dia";
+      drilldownSubtitle = `Detalhamento de ${formatDateLabel(selectedWorkDate)} (${selectedWorkDayPhotos?.periodLabel || "-"
+        }).`;
+      tableContent = (
+        <>
+          <TableHead>
+            <TableRow>
+              <TableCell>Capturada em</TableCell>
+              <TableCell>Valor</TableCell>
+              <TableCell>Status </TableCell>
+              <TableCell>Motivo da rejeição</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>{selectedWorkDayPhotoRows}</TableBody>
+        </>
+      );
+    } else {
+      drilldownTitle = "Visão semanal";
+      drilldownSubtitle = `Pagamento de ${formatDateLabel(selectedPaymentDate)} (${selectedPaymentWeek?.paymentDayType || "-"
+        }).`;
+      tableContent = (
+        <>
+          <TableHead>
+            <TableRow>
+              <TableCell>Data Pagamento</TableCell>
+              <TableCell>Total fotos</TableCell>
+              <TableCell>Fotos Válidas</TableCell>
+              <TableCell>Valor Fotos Válidas</TableCell>
+              <TableCell>Status Fotos Válidas</TableCell>
+              <TableCell>Fotos NÃO Válidas</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>{weeklyDayRows}</TableBody>
+        </>
+      );
+    }
   }
 
   return (
@@ -540,21 +665,9 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-16">
         <div>
           <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
-            {!selectedPaymentDate
-              ? "Visão mensal"
-              : selectedWorkDate
-                ? "Fotos do dia"
-                : "Visão semanal"}
+            {drilldownTitle}
           </Typography>
-          <Typography color="text.secondary">
-            {!selectedPaymentDate
-              ? "Selecione um mês para ver os pagamentos diários consolidados."
-              : selectedWorkDate
-                ? `Detalhamento de ${formatDateLabel(selectedWorkDate)} (${selectedWorkDayPhotos?.periodLabel || "-"
-                }).`
-                : `Pagamento de ${formatDateLabel(selectedPaymentDate)} (${selectedPaymentWeek?.paymentDayType || "-"
-                }).`}
-          </Typography>
+          <Typography color="text.secondary">{drilldownSubtitle}</Typography>
         </div>
 
         {!selectedPaymentDate ? (
@@ -593,47 +706,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
       ) : null}
 
       <TableContainer sx={{ maxHeight: 440 }} className="mt-24">
-        <Table stickyHeader>
-          {!selectedPaymentDate ? (
-            <>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Pagamento</TableCell>
-                  <TableCell>Fotos válidas</TableCell>
-                  <TableCell>Fotos rejeitadas</TableCell>
-                  <TableCell>Valor total</TableCell>
-                  <TableCell>Status </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>{monthlyPaymentsRows}</TableBody>
-            </>
-          ) : selectedWorkDate ? (
-            <>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Capturada em</TableCell>
-                  <TableCell>Descrição</TableCell>
-                  <TableCell>Valor</TableCell>
-                  <TableCell>Status </TableCell>
-                  <TableCell>Motivo da rejeição</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>{selectedWorkDayPhotoRows}</TableBody>
-            </>
-          ) : (
-            <>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Data</TableCell>
-                  <TableCell>Fotos válidas</TableCell>
-                  <TableCell>Fotos rejeitadas</TableCell>
-                  <TableCell>Valor total</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>{weeklyDayRows}</TableBody>
-            </>
-          )}
-        </Table>
+        <Table stickyHeader>{tableContent}</Table>
       </TableContainer>
 
       {selectedPaymentDate && !selectedWorkDate ? (

@@ -36,6 +36,7 @@ function normalizeSelectedPaymentWeek(selectedPaymentWeek) {
           validPhotosCount: normalizeNumber(day?.validPhotosCount),
           rejectedPhotosCount: normalizeNumber(day?.rejectedPhotosCount),
           paymentStatus: day?.paymentStatus || "-",
+          pendingReason: day?.pendingReason || null,
           totalPaymentValue: normalizeNumber(day?.totalPaymentValue),
         }))
       : [],
@@ -65,6 +66,7 @@ function normalizeDashboardResponse(data, requestedMonth) {
         validPhotosCount: normalizeNumber(payment?.validPhotosCount),
         rejectedPhotosCount: normalizeNumber(payment?.rejectedPhotosCount),
         paymentStatus: payment?.paymentStatus || "-",
+        pendingReason: payment?.pendingReason || null,
         totalPaymentValue: normalizeNumber(payment?.totalPaymentValue),
         coveredDaysCount: normalizeNumber(payment?.coveredDaysCount),
       }))
