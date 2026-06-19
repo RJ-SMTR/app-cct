@@ -58,6 +58,11 @@ export const ModalDelete = ({ openDelete, handleCloseDelete, row, setOpenDelete 
                 }
             })
             .catch((error) => {
+                if (error?.response?.status === 409) {
+                    dispatch(showMessage({ message: error?.response?.data?.message || "Apenas o aprovador pode excluir um agendamento com pagamento aprovado" }));
+                    return;
+                }
+
                 dispatch(showMessage({ message: "Senha incorreta!" }));
             });
     };

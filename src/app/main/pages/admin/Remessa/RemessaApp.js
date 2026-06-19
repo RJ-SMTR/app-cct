@@ -31,11 +31,11 @@ function RemessaApp() {
 
 
   const weekdays = [
-    { label: 'Segunda-feira', value: 1 },
-    { label: 'Terça-feira', value: 2 },
-    { label: 'Quarta-feira', value: 3 },
-    { label: 'Quinta-feira', value: 4 },
-    { label: 'Sexta-feira', value: 5 },
+    { label: 'Segunda-feira', value: 2 },
+    { label: 'Terça-feira', value: 3 },
+    { label: 'Quarta-feira', value: 4 },
+    { label: 'Quinta-feira', value: 5 },
+    { label: 'Sexta-feira', value: 6 },
 
   ];
 
@@ -502,13 +502,13 @@ function RemessaApp() {
                         render={({ field }) => (
                           <Box display="flex" gap={1}>
                             {[
-                              { label: "Dom", value: "0" },
-                              { label: "Seg", value: "1" },
-                              { label: "Ter", value: "2" },
-                              { label: "Qua", value: "3" },
-                              { label: "Qui", value: "4" },
-                              { label: "Sex", value: "5" },
-                              { label: "Sab", value: "6" },
+                              { label: "Dom", value: "1" },
+                              { label: "Seg", value: "2" },
+                              { label: "Ter", value: "3" },
+                              { label: "Qua", value: "4" },
+                              { label: "Qui", value: "5" },
+                              { label: "Sex", value: "6" },
+                              { label: "Sab", value: "7" },
                             ].map((day) => {
                               const isSelected = field.value.includes(day.value);
                               const selectedDia = watch('diaSemana');
