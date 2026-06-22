@@ -1,5 +1,6 @@
 import FusePageSimple from "@fuse/core/FusePageSimple";
 import FuseSvgIcon from "@fuse/core/FuseSvgIcon";
+import useThemeMediaQuery from "@fuse/hooks/useThemeMediaQuery";
 import { styled } from "@mui/material/styles";
 import {
   Alert,
@@ -528,14 +529,14 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   let weeklyDayRows = (
     <EmptyState
       message="Nenhum dia encontrado para este pagamento."
-      colSpan={6}
+      colSpan={3}
     />
   );
 
   if (drilldownLoading) {
     weeklyDayRows = [...Array(4)].map((_, index) => (
       <TableRow key={`loading-week-day-${index}`}>
-        <TableCell colSpan={6}>
+        <TableCell colSpan={3}>
           <Skeleton variant="text" height={28} />
         </TableCell>
       </TableRow>
@@ -543,10 +544,6 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   } else if (selectedPaymentWeek?.days?.length) {
     weeklyDayRows = selectedPaymentWeek.days.map((day) => {
       const isSelected = selectedWorkDate === day.date;
-      const totalPhotosCount = getTotalPhotosCount(
-        day.validPhotosCount,
-        day.rejectedPhotosCount
-      );
 
       return (
         <TableRow
@@ -557,16 +554,8 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           className="cursor-pointer"
         >
           <TableCell>{formatDateLabel(day.date)}</TableCell>
-          <TableCell>{totalPhotosCount}</TableCell>
           <TableCell>{day.validPhotosCount}</TableCell>
           <TableCell>{formatCurrency(day.totalPaymentValue)}</TableCell>
-          <TableCell>
-            <ValidPhotosStatusBadge
-              status={day.paymentStatus}
-              pendingReason={day.pendingReason}
-            />
-          </TableCell>
-          <TableCell>{day.rejectedPhotosCount}</TableCell>
         </TableRow>
       );
     });
@@ -647,11 +636,8 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           <TableHead>
             <TableRow>
               <TableCell>Data Pagamento</TableCell>
-              <TableCell>Total fotos</TableCell>
               <TableCell>Fotos Válidas</TableCell>
               <TableCell>Valor Fotos Válidas</TableCell>
-              <TableCell>Status Fotos Válidas</TableCell>
-              <TableCell>Fotos NÃO Válidas</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>{weeklyDayRows}</TableBody>
@@ -723,6 +709,7 @@ function AgentesApp() {
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
   const { id } = useParams();
+  const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down("lg"));
   const [selectedMonthDate, setSelectedMonthDate] = useState(
     buildMonthDate(DEFAULT_AGENTES_DASHBOARD_MONTH)
   );
@@ -975,7 +962,7 @@ function AgentesApp() {
           </Box>
         </div>
       }
-      scroll="normal"
+      scroll={isMobile ? "normal" : "page"}
     />
   );
 }

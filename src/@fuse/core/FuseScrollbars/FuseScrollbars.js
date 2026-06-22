@@ -36,6 +36,7 @@ const FuseScrollbars = forwardRef((props, ref) => {
   const handlerByEvent = useRef(new Map());
 
   const { customScrollbars } = props;
+  const shouldUsePerfectScrollbar = customScrollbars && props.enable && !isMobile;
 
   const hookUpEvents = useCallback(() => {
     Object.keys(handlerNameByEvent).forEach((key) => {
@@ -73,14 +74,14 @@ const FuseScrollbars = forwardRef((props, ref) => {
   const createPs = useCallback(() => {
     // console.info("create::ps");
 
-    if (isMobile || !ref || ps.current) {
+    if (!shouldUsePerfectScrollbar || !ref.current || ps.current) {
       return;
     }
 
     ps.current = new PerfectScrollbar(ref.current, props.option);
 
     hookUpEvents();
-  }, [hookUpEvents, props.option, ref]);
+  }, [hookUpEvents, props.option, ref, shouldUsePerfectScrollbar]);
 
   useEffect(() => {
     function updatePs() {
@@ -94,12 +95,12 @@ const FuseScrollbars = forwardRef((props, ref) => {
   });
 
   useEffect(() => {
-    if (customScrollbars) {
+    if (shouldUsePerfectScrollbar) {
       createPs();
     } else {
       destroyPs();
     }
-  }, [createPs, customScrollbars, destroyPs]);
+  }, [createPs, destroyPs, shouldUsePerfectScrollbar]);
 
   const scrollToTop = useCallback(() => {
     if (ref && ref.current) {
@@ -136,7 +137,7 @@ const FuseScrollbars = forwardRef((props, ref) => {
       id={props.id}
       className={props.className}
       style={
-        props.customScrollbars && (props.enable || true) && !isMobile
+        shouldUsePerfectScrollbar
           ? {
               position: 'relative',
               overflow: 'hidden!important',
