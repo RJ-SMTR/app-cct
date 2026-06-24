@@ -203,6 +203,10 @@ function isPendingPaymentStatus(status) {
   return normalizedStatus === "rejeitado" || normalizedStatus === "estorno";
 }
 
+function stopStatusBoxPropagation(event) {
+  event.stopPropagation();
+}
+
 function formatPhotoCount(count) {
   const parsedCount = Number(count);
 
@@ -227,15 +231,23 @@ function ValidPhotosStatusBadge({ status, pendingReason }) {
       enterTouchDelay={10}
       leaveTouchDelay={10000}
     >
-      <Badge
-        className="whitespace-nowrap"
-        color="error"
-        badgeContent={
-          <span className="inline-flex items-center gap-4 underline">
-            Pendentes <InfoOutlinedIcon fontSize="small" />
-          </span>
-        }
-      />
+      <Box
+        component="span"
+        onClick={stopStatusBoxPropagation}
+        onMouseDown={stopStatusBoxPropagation}
+        onTouchStart={stopStatusBoxPropagation}
+        sx={{ display: "inline-flex" }}
+      >
+        <Badge
+          className="whitespace-nowrap"
+          color="error"
+          badgeContent={
+            <span className="inline-flex items-center gap-4 underline">
+              Pendentes <InfoOutlinedIcon fontSize="small" />
+            </span>
+          }
+        />
+      </Box>
     </Tooltip>
   );
 }
@@ -479,6 +491,15 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
     setDrilldownError("");
   }, []);
 
+  const handleBack = useCallback(() => {
+    if (selectedWorkDate) {
+      handleBackToWeekly();
+      return;
+    }
+
+    handleBackToMonthly();
+  }, [handleBackToMonthly, handleBackToWeekly, selectedWorkDate]);
+
   let monthlyPaymentsRows = (
     <EmptyState
       message="Não há pagamentos para o mês selecionado."
@@ -672,14 +693,20 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           </LocalizationProvider>
         ) : (
           <div className="flex flex-wrap gap-8">
-            {selectedWorkDate ? (
-              <Button color="secondary" onClick={handleBackToWeekly}>
-                Voltar para semana
-              </Button>
-            ) : null}
-
-            <Button color="secondary" onClick={handleBackToMonthly}>
-              Voltar para visão mensal
+            <Button
+              onClick={handleBack}
+              variant="outlined"
+              sx={{
+                color: "common.black",
+                borderColor: "common.black",
+                backgroundColor: "transparent",
+                "&:hover": {
+                  borderColor: "common.black",
+                  backgroundColor: "transparent",
+                },
+              }}
+            >
+              Voltar
             </Button>
           </div>
         )}
@@ -691,8 +718,13 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
         </Alert>
       ) : null}
 
-      <TableContainer sx={{ maxHeight: 440 }} className="mt-24">
-        <Table stickyHeader>{tableContent}</Table>
+      <TableContainer
+        sx={{ maxHeight: 440, overflowX: "auto" }}
+        className="mt-24"
+      >
+        <Table stickyHeader sx={{ minWidth: selectedPaymentDate ? 560 : 820 }}>
+          {tableContent}
+        </Table>
       </TableContainer>
 
       {selectedPaymentDate && !selectedWorkDate ? (
@@ -868,17 +900,8 @@ function AgentesApp() {
       content={
         <div className="flex flex-col max-w-[95%] w-full mx-auto my-32 gap-24">
           <div className="flex">
-            <Link className="no-underline" to="/agentes">
-              <Button
-                variant="contained"
-                color="secondary"
-                className="z-10"
-                aria-label="Voltar"
-                size="medium"
-                role="button"
-              >
-                Voltar
-              </Button>
+            <Link className="p-8 underline mb-4" to="/agentes">
+              ←Voltar
             </Link>
           </div>
 
@@ -947,8 +970,11 @@ function AgentesApp() {
                 Consolidação dos principais motivos no mês selecionado.
               </Typography>
 
-              <TableContainer sx={{ maxHeight: 440 }} className="mt-24">
-                <Table stickyHeader>
+              <TableContainer
+                sx={{ maxHeight: 440, overflowX: "auto" }}
+                className="mt-24"
+              >
+                <Table stickyHeader sx={{ minWidth: 420 }}>
                   <TableHead>
                     <TableRow>
                       <TableCell>Motivo</TableCell>

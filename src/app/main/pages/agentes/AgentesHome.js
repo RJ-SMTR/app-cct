@@ -11,6 +11,7 @@ import {
   TableBody,
   TableCell,
   TableHead,
+  TableContainer,
   TablePagination,
   TableRow,
   TextField,
@@ -231,47 +232,49 @@ function AgentesHome() {
             rowsPerPageOptions={[10, 50, 100, 250, 500, 1000]}
           />
 
-          <Table className="simple w-full min-w-full mt-24">
-            <TableHead>
-              <TableRow>
-                <TableCell>
-                  <Typography
-                    color="text.secondary"
-                    className="font-semibold text-12 whitespace-nowrap"
-                  >
-                    CPF
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography
-                    color="text.secondary"
-                    className="font-semibold text-12 whitespace-nowrap"
-                  >
-                    Nome
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography
-                    color="text.secondary"
-                    className="font-semibold text-12 whitespace-nowrap"
-                  >
-                    E-mail
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography
-                    color="text.secondary"
-                    className="font-semibold text-12 whitespace-nowrap"
-                  >
-                    Associação
-                  </Typography>
-                </TableCell>
-                <TableCell />
-              </TableRow>
-            </TableHead>
+          <TableContainer className="mt-24" sx={{ overflowX: 'auto' }}>
+            <Table className="simple" sx={{ minWidth: 760 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>
+                    <Typography
+                      color="text.secondary"
+                      className="font-semibold text-12 whitespace-nowrap"
+                    >
+                      CPF
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography
+                      color="text.secondary"
+                      className="font-semibold text-12 whitespace-nowrap"
+                    >
+                      Nome
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography
+                      color="text.secondary"
+                      className="font-semibold text-12 whitespace-nowrap"
+                    >
+                      E-mail
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography
+                      color="text.secondary"
+                      className="font-semibold text-12 whitespace-nowrap"
+                    >
+                      Associação
+                    </Typography>
+                  </TableCell>
+                  <TableCell />
+                </TableRow>
+              </TableHead>
 
-            <TableBody>{agentRows}</TableBody>
-          </Table>
+              <TableBody>{agentRows}</TableBody>
+            </Table>
+          </TableContainer>
 
           <TablePagination
             component="div"
