@@ -5,6 +5,7 @@ const MOCK_AGENT_USERS = [
     cpf: '123.456.789-00',
     cpfCnpj: '123.456.789-00',
     consorcio: 'STPC',
+    associacoes: [0, 1],
     fullName: 'Agente de Teste',
     email: 'agente.teste@example.com',
     phone: '(21) 99999-0001',

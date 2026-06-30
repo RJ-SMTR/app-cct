@@ -4,6 +4,7 @@ import useThemeMediaQuery from "@fuse/hooks/useThemeMediaQuery";
 import { styled } from "@mui/material/styles";
 import {
   Alert,
+  Autocomplete,
   Box,
   Badge,
   Button,
@@ -369,6 +370,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   agentId,
   selectedMonth,
   selectedMonthDate,
+  associacoes,
   monthlyPayments,
   monthlyLoading,
   onMonthChange,
@@ -378,6 +380,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   const [selectedWorkDate, setSelectedWorkDate] = useState("");
   const [selectedPaymentWeek, setSelectedPaymentWeek] = useState(null);
   const [selectedWorkDayPhotos, setSelectedWorkDayPhotos] = useState(null);
+  const [selectedAssociacao, setSelectedAssociacao] = useState(null);
   const [drilldownLoading, setDrilldownLoading] = useState(false);
   const [drilldownError, setDrilldownError] = useState("");
 
@@ -389,6 +392,24 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
     setDrilldownLoading(false);
     setDrilldownError("");
   }, [selectedMonth]);
+
+  useEffect(() => {
+    if (!Array.isArray(associacoes) || associacoes.length === 0) {
+      setSelectedAssociacao(null);
+      return;
+    }
+
+    setSelectedAssociacao((currentValue) => {
+      if (
+        currentValue &&
+        associacoes.some((associacao) => associacao.value === currentValue.value)
+      ) {
+        return currentValue;
+      }
+
+      return associacoes[0];
+    });
+  }, [associacoes]);
 
   const handleDrilldownError = useCallback(
     (message) => {
@@ -677,39 +698,58 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           <Typography color="text.secondary">{drilldownSubtitle}</Typography>
         </div>
 
-        {!selectedPaymentDate ? (
-          <LocalizationProvider
-            dateAdapter={AdapterDateFns}
-            adapterLocale={ptBR}
-          >
-            <MobileDatePicker
-              label="Selecionar Mês"
-              openTo="month"
-              closeOnSelect
-              views={["year", "month"]}
-              value={selectedMonthDate}
-              onChange={onMonthChange}
-            />
-          </LocalizationProvider>
-        ) : (
-          <div className="flex flex-wrap gap-8">
-            <Button
-              onClick={handleBack}
-              variant="outlined"
-              sx={{
-                color: "common.black",
-                borderColor: "common.black",
-                backgroundColor: "transparent",
-                "&:hover": {
+        <div className="flex flex-col md:flex-row gap-12 md:items-center">
+          <Autocomplete
+            id="agente-associacao"
+            options={associacoes}
+            value={selectedAssociacao}
+            onChange={(_, newValue) => setSelectedAssociacao(newValue)}
+            isOptionEqualToValue={(option, value) => option.value === value?.value}
+            getOptionLabel={(option) => option?.label || ""}
+            className="min-w-[240px]"
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Selecionar Associação"
+                placeholder="Associação do dia"
+              />
+            )}
+          />
+
+          {!selectedPaymentDate ? (
+            <LocalizationProvider
+              dateAdapter={AdapterDateFns}
+              adapterLocale={ptBR}
+            >
+              <MobileDatePicker
+                label="Selecionar Mês"
+                openTo="month"
+                closeOnSelect
+                views={["year", "month"]}
+                value={selectedMonthDate}
+                onChange={onMonthChange}
+              />
+            </LocalizationProvider>
+          ) : (
+            <div className="flex flex-wrap gap-8">
+              <Button
+                onClick={handleBack}
+                variant="outlined"
+                sx={{
+                  color: "common.black",
                   borderColor: "common.black",
                   backgroundColor: "transparent",
-                },
-              }}
-            >
-              Voltar
-            </Button>
-          </div>
-        )}
+                  "&:hover": {
+                    borderColor: "common.black",
+                    backgroundColor: "transparent",
+                  },
+                }}
+              >
+                Voltar
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       {drilldownError ? (
@@ -957,6 +997,7 @@ function AgentesApp() {
               agentId={id}
               selectedMonth={selectedMonth}
               selectedMonthDate={selectedMonthDate}
+              associacoes={dashboard?.associacoes || []}
               monthlyPayments={dashboard?.monthlyPayments || []}
               monthlyLoading={loading}
               onMonthChange={handleSelectedMonth}

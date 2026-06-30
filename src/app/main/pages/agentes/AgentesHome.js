@@ -5,6 +5,7 @@ import {
   Box,
   Button,
   Modal,
+  Chip,
   Select,
   Paper,
   Table,
@@ -41,6 +42,13 @@ function getAgentCpf(agentUser) {
 }
 
 function getAgentAssociation(agentUser) {
+  if (Array.isArray(agentUser?.associacoes) && agentUser.associacoes.length > 0) {
+    return agentUser.associacoes
+      .map((association) => association?.label || association?.name || association?.value)
+      .filter(Boolean)
+      .join(', ');
+  }
+
   return (
     agentUser?.consorcio ||
     agentUser?.consorcioName ||
@@ -179,7 +187,21 @@ function AgentesHome() {
             <Typography className="whitespace-nowrap">{agentUser.email}</Typography>
           </TableCell>
           <TableCell>
-            <Typography className="whitespace-nowrap">{getAgentAssociation(agentUser)}</Typography>
+            <Box className="flex flex-wrap gap-8">
+              {Array.isArray(agentUser?.associacoes) && agentUser.associacoes.length > 0 ? (
+                agentUser.associacoes.map((association) => (
+                  <Chip
+                    key={`${agentUser.id}-${association.value}`}
+                    label={association.label}
+                    size="small"
+                  />
+                ))
+              ) : (
+                <Typography className="whitespace-nowrap">
+                  {getAgentAssociation(agentUser)}
+                </Typography>
+              )}
+            </Box>
           </TableCell>
           <TableCell>
             <Link

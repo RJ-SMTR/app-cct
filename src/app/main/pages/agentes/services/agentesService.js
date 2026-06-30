@@ -9,6 +9,15 @@ function normalizeNumber(value) {
   return Number.isFinite(parsedValue) ? parsedValue : 0;
 }
 
+function normalizeAssociationOption(option) {
+  const parsedValue = Number(option?.value);
+
+  return {
+    value: Number.isFinite(parsedValue) ? parsedValue : 0,
+    label: option?.label || "-",
+  };
+}
+
 function normalizePhoto(photo) {
   return {
     id: photo?.id || "",
@@ -77,6 +86,9 @@ function normalizeDashboardResponse(data, requestedMonth) {
     currentView: data?.currentView || "monthly",
     availableMonths: Array.isArray(data?.availableMonths)
       ? [...data.availableMonths].sort()
+      : [],
+    associacoes: Array.isArray(data?.associacoes)
+      ? data.associacoes.map((option) => normalizeAssociationOption(option))
       : [],
     validPhotosCount: normalizeNumber(data?.validPhotosCount),
     rejectedPhotosCount: normalizeNumber(data?.rejectedPhotosCount),
