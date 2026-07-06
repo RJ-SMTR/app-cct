@@ -41,12 +41,12 @@ import { showMessage } from 'app/store/fuse/messageSlice';
 
 const predefinedFilters = [
     { label: 'Todos', filterFn: () => true },
-    { label: 'CONSORCIO INTERSUL TRANSPORTES', filterFn: (row) => row.beneficiarioUsuario.fullName.includes('INTERSUL') },
-    { label: 'CONSORCIO INTERNORTE TRANSPORTES', filterFn: (row) => row.beneficiarioUsuario.fullName.includes('INTERNORTE') },
-    { label: 'CONSORCIO TRANSCARIOCA DE TRANSPORTES', filterFn: (row) => row.beneficiarioUsuario.fullName.includes('TRANSCARIOCA') },
-    { label: 'CONSORCIO SANTA CRUZ TRANSPORTES', filterFn: (row) => row.beneficiarioUsuario.fullName.includes('SANTA CRUZ') },
-    { label: 'MOBIRIO', filterFn: (row) => row.beneficiarioUsuario.fullName.includes('MUNICIPAL') },
-    { label: 'CONCESSIONARIA DO VLT CARIOCA S.A.', filterFn: (row) => row.beneficiarioUsuario.fullName.includes('VLT') },
+    { label: 'CONSORCIO INTERSUL TRANSPORTES', filterFn: (row) => getBeneficiarioNome(row).includes('INTERSUL') },
+    { label: 'CONSORCIO INTERNORTE TRANSPORTES', filterFn: (row) => getBeneficiarioNome(row).includes('INTERNORTE') },
+    { label: 'CONSORCIO TRANSCARIOCA DE TRANSPORTES', filterFn: (row) => getBeneficiarioNome(row).includes('TRANSCARIOCA') },
+    { label: 'CONSORCIO SANTA CRUZ TRANSPORTES', filterFn: (row) => getBeneficiarioNome(row).includes('SANTA CRUZ') },
+    { label: 'MOBIRIO', filterFn: (row) => getBeneficiarioNome(row).includes('MUNICIPAL') },
+    { label: 'CONCESSIONARIA DO VLT CARIOCA S.A.', filterFn: (row) => getBeneficiarioNome(row).includes('VLT') },
 ];
 
 const predefinedApprovalStatus = [
@@ -58,6 +58,8 @@ const predefinedApprovalStatus = [
 
 
 const normalize = (s) => s?.toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+
+const getBeneficiarioNome = (row) => row?.beneficiarioUsuario?.fullName || row?.nomeConsorcio || '';
 
 
 const weekdayNames = [null, 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
@@ -202,12 +204,13 @@ export function TableRemessa() {
             },
         },
         {
-            accessorKey: 'beneficiarioUsuario.fullName',
+            accessorFn: (row) => getBeneficiarioNome(row),
+            id: 'beneficiarioNome',
             header: 'Beneficiário',
             size: 200,
             Cell: ({ row, cell }) => {
                 if (row?.original?.isGroup) return <strong>{row.original.groupLabel}</strong>;
-                return <span>{row.original.beneficiarioUsuario.fullName}</span>;
+                return <span>{getBeneficiarioNome(row.original)}</span>;
             },
         },
         {

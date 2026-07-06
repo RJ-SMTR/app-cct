@@ -31,7 +31,9 @@ export const getUser = () => (dispatch) => {
             api.get('/users', {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
+            
                 .then((response) => {
+                    console.log(response.data)
                     const filteredUsers = response.data.data.filter(user =>
                         user.permitCode != null && user.role?.name != 'Admin'
                     )

@@ -60,23 +60,22 @@ function handleData(data) {
     const requestData = {};
 
     const hasConsorcioArr = Array.isArray(data?.consorcioName) && data.consorcioName.length > 0;
+    const hasConsorcioUserIdsArr = Array.isArray(data?.consorcioUserIds) && data.consorcioUserIds.length > 0;
     const hasNameArr = Array.isArray(data?.name) && data.name.length > 0;
 
     if (hasConsorcioArr && hasNameArr) {
-        // Preserve sources to classify per ID later
-        requestData.consorcioIds = data.consorcioName;
+        requestData.consorcioNames = data.consorcioName;
+        if (hasConsorcioUserIdsArr) requestData.consorcioUserIds = data.consorcioUserIds;
         requestData.favorecidoIds = data.name;
-        requestData.beneficiarioUsuario = [...data.consorcioName, ...data.name];
-        requestData.tipoBeneficiario = null;
     } else if (hasConsorcioArr) {
-        requestData.tipoBeneficiario = 'Consorcio';
-        requestData.beneficiarioUsuario = data.consorcioName;
+        requestData.consorcioNames = data.consorcioName;
+        if (hasConsorcioUserIdsArr) requestData.consorcioUserIds = data.consorcioUserIds;
     } else if (hasNameArr) {
-        requestData.tipoBeneficiario = 'Modal';
-        requestData.beneficiarioUsuario = data.name;
+        requestData.favorecidoIds = data.name;
     } else {
-        requestData.tipoBeneficiario = data?.tipoBeneficiario ?? null;
-        requestData.beneficiarioUsuario = data?.beneficiarioUsuario ?? null;
+        if (data?.tipoBeneficiario !== undefined) requestData.tipoBeneficiario = data.tipoBeneficiario;
+        if (data?.beneficiarioUsuario !== undefined) requestData.beneficiarioUsuario = data.beneficiarioUsuario;
+        if (data?.nomeConsorcio !== undefined) requestData.nomeConsorcio = data.nomeConsorcio;
     }
 
     const aprovacaoValue = data?.aprovacao;
@@ -84,11 +83,9 @@ function handleData(data) {
         requestData.aprovacao = aprovacaoValue.includes('Necessita');
     } else if (typeof aprovacaoValue === 'boolean') {
         requestData.aprovacao = aprovacaoValue;
-    } else {
-        requestData.aprovacao = false;
     }
 
-    const rawValor = data?.valorPagamentoUnico ?? data?.dataPagamentoUnico ?? data?.data?.valorPagamentoUnico;
+    const rawValor = data?.valorPagamentoUnico ?? data?.data?.valorPagamentoUnico;
     if (rawValor !== undefined && rawValor !== null && rawValor !== '') {
         const parsed = parseCurrency(rawValor);
         if (parsed !== null) {
@@ -101,7 +98,7 @@ function handleData(data) {
     if (data?.dataPagamentoUnico) requestData.dataPagamentoUnico = data.dataPagamentoUnico;
     if (data?.motivoPagamentoUnico) requestData.motivoPagamentoUnico = data.motivoPagamentoUnico;
 
-    requestData.tipoPagamento = data?.tipoPagamento ?? null;
+    if (data?.tipoPagamento !== undefined) requestData.tipoPagamento = data.tipoPagamento;
 
     const horarioRaw = data?.horario;
     if (horarioRaw) {
@@ -119,8 +116,8 @@ function handleData(data) {
         }
     }
 
-    requestData.diaSemana = data?.diaSemana ?? null;
-    requestData.status = false;
+    if (data?.diaSemana !== undefined) requestData.diaSemana = data.diaSemana;
+    if (typeof data?.status === 'boolean') requestData.status = data.status;
 
   
         const dayNameToNum = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
@@ -164,6 +161,10 @@ function handleData(data) {
         const anchorJS = normalizeDiaSemanaToJS(data?.diaSemana);
     console.log(anchorJS)
 
+        if (selectedDays.length > 0) {
+            requestData.weekdays = selectedDays;
+        }
+
         if (selectedDays.length > 0 && anchorJS !== null) {
             const next = (() => {
                 for (let i = 0; i < selectedDays.length; i++) {
@@ -202,29 +203,46 @@ function handleData(data) {
 export const bookPayment = (data) => async (dispatch) => {
 
     const base = handleData(data);
-
-    // Build membership sets from preserved arrays
-    const consorcioSet = new Set(Array.isArray(base.consorcioIds) ? base.consorcioIds.map((x) => Number(x)) : []);
-    const favorecidoSet = new Set(Array.isArray(base.favorecidoIds) ? base.favorecidoIds.map((x) => Number(x)) : []);
-
-    const allIds = Array.isArray(base.beneficiarioUsuario)
-        ? base.beneficiarioUsuario
-        : (base.beneficiarioUsuario !== undefined && base.beneficiarioUsuario !== null
-            ? [base.beneficiarioUsuario]
-            : []);
+    const consorcioNames = Array.isArray(base.consorcioNames) ? base.consorcioNames : [];
+    const consorcioUserIds = Array.isArray(base.consorcioUserIds) ? base.consorcioUserIds : [];
+    const favorecidoIds = Array.isArray(base.favorecidoIds) ? base.favorecidoIds : [];
 
     const apiRoute = jwtServiceConfig.agendamento;
     const token = window.localStorage.getItem('jwt_access_token');
 
-    const createOne = (id) => {
-        const numericId = Number(id);
-        // Favor favorecido -> Modal; consorcio -> Consorcio
-        let computedTipo = 'Consorcio';
-        if (favorecidoSet.has(numericId)) computedTipo = 'Modal';
-        else if (consorcioSet.has(numericId)) computedTipo = 'Consorcio';
-        const tipoBeneficiario = base.tipoBeneficiario ?? computedTipo;
-        const { consorcioIds, favorecidoIds, ...rest } = base;
-        const payload = { ...rest, beneficiarioUsuario: id, tipoBeneficiario };
+    const entries = [];
+    if (consorcioNames.length > 0) {
+        consorcioNames.forEach((nomeConsorcio, index) => {
+            entries.push({
+                tipoBeneficiario: 'Consorcio',
+                nomeConsorcio,
+                beneficiarioUsuario: consorcioUserIds[index],
+            });
+        });
+    }
+    if (favorecidoIds.length > 0) {
+        favorecidoIds.forEach((beneficiarioUsuario) => {
+            entries.push({ tipoBeneficiario: 'Modal', beneficiarioUsuario });
+        });
+    }
+    if (entries.length === 0) {
+        entries.push({
+            tipoBeneficiario: base.tipoBeneficiario,
+            nomeConsorcio: base.nomeConsorcio,
+            beneficiarioUsuario: base.beneficiarioUsuario,
+        });
+    }
+
+    const createOne = (entry) => {
+        const { consorcioNames, consorcioUserIds, favorecidoIds, ...rest } = base;
+        const payload = {
+            ...rest,
+            tipoBeneficiario: entry.tipoBeneficiario,
+            ...(entry.nomeConsorcio ? { nomeConsorcio: entry.nomeConsorcio } : {}),
+            ...(entry.beneficiarioUsuario !== undefined ? { beneficiarioUsuario: entry.beneficiarioUsuario } : {}),
+            ...(Array.isArray(consorcioNames) && consorcioNames.length > 0 ? { nomeConsorcios: consorcioNames } : {}),
+            ...(Array.isArray(consorcioUserIds) && consorcioUserIds.length > 0 ? { consorcioUserIds } : {}),
+        };
         console.log(payload)
         return api({
             method: 'post',
@@ -236,16 +254,15 @@ export const bookPayment = (data) => async (dispatch) => {
     };
 
     try {
-        if (allIds.length <= 1) {
-            const id = allIds[0] ?? base.beneficiarioUsuario;
-            const response = await createOne(id);
+        if (entries.length <= 1) {
+            const response = await createOne(entries[0]);
             if ([200, 201].includes(response.status)) {
                 dispatch(getBookings());
             }
             return { ok: true, created: 1, results: [response.data] };
         }
 
-        const settled = await Promise.allSettled(allIds.map((id) => createOne(id)));
+        const settled = await Promise.allSettled(entries.map((entry) => createOne(entry)));
         const successes = settled.filter((r) => r.status === 'fulfilled');
         const failures = settled.filter((r) => r.status === 'rejected');
         if (successes.length > 0) {
@@ -291,18 +308,22 @@ export const editPayment = (data) => async (dispatch) => {
 
     const base = handleData(data);
 
-    const consorcioSet = new Set(Array.isArray(base.consorcioIds) ? base.consorcioIds.map((x) => Number(x)) : []);
-    const favorecidoSet = new Set(Array.isArray(base.favorecidoIds) ? base.favorecidoIds.map((x) => Number(x)) : []);
+    const { consorcioNames, consorcioUserIds, favorecidoIds, ...rest } = base;
+    const payload = { ...rest };
 
-    const beneficiarioId = base?.beneficiarioUsuario ?? data?.beneficiarioUsuario;
-    const numericId = Number(beneficiarioId);
-    let computedTipo = 'Consorcio';
-    if (favorecidoSet.has(numericId)) computedTipo = 'Modal';
-    else if (consorcioSet.has(numericId)) computedTipo = 'Consorcio';
-
-    const tipoBeneficiario = base.tipoBeneficiario ?? computedTipo;
-    const { consorcioIds, favorecidoIds, ...rest } = base;
-    const payload = { ...rest, beneficiarioUsuario: beneficiarioId, tipoBeneficiario };
+    if (Array.isArray(consorcioNames) && consorcioNames.length > 0) {
+        payload.tipoBeneficiario = 'Consorcio';
+        payload.nomeConsorcio = consorcioNames[0];
+        payload.nomeConsorcios = consorcioNames;
+        if (Array.isArray(consorcioUserIds) && consorcioUserIds.length > 0) {
+            payload.beneficiarioUsuario = consorcioUserIds[0];
+            payload.consorcioUserIds = consorcioUserIds;
+        }
+    } else if (Array.isArray(favorecidoIds) && favorecidoIds.length > 0) {
+        payload.tipoBeneficiario = 'Modal';
+        payload.beneficiarioUsuario = favorecidoIds[0];
+        delete payload.nomeConsorcio;
+    }
 
     const config = {
         method: 'put',

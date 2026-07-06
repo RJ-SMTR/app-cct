@@ -60,6 +60,7 @@ function RemessaApp() {
     defaultValues: {
       name: [],
       consorcioName: [],
+      consorcioUserIds: [],
       horario: null
     }
 
@@ -110,11 +111,8 @@ function RemessaApp() {
       if (hasTodos) {
         const allWithoutTodos = consorcios.filter((o) => o.label !== 'Todos');
         setSelectedConsorcios(allWithoutTodos);
-        const allIds = consorcios
-          .filter((o) => o.label !== 'Todos')
-          .map((o) => o.value)
-          .flat();
-        setValue('consorcioName', [...new Set(allIds)]);
+        setValue('consorcioName', allWithoutTodos.map((o) => o.label));
+        setValue('consorcioUserIds', allWithoutTodos.map((o) => o.value));
         return;
       }
       setSelectedConsorcios(newValue);
@@ -146,11 +144,8 @@ function RemessaApp() {
   const handleAutocompleteChange = (field, newValue) => {
     if (Array.isArray(newValue)) {
       if (field === 'consorcioName') {
-        const ids = newValue
-          .map((item) => item.value)
-          .reduce((acc, v) => acc.concat(v), []);
-        const uniqueIds = [...new Set(ids)];
-        setValue(field, uniqueIds);
+        setValue(field, newValue.map((item) => item.label));
+        setValue('consorcioUserIds', newValue.map((item) => item.value));
       } else {
         setValue(field, newValue.map(item => item.value.userId));
       }
