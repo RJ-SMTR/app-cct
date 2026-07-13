@@ -54,6 +54,14 @@ const masterConfig = [
                 url: 'https://transportes.prefeitura.rio/atendimentodigital/',
 
             },
+            {
+                id: 'agentes-component',
+                title: 'Agentes',
+                translate: 'Agentes',
+                type: 'item',
+                icon: 'heroicons-outline:chart-bar',
+                url: 'agentes',
+            },
         ]
 
     },

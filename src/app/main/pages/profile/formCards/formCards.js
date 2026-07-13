@@ -1,4 +1,4 @@
-import { Card, Modal, Box, Typography } from "@mui/material"
+import { Card, Modal, Box, Typography, Button } from "@mui/material"
 import _ from '@lodash';
 import { useState, useEffect } from "react";
 import { Controller, useForm } from 'react-hook-form';
@@ -28,15 +28,23 @@ const style = {
   p: 4,
 };
 
+export function getUserCpf(user) {
+  return user?.cpf || user?.cpfCnpj || '-';
+}
 
-export function PersonalInfo({ user }) {
+export function PersonalInfo({
+  user,
+  primaryInfoLabel = 'Código de Permissão',
+  primaryInfoValue,
+}) {
   const { patchInfo, success } = useContext(AuthContext)
   const [isEditable, setIsEditable] = useState(false)
   const [saved, setSaved] = useState(false)
+  const resolvedPrimaryInfoValue = primaryInfoValue ?? user?.permitCode ?? '';
 
   const { handleSubmit, control, setError, formState } = useForm({
     defaultValues: {
-      permitCode: user.permitCode,
+      permitCode: resolvedPrimaryInfoValue,
       email: user.email,
       fullName: user.fullName ?? '',
       phone: user.phone ?? '',
@@ -107,11 +115,11 @@ export function PersonalInfo({ user }) {
               <TextField
                 {...field}
                 className="mb-24"
-                label="Código de Permissão"
+                label={primaryInfoLabel}
                 type="string"
                 variant="outlined"
                 disabled
-                value={user.permitCode}
+                value={resolvedPrimaryInfoValue}
                 fullWidth
               />
             )}
@@ -175,8 +183,14 @@ export function PersonalInfo({ user }) {
 
 
 
-export function BankInfo({ user }) {
-  const [isEditable, setIsEditable] = useState(false)
+export function BankInfo({
+  user,
+  hideEditButton = false,
+  defaultEditable = false,
+  submitButtonLabel = 'Salvar',
+  useSecondaryButton = false,
+}) {
+  const [isEditable, setIsEditable] = useState(defaultEditable)
   const [selectedBankCode, setSelectedBankCode] = useState(user.bankCode);
   const { patchInfo, success } = useContext(AuthContext)
   const [bankOptions, setBankOptions] = useState([]);
@@ -236,7 +250,7 @@ export function BankInfo({ user }) {
       patchInfo(info, user.id)
         .then((response) => {
           if (isValid) {
-            setIsEditable(false);
+            setIsEditable(hideEditButton ? defaultEditable : false);
             setSaved(true);
             success(response, "Seus dados foram salvos!");
           }
@@ -261,19 +275,56 @@ export function BankInfo({ user }) {
     }
   }
 
-  const renderButton = () => {
-    if (!isEditable) {
+  const renderActionButton = ({ label, onClick, type = 'button' }) => {
+    if (useSecondaryButton) {
       return (
-        <button className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-12' onClick={() => { setIsEditable(true); setSaved(false); }}>
-          Editar
-        </button>
+        <Button
+          variant="contained"
+          color="secondary"
+          type={type}
+          onClick={onClick}
+          size="small"
+        >
+          {label}
+        </Button>
       );
+    }
+
+    return (
+      <button
+        type={type}
+        className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-12'
+        onClick={onClick}
+      >
+        {label}
+      </button>
+    );
+  };
+
+  const renderButton = () => {
+    if (hideEditButton) {
+      return renderActionButton({
+        label: submitButtonLabel,
+        type: 'submit',
+      });
+    }
+
+    if (!isEditable) {
+      return renderActionButton({
+        label: 'Editar',
+        onClick: () => {
+          setIsEditable(true);
+          setSaved(false);
+        },
+      });
     } else {
       return (
         <div className='flex'>
-          <button type='submit' className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10' onClick={() => setIsEditable(true)}>
-            Salvar
-          </button>
+          {renderActionButton({
+            label: submitButtonLabel,
+            type: 'submit',
+            onClick: () => setIsEditable(true),
+          })}
         </div>
       );
     }
@@ -326,7 +377,7 @@ export function BankInfo({ user }) {
             type="text"
             variant="outlined"
             fullWidth
-            inputProps={{ maxLength: 5 }}
+            inputProps={{ maxLength: 4 }}
             error={!!errors.bankAgency}
             helperText={errors?.bankAgency?.message || (bankAgencyValue && !/^[0-9]*$/.test(bankAgencyValue) ? "A agência deve conter apenas números" : "")}
             disabled={!isEditable}
@@ -369,4 +420,3 @@ export function BankInfo({ user }) {
     </>
   );
 }
-

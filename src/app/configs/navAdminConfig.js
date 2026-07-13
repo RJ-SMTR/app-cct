@@ -49,6 +49,14 @@ const navAdminConfig = [
                 url: 'relatorio',
             },
             {
+                id: 'agentes-component',
+                title: 'Agentes',
+                translate: 'Agentes',
+                type: 'item',
+                icon: 'heroicons-outline:chart-bar',
+                url: 'agentes',
+            },
+            {
                 id: 'support',
                 title: 'Suporte',
                 translate: 'Suporte',
