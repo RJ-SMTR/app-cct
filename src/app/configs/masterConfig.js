@@ -21,7 +21,7 @@ const masterConfig = [
         title: 'Home',
         translate: 'Home',
         type: 'item',
-        icon: 'material-symbols-outlined:person_2',
+        icon: 'material-symbols-outlined:airport_shuttle',
         url: 'admin',
       },
       {
