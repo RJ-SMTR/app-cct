@@ -21,7 +21,7 @@ const masterConfig = [
         title: 'Home',
         translate: 'Home',
         type: 'item',
-        icon: 'heroicons-outline:home',
+        icon: 'material-symbols-outlined:person_2',
         url: 'admin',
       },
       {
