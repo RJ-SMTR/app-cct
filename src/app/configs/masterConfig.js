@@ -21,7 +21,7 @@ const masterConfig = [
                 title: 'Home',
                 translate: 'Home',
                 type: 'item',
-                icon: 'heroicons-outline:home',
+                icon: 'material-symbols-outlined:airport_shuttle',
                 url: 'admin',
 
 
@@ -59,7 +59,7 @@ const masterConfig = [
                 title: 'Agentes',
                 translate: 'Agentes',
                 type: 'item',
-                icon: 'heroicons-outline:chart-bar',
+                icon: 'material-symbols-outlined:parking_sign',
                 url: 'agentes',
             },
         ]
