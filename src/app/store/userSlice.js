@@ -5,10 +5,11 @@ import _ from '@lodash';
 import { setInitialSettings } from 'app/store/fuse/settingsSlice';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import settingsConfig from 'app/configs/settingsConfig';
+import { hasAgentesAccess, isAdminUser } from 'src/app/auth/utils/accessUtils';
 import jwtService from '../auth/services/jwtService';
 
 export const setUser = createAsyncThunk('user/setUser', async (user, { dispatch, getState }) => {
- 
+
   if (user.loginRedirectUrl) {
     settingsConfig.loginRedirectUrl = user.loginRedirectUrl;
   }
@@ -54,8 +55,19 @@ export const logoutUser = () => async (dispatch, getState) => {
     return null;
   }
 
+  const normalizedRoleName = user.role.name.toLowerCase();
+  let logoutRedirectPath = '/sign-in';
+
+  if (normalizedRoleName.includes('financeiro') || normalizedRoleName === 'admin finan') {
+    logoutRedirectPath = '/financeiro/sign-in';
+  } else if (isAdminUser(user)) {
+    logoutRedirectPath = '/admin/sign-in';
+  } else if (hasAgentesAccess(user)) {
+    logoutRedirectPath = '/agentes/sign-in';
+  }
+
   history.push({
-    pathname: '/',
+    pathname: logoutRedirectPath,
   });
 
   dispatch(setInitialSettings());
@@ -81,7 +93,7 @@ export const updateUserData = (user) => async (dispatch, getState) => {
 
 const initialState = {
   role: [], // guest
-  
+
 };
 
 const userSlice = createSlice({

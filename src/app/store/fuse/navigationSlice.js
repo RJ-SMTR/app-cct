@@ -75,7 +75,7 @@ export const selectNavigation = createSelector(
     }
     let configToUse;
     switch (userRole) {
-      
+
       case 'Admin Master':
         configToUse = masterConfig;
         break;
@@ -91,7 +91,7 @@ export const selectNavigation = createSelector(
         configToUse = navigationConfig;
 
     }
-    
+
 
 
     return setTranslationValues(

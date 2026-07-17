@@ -8,7 +8,6 @@ import ForgotPasswordConfig from '../main/pages/auth/password/forgot/ForgotPassw
 import ResetPasswordConfig from '../main/pages/auth/password/reset/ResetPasswordConfig';
 import ConcludeConfig from '../main/pages/auth/conclude/ConcludeConfig';
 import Error404Page from '../main/404/Error404Page';
-import HomeConifg from '../main/pages/home/HomeConfig';
 import profileAppConfig from '../main/pages/profile/profileAppConfig';
 import ExtractConfig from '../main/pages/extract/ExtractConfig';
 import AdminSignIn from '../main/pages/auth/admin/sign-in/SignInConfig';
@@ -25,14 +24,19 @@ import StatementsConfig from '../main/pages/admin/Statements/StatementsConfig';
 import ReportConfig from '../main/pages/admin/Report/ReportConfig';
 import ReportReleaseConfig from '../main/pages/admin/ReportRelease/ReportReleaseConfig';
 import ReportVanzeiroConfig from '../main/pages/report/reportConfig';
+import agentesAppConfig from '../main/pages/agentes/agentesAppConfig';
+import AgentesSignInConfig from '../main/pages/agentes/sign-in/AgentesSignInConfig';
+
 const routeConfigs = [
   // HomeConifg,
   SignOutConfig,
   SignInConfig,
+  AgentesSignInConfig,
   ForgotPasswordConfig,
   ResetPasswordConfig,
   ConcludeConfig,
   profileAppConfig,
+  agentesAppConfig,
   ExtractConfig,
   // ResumeConfig,
   AdminSignIn,
@@ -48,7 +52,7 @@ const routeConfigs = [
   StatementsConfig,
   ReportVanzeiroConfig,
   ReportConfig,
-  ReportReleaseConfig
+  ReportReleaseConfig,
 ];
 
 const routes = [

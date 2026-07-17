@@ -2,6 +2,7 @@ import BrowserRouter from '@fuse/core/BrowserRouter';
 import FuseLayout from '@fuse/core/FuseLayout';
 import FuseTheme from '@fuse/core/FuseTheme';
 import { SnackbarProvider } from 'notistack';
+import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import rtlPlugin from 'stylis-plugin-rtl';
 import createCache from '@emotion/cache';
@@ -15,19 +16,7 @@ import settingsConfig from 'app/configs/settingsConfig';
 import withAppProviders from './withAppProviders';
 import { AuthProvider } from './auth/AuthContext';
 import 'leaflet/dist/leaflet.css';
-
-import "rsuite/dist/rsuite-no-reset.min.css";
-
-import { useEffect } from 'react';
-
-
-// import axios from 'axios';
-/**
- * Axios HTTP Request defaults
- */
-// axios.defaults.baseURL = "";
-// axios.defaults.headers.common['Access-Control-Allow-Origin'] = '*';
-// axios.defaults.headers.common['Content-Type'] = 'application/x-www-form-urlencoded';
+import 'rsuite/dist/rsuite-no-reset.min.css';
 
 const emotionCacheOptions = {
   rtl: {
@@ -44,21 +33,27 @@ const emotionCacheOptions = {
 
 function App() {
   const user = useSelector(selectUser);
-
-  useEffect(() => {
-    window.addEventListener("unload", () => {
-      sessionStorage.removeItem('modalShown');
-    });
-  }, [])
   const langDirection = useSelector(selectCurrentLanguageDirection);
   const mainTheme = useSelector(selectMainTheme);
+
+  useEffect(() => {
+    const handleUnload = () => {
+      sessionStorage.removeItem('modalShown');
+    };
+
+    window.addEventListener('unload', handleUnload);
+
+    return () => {
+      window.removeEventListener('unload', handleUnload);
+    };
+  }, []);
+
   const loginRedirectUrl = user.role?.name?.includes('Financeiro')
     ? '/lancamentos'
     : user.role?.name?.includes('Admin')
       ? '/admin'
       : settingsConfig.loginRedirectUrl;
 
-  
   return (
     <CacheProvider value={createCache(emotionCacheOptions[langDirection])}>
       <FuseTheme theme={mainTheme} direction={langDirection}>

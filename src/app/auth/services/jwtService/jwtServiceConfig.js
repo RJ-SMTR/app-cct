@@ -1,9 +1,6 @@
-
-
-
 const jwtServiceConfig = {
-  
   signIn: `auth/licensee/login`,
+  cpfSignIn: 'auth/login/cpf',
   signUp: 'api/auth/sign-up',
   userInfo: `auth/me`,
   updateUser: 'api/auth/user/update',
@@ -24,12 +21,12 @@ const jwtServiceConfig = {
   setRelease: 'lancamento/create',
   finanGetByStatus: 'lancamento/getbystatus',
   report: 'cnab/relatorio-novo-remessa',
+  agentesDashboard: '/agentes/dashboard',
   odpMensal: '/ordem-pagamento/mensal',
   odpSemanal: '/ordem-pagamento/semanal',
   odpDiario: '/ordem-pagamento/diario',
   odpAnteriores: '/ordem-pagamento/transacoes-dias-anteriores',
-  extrato: '/cnab/relatorio/extrato/'
-
+  extrato: '/cnab/relatorio/extrato/',
 };
 
 export default jwtServiceConfig;
