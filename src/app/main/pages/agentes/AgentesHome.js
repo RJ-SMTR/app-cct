@@ -110,7 +110,7 @@ function AgentesHome() {
         setAgents([]);
         dispatch(
           showMessage({
-            message: 'Não foi possível carregar os guardadores.',
+            message: 'Não foi possível carregar o guardador.',
           })
         );
       })
@@ -166,14 +166,14 @@ function AgentesHome() {
 
   let agentRows = (
     <TableRow>
-      <TableCell colSpan={5}>Não há guardadores para exibir.</TableCell>
+      <TableCell colSpan={5}>Não há guardador para exibir.</TableCell>
     </TableRow>
   );
 
   if (loading) {
     agentRows = (
       <TableRow>
-        <TableCell colSpan={5}>Carregando guardadores...</TableCell>
+        <TableCell colSpan={5}>Carregando guardador...</TableCell>
       </TableRow>
     );
   } else if (agents.length > 0) {
@@ -225,7 +225,7 @@ function AgentesHome() {
 
   return (
     <div className="p-24 pt-10">
-      <Typography className="font-medium text-3xl">Guardadores</Typography>
+      <Typography className="font-medium text-3xl">Guardador</Typography>
       <Box className="flex flex-col justify-around">
         <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
           <div className="flex flex-row justify-between">

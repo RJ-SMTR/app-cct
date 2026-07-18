@@ -849,10 +849,10 @@ function AgentesApp() {
 
       setDashboard(response);
     } catch (requestError) {
-      setError("Não foi possível carregar o painel de guardadores.");
+      setError("Não foi possível carregar o painel de guardador.");
       dispatch(
         showMessage({
-          message: "Não foi possível carregar o painel de guardadores.",
+          message: "Não foi possível carregar o painel de guardador.",
         })
       );
     } finally {

@@ -38,16 +38,6 @@ function normalizeCpfInput(value) {
     .slice(0, 11);
 }
 
-function formatCpfInput(value) {
-  const normalizedCpf = normalizeCpfInput(value);
-
-  if (normalizedCpf.length !== 11) {
-    return normalizedCpf;
-  }
-
-  return normalizedCpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-}
-
 function handleCpfKeyDown(event) {
   const allowedControlKeys = [
     "Backspace",
@@ -147,8 +137,7 @@ function AgentesSignInPage() {
                   variant="outlined"
                   required
                   fullWidth
-                  value={formatCpfInput(field.value)}
-                  inputProps={{ maxLength: 14, inputMode: "numeric" }}
+                  inputProps={{ maxLength: 11, inputMode: "numeric" }}
                   onKeyDown={handleCpfKeyDown}
                   onChange={(event) => {
                     field.onChange(normalizeCpfInput(event.target.value));
