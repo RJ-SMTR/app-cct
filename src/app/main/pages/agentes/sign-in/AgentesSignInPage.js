@@ -32,6 +32,12 @@ const defaultValues = {
   remember: true,
 };
 
+function normalizeCpfInput(value) {
+  return String(value || "")
+    .replace(/\D/g, "")
+    .slice(0, 11);
+}
+
 function AgentesSignInPage() {
   const isHmg = window.location.href.includes("hmg");
   const [showPassword, setShowPassword] = useState(false);
@@ -104,6 +110,10 @@ function AgentesSignInPage() {
                   variant="outlined"
                   required
                   fullWidth
+                  inputProps={{ maxLength: 11, inputMode: "numeric" }}
+                  onChange={(event) => {
+                    field.onChange(normalizeCpfInput(event.target.value));
+                  }}
                 />
               )}
             />
