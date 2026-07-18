@@ -50,8 +50,8 @@ const navAdminConfig = [
             },
             {
                 id: 'agentes-component',
-                title: 'Guardadores',
-                translate: 'Guardadores',
+                title: 'Guardador',
+                translate: 'Guardador',
                 type: 'item',
                 icon: 'heroicons-outline:chart-bar',
                 url: 'agentes',

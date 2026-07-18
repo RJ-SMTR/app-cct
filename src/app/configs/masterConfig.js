@@ -56,8 +56,8 @@ const masterConfig = [
             },
             {
                 id: 'agentes-component',
-                title: 'Guardadores',
-                translate: 'Guardadores',
+                title: 'Guardador',
+                translate: 'Guardador',
                 type: 'item',
                 icon: 'material-symbols-outlined:parking_sign',
                 url: 'agentes',
