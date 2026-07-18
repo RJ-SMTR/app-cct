@@ -953,6 +953,7 @@ function AgentesApp() {
                 user={agentDetails}
                 primaryInfoLabel="CPF"
                 primaryInfoValue={agentCpf}
+                onUserUpdated={setAgentDetails}
               />
               {isOwnDashboard ? (
                 <BankInfo user={agentDetails} />
