@@ -1,7 +1,9 @@
 import FuseUtils from '@fuse/utils';
 import FuseLoading from '@fuse/core/FuseLoading';
 import { Navigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import settingsConfig from 'app/configs/settingsConfig';
+import { selectUser } from 'app/store/userSlice';
 import SignInConfig from '../main/pages/auth/sign-in/SignInConfig';
 import SignOutConfig from '../main/pages/auth/sign-out/SignOutConfig';
 import ForgotPasswordConfig from '../main/pages/auth/password/forgot/ForgotPasswordConfig';
@@ -26,6 +28,20 @@ import ReportReleaseConfig from '../main/pages/admin/ReportRelease/ReportRelease
 import ReportVanzeiroConfig from '../main/pages/report/reportConfig';
 import agentesAppConfig from '../main/pages/agentes/agentesAppConfig';
 import AgentesSignInConfig from '../main/pages/agentes/sign-in/AgentesSignInConfig';
+
+function RootRedirect() {
+  const user = useSelector(selectUser);
+
+  const targetPath = user?.role?.id === 6
+    ? '/agentes'
+    : user?.role?.name?.includes('Financeiro')
+      ? '/lancamentos'
+      : user?.role?.name?.includes('Admin')
+        ? '/admin'
+        : '/agentes'
+
+  return <Navigate to={targetPath} replace />;
+}
 
 const routeConfigs = [
   // HomeConifg,
@@ -59,7 +75,7 @@ const routes = [
   ...FuseUtils.generateRoutesFromConfigs(routeConfigs, settingsConfig.defaultAuth),
   {
     path: '/',
-    element: <Navigate to="/profile" />,
+    element: <RootRedirect />,
     auth: settingsConfig.defaultAuth,
   },
   {

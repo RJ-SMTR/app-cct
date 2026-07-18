@@ -48,11 +48,13 @@ function App() {
     };
   }, []);
 
-  const loginRedirectUrl = user.role?.name?.includes('Financeiro')
-    ? '/lancamentos'
-    : user.role?.name?.includes('Admin')
-      ? '/admin'
-      : settingsConfig.loginRedirectUrl;
+  const loginRedirectUrl = user.role?.id === 6
+    ? '/agentes'
+    : user.role?.name?.includes('Financeiro')
+      ? '/lancamentos'
+      : user.role?.name?.includes('Admin')
+        ? '/admin'
+        : settingsConfig.loginRedirectUrl;
 
   return (
     <CacheProvider value={createCache(emotionCacheOptions[langDirection])}>
