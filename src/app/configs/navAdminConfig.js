@@ -17,8 +17,8 @@ const navAdminConfig = [
         children: [
             {
                 id: 'Home-component',
-                title: 'Permissionario',
-                translate: 'Permissionario',
+                title: 'Permissionário',
+                translate: 'Permissionário',
                 type: 'item',
                 icon: 'heroicons-outline:home',
                 url: 'admin',
