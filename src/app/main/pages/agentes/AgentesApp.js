@@ -35,7 +35,7 @@ import { selectUser } from "app/store/userSlice";
 import { showMessage } from "app/store/fuse/messageSlice";
 import JwtService from "src/app/auth/services/jwtService";
 import { isAdminUser } from "src/app/auth/utils/accessUtils";
-import { getUserCpf, PersonalInfo } from "../profile/formCards/formCards";
+import { BankInfo, getUserCpf, PersonalInfo } from "../profile/formCards/formCards";
 import {
   DEFAULT_AGENTES_DASHBOARD_MONTH,
   getAgentesDashboard,
@@ -952,7 +952,11 @@ function AgentesApp() {
                 primaryInfoLabel="CPF"
                 primaryInfoValue={agentCpf}
               />
-              <AgentBankInfo user={agentDetails} />
+              {isOwnDashboard ? (
+                <BankInfo user={agentDetails} />
+              ) : (
+                <AgentBankInfo user={agentDetails} />
+              )}
             </div>
           ) : null}
 

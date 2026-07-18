@@ -93,7 +93,7 @@ class FuseAuthorization extends Component {
         case 'Admin':
           setTimeout(() => history.push(savedLoginUrl || '/admin/sign-in'), 0);
           break;
-        case 'Agentes':
+        case 'Agente':
           setTimeout(() => history.push(savedLoginUrl || '/agentes/sign-in'), 0);
           break;
         default:
