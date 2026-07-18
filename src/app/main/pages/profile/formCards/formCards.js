@@ -191,7 +191,7 @@ export function BankInfo({
   useSecondaryButton = false,
 }) {
   const [isEditable, setIsEditable] = useState(defaultEditable)
-  const [selectedBankCode, setSelectedBankCode] = useState(user.bankCode);
+  const [selectedBankCode, setSelectedBankCode] = useState(user.bankCode ?? '');
   const { patchInfo, success } = useContext(AuthContext)
   const [bankOptions, setBankOptions] = useState([]);
   const [saved, setSaved] = useState(false)
@@ -210,6 +210,12 @@ export function BankInfo({
   const bankAccountValue = watch("bankAccount")
   const bankAgencyValue = watch("bankAgency")
 
+  const normalizeBankCode = (bankCode) => {
+    const parsedCode = Number(bankCode);
+
+    return Number.isFinite(parsedCode) ? parsedCode : bankCode;
+  };
+
   useEffect(() => {
     const bankCodes = [184, 29, 479, 386, 249]
     fetchBankOptions();
@@ -217,6 +223,7 @@ export function BankInfo({
       setError('bankCode', { message: `Erro: Código do banco ${user.bankCode} não é permitido. Por favor, contacte o suporte!` });
     }
     setSaved(false)
+    setSelectedBankCode(user.bankCode ?? '');
   }, [user]);
 
   const fetchBankOptions = async () => {
@@ -225,7 +232,11 @@ export function BankInfo({
       const bankCodes = [184, 29, 479, 386, 249]
       response.data = response.data.sort((a, b) => a.name.localeCompare(b.name));
 
-      setUserBank(response.data.find((bank) => bank.code === selectedBankCode) || null)
+      const normalizedSelectedBankCode = normalizeBankCode(selectedBankCode);
+
+      setUserBank(
+        response.data.find((bank) => normalizeBankCode(bank.code) === normalizedSelectedBankCode) || null
+      )
       const filteredData = response.data.filter(({ code }) => !bankCodes.includes(code));
 
       setBankOptions(filteredData);
@@ -237,6 +248,7 @@ export function BankInfo({
   const handleAutocompleteChange = (_, newValue) => {
     setValue('bankCode', newValue ? newValue.code : '');
     setSelectedBankCode(newValue ? newValue.code : '');
+    setUserBank(newValue || null);
   };
 
   function onSubmit(info) {
@@ -348,6 +360,7 @@ export function BankInfo({
               options={bankOptions}
               getOptionLabel={(option) => `${option.code} - ${option.name}`}
               value={userBank}
+              isOptionEqualToValue={(option, value) => option.code === value?.code}
               onChange={handleAutocompleteChange}
               disabled={!isEditable}
               renderInput={(params) => (

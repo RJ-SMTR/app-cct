@@ -66,13 +66,13 @@ export function getUserAccessTokens(user) {
 export function hasAgentesAccess(user) {
   const accessTokens = getUserAccessTokens(user);
 
-  return ['agentes', 'admin', 'admin master'].some((token) => accessTokens.includes(token));
+  return [ 'agente', 'admin', 'admin master'].some((token) => accessTokens.includes(token));
 }
 
 export function isAgenteUser(user) {
   const accessTokens = getUserAccessTokens(user);
 
-  return accessTokens.includes('agentes');
+  return accessTokens.includes('agente');
 }
 
 export function isAdminUser(user) {

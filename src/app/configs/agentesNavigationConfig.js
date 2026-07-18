@@ -14,7 +14,7 @@ const agentesNavigationConfig = [
     title: 'Agentes',
     translate: 'Agentes',
     type: 'item',
-    icon: 'heroicons-outline:chart-bar',
+    icon: 'material-symbols-outlined:parking_sign',
     url: 'agentes',
     auth: authRoles.agentes,
   },
