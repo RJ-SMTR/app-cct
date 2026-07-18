@@ -37,7 +37,6 @@ function normalizeCpfInput(value) {
     .replace(/\D/g, "")
     .slice(0, 11);
 }
-
 function handleCpfKeyDown(event) {
   const allowedControlKeys = [
     "Backspace",
