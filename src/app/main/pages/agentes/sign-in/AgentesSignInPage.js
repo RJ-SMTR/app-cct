@@ -38,6 +38,40 @@ function normalizeCpfInput(value) {
     .slice(0, 11);
 }
 
+function formatCpfInput(value) {
+  const normalizedCpf = normalizeCpfInput(value);
+
+  if (normalizedCpf.length !== 11) {
+    return normalizedCpf;
+  }
+
+  return normalizedCpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+}
+
+function handleCpfKeyDown(event) {
+  const allowedControlKeys = [
+    "Backspace",
+    "Delete",
+    "Tab",
+    "ArrowLeft",
+    "ArrowRight",
+    "Home",
+    "End",
+  ];
+
+  if (
+    allowedControlKeys.includes(event.key) ||
+    event.ctrlKey ||
+    event.metaKey
+  ) {
+    return;
+  }
+
+  if (!/^\d$/.test(event.key)) {
+    event.preventDefault();
+  }
+}
+
 function AgentesSignInPage() {
   const isHmg = window.location.href.includes("hmg");
   const [showPassword, setShowPassword] = useState(false);
@@ -110,7 +144,9 @@ function AgentesSignInPage() {
                   variant="outlined"
                   required
                   fullWidth
-                  inputProps={{ maxLength: 11, inputMode: "numeric" }}
+                  value={formatCpfInput(field.value)}
+                  inputProps={{ maxLength: 14, inputMode: "numeric" }}
+                  onKeyDown={handleCpfKeyDown}
                   onChange={(event) => {
                     field.onChange(normalizeCpfInput(event.target.value));
                   }}
