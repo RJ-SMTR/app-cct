@@ -129,6 +129,9 @@ function AgentesSignInPage() {
             className="flex flex-col justify-center w-full mt-32"
             onSubmit={handleSubmit(onSubmit)}
           >
+            <Typography className="mb-12 text-sm text-secondary">
+              Digite o CPF utilizando apenas números
+            </Typography>
             <Controller
               name="cpf"
               control={control}
