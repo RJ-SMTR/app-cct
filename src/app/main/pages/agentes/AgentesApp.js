@@ -922,7 +922,9 @@ function AgentesApp() {
                 <Typography className="text-lg font-bold leading-none">
                   {dashboardOwnerName}
                 </Typography>
-                <Typography color="text.secondary">Código de identificação:{user.permitCode}</Typography>
+                <Typography color="text.secondary">
+                  Código de identificação:{agentDetails?.permitCode ?? "-"}
+                </Typography>
               </div>
 
               {isAdminUser(user) ? (

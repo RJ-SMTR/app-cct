@@ -18,8 +18,8 @@ const masterConfig = [
 
             {
                 id: 'Home-component',
-                title: 'Home',
-                translate: 'Home',
+                title: 'Permissionario',
+                translate: 'Permissionario',
                 type: 'item',
                 icon: 'material-symbols-outlined:airport_shuttle',
                 url: 'admin',
