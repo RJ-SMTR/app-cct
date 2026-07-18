@@ -8,9 +8,12 @@ import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { useContext } from "react";
 import { AuthContext } from "src/app/auth/AuthContext";
 import { api } from 'app/configs/api/api';
+import { selectUser } from 'app/store/userSlice';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Link } from "react-router-dom";
+import { useSelector } from 'react-redux';
+import { isAdminUser } from 'src/app/auth/utils/accessUtils';
 
 
 const personalInfoSchema = yup.object().shape({
@@ -38,6 +41,9 @@ export function PersonalInfo({
   primaryInfoValue,
 }) {
   const { patchInfo, success } = useContext(AuthContext)
+  const currentUser = useSelector(selectUser)
+  const canEditEmail = isAdminUser(currentUser)
+  const canEditPhone = String(currentUser?.id) === String(user?.id)
   const [isEditable, setIsEditable] = useState(false)
   const [saved, setSaved] = useState(false)
   const resolvedPrimaryInfoValue = primaryInfoValue ?? user?.permitCode ?? '';
@@ -58,8 +64,14 @@ export function PersonalInfo({
   const { isValid, errors } = formState;
 
 
-  function onSubmit({ phone }) {
-    patchInfo({ phone }, user.id)
+  function onSubmit({ phone, email }) {
+    patchInfo(
+      {
+        phone: canEditPhone ? phone : user.phone,
+        ...(canEditEmail ? { email } : {}),
+      },
+      user.id
+    )
       .then((response) => {
         setIsEditable(false)
         setSaved(true)
@@ -67,6 +79,11 @@ export function PersonalInfo({
 
       })
       .catch((_errors) => {
+        if (_errors.email) {
+          setError('email', {
+            message: 'E-mail inválido'
+          });
+        }
         setError(_errors.phone, {
           message: 'Telefone inválido'
         });
@@ -150,8 +167,7 @@ export function PersonalInfo({
                 label="E-mail"
                 type="string"
                 variant="outlined"
-                disabled
-                value={user.email}
+                disabled={!isEditable || !canEditEmail}
                 fullWidth
               />
             )}
@@ -162,7 +178,7 @@ export function PersonalInfo({
             render={({ field }) => (
               <TextField
                 {...field}
-                disabled={!isEditable}
+                disabled={!isEditable || !canEditPhone}
                 className="mb-24"
                 label="Celular"
                 variant="outlined"

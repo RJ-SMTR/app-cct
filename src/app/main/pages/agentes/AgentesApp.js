@@ -922,17 +922,19 @@ function AgentesApp() {
                 <Typography className="text-lg font-bold leading-none">
                   {dashboardOwnerName}
                 </Typography>
-                <Typography color="text.secondary">#{id}</Typography>
+                <Typography color="text.secondary">Código de identificação:{user.permitCode}</Typography>
               </div>
 
-              <div className="flex flex-col md:items-end">
-                <Typography className="text-sm font-medium">
-                  Convite enviado em
-                </Typography>
-                <Typography color="text.secondary">
-                  {formatDateTimeLabel(inviteSentAt)}
-                </Typography>
-              </div>
+              {isAdminUser(user) ? (
+                <div className="flex flex-col md:items-end">
+                  <Typography className="text-sm font-medium">
+                    Convite enviado em
+                  </Typography>
+                  <Typography color="text.secondary">
+                    {formatDateTimeLabel(inviteSentAt)}
+                  </Typography>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
