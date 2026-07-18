@@ -8,11 +8,12 @@ import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { useContext } from "react";
 import { AuthContext } from "src/app/auth/AuthContext";
 import { api } from 'app/configs/api/api';
+import { showMessage } from 'app/store/fuse/messageSlice';
 import { selectUser } from 'app/store/userSlice';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Link } from "react-router-dom";
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { isAdminUser } from 'src/app/auth/utils/accessUtils';
 
 
@@ -39,8 +40,10 @@ export function PersonalInfo({
   user,
   primaryInfoLabel = 'Código de Permissão',
   primaryInfoValue,
+  onUserUpdated,
 }) {
   const { patchInfo, success } = useContext(AuthContext)
+  const dispatch = useDispatch()
   const currentUser = useSelector(selectUser)
   const canEditEmail = isAdminUser(currentUser)
   const canEditPhone = String(currentUser?.id) === String(user?.id)
@@ -75,7 +78,14 @@ export function PersonalInfo({
       .then((response) => {
         setIsEditable(false)
         setSaved(true)
-        success(response, "Seus dados foram salvos!")
+        onUserUpdated?.(response)
+
+        if (String(currentUser?.id) === String(user?.id)) {
+          success(response, "Seus dados foram salvos!")
+          return;
+        }
+
+        dispatch(showMessage({ message: "Seus dados foram salvos!" }))
 
       })
       .catch((_errors) => {

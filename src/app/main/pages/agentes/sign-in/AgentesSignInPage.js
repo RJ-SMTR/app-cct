@@ -32,6 +32,46 @@ const defaultValues = {
   remember: true,
 };
 
+function normalizeCpfInput(value) {
+  return String(value || "")
+    .replace(/\D/g, "")
+    .slice(0, 11);
+}
+
+function formatCpfInput(value) {
+  const normalizedCpf = normalizeCpfInput(value);
+
+  if (normalizedCpf.length !== 11) {
+    return normalizedCpf;
+  }
+
+  return normalizedCpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+}
+
+function handleCpfKeyDown(event) {
+  const allowedControlKeys = [
+    "Backspace",
+    "Delete",
+    "Tab",
+    "ArrowLeft",
+    "ArrowRight",
+    "Home",
+    "End",
+  ];
+
+  if (
+    allowedControlKeys.includes(event.key) ||
+    event.ctrlKey ||
+    event.metaKey
+  ) {
+    return;
+  }
+
+  if (!/^\d$/.test(event.key)) {
+    event.preventDefault();
+  }
+}
+
 function AgentesSignInPage() {
   const isHmg = window.location.href.includes("hmg");
   const [showPassword, setShowPassword] = useState(false);
@@ -74,7 +114,7 @@ function AgentesSignInPage() {
               className="mb-10"
               alt="logo CCT"
             />
-            Login de Agente
+            Login de Guardador
           </Typography>
 
           {isHmg && (
@@ -89,6 +129,9 @@ function AgentesSignInPage() {
             className="flex flex-col justify-center w-full mt-32"
             onSubmit={handleSubmit(onSubmit)}
           >
+            <Typography className="mb-12 text-sm text-secondary">
+              Digite o CPF utilizando apenas números
+            </Typography>
             <Controller
               name="cpf"
               control={control}
@@ -104,6 +147,12 @@ function AgentesSignInPage() {
                   variant="outlined"
                   required
                   fullWidth
+                  value={formatCpfInput(field.value)}
+                  inputProps={{ maxLength: 14, inputMode: "numeric" }}
+                  onKeyDown={handleCpfKeyDown}
+                  onChange={(event) => {
+                    field.onChange(normalizeCpfInput(event.target.value));
+                  }}
                 />
               )}
             />
@@ -164,7 +213,7 @@ function AgentesSignInPage() {
               variant="contained"
               color="secondary"
               className="w-full mt-16 z-10"
-              aria-label="Sign in agente"
+              aria-label="Sign in guardador"
               disabled={_.isEmpty(dirtyFields) || !isValid}
               type="submit"
               size="large"
