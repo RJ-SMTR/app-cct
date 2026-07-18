@@ -114,7 +114,7 @@ function AgentesSignInPage() {
               className="mb-10"
               alt="logo CCT"
             />
-            Login de Agente
+            Login de Guardador
           </Typography>
 
           {isHmg && (
@@ -213,7 +213,7 @@ function AgentesSignInPage() {
               variant="contained"
               color="secondary"
               className="w-full mt-16 z-10"
-              aria-label="Sign in agente"
+              aria-label="Sign in guardador"
               disabled={_.isEmpty(dirtyFields) || !isValid}
               type="submit"
               size="large"

@@ -11,8 +11,8 @@ i18next.addResourceBundle('ar', 'navigation', ar);
 const agentesNavigationConfig = [
   {
     id: 'agentes',
-    title: 'Agentes',
-    translate: 'Agentes',
+    title: 'Guardadores',
+    translate: 'Guardadores',
     type: 'item',
     icon: 'material-symbols-outlined:parking_sign',
     url: 'agentes',

@@ -798,7 +798,7 @@ function AgentesApp() {
   const dashboardOwnerName =
     agentDetails?.fullName ||
     (isOwnDashboard ? user.fullName : null) ||
-    "Agente";
+    "Guardador";
   const agentCpf = getUserCpf(agentDetails);
   const inviteSentAt = getInviteSentAt(agentDetails);
 
@@ -824,7 +824,7 @@ function AgentesApp() {
     } catch (requestError) {
       dispatch(
         showMessage({
-          message: "Não foi possível carregar os dados do agente.",
+          message: "Não foi possível carregar os dados do guardador.",
         })
       );
     }
@@ -849,10 +849,10 @@ function AgentesApp() {
 
       setDashboard(response);
     } catch (requestError) {
-      setError("Não foi possível carregar o painel de agentes.");
+      setError("Não foi possível carregar o painel de guardadores.");
       dispatch(
         showMessage({
-          message: "Não foi possível carregar o painel de agentes.",
+          message: "Não foi possível carregar o painel de guardadores.",
         })
       );
     } finally {
