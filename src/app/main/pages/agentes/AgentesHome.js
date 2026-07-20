@@ -5,6 +5,7 @@ import {
   Box,
   Button,
   Modal,
+  Badge,
   Chip,
   Select,
   Paper,
@@ -60,6 +61,22 @@ function getAgentAssociation(agentUser) {
 
 function normalizeAgentList(agentUsers) {
   return Array.isArray(agentUsers) ? agentUsers : [];
+}
+
+function getInviteStatusLabel(agentUser) {
+  const inviteStatusName =
+    agentUser?.inviteStatus?.name || agentUser?.aux_inviteStatus?.name;
+
+  switch (inviteStatusName) {
+    case 'created':
+      return 'Criado';
+    case 'sent':
+      return 'Enviado';
+    case 'used':
+      return 'Acessado';
+    default:
+      return '';
+  }
 }
 
 function AgentesHome() {
@@ -166,14 +183,14 @@ function AgentesHome() {
 
   let agentRows = (
     <TableRow>
-      <TableCell colSpan={5}>Não há guardador para exibir.</TableCell>
+      <TableCell colSpan={6}>Não há guardador para exibir.</TableCell>
     </TableRow>
   );
 
   if (loading) {
     agentRows = (
       <TableRow>
-        <TableCell colSpan={5}>Carregando guardador...</TableCell>
+        <TableCell colSpan={6}>Carregando guardador...</TableCell>
       </TableRow>
     );
   } else if (agents.length > 0) {
@@ -189,6 +206,15 @@ function AgentesHome() {
           </TableCell>
           <TableCell>
             <Typography className="whitespace-nowrap">{agentUser.email}</Typography>
+          </TableCell>
+          <TableCell>
+            <Typography className="whitespace-nowrap">
+              <Badge
+                className="top-[5px] mt-10"
+                color={getInviteStatusLabel(agentUser) ? 'success' : 'warning'}
+                badgeContent={getInviteStatusLabel(agentUser) ?? 'Convite não enviado'}
+              />
+            </Typography>
           </TableCell>
           <TableCell>
             <Box className="flex flex-wrap gap-8">
@@ -284,6 +310,14 @@ function AgentesHome() {
                       className="font-semibold text-12 whitespace-nowrap"
                     >
                       E-mail
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography
+                      color="text.secondary"
+                      className="font-semibold text-12 whitespace-nowrap"
+                    >
+                      Status de convite
                     </Typography>
                   </TableCell>
                   <TableCell>

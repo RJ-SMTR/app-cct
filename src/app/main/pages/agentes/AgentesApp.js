@@ -802,6 +802,59 @@ function AgentesApp() {
   const agentCpf = getUserCpf(agentDetails);
   const inviteSentAt = getInviteSentAt(agentDetails);
 
+  const handleResendInvite = useCallback(async () => {
+    const token = window.localStorage.getItem("jwt_access_token");
+    const data = {
+      id,
+    };
+
+    if (!JwtService.isAuthTokenValid(token)) {
+      return;
+    }
+
+    try {
+      await api.post("/auth/email/resend", data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      dispatch(
+        showMessage({
+          message: "E-mail enviado.",
+        })
+      );
+    } catch (requestError) {
+      const errorMessage = requestError?.response?.data?.error || "";
+
+      if (errorMessage.includes("mailStatus")) {
+        dispatch(
+          showMessage({
+            message:
+              "Usuário não está na fila de envio, não foi possível fazer o reenvio.",
+          })
+        );
+        return;
+      }
+
+      if (errorMessage.includes("quota")) {
+        dispatch(
+          showMessage({
+            message:
+              "Número máximo de envios diário atingido, não foi possível fazer o reenvio.",
+          })
+        );
+        return;
+      }
+
+      dispatch(
+        showMessage({
+          message: "Erro desconhecido, não foi possível fazer o reenvio.",
+        })
+      );
+    }
+  }, [dispatch, id]);
+
   const loadAgentDetails = useCallback(async () => {
     if (isOwnDashboard) {
       setAgentDetails(user);
@@ -916,17 +969,25 @@ function AgentesApp() {
     <Root
       header={
         <div className="flex flex-col">
-          <div className="flex flex-col justify-center max-w-[95%] w-full mx-auto px-32 py-24 lg:h-72">
+          <div className="flex flex-col justify-center max-w-[95%] w-full mx-auto px-32 pt-40 pb-32 lg:min-h-[120px]">
             <div className="flex flex-col gap-12 my-16 md:flex-row md:items-start md:justify-between">
               <div className="flex flex-col items-start">
                 <Typography className="text-lg font-bold leading-none">
                   {dashboardOwnerName}
                 </Typography>
-                <Typography color="text.secondary">Código de identificação:{user.permitCode}</Typography>
+                <Typography color="text.secondary">
+                  Código de identificação:{agentDetails?.permitCode ?? "-"}
+                </Typography>
               </div>
 
               {isAdminUser(user) ? (
-                <div className="flex flex-col md:items-end">
+                <div className="flex flex-col mt-16 md:mt-0 md:items-end">
+                  <button
+                    onClick={handleResendInvite}
+                    className="rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-12 mb-12"
+                  >
+                    Reenviar e-mail de cadastro
+                  </button>
                   <Typography className="text-sm font-medium">
                     Convite enviado em
                   </Typography>

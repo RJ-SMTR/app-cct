@@ -161,7 +161,10 @@ export function TableUsers() {
                             <TableBody>
                                 {userList.length > 0 ? userList.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((i) => {
                                     const emailStatus = (i) => {
-                                        switch (i.aux_inviteStatus?.name) {
+                                        const inviteStatusName =
+                                            i?.inviteStatus?.name || i?.aux_inviteStatus?.name;
+
+                                        switch (inviteStatusName) {
                                             case 'created':
                                                 return 'Criado';
                                                 break;
