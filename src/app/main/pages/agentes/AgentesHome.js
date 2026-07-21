@@ -42,10 +42,26 @@ function getAgentCpf(agentUser) {
   return agentUser?.cpf || agentUser?.cpfCnpj || '-';
 }
 
+function getAssociationLabel(association) {
+  return association?.label || association?.name || association?.value || '';
+}
+
+function shortenAssociationLabel(label) {
+  const normalizedLabel = String(label || '').trim();
+
+  if (!normalizedLabel) {
+    return '-';
+  }
+
+  const [firstWord, secondWord] = normalizedLabel.split(/\s+/);
+
+  return [firstWord, secondWord].filter(Boolean).join(' ');
+}
+
 function getAgentAssociation(agentUser) {
   if (Array.isArray(agentUser?.associacoes) && agentUser.associacoes.length > 0) {
     return agentUser.associacoes
-      .map((association) => association?.label || association?.name || association?.value)
+      .map((association) => getAssociationLabel(association))
       .filter(Boolean)
       .join(', ');
   }
@@ -63,9 +79,19 @@ function normalizeAgentList(agentUsers) {
   return Array.isArray(agentUsers) ? agentUsers : [];
 }
 
+function getAgentAssociationDisplay(agentUser) {
+  if (Array.isArray(agentUser?.associacoes) && agentUser.associacoes.length > 0) {
+    return agentUser.associacoes
+      .map((association) => shortenAssociationLabel(getAssociationLabel(association)))
+      .filter(Boolean)
+      .join(', ');
+  }
+
+  return shortenAssociationLabel(getAgentAssociation(agentUser));
+}
+
 function getInviteStatusLabel(agentUser) {
-  const inviteStatusName =
-    agentUser?.inviteStatus?.name || agentUser?.aux_inviteStatus?.name;
+  const inviteStatusName = agentUser?.inviteStatus?.name || agentUser?.aux_inviteStatus?.name;
 
   switch (inviteStatusName) {
     case 'created':
@@ -202,7 +228,9 @@ function AgentesHome() {
             <Typography color="text.secondary">{getAgentCpf(agentUser)}</Typography>
           </TableCell>
           <TableCell>
-            <Typography className="whitespace-nowrap">{agentUser.fullName ?? 'Guardador'}</Typography>
+            <Typography className="whitespace-nowrap">
+              {agentUser.fullName ?? 'Guardador'}
+            </Typography>
           </TableCell>
           <TableCell>
             <Typography className="whitespace-nowrap">{agentUser.email}</Typography>
@@ -222,13 +250,13 @@ function AgentesHome() {
                 agentUser.associacoes.map((association) => (
                   <Chip
                     key={`${agentUser.id}-${association.value}`}
-                    label={association.label}
+                    label={shortenAssociationLabel(getAssociationLabel(association))}
                     size="small"
                   />
                 ))
               ) : (
                 <Typography className="whitespace-nowrap">
-                  {getAgentAssociation(agentUser)}
+                  {getAgentAssociationDisplay(agentUser)}
                 </Typography>
               )}
             </Box>
