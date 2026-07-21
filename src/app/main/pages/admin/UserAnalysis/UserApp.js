@@ -9,8 +9,9 @@ import { BankInfo, PersonalInfo } from './forms/userForms';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import { useDispatch } from 'react-redux';
 
-import { useThemeMediaQuery
- } from '@fuse/hooks';
+import {
+  useThemeMediaQuery
+} from '@fuse/hooks';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '@mui/material';
 import { useEffect, useState } from 'react';
@@ -21,6 +22,7 @@ import TableTypes from '../../extract/widgets/TableTypes';
 import Entries from '../../extract/widgets/Entries';
 import TablePending from '../../extract/widgets/TablePending';
 import JwtService from 'src/app/auth/services/jwtService';
+import { format, isValid, parseISO } from 'date-fns';
 const Root = styled(FusePageSimple)(({ theme }) => ({
   '& .FusePageSimple-header': {
     backgroundColor: theme.palette.background.paper,
@@ -33,9 +35,24 @@ const Root = styled(FusePageSimple)(({ theme }) => ({
   },
 }));
 
+function formatDateTimeLabel(dateTime, dateFormat = 'dd/MM/yyyy HH:mm') {
+  if (!dateTime || typeof dateTime !== 'string') {
+    return '-';
+  }
+
+  const normalizedDateTime = dateTime.includes('T') ? dateTime : `${dateTime}T12:00:00`;
+  const parsedDateTime = parseISO(normalizedDateTime);
+
+  if (!isValid(parsedDateTime)) {
+    return '-';
+  }
+
+  return format(parsedDateTime, dateFormat);
+}
+
 function UserApp() {
   const [user, setUser] = useState()
-  let {id} = useParams()
+  let { id } = useParams()
   const valorAcumulado = useSelector(state => state.extract.valorAcumuladoLabel);
   const paidValue = useSelector(state => state.extract.valorPagoLabel);
   const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
@@ -47,47 +64,47 @@ function UserApp() {
   }, [])
   const onSubmit = async () => {
 
-      const token = window.localStorage.getItem('jwt_access_token')
-      const data = {
-        id: id,
-      };
+    const token = window.localStorage.getItem('jwt_access_token')
+    const data = {
+      id: id,
+    };
 
-      if(JwtService.isAuthTokenValid(token)){
-        return new Promise((resolve, reject) => {
-          api
-            .post('/auth/email/resend', data, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            })
-            .then((response) => {
-              dispatch(showMessage({ message: 'E-mail enviado.' }))
-              resolve(response.data)
-            })
-            .catch((error) => {
-              reject(error)
-              if (error.response.data.error.includes('mailStatus')) {
-                dispatch(showMessage({ message: 'Usuário não esta na fila de envio, não foi possível fazer o reenvio.' }))
+    if (JwtService.isAuthTokenValid(token)) {
+      return new Promise((resolve, reject) => {
+        api
+          .post('/auth/email/resend', data, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+          .then((response) => {
+            dispatch(showMessage({ message: 'E-mail enviado.' }))
+            resolve(response.data)
+          })
+          .catch((error) => {
+            reject(error)
+            if (error.response.data.error.includes('mailStatus')) {
+              dispatch(showMessage({ message: 'Usuário não esta na fila de envio, não foi possível fazer o reenvio.' }))
 
-              } else if (error.response.data.error.includes('quota')) {
-                dispatch(showMessage({ message: 'Número máximo de envios diário atingido, não foi possível fazer o reenvio.' }))
-              } else {
-                dispatch(showMessage({ message: 'Erro desconhecido, não foi possível fazer o reenvio.' }))
-              }
-              console.log(error.response.data.error)
+            } else if (error.response.data.error.includes('quota')) {
+              dispatch(showMessage({ message: 'Número máximo de envios diário atingido, não foi possível fazer o reenvio.' }))
+            } else {
+              dispatch(showMessage({ message: 'Erro desconhecido, não foi possível fazer o reenvio.' }))
+            }
+            console.log(error.response.data.error)
 
-            });
-        });
-      }
+          });
+      });
+    }
   };
   useEffect(() => {
     const token = window.localStorage.getItem('jwt_access_token');
     api.get(`/users/${id}`, {
       headers: { "Authorization": `Bearer ${token}` },
     })
-        .then(response => {
-          setUser(response.data)
-        })
+      .then(response => {
+        setUser(response.data)
+      })
   }, [])
 
 
@@ -101,33 +118,39 @@ function UserApp() {
             alt="Profile Cover"
           />
 
-          <div className="flex flex-col flex-0 lg:flex-row items-center max-w-[95%] w-full mx-auto px-32 lg:h-72 md:justify-between">
-           <div className='flex flex-col md:flex-row items-center'>
-             <div className="-mt-96 lg:-mt-88 rounded-full">
-              
-               <motion.div initial={{ scale: 0 }} animate={{ scale: 1, transition: { delay: 0.1 } }}>
-                
-                  <Avatar sx={{ borderColor: 'background.white' }} className="w-128 h-128 border-4"  />
-               </motion.div>
-             </div>
-            
-             <div className="flex flex-col items-center lg:items-start my-16 lg:mt-16 lg:ml-32 md:justify-between">
-              
-                 <Typography className="text-lg font-bold leading-none">{user?.fullName}</Typography>
-                 <Typography color="text.secondary">#{id}</Typography>
-                {user?.bloqueado ? 
-                <p className='text-red-600 mb-0'>Usuário Bloqueado</p>
+          <div className="flex flex-col flex-0 lg:flex-row items-start max-w-[95%] w-full mx-auto md:justify-between">
+            <div className='flex flex-col md:flex-row items-center'>
+              <div className="-mt-96 lg:-mt-88 rounded-full">
+
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1, transition: { delay: 0.1 } }}>
+
+                  <Avatar sx={{ borderColor: 'background.white' }} className="w-128 h-128 border-4" />
+                </motion.div>
+              </div>
+
+              <div className="flex flex-col items-center lg:items-start my-16 lg:mt-16 lg:ml-32 md:justify-between">
+
+                <Typography className="text-lg font-bold leading-none">{user?.fullName}</Typography>
+                <Typography color="text.secondary">#{id}</Typography>
+                {user?.bloqueado ?
+                  <p className='text-red-600 mb-0'>Usuário Bloqueado</p>
                   : <></>}
-            
-             </div>
-           </div>
-            <div>
-              
-              <button onClick={() => onSubmit()} className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-12 mb-12 '>
-              Reenviar e-mail de cadastro
-             </button>
+
+              </div>
             </div>
-          
+            <div className='flex flex-col items-center md:items-end my-12 py-12'>
+
+              <button onClick={() => onSubmit()} className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-12 mb-6'>
+                Reenviar e-mail de cadastro
+              </button>
+              <Typography className="text-sm font-medium">
+                Convite enviado em
+              </Typography>
+              <Typography color="text.secondary">
+                {formatDateTimeLabel(user?.inviteAt)}
+              </Typography>
+            </div>
+
           </div>
         </div>
       }
@@ -146,18 +169,18 @@ function UserApp() {
           </div>
           {user && (
             <>
-           <div className='md:flex mt-10 '>
+              <div className='md:flex mt-10 '>
                 <Entries type={paidValue} isDay="false" />
-           </div>
+              </div>
               <div className={`flex flex-col `}>
-               <div>
-                 <Table id={id} />
-               </div>
+                <div>
+                  <Table id={id} />
+                </div>
                 {searchingWeek && !searchingDay ? <div>
                   <TablePending id={id} />
                 </div> : <></>}
 
-         </div>
+              </div>
             </>
           )}
         </div>
