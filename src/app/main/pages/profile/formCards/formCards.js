@@ -90,9 +90,12 @@ export function PersonalInfo({
             message: 'E-mail inválido'
           });
         }
-        setError(_errors.phone, {
-          message: 'Telefone inválido'
-        });
+
+        if (_errors.phone) {
+          setError('phone', {
+            message: 'Telefone inválido'
+          });
+        }
       });
 
   }
@@ -175,6 +178,8 @@ export function PersonalInfo({
                 variant="outlined"
                 disabled={!isEditable || !canEditEmail}
                 fullWidth
+                error={!!errors.email}
+                helperText={errors?.email?.message}
               />
             )}
           />
