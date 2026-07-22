@@ -46,6 +46,8 @@ function getAssociationLabel(association) {
   return association?.label || association?.name || association?.value || '';
 }
 
+const ASSOCIATION_CONNECTOR_WORDS = new Set(['da', 'das', 'de', 'do', 'dos', 'e']);
+
 function shortenAssociationLabel(label) {
   const normalizedLabel = String(label || '').trim();
 
@@ -53,9 +55,21 @@ function shortenAssociationLabel(label) {
     return '-';
   }
 
-  const [firstWord, secondWord] = normalizedLabel.split(/\s+/);
+  const words = normalizedLabel.split(/\s+/);
+  let significantWordsCount = 0;
+  const shortenedWords = words.filter((word) => {
+    if (significantWordsCount === 2) {
+      return false;
+    }
 
-  return [firstWord, secondWord].filter(Boolean).join(' ');
+    if (!ASSOCIATION_CONNECTOR_WORDS.has(word.toLowerCase())) {
+      significantWordsCount += 1;
+    }
+
+    return true;
+  });
+
+  return shortenedWords.join(' ');
 }
 
 function getAgentAssociation(agentUser) {
