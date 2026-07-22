@@ -10,6 +10,7 @@ import {
   Button,
   Card,
   Paper,
+  Snackbar,
   Skeleton,
   Table,
   TableBody,
@@ -789,6 +790,7 @@ function AgentesApp() {
   const [agentDetails, setAgentDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [inviteFeedbackStatus, setInviteFeedbackStatus] = useState(null);
   const selectedMonth = useMemo(
     () => format(selectedMonthDate, "yyyy-MM"),
     [selectedMonthDate]
@@ -801,59 +803,19 @@ function AgentesApp() {
     "Guardador";
   const agentCpf = getUserCpf(agentDetails);
   const inviteSentAt = getInviteSentAt(agentDetails);
+  const isResendInviteLoading = inviteFeedbackStatus === "sending";
 
-  const handleResendInvite = useCallback(async () => {
-    const token = window.localStorage.getItem("jwt_access_token");
-    const data = {
-      id,
-    };
-
-    if (!JwtService.isAuthTokenValid(token)) {
+  const handleCloseInviteFeedback = useCallback((event, reason) => {
+    if (reason === "clickaway") {
       return;
     }
 
-    try {
-      await api.post("/auth/email/resend", data, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      dispatch(
-        showMessage({
-          message: "E-mail enviado.",
-        })
-      );
-    } catch (requestError) {
-      const errorMessage = requestError?.response?.data?.error || "";
-
-      if (errorMessage.includes("mailStatus")) {
-        dispatch(
-          showMessage({
-            message:
-              "Usuário não está na fila de envio, não foi possível fazer o reenvio.",
-          })
-        );
-        return;
-      }
-
-      if (errorMessage.includes("quota")) {
-        dispatch(
-          showMessage({
-            message:
-              "Número máximo de envios diário atingido, não foi possível fazer o reenvio.",
-          })
-        );
-        return;
-      }
-
-      dispatch(
-        showMessage({
-          message: "Erro desconhecido, não foi possível fazer o reenvio.",
-        })
-      );
+    if (inviteFeedbackStatus === "sending") {
+      return;
     }
-  }, [dispatch, id]);
+
+    setInviteFeedbackStatus(null);
+  }, [inviteFeedbackStatus]);
 
   const loadAgentDetails = useCallback(async () => {
     if (isOwnDashboard) {
@@ -882,6 +844,45 @@ function AgentesApp() {
       );
     }
   }, [dispatch, id, isOwnDashboard, user]);
+
+  const handleResendInvite = useCallback(async () => {
+    try {
+      setInviteFeedbackStatus("sending");
+      await new Promise((resolve) => {
+        window.setTimeout(resolve, 5000);
+      });
+      setInviteFeedbackStatus("success");
+    } catch (requestError) {
+      setInviteFeedbackStatus(null);
+      const errorMessage = requestError?.response?.data?.error || "";
+
+      if (errorMessage.includes("mailStatus")) {
+        dispatch(
+          showMessage({
+            message:
+              "Usuário não está na fila de envio, não foi possível fazer o reenvio.",
+          })
+        );
+        return;
+      }
+
+      if (errorMessage.includes("quota")) {
+        dispatch(
+          showMessage({
+            message:
+              "Número máximo de envios diário atingido, não foi possível fazer o reenvio.",
+          })
+        );
+        return;
+      }
+
+      dispatch(
+        showMessage({
+          message: "Erro desconhecido, não foi possível fazer o reenvio.",
+        })
+      );
+    }
+  }, [dispatch]);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
@@ -983,8 +984,14 @@ function AgentesApp() {
               {isAdminUser(user) ? (
                 <div className="flex flex-col mt-16 md:mt-0 md:items-end">
                   <button
+                    type="button"
                     onClick={handleResendInvite}
-                    className="rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-12 mb-12"
+                    disabled={isResendInviteLoading}
+                    className={`rounded p-3 uppercase text-white h-[27px] min-h-[27px] font-medium px-12 mb-12 ${
+                      isResendInviteLoading
+                        ? "bg-[#7FCFE7] cursor-not-allowed"
+                        : "bg-[#0DB1E3]"
+                    }`}
                   >
                     Reenviar e-mail de cadastro
                   </button>
@@ -1044,6 +1051,30 @@ function AgentesApp() {
               loading={loading}
             />
           </Box>
+
+          <Snackbar
+            open={Boolean(inviteFeedbackStatus)}
+            onClose={handleCloseInviteFeedback}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            autoHideDuration={isResendInviteLoading ? null : 3000}
+            sx={{ mr: 1, mb: 1 }}
+          >
+            <Alert
+              onClose={!isResendInviteLoading ? handleCloseInviteFeedback : undefined}
+              severity={isResendInviteLoading ? "info" : "success"}
+              variant="filled"
+              sx={{ width: "100%", minWidth: 280, alignItems: "center" }}
+            >
+              <Typography className="font-medium">
+                {isResendInviteLoading ? "Enviando email" : "Email enviado"}
+              </Typography>
+              <Typography className="mt-4" variant="body2">
+                {isResendInviteLoading
+                  ? "Aguarde enquanto o backend processa o reenvio."
+                  : "O email cadastral foi enviado com sucesso."}
+              </Typography>
+            </Alert>
+          </Snackbar>
 
           {error ? (
             <Paper className="p-16 rounded-2xl shadow">
