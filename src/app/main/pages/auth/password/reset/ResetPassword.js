@@ -14,6 +14,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { getResetPasswordRedirectTo } from './resetPasswordRedirect';
 
 const getCharacterValidationError = (str) => {
   return `Sua senha deve conter 1 ${str}`;
@@ -57,8 +58,10 @@ function ResetPassword() {
   };
 
   function onSubmit(data) {
-    resetPasswordFunction(data.passwordConfirm, hash).then(() => {
-      setTimeout(() => navigate('/sign-in'), 3000);
+    resetPasswordFunction(data.passwordConfirm, hash).then((response) => {
+      const redirectTo = getResetPasswordRedirectTo(response);
+
+      setTimeout(() => navigate(redirectTo), 3000);
     });
   }
 

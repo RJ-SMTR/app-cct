@@ -1,39 +1,46 @@
 ## Problem Statement
 
-On the `agentes/:id` screen, an admin can edit a guardador's email in the shared `PersonalInfo` form. When the guardador has no celular saved, the form currently blocks submission because `phone` is always required, even when the field is disabled and cannot be edited in that context.
+Na tela de redefinição de senha, o frontend ainda assume que o endpoint `POST /api/v1/auth/reset/password` conclui sem corpo e sempre redireciona o usuário para `/sign-in`. O backend passou a decidir o destino correto após o reset com base no papel associado ao hash e agora retorna `200` com `redirectTo`. Enquanto o frontend ignorar esse contrato, usuários do fluxo de agentes serão enviados para a tela errada após redefinir a senha.
 
 ## Solution
 
-Allow the shared profile form to save changes without requiring celular. The field may remain editable where the current flow allows it, but its absence must not block saving email or other allowed profile data.
+Atualizar o fluxo de redefinição de senha para consumir o novo payload de sucesso do backend e usar exatamente o valor de `redirectTo` na navegação pós-reset, preservando o comportamento atual de loading, mensagens de erro, mensagem de sucesso e atraso antes do redirecionamento.
 
 ## User Stories
 
-1. As an admin, I want to update a guardador's email even when that guardador has no celular registered, so that I can correct invitation and login data without being blocked by an unrelated field.
-2. As an admin, I want disabled fields to stop blocking form submission, so that the save action matches what the UI allows me to edit.
-3. As a guardador editing my own profile, I want to save my profile even if I do not provide celular, so that contact data is not a blocker for other profile changes.
-4. As a developer, I want the validation rule for `PersonalInfo` to stop treating celular as mandatory, so that the shared form behaves consistently across admin and self-service contexts.
-5. As a developer, I want a regression test around the validation rule, so that future edits do not reintroduce the email-save block.
+1. As a permissionary user, I want to be redirected to `/sign-in` after resetting my password, so that I land on the correct login screen for my flow.
+2. As an agent user, I want to be redirected to `/agentes/sign-in` after resetting my password, so that I return to the correct login screen without frontend role inference.
+3. As a developer, I want the reset password flow to consume the backend response contract directly, so that role-based routing logic stays centralized on the server.
+4. As a developer, I want the reset password screen to preserve its current loading, success, and error behavior, so that only the post-success navigation changes.
+5. As a developer, I want regression coverage for both redirect targets returned by the backend, so that future changes do not reintroduce a hardcoded redirect.
 
 ## Implementation Decisions
 
-- The fix stays inside the shared `PersonalInfo` flow because `AgentesApp` reuses that form for guardador profile data.
-- The `phone` validation rule no longer requires a value in the shared `PersonalInfo` form.
-- The submit payload omits `phone` entirely when the current user cannot edit it, reducing the chance of backend validation on a disabled field.
-- The phone field error wiring is corrected so the visible error matches the actual form field name.
+- The change stays limited to the password reset flow and must not alter the reset email request flow.
+- The frontend must read `response.data.redirectTo` from the successful reset password response and navigate using that exact value.
+- Any local rule that infers the destination from role, route shape, or other frontend state is out of scope and must not be introduced.
+- The existing delay before navigation and the current success/error messaging behavior must remain unchanged.
+- If a reusable response seam is needed for testing, it should stay local to the reset password flow rather than introducing broad auth abstractions.
+- There is no TypeScript contract in this area today; no synthetic typing layer should be introduced just for this bug fix.
 
 ## Testing Decisions
 
-- Add a focused regression test around the validation seam instead of a broad UI test, because the bug is caused by form validation rather than table/dashboard behavior.
-- The test should verify external behavior of the validation rule:
-  - `phone` is optional.
-- Manual validation remains relevant for the end-to-end admin flow on `agentes/:id`.
+- Favor a focused regression seam around the reset success redirect behavior instead of a broad end-to-end auth test.
+- Test external behavior of the new contract handling by validating both backend-provided redirect targets:
+  - `/sign-in`
+  - `/agentes/sign-in`
+- Reuse the repository's existing Jest style for narrow unit tests where possible.
+- Manual validation should confirm the screen still shows the current success path and only changes destination after a successful reset.
 
 ## Out of Scope
 
-- Changes to backend validation rules.
-- Changes to bank data, invite resend, or dashboard behavior in `AgentesApp`.
-- Broad refactors of the profile form system.
+- Changes to `POST /api/v1/auth/forgot/password`.
+- Changes to application route definitions.
+- Any frontend role detection or redirect heuristics beyond consuming `redirectTo`.
+- Broader authentication refactors outside the reset password success path.
 
 ## Further Notes
 
-- This PRD is intentionally narrow because the requested work is a targeted bug fix on an existing shared form.
+- This is a narrow backend contract alignment on an existing screen.
+- The payload shape expected from the backend success response is:
+  - `redirectTo: string`
