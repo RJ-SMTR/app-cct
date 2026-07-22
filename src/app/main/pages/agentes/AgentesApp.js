@@ -1084,7 +1084,7 @@ function AgentesApp() {
               </Typography>
               <Typography className="mt-4" variant="body2">
                 {isResendInviteLoading
-                  ? "Aguarde enquanto o backend processa o reenvio."
+                  ? "Aguarde enquanto o email está sendo enviado."
                   : "O email cadastral foi enviado com sucesso."}
               </Typography>
             </Alert>
