@@ -47,7 +47,6 @@ function getAssociationLabel(association) {
 }
 
 const ASSOCIATION_CONNECTOR_WORDS = new Set(['da', 'das', 'de', 'do', 'dos', 'e']);
-
 function shortenAssociationLabel(label) {
   const normalizedLabel = String(label || '').trim();
 
