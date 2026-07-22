@@ -10,16 +10,11 @@ import { AuthContext } from "src/app/auth/AuthContext";
 import { api } from 'app/configs/api/api';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import { selectUser } from 'app/store/userSlice';
-import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from 'react-redux';
 import { isAdminUser } from 'src/app/auth/utils/accessUtils';
-
-
-const personalInfoSchema = yup.object().shape({
-  phone: yup.string().required("Insira um telefone válido"),
-});
+import { createPersonalInfoSchema } from "./personalInfoValidation";
 
 const style = {
   position: 'absolute',
@@ -50,6 +45,7 @@ export function PersonalInfo({
   const [isEditable, setIsEditable] = useState(false)
   const [saved, setSaved] = useState(false)
   const resolvedPrimaryInfoValue = primaryInfoValue ?? user?.permitCode ?? '';
+  const personalInfoSchema = createPersonalInfoSchema();
 
   const { handleSubmit, control, setError, formState } = useForm({
     defaultValues: {
@@ -70,7 +66,7 @@ export function PersonalInfo({
   function onSubmit({ phone, email }) {
     patchInfo(
       {
-        phone: canEditPhone ? phone : user.phone,
+        ...(canEditPhone ? { phone } : {}),
         ...(canEditEmail ? { email } : {}),
       },
       user.id
@@ -193,8 +189,8 @@ export function PersonalInfo({
                 label="Celular"
                 variant="outlined"
                 fullWidth
-                error={!!errors.invalidPhone}
-                helperText={errors?.invalidPhone?.message}
+                error={!!errors.phone}
+                helperText={errors?.phone?.message}
               />
             )}
           />
