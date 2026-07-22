@@ -846,11 +846,25 @@ function AgentesApp() {
   }, [dispatch, id, isOwnDashboard, user]);
 
   const handleResendInvite = useCallback(async () => {
+    const token = window.localStorage.getItem("jwt_access_token");
+    const data = {
+      id,
+    };
+
+    if (!JwtService.isAuthTokenValid(token)) {
+      return;
+    }
+
     try {
       setInviteFeedbackStatus("sending");
-      await new Promise((resolve) => {
-        window.setTimeout(resolve, 5000);
+
+      await api.post("/auth/email/resend", data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
+
+      await loadAgentDetails();
       setInviteFeedbackStatus("success");
     } catch (requestError) {
       setInviteFeedbackStatus(null);
@@ -882,7 +896,7 @@ function AgentesApp() {
         })
       );
     }
-  }, [dispatch]);
+  }, [dispatch, id, loadAgentDetails]);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
