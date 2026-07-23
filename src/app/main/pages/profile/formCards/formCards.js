@@ -14,6 +14,10 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from 'react-redux';
 import { isAdminUser } from 'src/app/auth/utils/accessUtils';
+import {
+  getPersonalInfoEmailErrorMessage,
+  getPersonalInfoErrors,
+} from "./personalInfoApiErrors";
 import { createPersonalInfoSchema } from "./personalInfoValidation";
 
 const style = {
@@ -84,14 +88,19 @@ export function PersonalInfo({
         dispatch(showMessage({ message: "Seus dados foram salvos!" }))
 
       })
-      .catch((_errors) => {
-        if (_errors.email) {
+      .catch((apiError) => {
+        setSaved(false);
+
+        const errors = getPersonalInfoErrors(apiError);
+        const emailErrorMessage = getPersonalInfoEmailErrorMessage(apiError);
+
+        if (emailErrorMessage) {
           setError('email', {
-            message: 'E-mail inválido'
+            message: emailErrorMessage
           });
         }
 
-        if (_errors.phone) {
+        if (errors.phone) {
           setError('phone', {
             message: 'Telefone inválido'
           });
