@@ -2,7 +2,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useForm } from 'react-hook-form';
 import Button from '@mui/material/Button';
 import { useDispatch, useSelector } from 'react-redux';
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import Typography from '@mui/material/Typography';
 import { Link } from 'react-router-dom';
 import * as yup from 'yup';
@@ -16,11 +16,12 @@ import { StepOne, StepTwo } from '../formFields/FormFields';
 import { makeStyles } from '@mui/styles';
 import { AuthContext } from 'src/app/auth/AuthContext';
 import { setActiveStep, setButtonType } from 'app/store/formStepSlice';
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-
-
-
+import {
+    getConcludeRegistrationInviteData,
+    getConcludeRegistrationRegisterData,
+} from './concludeRegistrationResponse';
 
 const steps = ['', ''];
 const getCharacterValidationError = (str) => {
@@ -44,14 +45,15 @@ const defaultValues = {
 };
 
 function ConcludePage() {
-    // FAZER ALGO COM O HASH
+    const navigate = useNavigate();
     let { hash } = useParams();
     const dispatch = useDispatch();
     const activeStep = useSelector((state) => state.steps.activeStep);
     const buttonType = useSelector((state) => state.steps.buttonType);
     const [skipped, setSkipped] = useState(new Set());
-    const [info, setInfo] = useState({})
+    const [inviteData, setInviteData] = useState(null)
     const [isInviteInfoCalled, setIsInviteInfoCalled] = useState(false);
+    const [registrationResult, setRegistrationResult] = useState(null);
     const { handleInvite, handleRegister } = useContext(AuthContext)
     const useStyles = makeStyles(() => ({
         root: {
@@ -73,24 +75,33 @@ function ConcludePage() {
 
     const { isValid, dirtyFields, errors,  } = formState;
 
-    function inviteInfo(hash){
-    handleInvite(hash) 
-        .then((response) => {
-            if (response.status === 200){
-                setInfo(response.data)
-                setIsInviteInfoCalled(true);
+    useEffect(() => {
+        if (!hash || isInviteInfoCalled) {
+            return;
+        }
 
-            }
-        })
-        .catch((_error)=> {
-        })
-    }
-    if (hash && !isInviteInfoCalled) {
-        inviteInfo(hash);
-    }
+        handleInvite(hash)
+            .then((response) => {
+                if (response.status === 200) {
+                    setInviteData(getConcludeRegistrationInviteData(response));
+                    setIsInviteInfoCalled(true);
+                }
+            })
+            .catch((_error)=> {
+            });
+    }, [handleInvite, hash, isInviteInfoCalled]);
     
-    function onSubmit({ permitCode, password, email }) {
-        handleRegister(hash, permitCode, password, email)
+    function onSubmit({ permitCode, password }) {
+        handleRegister(hash, permitCode, password).then((response) => {
+            const registerData = getConcludeRegistrationRegisterData(response);
+
+            setRegistrationResult(registerData);
+            dispatch(setActiveStep(steps.length));
+
+            if (registerData.redirectTo) {
+                setTimeout(() => navigate(registerData.redirectTo), 3000);
+            }
+        });
     }
 
     const isStepSkipped = (step) => {
@@ -99,7 +110,7 @@ function ConcludePage() {
 
     const handleNext = (e) => {
         e.preventDefault();
-        setValue('permitCode', info.permitCode)
+        setValue('permitCode', inviteData?.permitCode)
             if (activeStep === 0) {
                 dispatch(setActiveStep(activeStep + 1));
             } else {
@@ -189,6 +200,8 @@ function ConcludePage() {
         } 
     };
 
+    const successRedirectTo = registrationResult?.redirectTo;
+
     if (isInviteInfoCalled){
        return (
     
@@ -202,12 +215,12 @@ function ConcludePage() {
                        {activeStep === steps.length ? <>
                            <Box className="flex flex-col items-center mt-40">
                                <img src='assets/icons/check.svg' alt='confirmado' />
-                               <h2 className='text-center'> Obrigado por finalizar seu cadastro! Logo iremos te redirecionar, se não acontecer nada <Link to='/'>clique aqui</Link></h2>
+                               <h2 className='text-center'> Obrigado por finalizar seu cadastro! Logo iremos te redirecionar, se não acontecer nada <Link to={successRedirectTo}>clique aqui</Link></h2>
                            </Box>
 
                        </> : <>
                            <div className="items-baseline mt-10 font-medium">
-                               <Typography>Olá, {info.fullName}.<br></br> Confirme seus dados abaixo! Se por acaso estiverem incorretos
+                               <Typography>Olá, {inviteData?.fullName}.<br></br> Confirme seus dados abaixo! Se por acaso estiverem incorretos
                                        <Link className="ml-4" to="https://transportes.prefeitura.rio/atendimentodigital/">
                                            <span className='underline'> fale conosco!</span>
                                    </Link></Typography>
@@ -237,7 +250,7 @@ function ConcludePage() {
                                    </Stepper>
                                </Box>
 
-                               {renderFields(info.email, info.permitCode)}
+                               {renderFields(inviteData?.email, inviteData?.permitCode)}
 
 
                                <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
