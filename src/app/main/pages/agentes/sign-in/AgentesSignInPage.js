@@ -233,7 +233,7 @@ function AgentesSignInPage() {
 
       <Box className="relative hidden md:flex flex-auto items-center justify-center h-screen overflow-hidden max-w-[55vw]">
         <img
-          src="assets/images/etc/kombi.jpg"
+          src="assets/images/etc/agentes.jpeg"
           className="h-full w-full object-fill"
           alt="Kombis CCT"
         />
