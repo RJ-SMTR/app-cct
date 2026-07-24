@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - "release/*"
-      - "develop"
+      - "homol"
 
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
