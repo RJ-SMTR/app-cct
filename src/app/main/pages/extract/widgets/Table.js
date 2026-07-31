@@ -51,6 +51,10 @@ import { MobileDatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import ptBR from 'date-fns/locale/pt-BR';
+import {
+  MIN_VANZEIROS_SELECTABLE_MONTH_DATE,
+  clampVanzeirosMonthDate,
+} from './vanzeirosMonthSelection';
 
 function TableTransactions({ id }) {
   const dispatch = useDispatch()
@@ -241,12 +245,13 @@ function TableTransactions({ id }) {
       dispatch(setDateRange([]));
       return;
     }
-    setSelectedDate(newValue);
+    const clampedDate = clampVanzeirosMonthDate(newValue);
+    setSelectedDate(clampedDate);
     setPage(0);
     dispatch(setPreviousDays(''));
     dispatch(setStatements([]));
     dispatch(setSumInfo([]));
-    const newDate = formatISO(newValue).substring(0, 7)
+    const newDate = formatISO(clampedDate).substring(0, 7)
     dispatch(setDateRange(newDate))
   }
 
@@ -375,6 +380,7 @@ function TableTransactions({ id }) {
                     views={['year', 'month']}
                     value={selectedDate}
                     onChange={handleSelectedDate}
+                    minDate={MIN_VANZEIROS_SELECTABLE_MONTH_DATE}
                   />
 
                 </LocalizationProvider> : <></>}
@@ -413,6 +419,7 @@ function TableTransactions({ id }) {
                       views={['year', 'month']}
                       value={selectedDate}
                       onChange={handleSelectedDate}
+                      minDate={MIN_VANZEIROS_SELECTABLE_MONTH_DATE}
                     />
 
                   </LocalizationProvider> : <></>}

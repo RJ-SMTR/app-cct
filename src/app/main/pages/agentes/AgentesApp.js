@@ -38,9 +38,14 @@ import JwtService from "src/app/auth/services/jwtService";
 import { isAdminUser } from "src/app/auth/utils/accessUtils";
 import { BankInfo, getUserCpf, PersonalInfo } from "../profile/formCards/formCards";
 import {
-  DEFAULT_AGENTES_DASHBOARD_MONTH,
   getAgentesDashboard,
 } from "./services/agentesService";
+import {
+  MIN_AGENTES_SELECTABLE_MONTH_DATE,
+  buildMonthDate,
+  clampAgentesMonthDate,
+  getLatestAllowedAgentesMonth,
+} from "./agentesMonthSelection";
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
   "& .FusePageSimple-header": {
@@ -53,14 +58,6 @@ const Root = styled(FusePageSimple)(({ theme }) => ({
     },
   },
 }));
-
-function buildMonthDate(month) {
-  if (!month) {
-    return new Date();
-  }
-
-  return new Date(`${month}-01T12:00:00`);
-}
 
 function formatCurrency(value) {
   return new Intl.NumberFormat("pt-BR", {
@@ -177,6 +174,15 @@ function formatDateTimeLabel(dateTime, dateFormat = "dd/MM/yyyy HH:mm") {
 function getInviteSentAt(user) {
   return user?.inviteAt || "";
 }
+
+const statusBadgeSx = {
+  "& .MuiBadge-badge": {
+    position: "relative",
+    transform: "none",
+    padding: "3px",
+  },
+};
+
 function StatusBadge({ status }) {
   const normalizedStatus = normalizePaymentStatus(status);
   const badgeStatus = normalizedStatus || status || "Rejeitado";
@@ -197,6 +203,7 @@ function StatusBadge({ status }) {
       className="whitespace-nowrap"
       color={badgeColor}
       badgeContent={badgeStatus}
+      sx={statusBadgeSx}
     />
   );
 }
@@ -242,7 +249,7 @@ function ValidPhotosStatusBadge({ status, pendingReason }) {
         onClick={stopStatusBoxPropagation}
         onMouseDown={stopStatusBoxPropagation}
         onTouchStart={stopStatusBoxPropagation}
-        sx={{ display: "inline-flex" }}
+        sx={{ display: "inline-flex", alignItems: "center" }}
       >
         <Badge
           className="whitespace-nowrap"
@@ -252,6 +259,7 @@ function ValidPhotosStatusBadge({ status, pendingReason }) {
               Pendentes <InfoOutlinedIcon fontSize="small" />
             </span>
           }
+          sx={statusBadgeSx}
         />
       </Box>
     </Tooltip>
@@ -561,7 +569,10 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           <TableCell>{totalPhotosCount}</TableCell>
           <TableCell>{payment.validPhotosCount}</TableCell>
           <TableCell>{formatCurrency(payment.totalPaymentValue)}</TableCell>
-          <TableCell>
+          <TableCell
+            align="center"
+            sx={{ verticalAlign: "middle" }}
+          >
             <ValidPhotosStatusBadge
               status={payment.paymentStatus}
               pendingReason={payment.pendingReason}
@@ -628,7 +639,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
         >
           <TableCell>{formatDateTimeLabel(photo.capturedAt)}</TableCell>
           <TableCell>{formatCurrency(photo.amount)}</TableCell>
-          <TableCell>
+          <TableCell align="center">
             {normalizePaymentStatus(photo.status) === "Pago" ? "-" : photo.status}
           </TableCell>
           <TableCell>{photo.rejectionReason || "-"}</TableCell>
@@ -648,7 +659,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           <TableCell>Total fotos</TableCell>
           <TableCell>Fotos Válidas</TableCell>
           <TableCell>Valor Fotos Válidas</TableCell>
-          <TableCell>Status Fotos Válidas</TableCell>
+              <TableCell align="center">Status Fotos Válidas</TableCell>
           <TableCell>Fotos NÃO Válidas</TableCell>
         </TableRow>
       </TableHead>
@@ -667,7 +678,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
             <TableRow>
               <TableCell>Capturada em</TableCell>
               <TableCell>Valor</TableCell>
-              <TableCell>Status </TableCell>
+              <TableCell align="center">Status </TableCell>
               <TableCell>Motivo da rejeição</TableCell>
             </TableRow>
           </TableHead>
@@ -733,6 +744,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
                 views={["year", "month"]}
                 value={selectedMonthDate}
                 onChange={onMonthChange}
+                minDate={MIN_AGENTES_SELECTABLE_MONTH_DATE}
               />
             </LocalizationProvider>
           ) : (
@@ -788,7 +800,7 @@ function AgentesApp() {
   const { id } = useParams();
   const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down("lg"));
   const [selectedMonthDate, setSelectedMonthDate] = useState(
-    buildMonthDate(DEFAULT_AGENTES_DASHBOARD_MONTH)
+    clampAgentesMonthDate(buildMonthDate())
   );
   const [dashboard, setDashboard] = useState(null);
   const [agentDetails, setAgentDetails] = useState(null);
@@ -913,10 +925,14 @@ function AgentesApp() {
         response.availableMonths.length > 0 &&
         !response.availableMonths.includes(selectedMonth)
       ) {
-        const latestAvailableMonth =
-          response.availableMonths[response.availableMonths.length - 1];
-        setSelectedMonthDate(buildMonthDate(latestAvailableMonth));
-        return;
+        const latestAllowedMonth = getLatestAllowedAgentesMonth(
+          response.availableMonths
+        );
+
+        if (latestAllowedMonth && latestAllowedMonth !== selectedMonth) {
+          setSelectedMonthDate(buildMonthDate(latestAllowedMonth));
+          return;
+        }
       }
 
       setDashboard(response);
@@ -953,7 +969,7 @@ function AgentesApp() {
       return;
     }
 
-    setSelectedMonthDate(newValue);
+    setSelectedMonthDate(clampAgentesMonthDate(newValue));
   };
 
   let rejectionReasonRows = (
