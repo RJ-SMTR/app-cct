@@ -41,6 +41,12 @@ import {
   DEFAULT_AGENTES_DASHBOARD_MONTH,
   getAgentesDashboard,
 } from "./services/agentesService";
+import {
+  MIN_AGENTES_SELECTABLE_MONTH_DATE,
+  buildMonthDate,
+  clampAgentesMonthDate,
+  getLatestAllowedAgentesMonth,
+} from "./agentesMonthSelection";
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
   "& .FusePageSimple-header": {
@@ -53,14 +59,6 @@ const Root = styled(FusePageSimple)(({ theme }) => ({
     },
   },
 }));
-
-function buildMonthDate(month) {
-  if (!month) {
-    return new Date();
-  }
-
-  return new Date(`${month}-01T12:00:00`);
-}
 
 function formatCurrency(value) {
   return new Intl.NumberFormat("pt-BR", {
@@ -729,6 +727,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
                 views={["year", "month"]}
                 value={selectedMonthDate}
                 onChange={onMonthChange}
+                minDate={MIN_AGENTES_SELECTABLE_MONTH_DATE}
               />
             </LocalizationProvider>
           ) : (
@@ -784,7 +783,7 @@ function AgentesApp() {
   const { id } = useParams();
   const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down("lg"));
   const [selectedMonthDate, setSelectedMonthDate] = useState(
-    buildMonthDate(DEFAULT_AGENTES_DASHBOARD_MONTH)
+    clampAgentesMonthDate(buildMonthDate(DEFAULT_AGENTES_DASHBOARD_MONTH))
   );
   const [dashboard, setDashboard] = useState(null);
   const [agentDetails, setAgentDetails] = useState(null);
@@ -909,10 +908,14 @@ function AgentesApp() {
         response.availableMonths.length > 0 &&
         !response.availableMonths.includes(selectedMonth)
       ) {
-        const latestAvailableMonth =
-          response.availableMonths[response.availableMonths.length - 1];
-        setSelectedMonthDate(buildMonthDate(latestAvailableMonth));
-        return;
+        const latestAllowedMonth = getLatestAllowedAgentesMonth(
+          response.availableMonths
+        );
+
+        if (latestAllowedMonth && latestAllowedMonth !== selectedMonth) {
+          setSelectedMonthDate(buildMonthDate(latestAllowedMonth));
+          return;
+        }
       }
 
       setDashboard(response);
@@ -949,7 +952,7 @@ function AgentesApp() {
       return;
     }
 
-    setSelectedMonthDate(newValue);
+    setSelectedMonthDate(clampAgentesMonthDate(newValue));
   };
 
   let rejectionReasonRows = (

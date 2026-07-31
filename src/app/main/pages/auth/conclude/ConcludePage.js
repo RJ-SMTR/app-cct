@@ -19,7 +19,9 @@ import { setActiveStep, setButtonType } from 'app/store/formStepSlice';
 import { useNavigate, useParams } from 'react-router-dom'
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import {
+    getConcludeRegistrationCoverImage,
     getConcludeRegistrationInviteData,
+    getConcludeRegistrationPrimaryInfo,
     getConcludeRegistrationRegisterData,
 } from './concludeRegistrationResponse';
 
@@ -141,8 +143,10 @@ function ConcludePage() {
 
     };
 
-    const renderFields = (email, permitCode) => {
-        if (email && permitCode) {
+    const primaryInfo = getConcludeRegistrationPrimaryInfo(inviteData);
+    const coverImage = getConcludeRegistrationCoverImage(inviteData);
+
+    const renderFields = (email, primaryInfoValue) => {
         switch (activeStep) {
             case 0:
                     return (
@@ -150,10 +154,10 @@ function ConcludePage() {
                         <StepOne
                             customClass={c.root}
                             type="name"
-                            label="Código de permissão"
+                            label={primaryInfo.label}
                             name="permitCode"
                             control={control}
-                            value={permitCode}
+                            value={primaryInfoValue ?? ''}
                         />
                         <StepOne
                             customClass={c.root}
@@ -161,7 +165,7 @@ function ConcludePage() {
                             label="E-mail"
                             name="email"
                             control={control}
-                            value={email}
+                            value={email ?? ''}
                         />
                     </>
                 );
@@ -197,7 +201,6 @@ function ConcludePage() {
                     </>
                 );
         }
-        } 
     };
 
     const successRedirectTo = registrationResult?.redirectTo;
@@ -250,7 +253,7 @@ function ConcludePage() {
                                    </Stepper>
                                </Box>
 
-                               {renderFields(inviteData?.email, inviteData?.permitCode)}
+                               {renderFields(inviteData?.email, primaryInfo.value)}
 
 
                                <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
@@ -301,7 +304,7 @@ function ConcludePage() {
                </Paper>
 
                <Box className="relative hidden md:flex flex-auto items-center justify-center h-screen  overflow-hidden ">
-               <img src="assets/images/etc/kombi.jpg" className="h-full w-full object-fill" alt="Kombis CCT" />
+               <img src={coverImage} className="h-full w-full object-fill" alt="Capa CCT" />
                </Box>
            </div>
        );
@@ -341,11 +344,11 @@ function ConcludePage() {
                 </svg>
             </Paper>
 
-            <Box className="relative hidden md:flex flex-auto items-center justify-center h-screen  overflow-hidden ">
-            <img src="assets/images/etc/kombi.jpg" className="h-full w-full object-fill" alt="Kombis CCT" />
-            </Box>
-        </div>
-    )
+                <Box className="relative hidden md:flex flex-auto items-center justify-center h-screen  overflow-hidden ">
+                <img src={coverImage} className="h-full w-full object-fill" alt="Capa CCT" />
+                </Box>
+            </div>
+        )
    }
 }
 
