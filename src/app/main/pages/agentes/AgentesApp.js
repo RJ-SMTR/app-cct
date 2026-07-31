@@ -184,6 +184,10 @@ function StatusBadge({ status }) {
 
   if (normalizedStatus === "Rejeitado") {
     badgeColor = "error";
+  } else if (
+    String(badgeStatus || "").trim().toLowerCase() === "aguardando pagamento"
+  ) {
+    badgeColor = "wait";
   } else if (String(badgeStatus || "").toLowerCase().includes("estorno")) {
     badgeColor = "warning";
   }
