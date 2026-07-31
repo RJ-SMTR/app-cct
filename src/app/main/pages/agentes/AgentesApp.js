@@ -38,7 +38,6 @@ import JwtService from "src/app/auth/services/jwtService";
 import { isAdminUser } from "src/app/auth/utils/accessUtils";
 import { BankInfo, getUserCpf, PersonalInfo } from "../profile/formCards/formCards";
 import {
-  DEFAULT_AGENTES_DASHBOARD_MONTH,
   getAgentesDashboard,
 } from "./services/agentesService";
 import {
@@ -797,7 +796,7 @@ function AgentesApp() {
   const { id } = useParams();
   const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down("lg"));
   const [selectedMonthDate, setSelectedMonthDate] = useState(
-    clampAgentesMonthDate(buildMonthDate(DEFAULT_AGENTES_DASHBOARD_MONTH))
+    clampAgentesMonthDate(buildMonthDate())
   );
   const [dashboard, setDashboard] = useState(null);
   const [agentDetails, setAgentDetails] = useState(null);

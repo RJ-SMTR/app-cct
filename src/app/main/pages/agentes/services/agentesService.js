@@ -2,8 +2,6 @@ import { api } from "app/configs/api/api";
 import JwtService from "../../../../auth/services/jwtService";
 import jwtServiceConfig from "../../../../auth/services/jwtService/jwtServiceConfig";
 
-export const DEFAULT_AGENTES_DASHBOARD_MONTH = "2026-07";
-
 function normalizeNumber(value) {
   const parsedValue = Number(value);
   return Number.isFinite(parsedValue) ? parsedValue : 0;
