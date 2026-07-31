@@ -175,6 +175,15 @@ function formatDateTimeLabel(dateTime, dateFormat = "dd/MM/yyyy HH:mm") {
 function getInviteSentAt(user) {
   return user?.inviteAt || "";
 }
+
+const statusBadgeSx = {
+  "& .MuiBadge-badge": {
+    position: "relative",
+    transform: "none",
+    padding: "3px",
+  },
+};
+
 function StatusBadge({ status }) {
   const normalizedStatus = normalizePaymentStatus(status);
   const badgeStatus = normalizedStatus || status || "Rejeitado";
@@ -191,6 +200,7 @@ function StatusBadge({ status }) {
       className="whitespace-nowrap"
       color={badgeColor}
       badgeContent={badgeStatus}
+      sx={statusBadgeSx}
     />
   );
 }
@@ -236,7 +246,7 @@ function ValidPhotosStatusBadge({ status, pendingReason }) {
         onClick={stopStatusBoxPropagation}
         onMouseDown={stopStatusBoxPropagation}
         onTouchStart={stopStatusBoxPropagation}
-        sx={{ display: "inline-flex" }}
+        sx={{ display: "inline-flex", alignItems: "center" }}
       >
         <Badge
           className="whitespace-nowrap"
@@ -246,6 +256,7 @@ function ValidPhotosStatusBadge({ status, pendingReason }) {
               Pendentes <InfoOutlinedIcon fontSize="small" />
             </span>
           }
+          sx={statusBadgeSx}
         />
       </Box>
     </Tooltip>
@@ -555,7 +566,10 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           <TableCell>{totalPhotosCount}</TableCell>
           <TableCell>{payment.validPhotosCount}</TableCell>
           <TableCell>{formatCurrency(payment.totalPaymentValue)}</TableCell>
-          <TableCell>
+          <TableCell
+            align="center"
+            sx={{ verticalAlign: "middle" }}
+          >
             <ValidPhotosStatusBadge
               status={payment.paymentStatus}
               pendingReason={payment.pendingReason}
@@ -622,7 +636,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
         >
           <TableCell>{formatDateTimeLabel(photo.capturedAt)}</TableCell>
           <TableCell>{formatCurrency(photo.amount)}</TableCell>
-          <TableCell>
+          <TableCell align="center">
             {normalizePaymentStatus(photo.status) === "Pago" ? "-" : photo.status}
           </TableCell>
           <TableCell>{photo.rejectionReason || "-"}</TableCell>
@@ -642,7 +656,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           <TableCell>Total fotos</TableCell>
           <TableCell>Fotos Válidas</TableCell>
           <TableCell>Valor Fotos Válidas</TableCell>
-          <TableCell>Status Fotos Válidas</TableCell>
+              <TableCell align="center">Status Fotos Válidas</TableCell>
           <TableCell>Fotos NÃO Válidas</TableCell>
         </TableRow>
       </TableHead>
@@ -661,7 +675,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
             <TableRow>
               <TableCell>Capturada em</TableCell>
               <TableCell>Valor</TableCell>
-              <TableCell>Status </TableCell>
+              <TableCell align="center">Status </TableCell>
               <TableCell>Motivo da rejeição</TableCell>
             </TableRow>
           </TableHead>
