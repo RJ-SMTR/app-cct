@@ -24,6 +24,10 @@ export const MIN_AGENTES_SELECTABLE_MONTH_DATE = buildMonthDate(
   MIN_AGENTES_SELECTABLE_MONTH
 );
 
+export function getInitialAgentesMonthDate() {
+  return clampAgentesMonthDate(buildMonthDate());
+}
+
 export function clampAgentesMonthDate(dateValue) {
   if (!(dateValue instanceof Date) || Number.isNaN(dateValue.getTime())) {
     return MIN_AGENTES_SELECTABLE_MONTH_DATE;
