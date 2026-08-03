@@ -44,7 +44,6 @@ import {
   MIN_AGENTES_SELECTABLE_MONTH_DATE,
   buildMonthDate,
   clampAgentesMonthDate,
-  getLatestAllowedAgentesMonth,
 } from "./agentesMonthSelection";
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
@@ -916,20 +915,6 @@ function AgentesApp() {
 
     try {
       const response = await getAgentesDashboard(id, selectedMonth);
-
-      if (
-        response.availableMonths.length > 0 &&
-        !response.availableMonths.includes(selectedMonth)
-      ) {
-        const latestAllowedMonth = getLatestAllowedAgentesMonth(
-          response.availableMonths
-        );
-
-        if (latestAllowedMonth && latestAllowedMonth !== selectedMonth) {
-          setSelectedMonthDate(buildMonthDate(latestAllowedMonth));
-          return;
-        }
-      }
 
       setDashboard(response);
     } catch (requestError) {
