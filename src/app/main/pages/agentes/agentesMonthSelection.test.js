@@ -1,4 +1,5 @@
 import {
+  getInitialAgentesMonthDate,
   MIN_AGENTES_SELECTABLE_MONTH,
   MIN_AGENTES_SELECTABLE_MONTH_DATE,
   buildMonthDate,
@@ -7,6 +8,10 @@ import {
 } from "./agentesMonthSelection";
 
 describe("agentesMonthSelection", () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it("clamps months before julho de 2026 to julho de 2026", () => {
     expect(clampAgentesMonthDate(buildMonthDate("2026-06"))).toEqual(
       MIN_AGENTES_SELECTABLE_MONTH_DATE
@@ -34,5 +39,11 @@ describe("agentesMonthSelection", () => {
 
   it("exposes julho de 2026 as the minimum selectable month", () => {
     expect(MIN_AGENTES_SELECTABLE_MONTH).toBe("2026-07");
+  });
+
+  it("uses the current month as the initial agentes dashboard month", () => {
+    jest.useFakeTimers().setSystemTime(new Date("2026-08-03T12:00:00"));
+
+    expect(getInitialAgentesMonthDate()).toEqual(buildMonthDate("2026-08"));
   });
 });
