@@ -38,12 +38,14 @@ import JwtService from "src/app/auth/services/jwtService";
 import { isAdminUser } from "src/app/auth/utils/accessUtils";
 import { BankInfo, getUserCpf, PersonalInfo } from "../profile/formCards/formCards";
 import {
+  DEFAULT_AGENTES_DASHBOARD_MONTH,
   getAgentesDashboard,
 } from "./services/agentesService";
 import {
   MIN_AGENTES_SELECTABLE_MONTH_DATE,
   buildMonthDate,
   clampAgentesMonthDate,
+  getLatestAllowedAgentesMonth,
 } from "./agentesMonthSelection";
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
@@ -799,7 +801,7 @@ function AgentesApp() {
   const { id } = useParams();
   const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down("lg"));
   const [selectedMonthDate, setSelectedMonthDate] = useState(
-    clampAgentesMonthDate(buildMonthDate())
+    clampAgentesMonthDate(buildMonthDate(DEFAULT_AGENTES_DASHBOARD_MONTH))
   );
   const [dashboard, setDashboard] = useState(null);
   const [agentDetails, setAgentDetails] = useState(null);
@@ -919,6 +921,20 @@ function AgentesApp() {
 
     try {
       const response = await getAgentesDashboard(id, selectedMonth);
+
+      if (
+        response.availableMonths.length > 0 &&
+        !response.availableMonths.includes(selectedMonth)
+      ) {
+        const latestAllowedMonth = getLatestAllowedAgentesMonth(
+          response.availableMonths
+        );
+
+        if (latestAllowedMonth && latestAllowedMonth !== selectedMonth) {
+          setSelectedMonthDate(buildMonthDate(latestAllowedMonth));
+          return;
+        }
+      }
 
       setDashboard(response);
     } catch (requestError) {
