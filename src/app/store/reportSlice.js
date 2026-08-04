@@ -4,6 +4,10 @@ import { api } from 'app/configs/api/api';
 import accounting from 'accounting';
 import dayjs from 'dayjs';
 import JwtService from '../auth/services/jwtService';
+import {
+  buildAgentConsolidatedReportParams,
+  normalizeAgentConsolidatedReportBlocks,
+} from './agentConsolidatedReportUtils';
 
 
 const initialState = {
@@ -296,6 +300,23 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
       }
     });
   }
+};
+
+export const fetchAgentConsolidatedReport = (data) => async () => {
+  const token = window.localStorage.getItem('jwt_access_token');
+
+  if (!JwtService.isAuthTokenValid(token)) {
+    return Promise.reject(new Error('Sessão inválida. Faça login novamente.'));
+  }
+
+  const requestData = buildAgentConsolidatedReportParams(data);
+  const responseData = await requestReport(
+    jwtServiceConfig.consolidadoGuardador,
+    requestData,
+    token
+  );
+
+  return normalizeAgentConsolidatedReportBlocks(responseData);
 };
 
 export const handleFinancialMovementSummary = (data, options = {}) => async (dispatch) => {
