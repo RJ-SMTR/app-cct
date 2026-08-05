@@ -225,11 +225,14 @@ function formatPhotoCount(count) {
   return Number.isFinite(parsedCount) ? parsedCount : 0;
 }
 
+/*
+ * Preserved for future reactivation of the hidden monthly photo-count columns.
 function getTotalPhotosCount(validPhotosCount, rejectedPhotosCount) {
   return (
     formatPhotoCount(validPhotosCount) + formatPhotoCount(rejectedPhotosCount)
   );
 }
+*/
 
 function ValidPhotosStatusBadge({ status, pendingReason }) {
   if (!isPendingPaymentStatus(status)) {
@@ -536,14 +539,14 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   let monthlyPaymentsRows = (
     <EmptyState
       message="Não há pagamentos para o mês selecionado."
-      colSpan={6}
+      colSpan={4}
     />
   );
 
   if (monthlyLoading) {
     monthlyPaymentsRows = [...Array(4)].map((_, index) => (
       <TableRow key={`loading-payment-cycle-${index}`}>
-        <TableCell colSpan={6}>
+        <TableCell colSpan={4}>
           <Skeleton variant="text" height={28} />
         </TableCell>
       </TableRow>
@@ -551,10 +554,6 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   } else if (monthlyPayments?.length) {
     monthlyPaymentsRows = monthlyPayments.map((payment) => {
       const isSelected = selectedPaymentDate === payment.paymentDate;
-      const totalPhotosCount = getTotalPhotosCount(
-        payment.validPhotosCount,
-        payment.rejectedPhotosCount
-      );
 
       return (
         <TableRow
@@ -565,8 +564,8 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           className="cursor-pointer"
         >
           <TableCell>{formatDateLabel(payment.paymentDate)}</TableCell>
-          <TableCell>{totalPhotosCount}</TableCell>
-          <TableCell>{payment.validPhotosCount}</TableCell>
+          {/* <TableCell>{getTotalPhotosCount(payment.validPhotosCount, payment.rejectedPhotosCount)}</TableCell> */}
+          {/* <TableCell>{payment.validPhotosCount}</TableCell> */}
           <TableCell>{formatCurrency(payment.totalPaymentValue)}</TableCell>
           <TableCell
             align="center"
@@ -586,14 +585,14 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   let weeklyDayRows = (
     <EmptyState
       message="Nenhum dia encontrado para este pagamento."
-      colSpan={3}
+      colSpan={2}
     />
   );
 
   if (drilldownLoading) {
     weeklyDayRows = [...Array(4)].map((_, index) => (
       <TableRow key={`loading-week-day-${index}`}>
-        <TableCell colSpan={3}>
+        <TableCell colSpan={2}>
           <Skeleton variant="text" height={28} />
         </TableCell>
       </TableRow>
@@ -611,7 +610,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           className="cursor-pointer"
         >
           <TableCell>{formatDateLabel(day.date)}</TableCell>
-          <TableCell>{day.validPhotosCount}</TableCell>
+          {/* <TableCell>{day.validPhotosCount}</TableCell> */}
           <TableCell>{formatCurrency(day.totalPaymentValue)}</TableCell>
         </TableRow>
       );
@@ -619,13 +618,16 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   }
 
   let selectedWorkDayPhotoRows = (
-    <EmptyState message="Nenhuma foto encontrada para o dia selecionado." />
+    <EmptyState
+      message="Nenhuma foto encontrada para o dia selecionado."
+      colSpan={3}
+    />
   );
 
   if (drilldownLoading) {
     selectedWorkDayPhotoRows = [...Array(4)].map((_, index) => (
       <TableRow key={`loading-photo-row-${index}`}>
-        <TableCell colSpan={5}>
+        <TableCell colSpan={3}>
           <Skeleton variant="text" height={28} />
         </TableCell>
       </TableRow>
@@ -641,7 +643,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           <TableCell align="center">
             {normalizePaymentStatus(photo.status) === "Pago" ? "-" : photo.status}
           </TableCell>
-          <TableCell>{photo.rejectionReason || "-"}</TableCell>
+          {/* <TableCell>{photo.rejectionReason || "-"}</TableCell> */}
         </TableRow>
       )
     );
@@ -655,10 +657,10 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
       <TableHead>
         <TableRow>
           <TableCell>Data Pagamento</TableCell>
-          <TableCell>Total fotos</TableCell>
-          <TableCell>Fotos Válidas</TableCell>
+          {/* <TableCell>Total fotos</TableCell> */}
+          {/* <TableCell>Fotos Válidas</TableCell> */}
           <TableCell>Valor Fotos Válidas</TableCell>
-              <TableCell align="center">Status Fotos Válidas</TableCell>
+          <TableCell align="center">Status Fotos Válidas</TableCell>
           <TableCell>Fotos NÃO Válidas</TableCell>
         </TableRow>
       </TableHead>
@@ -678,7 +680,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
               <TableCell>Capturada em</TableCell>
               <TableCell>Valor</TableCell>
               <TableCell align="center">Status </TableCell>
-              <TableCell>Motivo da rejeição</TableCell>
+              {/* <TableCell>Motivo da rejeição</TableCell> */}
             </TableRow>
           </TableHead>
           <TableBody>{selectedWorkDayPhotoRows}</TableBody>
@@ -693,7 +695,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           <TableHead>
             <TableRow>
               <TableCell>Data Pagamento</TableCell>
-              <TableCell>Fotos Válidas</TableCell>
+              {/* <TableCell>Fotos Válidas</TableCell> */}
               <TableCell>Valor Fotos Válidas</TableCell>
             </TableRow>
           </TableHead>
@@ -957,6 +959,8 @@ function AgentesApp() {
     setSelectedMonthDate(clampAgentesMonthDate(newValue));
   };
 
+  /*
+   * Preserved for future reactivation of the hidden rejection-reasons dashboard block.
   let rejectionReasonRows = (
     <EmptyState
       message="Não há rejeições no período selecionado."
@@ -980,6 +984,7 @@ function AgentesApp() {
       </TableRow>
     ));
   }
+  */
 
   if (!canAccessSelectedAgent) {
     return <Navigate to={`/agentes/${user?.id}`} replace />;
@@ -1121,7 +1126,7 @@ function AgentesApp() {
               onMonthChange={handleSelectedMonth}
             />
 
-            <Paper className="flex flex-col flex-auto p-16 rounded-2xl shadow overflow-hidden">
+            {/* <Paper className="flex flex-col flex-auto p-16 rounded-2xl shadow overflow-hidden">
               <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
                 Motivos de rejeição
               </Typography>
@@ -1143,7 +1148,7 @@ function AgentesApp() {
                   <TableBody>{rejectionReasonRows}</TableBody>
                 </Table>
               </TableContainer>
-            </Paper>
+            </Paper> */}
           </Box>
         </div>
       }
