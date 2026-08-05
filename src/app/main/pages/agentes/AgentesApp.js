@@ -1055,19 +1055,19 @@ function AgentesApp() {
             </div>
           ) : null}
 
-          <Box className="grid grid-cols-1 md:grid-cols-3 gap-16">
-            <SummaryCard
+          <Box className="grid grid-cols-1 gap-16">
+            {/* <SummaryCard
               title="Fotos válidas"
               value={dashboard?.validPhotosCount ?? 0}
               icon="heroicons-outline:badge-check"
               loading={loading}
-            />
-            <SummaryCard
+            /> */}
+            {/* <SummaryCard
               title="Fotos rejeitadas"
               value={dashboard?.rejectedPhotosCount ?? 0}
               icon="heroicons-outline:x-circle"
               loading={loading}
-            />
+            /> */}
             <SummaryCard
               title="Valor consolidado"
               value={formatCurrency(dashboard?.consolidatedPaymentValue)}
