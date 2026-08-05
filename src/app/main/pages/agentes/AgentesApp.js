@@ -44,6 +44,7 @@ import {
   MIN_AGENTES_SELECTABLE_MONTH_DATE,
   buildMonthDate,
   clampAgentesMonthDate,
+  getInitialAgentesMonthDate,
 } from "./agentesMonthSelection";
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
@@ -658,7 +659,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           <TableCell>Total fotos</TableCell>
           <TableCell>Fotos Válidas</TableCell>
           <TableCell>Valor Fotos Válidas</TableCell>
-              <TableCell align="center">Status Fotos Válidas</TableCell>
+          <TableCell align="center">Status Fotos Válidas</TableCell>
           <TableCell>Fotos NÃO Válidas</TableCell>
         </TableRow>
       </TableHead>
@@ -799,7 +800,7 @@ function AgentesApp() {
   const { id } = useParams();
   const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down("lg"));
   const [selectedMonthDate, setSelectedMonthDate] = useState(
-    clampAgentesMonthDate(buildMonthDate())
+    getInitialAgentesMonthDate()
   );
   const [dashboard, setDashboard] = useState(null);
   const [agentDetails, setAgentDetails] = useState(null);
@@ -919,7 +920,6 @@ function AgentesApp() {
 
     try {
       const response = await getAgentesDashboard(id, selectedMonth);
-
       setDashboard(response);
     } catch (requestError) {
       setError("Não foi possível carregar o painel de guardador.");
@@ -1006,11 +1006,10 @@ function AgentesApp() {
                     type="button"
                     onClick={handleResendInvite}
                     disabled={isResendInviteLoading}
-                    className={`rounded p-3 uppercase text-white h-[27px] min-h-[27px] font-medium px-12 mb-12 ${
-                      isResendInviteLoading
+                    className={`rounded p-3 uppercase text-white h-[27px] min-h-[27px] font-medium px-12 mb-12 ${isResendInviteLoading
                         ? "bg-[#7FCFE7] cursor-not-allowed"
                         : "bg-[#0DB1E3]"
-                    }`}
+                      }`}
                   >
                     Reenviar e-mail de cadastro
                   </button>

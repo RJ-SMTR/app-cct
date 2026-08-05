@@ -41,6 +41,10 @@ export function clampAgentesMonthDate(dateValue) {
   return normalizedDateValue;
 }
 
+export function getInitialAgentesMonthDate() {
+  return clampAgentesMonthDate(buildMonthDate());
+}
+
 export function getLatestAllowedAgentesMonth(availableMonths) {
   if (!Array.isArray(availableMonths) || availableMonths.length === 0) {
     return null;
