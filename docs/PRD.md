@@ -1,39 +1,48 @@
 ## Problem Statement
 
-On the `agentes/:id` screen, an admin can edit a guardador's email in the shared `PersonalInfo` form. When the guardador has no celular saved, the form currently blocks submission because `phone` is always required, even when the field is disabled and cannot be edited in that context.
+Na tela `agentes/:id`, as tabelas de drilldown do dashboard ainda exibem algumas colunas que o usuário não quer mostrar visualmente agora. O pedido não é remover a implementação de vez, mas deixar essas partes comentadas para reutilização futura.
 
 ## Solution
 
-Allow the shared profile form to save changes without requiring celular. The field may remain editable where the current flow allows it, but its absence must not block saving email or other allowed profile data.
+Ocultar visualmente, por comentário no JSX, as colunas indicadas no drilldown do dashboard de guardador:
+
+- na visão mensal: `Total fotos` e `Fotos Válidas`;
+- na visão semanal: `Fotos Válidas`.
+- na visão diária: `Motivo da rejeição`.
+
+A lógica associada deve permanecer fácil de reativar depois, sem reescrever o comportamento.
 
 ## User Stories
 
-1. As an admin, I want to update a guardador's email even when that guardador has no celular registered, so that I can correct invitation and login data without being blocked by an unrelated field.
-2. As an admin, I want disabled fields to stop blocking form submission, so that the save action matches what the UI allows me to edit.
-3. As a guardador editing my own profile, I want to save my profile even if I do not provide celular, so that contact data is not a blocker for other profile changes.
-4. As a developer, I want the validation rule for `PersonalInfo` to stop treating celular as mandatory, so that the shared form behaves consistently across admin and self-service contexts.
-5. As a developer, I want a regression test around the validation rule, so that future edits do not reintroduce the email-save block.
+1. As an admin viewing the guardador dashboard, I want the monthly drilldown table to stop showing `Total fotos`, so that the table matches the current reporting need.
+2. As an admin viewing the guardador dashboard, I want the monthly drilldown table to stop showing `Fotos Válidas`, so that the table displays only the columns still relevant right now.
+3. As an admin viewing the guardador dashboard, I want the weekly drilldown table to stop showing `Fotos Válidas`, so that the weekly view stays visually aligned with the reduced scope.
+4. As an admin viewing the day-level photo drilldown, I want `Motivo da rejeição` hidden for now, so that the detailed table stays visually simpler.
+5. As a developer, I want those hidden columns preserved as code comments instead of deleted, so that they can be restored quickly in a future iteration.
+6. As a developer, I want the supporting table layout such as `colSpan` values to remain consistent after hiding the columns, so that loading and empty states still render correctly.
 
 ## Implementation Decisions
 
-- The fix stays inside the shared `PersonalInfo` flow because `AgentesApp` reuses that form for guardador profile data.
-- The `phone` validation rule no longer requires a value in the shared `PersonalInfo` form.
-- The submit payload omits `phone` entirely when the current user cannot edit it, reducing the chance of backend validation on a disabled field.
-- The phone field error wiring is corrected so the visible error matches the actual form field name.
+- The change stays inside the existing `AgentesApp` drilldown table rendering.
+- The requested columns are hidden by commenting out their JSX instead of deleting the code outright.
+- Supporting table structure such as `colSpan` values must be updated to reflect the currently visible columns.
+- Hidden helper logic that exists only for the removed visual columns may also be preserved as comments to avoid leaving unused runtime code behind.
+- The day-level photo detail table follows the same preservation rule for `Motivo da rejeição`.
 
 ## Testing Decisions
 
-- Add a focused regression test around the validation seam instead of a broad UI test, because the bug is caused by form validation rather than table/dashboard behavior.
-- The test should verify external behavior of the validation rule:
-  - `phone` is optional.
-- Manual validation remains relevant for the end-to-end admin flow on `agentes/:id`.
+- Validate the change at the highest practical seam for this narrow UI adjustment: the rendered table structure in `AgentesApp`.
+- Prefer lightweight static validation for this change because the repository does not currently expose an existing focused test seam for this table.
+- Run targeted syntax/lint validation on `AgentesApp.js` to catch JSX or unused-symbol regressions introduced by commenting out the columns.
+- Manual review remains relevant for confirming that the monthly and weekly tables still align after the columns are hidden.
 
 ## Out of Scope
 
-- Changes to backend validation rules.
-- Changes to bank data, invite resend, or dashboard behavior in `AgentesApp`.
-- Broad refactors of the profile form system.
+- Changes to backend dashboard APIs or payloads.
+- Changes to summary cards such as `Fotos válidas` and `Fotos rejeitadas`.
+- Permanent removal or refactor of historical photo-count logic.
+- Changes to rejection/payment status behavior beyond hiding the rejection-reason column.
 
 ## Further Notes
 
-- This PRD is intentionally narrow because the requested work is a targeted bug fix on an existing shared form.
+- This PRD is intentionally narrow and reflects the clarified request to preserve the hidden code for future reuse.

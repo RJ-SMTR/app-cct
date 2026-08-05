@@ -4,98 +4,99 @@
 - Project memory consulted: repository `AGENTS.md` instructions, no `PROJECT.md`, no `CONTEXT.md`, no `WORKFLOW.md` found in the repository
 - Relevant modules:
   - `src/app/main/pages/agentes/AgentesApp.js`
-  - `src/app/main/pages/profile/formCards/formCards.js`
-  - `src/app/auth/AuthContext.js`
-- Relevant scripts:
-  - `npm test`
+- Relevant tests/scripts:
+  - no focused existing test found for the drilldown table
+  - `npx eslint --no-ignore src/app/main/pages/agentes/AgentesApp.js`
 
 ## Implementation Goal
 
-Fix the shared `PersonalInfo` form so profile changes can be saved without requiring celular, including the admin email edit flow on `agentes/:id`.
+Ocultar visualmente, mas preservar em comentário, as colunas pedidas nas tabelas de drilldown do dashboard de guardador em `AgentesApp`, mantendo a estrutura da tabela consistente.
 
 ## Non-Goals
 
-- Do not change backend APIs.
-- Do not alter guardador dashboard data loading.
-- Do not change bank information flows.
-- Do not redesign the shared profile form beyond the minimal validation/payload fix.
+- Não alterar endpoints ou transformação de dados do dashboard.
+- Não remover definitivamente a lógica das colunas ocultadas.
+- Não mexer nos cards-resumo superiores.
+- Não alterar o comportamento da tabela de fotos do dia além de esconder `Motivo da rejeição`.
 
 ## Acceptance Criteria Mapping
 
 | Acceptance Criterion | Task(s) | Test(s) | Status |
 | --- | --- | --- | --- |
-| Admin can save email without celular when celular is disabled | T1, T2 | validation regression + manual admin flow review | planned |
-| Self-edit flow can also save without celular | T1, T2 | validation regression | planned |
-| Phone validation feedback points to the correct field | T2 | manual form review | planned |
+| Visão mensal deixa de mostrar `Total fotos` | T1 | JSX/lint validation + manual table review | planned |
+| Visão mensal deixa de mostrar `Fotos Válidas` | T1 | JSX/lint validation + manual table review | planned |
+| Visão semanal deixa de mostrar `Fotos Válidas` | T1 | JSX/lint validation + manual table review | planned |
+| Visão diária deixa de mostrar `Motivo da rejeição` | T1 | JSX/lint validation + manual table review | planned |
+| Código ocultado permanece fácil de restaurar depois | T1 | code review of preserved comments | planned |
+| Loading and empty states continuam alinhados à nova contagem de colunas | T2 | JSX/lint validation + manual table review | planned |
 
 ## Task Breakdown
 
-## T1 — Relax phone validation
+## T1 — Comentar as colunas pedidas no drilldown
 
 Objective:
-Create a small validation seam for the shared `PersonalInfo` form so `phone` is optional.
+Comentar os cabeçalhos e células das colunas solicitadas nas visões mensal, semanal e diária, preservando o trecho para futura reativação.
 
 Affected files / areas:
-`src/app/main/pages/profile/formCards/formCards.js`
-Potential helper file under the same folder.
+`src/app/main/pages/agentes/AgentesApp.js`
 
 Test-first plan:
-Add a focused regression test that proves empty `phone` is accepted.
+Como não há uma suíte focada já existente para essa tabela, validar primeiro o desenho atual do JSX e depois rodar lint focado no arquivo alterado para detectar regressões sintáticas ou símbolos órfãos.
 
 Implementation notes:
-Keep the logic local to the shared profile form area. Avoid changing unrelated form behavior.
+Preservar os blocos ocultados em comentários JSX claros. Se uma função auxiliar ficar sem uso apenas por causa da ocultação, preservar sua intenção em comentário em vez de deixá-la como código morto executável.
 
 Dependencies:
 None.
 
 Completion signal:
-Automated test covers the optional phone outcome.
+As colunas deixam de aparecer na UI renderizada e o código continua claramente reaproveitável.
 
-## T2 — Update shared submit behavior
+## T2 — Ajustar a estrutura remanescente da tabela
 
 Objective:
-Prevent the shared form from sending a disabled phone field in admin-only email edits and correct the phone field error binding.
+Atualizar `colSpan` e demais detalhes estruturais para refletir apenas as colunas ainda visíveis.
 
 Affected files / areas:
-`src/app/main/pages/profile/formCards/formCards.js`
+`src/app/main/pages/agentes/AgentesApp.js`
 
 Test-first plan:
-Use the validation regression from T1 and manually review the submit payload path in code.
+Revisar os `colSpan` de estados vazio/carregando antes da edição e depois validar o arquivo com lint focado.
 
 Implementation notes:
-Only include `phone` in the patch payload when the current user can edit it. Keep the existing success/error behavior otherwise.
+Manter a tabela coerente entre visão mensal e semanal, sem alterar a navegação entre mês, semana e fotos do dia.
 
 Dependencies:
 T1.
 
 Completion signal:
-The form can submit without a phone value in non-editable contexts, and the field reads its own error state.
+Os estados vazio e carregando continuam ocupando a largura correta da tabela após a ocultação das colunas.
 
 ## Test Strategy
 
 - Automated:
-  - Run a focused Jest test for the extracted validation rule.
+  - Rodar `npx eslint --no-ignore src/app/main/pages/agentes/AgentesApp.js`.
 - Manual:
-  - Review the `PersonalInfo` submit path for admin editing another user.
-  - Confirm self-edit no longer blocks save when celular is empty.
-- Expected command:
-  - `npm test -- --runInBand --watch=false src/app/main/pages/profile/formCards/personalInfoValidation.test.js`
+  - Revisar a visão mensal para confirmar que `Total fotos` e `Fotos Válidas` não aparecem.
+  - Revisar a visão semanal para confirmar que `Fotos Válidas` não aparece.
+  - Revisar a visão diária para confirmar que `Motivo da rejeição` não aparece.
+  - Confirmar que os estados de loading e empty state continuam alinhados à quantidade visível de colunas.
 
 ## Risk Plan
 
-- Risk: the backend may still reject empty phone values in some flows.
-  - Mitigation: keep the payload behavior narrow and validate the main admin flow first.
-- Risk: backend still rejects disabled phone values.
-  - Mitigation: omit `phone` from the payload when it is not editable.
-- Risk: hidden UI regression from shared form reuse.
-  - Mitigation: keep the change narrow and confined to `PersonalInfo`.
+- Risk: deixar `colSpan` antigo e quebrar alinhamento visual da tabela.
+  - Mitigation: ajustar todos os `colSpan` afetados na mesma alteração.
+- Risk: introduzir erro de JSX ao comentar colunas e células.
+  - Mitigation: validar o arquivo com lint focado após a edição.
+- Risk: deixar helpers sem uso e causar falha de lint.
+  - Mitigation: preservar helpers afetados apenas como comentário quando não houver mais uso em runtime.
 
 ## Execution Order
 
-1. Add validation seam and regression test.
-2. Update `PersonalInfo` to use the conditional schema.
-3. Adjust submit payload and phone error binding.
-4. Run the focused test command.
+1. Comentar as colunas e células pedidas na visão mensal, semanal e diária.
+2. Ajustar `colSpan` e quaisquer helpers que virem código morto.
+3. Rodar lint focado em `AgentesApp.js`.
+4. Revisar o diff final antes de publicar.
 
 ## Open Questions
 
@@ -103,4 +104,4 @@ No blocking open questions.
 
 ## Handoff to tdd
 
-Ready for tdd. Start with T1 and write the failing validation test for optional phone behavior.
+Ready for tdd. Start with T1 in `AgentesApp.js`, then run focused lint validation on the edited file.
