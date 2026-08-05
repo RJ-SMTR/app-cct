@@ -959,6 +959,8 @@ function AgentesApp() {
     setSelectedMonthDate(clampAgentesMonthDate(newValue));
   };
 
+  /*
+   * Preserved for future reactivation of the hidden rejection-reasons dashboard block.
   let rejectionReasonRows = (
     <EmptyState
       message="Não há rejeições no período selecionado."
@@ -982,6 +984,7 @@ function AgentesApp() {
       </TableRow>
     ));
   }
+  */
 
   if (!canAccessSelectedAgent) {
     return <Navigate to={`/agentes/${user?.id}`} replace />;
@@ -1123,7 +1126,7 @@ function AgentesApp() {
               onMonthChange={handleSelectedMonth}
             />
 
-            <Paper className="flex flex-col flex-auto p-16 rounded-2xl shadow overflow-hidden">
+            {/* <Paper className="flex flex-col flex-auto p-16 rounded-2xl shadow overflow-hidden">
               <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
                 Motivos de rejeição
               </Typography>
@@ -1145,7 +1148,7 @@ function AgentesApp() {
                   <TableBody>{rejectionReasonRows}</TableBody>
                 </Table>
               </TableContainer>
-            </Paper>
+            </Paper> */}
           </Box>
         </div>
       }

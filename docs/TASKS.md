@@ -10,7 +10,7 @@
 
 ## Implementation Goal
 
-Ocultar visualmente, mas preservar em comentário, as colunas pedidas nas tabelas de drilldown do dashboard de guardador em `AgentesApp`, mantendo a estrutura da tabela consistente.
+Ocultar visualmente, mas preservar em comentário, as colunas pedidas nas tabelas de drilldown e o bloco `Motivos de rejeição` do dashboard de guardador em `AgentesApp`, mantendo a estrutura remanescente consistente.
 
 ## Non-Goals
 
@@ -18,6 +18,7 @@ Ocultar visualmente, mas preservar em comentário, as colunas pedidas nas tabela
 - Não remover definitivamente a lógica das colunas ocultadas.
 - Não mexer nos cards-resumo superiores.
 - Não alterar o comportamento da tabela de fotos do dia além de esconder `Motivo da rejeição`.
+- Não alterar a lógica dos dados de rejeição além de esconder sua UI.
 
 ## Acceptance Criteria Mapping
 
@@ -27,6 +28,7 @@ Ocultar visualmente, mas preservar em comentário, as colunas pedidas nas tabela
 | Visão mensal deixa de mostrar `Fotos Válidas` | T1 | JSX/lint validation + manual table review | planned |
 | Visão semanal deixa de mostrar `Fotos Válidas` | T1 | JSX/lint validation + manual table review | planned |
 | Visão diária deixa de mostrar `Motivo da rejeição` | T1 | JSX/lint validation + manual table review | planned |
+| Dashboard deixa de mostrar o bloco `Motivos de rejeição` | T1 | JSX/lint validation + manual page review | planned |
 | Código ocultado permanece fácil de restaurar depois | T1 | code review of preserved comments | planned |
 | Loading and empty states continuam alinhados à nova contagem de colunas | T2 | JSX/lint validation + manual table review | planned |
 
@@ -35,7 +37,7 @@ Ocultar visualmente, mas preservar em comentário, as colunas pedidas nas tabela
 ## T1 — Comentar as colunas pedidas no drilldown
 
 Objective:
-Comentar os cabeçalhos e células das colunas solicitadas nas visões mensal, semanal e diária, preservando o trecho para futura reativação.
+Comentar os cabeçalhos e células das colunas solicitadas nas visões mensal, semanal e diária, além do bloco `Motivos de rejeição`, preservando o trecho para futura reativação.
 
 Affected files / areas:
 `src/app/main/pages/agentes/AgentesApp.js`
@@ -44,7 +46,7 @@ Test-first plan:
 Como não há uma suíte focada já existente para essa tabela, validar primeiro o desenho atual do JSX e depois rodar lint focado no arquivo alterado para detectar regressões sintáticas ou símbolos órfãos.
 
 Implementation notes:
-Preservar os blocos ocultados em comentários JSX claros. Se uma função auxiliar ficar sem uso apenas por causa da ocultação, preservar sua intenção em comentário em vez de deixá-la como código morto executável.
+Preservar os blocos ocultados em comentários JSX claros. Se uma função auxiliar ou montagem de linhas ficar sem uso apenas por causa da ocultação, preservar sua intenção em comentário em vez de deixá-la como código morto executável.
 
 Dependencies:
 None.
@@ -64,7 +66,7 @@ Test-first plan:
 Revisar os `colSpan` de estados vazio/carregando antes da edição e depois validar o arquivo com lint focado.
 
 Implementation notes:
-Manter a tabela coerente entre visão mensal e semanal, sem alterar a navegação entre mês, semana e fotos do dia.
+Manter a tabela coerente entre visão mensal e semanal, sem alterar a navegação entre mês, semana e fotos do dia. O bloco ocultado de motivos de rejeição não deve deixar variáveis órfãs em runtime.
 
 Dependencies:
 T1.
@@ -80,6 +82,7 @@ Os estados vazio e carregando continuam ocupando a largura correta da tabela ap�
   - Revisar a visão mensal para confirmar que `Total fotos` e `Fotos Válidas` não aparecem.
   - Revisar a visão semanal para confirmar que `Fotos Válidas` não aparece.
   - Revisar a visão diária para confirmar que `Motivo da rejeição` não aparece.
+  - Revisar o dashboard para confirmar que o card `Motivos de rejeição` não aparece.
   - Confirmar que os estados de loading e empty state continuam alinhados à quantidade visível de colunas.
 
 ## Risk Plan
@@ -93,7 +96,7 @@ Os estados vazio e carregando continuam ocupando a largura correta da tabela ap�
 
 ## Execution Order
 
-1. Comentar as colunas e células pedidas na visão mensal, semanal e diária.
+1. Comentar as colunas e células pedidas na visão mensal, semanal e diária, além do bloco `Motivos de rejeição`.
 2. Ajustar `colSpan` e quaisquer helpers que virem código morto.
 3. Rodar lint focado em `AgentesApp.js`.
 4. Revisar o diff final antes de publicar.
