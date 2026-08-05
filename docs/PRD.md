@@ -1,39 +1,61 @@
 ## Problem Statement
 
-On the `agentes/:id` screen, an admin can edit a guardador's email in the shared `PersonalInfo` form. When the guardador has no celular saved, the form currently blocks submission because `phone` is always required, even when the field is disabled and cannot be edited in that context.
+Na tela `agentes/:id`, o dashboard ainda usa a modelagem anterior de dados e não suporta o contrato atualizado de `GET /v1/agentes/dashboard`. Isso impede alternar entre visualização por `data tentativa` e `data efetiva`, não usa `dateType` como fonte de verdade do modo ativo e mantém um fluxo de drill-down parcial, com buscas separadas e suposições antigas sobre pendências.
 
 ## Solution
 
-Allow the shared profile form to save changes without requiring celular. The field may remain editable where the current flow allows it, but its absence must not block saving email or other allowed profile data.
+Atualizar o dashboard de agentes para consumir o contrato novo de forma centralizada, com um estado de consulta explícito baseado em `month`, `dateType`, `paymentDate` e `workDate`. A tela deve permitir alternar entre `tentative` e `effective`, recarregar dados ao trocar o tipo de data, respeitar `availableMonths` retornado pela API e suportar navegação mensal, semanal e diária a partir do mesmo endpoint.
 
 ## User Stories
 
-1. As an admin, I want to update a guardador's email even when that guardador has no celular registered, so that I can correct invitation and login data without being blocked by an unrelated field.
-2. As an admin, I want disabled fields to stop blocking form submission, so that the save action matches what the UI allows me to edit.
-3. As a guardador editing my own profile, I want to save my profile even if I do not provide celular, so that contact data is not a blocker for other profile changes.
-4. As a developer, I want the validation rule for `PersonalInfo` to stop treating celular as mandatory, so that the shared form behaves consistently across admin and self-service contexts.
-5. As a developer, I want a regression test around the validation rule, so that future edits do not reintroduce the email-save block.
+1. As an agente, I want to switch between tentative and effective date modes, so that I can inspect my dashboard using the correct payment reference.
+2. As an admin, I want the selected date mode to persist in the screen state based on the API response, so that the UI always reflects the backend contract.
+3. As an agente, I want the dashboard to always send a month when loading data, so that the API can return a valid contracted response.
+4. As an admin, I want the available month options to refresh when I change the date mode, so that I only navigate across months supported by that mode.
+5. As an agente, I want to click a monthly payment and drill into its weekly breakdown, so that I can inspect the covered work days for that payment cycle.
+6. As an agente, I want to click a day inside a payment cycle and drill into the daily photo list, so that I can understand which captured entries compose that total.
+7. As an admin, I want loading, error and empty states to reflect the current query, so that the dashboard remains understandable while data is being fetched or when no records exist.
+8. As a developer, I want the dashboard payload to be normalized and typed according to the backend contract, so that the screen logic is resilient to optional fields and response variations.
+9. As a developer, I want `effective` mode to stop assuming pending behavior, so that the UI does not invent unsupported states such as paid-pending handling.
+10. As a developer, I want the drill-down to be driven by the contract query parameters instead of duplicated local fetch state, so that monthly, weekly and daily navigation stay consistent.
 
 ## Implementation Decisions
 
-- The fix stays inside the shared `PersonalInfo` flow because `AgentesApp` reuses that form for guardador profile data.
-- The `phone` validation rule no longer requires a value in the shared `PersonalInfo` form.
-- The submit payload omits `phone` entirely when the current user cannot edit it, reducing the chance of backend validation on a disabled field.
-- The phone field error wiring is corrected so the visible error matches the actual form field name.
+- The agents dashboard continues to use a single endpoint, now aligned to `GET /v1/agentes/dashboard`.
+- The active query state is modeled around the contract inputs:
+  - `month` is always sent.
+  - `dateType` is always sent and defaults to `tentative` only before the first response.
+  - `paymentDate` is sent only for weekly or daily drill-down.
+  - `workDate` is sent only for daily drill-down.
+- The response `dateType` becomes the source of truth for the active dashboard mode after each successful request.
+- The response `currentView` becomes the source of truth for which drill-down level is rendered.
+- The dashboard uses the backend-provided `availableMonths` to keep month navigation aligned to the selected `dateType`.
+- If the current month is no longer available for the returned `dateType`, the screen may realign to a valid available month instead of keeping an invalid selection.
+- The previous status presentation that collapsed rejected or estorno entries into a generic pending badge is removed from the dashboard flow touched by this feature.
+- `effective` mode does not assume pending entries exist and does not introduce any `pendência paga` behavior.
+- Payload shape is documented through code-level typings derived from the contract, even though the repository is implemented in JavaScript rather than TypeScript.
 
 ## Testing Decisions
 
-- Add a focused regression test around the validation seam instead of a broad UI test, because the bug is caused by form validation rather than table/dashboard behavior.
-- The test should verify external behavior of the validation rule:
-  - `phone` is optional.
-- Manual validation remains relevant for the end-to-end admin flow on `agentes/:id`.
+- Tests should verify external behavior of the dashboard seams, not component internals.
+- A good test in this feature checks:
+  - request params sent to the dashboard endpoint;
+  - normalized response shape returned by the service layer;
+  - month-selection rules derived from `availableMonths`;
+  - drill-down state transitions that can be expressed through pure helpers.
+- Prioritize unit tests for pure normalization and month-selection logic because the repository already has this style of deterministic contract-focused testing.
+- Prefer testing the service seam over broad UI snapshots, since the behavior change is primarily driven by contract adaptation and query-state transitions.
+- Manual validation remains relevant for the visual toggle flow and the end-to-end monthly -> weekly -> daily navigation.
 
 ## Out of Scope
 
-- Changes to backend validation rules.
-- Changes to bank data, invite resend, or dashboard behavior in `AgentesApp`.
-- Broad refactors of the profile form system.
+- Implementing `pendência paga`.
+- Changing unrelated agent profile or bank information flows.
+- Creating an alternative dashboard endpoint.
+- Redesigning the overall agents page layout outside the new toggle and drill-down behavior.
+- Backend contract changes beyond consuming the fields documented in `dashboard-api-contract.md`.
 
 ## Further Notes
 
-- This PRD is intentionally narrow because the requested work is a targeted bug fix on an existing shared form.
+- `dashboard-api-contract.md` is the source of truth for this feature.
+- No `PROJECT.md`, `CONTEXT.md`, ADR or glossary entry was available for this area during planning.

@@ -1,6 +1,12 @@
-import { api } from "app/configs/api/api";
+import { api } from "../../../../configs/api/api";
 import JwtService from "../../../../auth/services/jwtService";
 import jwtServiceConfig from "../../../../auth/services/jwtService/jwtServiceConfig";
+import {
+  DEFAULT_AGENTES_DASHBOARD_DATE_TYPE,
+  normalizeDashboardDateType,
+  normalizeDashboardView,
+} from "./agentesDashboardTypes";
+
 function normalizeNumber(value) {
   const parsedValue = Number(value);
   return Number.isFinite(parsedValue) ? parsedValue : 0;
@@ -12,6 +18,7 @@ function normalizeAssociationOption(option) {
   return {
     value: Number.isFinite(parsedValue) ? parsedValue : 0,
     label: option?.label || "-",
+    cpfCnpj: option?.cpfCnpj || null,
   };
 }
 
@@ -80,7 +87,8 @@ function normalizeDashboardResponse(data, requestedMonth) {
 
   return {
     month: data?.month || requestedMonth,
-    currentView: data?.currentView || "monthly",
+    dateType: normalizeDashboardDateType(data?.dateType),
+    currentView: normalizeDashboardView(data?.currentView),
     availableMonths: Array.isArray(data?.availableMonths)
       ? [...data.availableMonths].sort()
       : [],
@@ -96,7 +104,15 @@ function normalizeDashboardResponse(data, requestedMonth) {
           count: normalizeNumber(item?.count),
         }))
       : [],
-    monthlySummary: data?.monthlySummary || null,
+    monthlySummary: {
+      daysWithPayments: normalizeNumber(data?.monthlySummary?.daysWithPayments),
+      totalPayments: normalizeNumber(data?.monthlySummary?.totalPayments),
+      totalPaidEntries: normalizeNumber(data?.monthlySummary?.totalPaidEntries),
+      totalRejectedEntries: normalizeNumber(
+        data?.monthlySummary?.totalRejectedEntries
+      ),
+      totalPaymentValue: normalizeNumber(data?.monthlySummary?.totalPaymentValue),
+    },
     monthlyPayments,
     selectedPaymentWeek: normalizeSelectedPaymentWeek(
       data?.selectedPaymentWeek
@@ -109,11 +125,11 @@ function normalizeDashboardResponse(data, requestedMonth) {
 
 function buildDashboardRequestConfig(
   userId,
-  month,
-  paymentDate,
-  workDate,
+  query,
   token
 ) {
+  const normalizedDateType = normalizeDashboardDateType(query?.dateType);
+
   return {
     method: "get",
     url: jwtServiceConfig.agentesDashboard,
@@ -122,9 +138,10 @@ function buildDashboardRequestConfig(
     },
     params: {
       userId,
-      month,
-      ...(paymentDate ? { paymentDate } : {}),
-      ...(workDate ? { workDate } : {}),
+      month: query?.month,
+      dateType: normalizedDateType,
+      ...(query?.paymentDate ? { paymentDate: query.paymentDate } : {}),
+      ...(query?.workDate ? { workDate: query.workDate } : {}),
     },
   };
 }
@@ -132,6 +149,7 @@ function buildDashboardRequestConfig(
 export async function getAgentesDashboard(
   userId,
   month,
+  dateType,
   paymentDate,
   workDate
 ) {
@@ -142,7 +160,16 @@ export async function getAgentesDashboard(
   }
 
   const response = await api.request(
-    buildDashboardRequestConfig(userId, month, paymentDate, workDate, token)
+    buildDashboardRequestConfig(
+      userId,
+      {
+        month,
+        dateType: dateType || DEFAULT_AGENTES_DASHBOARD_DATE_TYPE,
+        paymentDate,
+        workDate,
+      },
+      token
+    )
   );
 
   return {
@@ -150,3 +177,5 @@ export async function getAgentesDashboard(
     userId,
   };
 }
+
+export { buildDashboardRequestConfig, normalizeDashboardResponse };

@@ -19,13 +19,12 @@ import {
   TableHead,
   TableRow,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
   Typography,
 } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { MobileDatePicker } from "@mui/x-date-pickers";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { format, isValid, parseISO } from "date-fns";
 import ptBR from "date-fns/locale/pt-BR";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
@@ -41,11 +40,16 @@ import {
   getAgentesDashboard,
 } from "./services/agentesService";
 import {
-  MIN_AGENTES_SELECTABLE_MONTH_DATE,
   buildMonthDate,
-  clampAgentesMonthDate,
   getInitialAgentesMonthDate,
+  getSelectableAgentesMonths,
 } from "./agentesMonthSelection";
+import {
+  areAgentesDashboardQueriesEqual,
+  createAgentesDashboardQuery,
+  resolveAgentesDashboardQuery,
+} from "./agentesDashboardQuery";
+import { DEFAULT_AGENTES_DASHBOARD_DATE_TYPE } from "./services/agentesDashboardTypes";
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
   "& .FusePageSimple-header": {
@@ -88,6 +92,22 @@ function SummaryCard({ title, value, icon, loading }) {
       </div>
     </Paper>
   );
+}
+
+function formatMonthLabel(month) {
+  const parsedMonth = buildMonthDate(month);
+
+  if (!isValid(parsedMonth)) {
+    return month || "-";
+  }
+
+  return format(parsedMonth, "MMMM 'de' yyyy", {
+    locale: ptBR,
+  });
+}
+
+function getDateTypeLabel(dateType) {
+  return dateType === "effective" ? "Data efetiva" : "Data tentativa";
 }
 
 function EmptyState({ message, colSpan = 5 }) {
@@ -208,14 +228,6 @@ function StatusBadge({ status }) {
   );
 }
 
-function isPendingPaymentStatus(status) {
-  const normalizedStatus = String(status || "")
-    .trim()
-    .toLowerCase();
-
-  return normalizedStatus === "rejeitado" || normalizedStatus === "estorno";
-}
-
 function stopStatusBoxPropagation(event) {
   event.stopPropagation();
 }
@@ -232,37 +244,27 @@ function getTotalPhotosCount(validPhotosCount, rejectedPhotosCount) {
   );
 }
 
-function ValidPhotosStatusBadge({ status, pendingReason }) {
-  if (!isPendingPaymentStatus(status)) {
-    return <StatusBadge status={status} />;
-  }
-
+function DashboardStatusBadge({ status, pendingReason }) {
   return (
-    <Tooltip
-      title={pendingReason || "Pendente"}
-      arrow
-      enterTouchDelay={10}
-      leaveTouchDelay={10000}
+    <Box
+      component="span"
+      onClick={stopStatusBoxPropagation}
+      onMouseDown={stopStatusBoxPropagation}
+      onTouchStart={stopStatusBoxPropagation}
+      sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}
     >
-      <Box
-        component="span"
-        onClick={stopStatusBoxPropagation}
-        onMouseDown={stopStatusBoxPropagation}
-        onTouchStart={stopStatusBoxPropagation}
-        sx={{ display: "inline-flex", alignItems: "center" }}
-      >
-        <Badge
-          className="whitespace-nowrap"
-          color="error"
-          badgeContent={
-            <span className="inline-flex items-center gap-4 underline">
-              Pendentes <InfoOutlinedIcon fontSize="small" />
-            </span>
-          }
-          sx={statusBadgeSx}
-        />
-      </Box>
-    </Tooltip>
+      <StatusBadge status={status} />
+      {pendingReason ? (
+        <Tooltip
+          title={pendingReason}
+          arrow
+          enterTouchDelay={10}
+          leaveTouchDelay={10000}
+        >
+          <InfoOutlinedIcon fontSize="small" color="action" />
+        </Tooltip>
+      ) : null}
+    </Box>
   );
 }
 
@@ -380,31 +382,19 @@ function AgentBankInfo({ user }) {
 }
 
 const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
-  agentId,
-  selectedMonth,
-  selectedMonthDate,
+  dashboard,
+  dashboardQuery,
+  availableMonths,
   associacoes,
   monthlyPayments,
-  monthlyLoading,
+  loading,
   onMonthChange,
+  onDateTypeChange,
+  onSelectMonthlyPayment,
+  onSelectWeeklyDay,
+  onBack,
 }) {
-  const dispatch = useDispatch();
-  const [selectedPaymentDate, setSelectedPaymentDate] = useState("");
-  const [selectedWorkDate, setSelectedWorkDate] = useState("");
-  const [selectedPaymentWeek, setSelectedPaymentWeek] = useState(null);
-  const [selectedWorkDayPhotos, setSelectedWorkDayPhotos] = useState(null);
   const [selectedAssociacao, setSelectedAssociacao] = useState(null);
-  const [drilldownLoading, setDrilldownLoading] = useState(false);
-  const [drilldownError, setDrilldownError] = useState("");
-
-  useEffect(() => {
-    setSelectedPaymentDate("");
-    setSelectedWorkDate("");
-    setSelectedPaymentWeek(null);
-    setSelectedWorkDayPhotos(null);
-    setDrilldownLoading(false);
-    setDrilldownError("");
-  }, [selectedMonth]);
 
   useEffect(() => {
     if (!Array.isArray(associacoes) || associacoes.length === 0) {
@@ -423,125 +413,30 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
       return associacoes[0];
     });
   }, [associacoes]);
+  const selectedPaymentDate = dashboardQuery?.paymentDate || "";
+  const selectedWorkDate = dashboardQuery?.workDate || "";
+  const activeDateType =
+    dashboard?.dateType || dashboardQuery?.dateType || DEFAULT_AGENTES_DASHBOARD_DATE_TYPE;
+  const currentView = dashboard?.currentView || "monthly";
+  const selectedPaymentWeek = dashboard?.selectedPaymentWeek || null;
+  const selectedWorkDayPhotos = dashboard?.selectedWorkDayPhotos || null;
+  const monthOptions = useMemo(() => {
+    const options = [
+      dashboardQuery?.month,
+      ...getSelectableAgentesMonths(availableMonths),
+    ].filter(Boolean);
 
-  const handleDrilldownError = useCallback(
-    (message) => {
-      setDrilldownError(message);
-      dispatch(
-        showMessage({
-          message,
-        })
-      );
-    },
-    [dispatch]
-  );
-
-  const loadWeeklyView = useCallback(
-    async (paymentDate) => {
-      setDrilldownLoading(true);
-      setDrilldownError("");
-
-      try {
-        const response = await getAgentesDashboard(
-          agentId,
-          selectedMonth,
-          paymentDate
-        );
-
-        setSelectedPaymentDate(paymentDate);
-        setSelectedWorkDate("");
-        setSelectedPaymentWeek(response.selectedPaymentWeek || null);
-        setSelectedWorkDayPhotos(null);
-      } catch (requestError) {
-        handleDrilldownError(
-          "Não foi possível carregar a visão semanal deste pagamento."
-        );
-      } finally {
-        setDrilldownLoading(false);
-      }
-    },
-    [agentId, handleDrilldownError, selectedMonth]
-  );
-
-  const loadDailyView = useCallback(
-    async (paymentDate, workDate) => {
-      setDrilldownLoading(true);
-      setDrilldownError("");
-
-      try {
-        const response = await getAgentesDashboard(
-          agentId,
-          selectedMonth,
-          paymentDate,
-          workDate
-        );
-
-        setSelectedPaymentDate(paymentDate);
-        setSelectedWorkDate(workDate);
-        setSelectedPaymentWeek(response.selectedPaymentWeek || null);
-        setSelectedWorkDayPhotos(response.selectedWorkDayPhotos || null);
-      } catch (requestError) {
-        handleDrilldownError(
-          "Não foi possível carregar as fotos do dia selecionado."
-        );
-      } finally {
-        setDrilldownLoading(false);
-      }
-    },
-    [agentId, handleDrilldownError, selectedMonth]
-  );
-
-  const handleSelectMonthlyPayment = useCallback(
-    (paymentDate) => {
-      loadWeeklyView(paymentDate);
-    },
-    [loadWeeklyView]
-  );
-
-  const handleSelectWeeklyDay = useCallback(
-    (workDate) => {
-      if (!selectedPaymentDate) {
-        return;
-      }
-
-      loadDailyView(selectedPaymentDate, workDate);
-    },
-    [loadDailyView, selectedPaymentDate]
-  );
-
-  const handleBackToMonthly = useCallback(() => {
-    setSelectedPaymentDate("");
-    setSelectedWorkDate("");
-    setSelectedPaymentWeek(null);
-    setSelectedWorkDayPhotos(null);
-    setDrilldownLoading(false);
-    setDrilldownError("");
-  }, []);
-
-  const handleBackToWeekly = useCallback(() => {
-    setSelectedWorkDate("");
-    setSelectedWorkDayPhotos(null);
-    setDrilldownLoading(false);
-    setDrilldownError("");
-  }, []);
-
-  const handleBack = useCallback(() => {
-    if (selectedWorkDate) {
-      handleBackToWeekly();
-      return;
-    }
-
-    handleBackToMonthly();
-  }, [handleBackToMonthly, handleBackToWeekly, selectedWorkDate]);
+    return [...new Set(options)];
+  }, [availableMonths, dashboardQuery?.month]);
 
   let monthlyPaymentsRows = (
     <EmptyState
-      message="Não há pagamentos para o mês selecionado."
+      message={`Não há pagamentos para ${getDateTypeLabel(activeDateType).toLowerCase()} no mês selecionado.`}
       colSpan={6}
     />
   );
 
-  if (monthlyLoading) {
+  if (loading) {
     monthlyPaymentsRows = [...Array(4)].map((_, index) => (
       <TableRow key={`loading-payment-cycle-${index}`}>
         <TableCell colSpan={6}>
@@ -562,7 +457,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           key={payment.paymentDate}
           hover
           selected={isSelected}
-          onClick={() => handleSelectMonthlyPayment(payment.paymentDate)}
+          onClick={() => onSelectMonthlyPayment(payment.paymentDate)}
           className="cursor-pointer"
         >
           <TableCell>{formatDateLabel(payment.paymentDate)}</TableCell>
@@ -573,7 +468,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
             align="center"
             sx={{ verticalAlign: "middle" }}
           >
-            <ValidPhotosStatusBadge
+            <DashboardStatusBadge
               status={payment.paymentStatus}
               pendingReason={payment.pendingReason}
             />
@@ -591,7 +486,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
     />
   );
 
-  if (drilldownLoading) {
+  if (loading) {
     weeklyDayRows = [...Array(4)].map((_, index) => (
       <TableRow key={`loading-week-day-${index}`}>
         <TableCell colSpan={3}>
@@ -608,7 +503,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           key={`${day.date}-${day.periodLabel}`}
           hover
           selected={isSelected}
-          onClick={() => handleSelectWeeklyDay(day.date)}
+          onClick={() => onSelectWeeklyDay(day.date)}
           className="cursor-pointer"
         >
           <TableCell>{formatDateLabel(day.date)}</TableCell>
@@ -623,7 +518,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
     <EmptyState message="Nenhuma foto encontrada para o dia selecionado." />
   );
 
-  if (drilldownLoading) {
+  if (loading) {
     selectedWorkDayPhotoRows = [...Array(4)].map((_, index) => (
       <TableRow key={`loading-photo-row-${index}`}>
         <TableCell colSpan={5}>
@@ -667,8 +562,8 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
     </>
   );
 
-  if (selectedPaymentDate) {
-    if (selectedWorkDate) {
+  if (currentView !== "monthly") {
+    if (currentView === "daily") {
       drilldownTitle = "Fotos do dia";
       drilldownSubtitle = `Detalhamento de ${formatDateLabel(selectedWorkDate)} (${selectedWorkDayPhotos?.periodLabel || "-"
         }).`;
@@ -711,10 +606,45 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
             {drilldownTitle}
           </Typography>
-          <Typography color="text.secondary">{drilldownSubtitle}</Typography>
+          <Typography color="text.secondary">
+            {drilldownSubtitle}
+          </Typography>
         </div>
 
         <div className="flex flex-col md:flex-row gap-12 md:items-center">
+          <ToggleButtonGroup
+            color="primary"
+            exclusive
+            value={activeDateType}
+            onChange={onDateTypeChange}
+            size="small"
+          >
+            <ToggleButton value="tentative">Data tentativa</ToggleButton>
+            <ToggleButton value="effective">Data efetiva</ToggleButton>
+          </ToggleButtonGroup>
+
+          <Autocomplete
+            id="agente-dashboard-month"
+            options={monthOptions}
+            value={dashboardQuery?.month || null}
+            disableClearable
+            onChange={(_, newValue) => {
+              if (newValue) {
+                onMonthChange(newValue);
+              }
+            }}
+            getOptionLabel={(option) => formatMonthLabel(option)}
+            isOptionEqualToValue={(option, value) => option === value}
+            className="min-w-[220px]"
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Mês de referência"
+                placeholder="Selecione o mês"
+              />
+            )}
+          />
+
           <Autocomplete
             id="agente-associacao"
             options={associacoes}
@@ -732,25 +662,10 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
             )}
           />
 
-          {!selectedPaymentDate ? (
-            <LocalizationProvider
-              dateAdapter={AdapterDateFns}
-              adapterLocale={ptBR}
-            >
-              <MobileDatePicker
-                label="Selecionar Mês"
-                openTo="month"
-                closeOnSelect
-                views={["year", "month"]}
-                value={selectedMonthDate}
-                onChange={onMonthChange}
-                minDate={MIN_AGENTES_SELECTABLE_MONTH_DATE}
-              />
-            </LocalizationProvider>
-          ) : (
+          {currentView !== "monthly" ? (
             <div className="flex flex-wrap gap-8">
               <Button
-                onClick={handleBack}
+                onClick={onBack}
                 variant="outlined"
                 sx={{
                   color: "common.black",
@@ -765,15 +680,9 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
                 Voltar
               </Button>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
-
-      {drilldownError ? (
-        <Alert severity="error" className="mt-16">
-          {drilldownError}
-        </Alert>
-      ) : null}
 
       <TableContainer
         sx={{ maxHeight: 440, overflowX: "auto" }}
@@ -784,7 +693,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
         </Table>
       </TableContainer>
 
-      {selectedPaymentDate && !selectedWorkDate ? (
+      {currentView === "weekly" ? (
         <Typography className="font-medium text-base mt-16 self-end">
           Total do pagamento:{" "}
           {formatCurrency(selectedPaymentWeek?.totalPaymentValue)}
@@ -799,17 +708,20 @@ function AgentesApp() {
   const user = useSelector(selectUser);
   const { id } = useParams();
   const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down("lg"));
-  const [selectedMonthDate, setSelectedMonthDate] = useState(
-    getInitialAgentesMonthDate()
+  const [dashboardQuery, setDashboardQuery] = useState(() =>
+    createAgentesDashboardQuery({
+      month: format(getInitialAgentesMonthDate(), "yyyy-MM"),
+      dateType: DEFAULT_AGENTES_DASHBOARD_DATE_TYPE,
+    })
   );
   const [dashboard, setDashboard] = useState(null);
   const [agentDetails, setAgentDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [inviteFeedbackStatus, setInviteFeedbackStatus] = useState(null);
-  const selectedMonth = useMemo(
-    () => format(selectedMonthDate, "yyyy-MM"),
-    [selectedMonthDate]
+  const availableMonths = useMemo(
+    () => getSelectableAgentesMonths(dashboard?.availableMonths),
+    [dashboard?.availableMonths]
   );
   const isOwnDashboard = String(user?.id) === String(id);
   const canAccessSelectedAgent = isAdminUser(user) || isOwnDashboard;
@@ -919,8 +831,33 @@ function AgentesApp() {
     setError("");
 
     try {
-      const response = await getAgentesDashboard(id, selectedMonth);
+      const response = await getAgentesDashboard(
+        id,
+        dashboardQuery.month,
+        dashboardQuery.dateType,
+        dashboardQuery.paymentDate,
+        dashboardQuery.workDate
+      );
+      const nextQuery = resolveAgentesDashboardQuery(dashboardQuery, response);
+      const shouldRefetchWithNextQuery =
+        !areAgentesDashboardQueriesEqual(nextQuery, dashboardQuery) &&
+        (nextQuery.month !== dashboardQuery.month ||
+          nextQuery.dateType !== dashboardQuery.dateType);
+
+      if (shouldRefetchWithNextQuery) {
+        setDashboard(null);
+        setDashboardQuery(nextQuery);
+        return;
+      }
+
       setDashboard(response);
+      setDashboardQuery((currentQuery) => {
+        if (areAgentesDashboardQueriesEqual(currentQuery, nextQuery)) {
+          return currentQuery;
+        }
+
+        return nextQuery;
+      });
     } catch (requestError) {
       setError("Não foi possível carregar o painel de guardador.");
       dispatch(
@@ -931,7 +868,7 @@ function AgentesApp() {
     } finally {
       setLoading(false);
     }
-  }, [dispatch, id, selectedMonth]);
+  }, [dashboardQuery, dispatch, id]);
 
   useEffect(() => {
     if (!canAccessSelectedAgent) {
@@ -949,13 +886,72 @@ function AgentesApp() {
     loadDashboard();
   }, [canAccessSelectedAgent, loadDashboard]);
 
-  const handleSelectedMonth = (newValue) => {
-    if (!newValue) {
+  const handleSelectedMonth = useCallback((month) => {
+    setDashboardQuery((currentQuery) =>
+      createAgentesDashboardQuery({
+        ...currentQuery,
+        month,
+        paymentDate: "",
+        workDate: "",
+      })
+    );
+  }, []);
+
+  const handleDateTypeChange = useCallback((_, dateType) => {
+    if (!dateType) {
       return;
     }
 
-    setSelectedMonthDate(clampAgentesMonthDate(newValue));
-  };
+    setDashboard(null);
+    setDashboardQuery((currentQuery) =>
+      createAgentesDashboardQuery({
+        ...currentQuery,
+        dateType,
+        paymentDate: "",
+        workDate: "",
+      })
+    );
+  }, []);
+
+  const handleSelectMonthlyPayment = useCallback((paymentDate) => {
+    setDashboardQuery((currentQuery) =>
+      createAgentesDashboardQuery({
+        ...currentQuery,
+        paymentDate,
+        workDate: "",
+      })
+    );
+  }, []);
+
+  const handleSelectWeeklyDay = useCallback((workDate) => {
+    setDashboardQuery((currentQuery) => {
+      if (!currentQuery.paymentDate) {
+        return currentQuery;
+      }
+
+      return createAgentesDashboardQuery({
+        ...currentQuery,
+        workDate,
+      });
+    });
+  }, []);
+
+  const handleBack = useCallback(() => {
+    setDashboardQuery((currentQuery) => {
+      if (currentQuery.workDate) {
+        return createAgentesDashboardQuery({
+          ...currentQuery,
+          workDate: "",
+        });
+      }
+
+      return createAgentesDashboardQuery({
+        ...currentQuery,
+        paymentDate: "",
+        workDate: "",
+      });
+    });
+  }, []);
 
   let rejectionReasonRows = (
     <EmptyState
@@ -1112,13 +1108,17 @@ function AgentesApp() {
 
           <Box className="grid grid-cols-1 xl:grid-cols-3 gap-24">
             <DashboardDrilldownCard
-              agentId={id}
-              selectedMonth={selectedMonth}
-              selectedMonthDate={selectedMonthDate}
+              dashboard={dashboard}
+              dashboardQuery={dashboardQuery}
+              availableMonths={availableMonths}
               associacoes={dashboard?.associacoes || []}
               monthlyPayments={dashboard?.monthlyPayments || []}
-              monthlyLoading={loading}
+              loading={loading}
               onMonthChange={handleSelectedMonth}
+              onDateTypeChange={handleDateTypeChange}
+              onSelectMonthlyPayment={handleSelectMonthlyPayment}
+              onSelectWeeklyDay={handleSelectWeeklyDay}
+              onBack={handleBack}
             />
 
             <Paper className="flex flex-col flex-auto p-16 rounded-2xl shadow overflow-hidden">

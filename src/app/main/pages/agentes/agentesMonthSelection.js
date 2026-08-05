@@ -60,3 +60,31 @@ export function getLatestAllowedAgentesMonth(availableMonths) {
 
   return null;
 }
+
+export function getSelectableAgentesMonths(availableMonths) {
+  if (!Array.isArray(availableMonths) || availableMonths.length === 0) {
+    return [];
+  }
+
+  return [...new Set(availableMonths)]
+    .filter(
+      (month) => typeof month === "string" && month >= MIN_AGENTES_SELECTABLE_MONTH
+    )
+    .sort()
+    .reverse();
+}
+
+export function resolveAgentesSelectedMonth(currentMonth, availableMonths) {
+  const normalizedCurrentMonth =
+    typeof currentMonth === "string" ? currentMonth.trim() : "";
+  const selectableMonths = getSelectableAgentesMonths(availableMonths);
+
+  if (
+    normalizedCurrentMonth &&
+    selectableMonths.includes(normalizedCurrentMonth)
+  ) {
+    return normalizedCurrentMonth;
+  }
+
+  return selectableMonths[0] || normalizedCurrentMonth;
+}

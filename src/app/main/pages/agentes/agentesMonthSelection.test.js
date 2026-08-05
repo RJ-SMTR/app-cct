@@ -4,7 +4,9 @@ import {
   MIN_AGENTES_SELECTABLE_MONTH_DATE,
   buildMonthDate,
   clampAgentesMonthDate,
+  getSelectableAgentesMonths,
   getLatestAllowedAgentesMonth,
+  resolveAgentesSelectedMonth,
 } from "./agentesMonthSelection";
 
 describe("agentesMonthSelection", () => {
@@ -35,6 +37,29 @@ describe("agentesMonthSelection", () => {
 
   it("returns null when all available months are before the minimum", () => {
     expect(getLatestAllowedAgentesMonth(["2026-05", "2026-06"])).toBeNull();
+  });
+
+  it("keeps selectable months unique and sorted from latest to earliest", () => {
+    expect(
+      getSelectableAgentesMonths([
+        "2026-08",
+        "2026-06",
+        "2026-08",
+        "2026-07",
+      ])
+    ).toEqual(["2026-08", "2026-07"]);
+  });
+
+  it("keeps the current month when it is still available", () => {
+    expect(
+      resolveAgentesSelectedMonth("2026-08", ["2026-09", "2026-08"])
+    ).toBe("2026-08");
+  });
+
+  it("falls back to the latest available month when the current one is invalid", () => {
+    expect(
+      resolveAgentesSelectedMonth("2026-09", ["2026-08", "2026-07"])
+    ).toBe("2026-08");
   });
 
   it("exposes julho de 2026 as the minimum selectable month", () => {
