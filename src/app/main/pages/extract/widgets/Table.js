@@ -540,7 +540,8 @@ function TableTransactions({ id }) {
                   })
                 ) : (
                   <TableCell colSpan={4}>
-                    <p>Não há dados para serem exibidos</p>
+                    <p><i>Carregando as transações…</i></p>
+                    <p><i>Aguarde. As informações estarão disponíveis em breve.</i></p>
                   </TableCell>
                 )}
 
