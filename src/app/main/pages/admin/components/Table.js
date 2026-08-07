@@ -173,6 +173,8 @@ export function TableUsers() {
                                                 break;
                                             case 'used':
                                                 return 'Acessado';
+                                            case 'prov':
+                                                return 'Provisionado';
                                                 break;
                                         }
                                     }

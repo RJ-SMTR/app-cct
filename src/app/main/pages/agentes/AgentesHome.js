@@ -113,6 +113,8 @@ function getInviteStatusLabel(agentUser) {
       return 'Enviado';
     case 'used':
       return 'Acessado';
+    case 'prov':
+      return 'Provisionado';
     default:
       return '';
   }
