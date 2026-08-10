@@ -188,6 +188,7 @@ export const  getPreviousDays = (idOrdem, userId, userRoleId) => async (dispatch
         let config = {
             method: 'get',
             maxBodyLength: Infinity,
+            url: userId ? previousDaysRoute + `/${normalizedIdOrdem}?userId=${userId}` : jwtServiceConfig.bankStatement + `/${normalizedIdOrdem}`,
             headers: { "Authorization": `Bearer ${token}` },
         }
         try {
