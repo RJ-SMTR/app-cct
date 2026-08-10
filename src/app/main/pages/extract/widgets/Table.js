@@ -56,7 +56,7 @@ import {
   clampVanzeirosMonthDate,
 } from './vanzeirosMonthSelection';
 
-function TableTransactions({ id }) {
+function TableTransactions({ id, userRoleId }) {
   const dispatch = useDispatch()
   const user = useSelector(selectUser)
   const {
@@ -188,7 +188,7 @@ function TableTransactions({ id }) {
   useEffect(() => {
     setPreviousDays("");
     if (user.role.name.includes("Admin")) {
-      dispatch(getStatements(dateRange, searchingDay, searchingWeek, id, ordemPgtoId, mocked))
+      dispatch(getStatements(dateRange, searchingDay, searchingWeek, id, ordemPgtoId, mocked, userRoleId))
         .catch((error) => {
           if (error) {
 
@@ -197,7 +197,7 @@ function TableTransactions({ id }) {
         });
 
     } else {
-      dispatch(getStatements(dateRange, searchingDay, searchingWeek, id, ordemPgtoId))
+      dispatch(getStatements(dateRange, searchingDay, searchingWeek, id, ordemPgtoId, undefined, userRoleId))
         .catch((error) => {
           if (error) {
 

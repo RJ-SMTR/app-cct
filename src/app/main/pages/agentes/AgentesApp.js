@@ -125,6 +125,13 @@ function formatDateLabel(date) {
   return format(parsedDate, "dd/MM/yyyy");
 }
 
+function areSameCalendarDay(firstDate, secondDate) {
+  const firstDateLabel = normalizeDateValue(firstDate).slice(0, 10);
+  const secondDateLabel = normalizeDateValue(secondDate).slice(0, 10);
+
+  return Boolean(firstDateLabel && secondDateLabel && firstDateLabel === secondDateLabel);
+}
+
 function normalizeDateValue(dateValue) {
   if (typeof dateValue !== "string") {
     return "";
@@ -207,6 +214,48 @@ function StatusBadge({ status }) {
   );
 }
 
+function getPermissionarioStatus(statusRemessa) {
+  if (statusRemessa === null || statusRemessa === undefined || statusRemessa === "") {
+    return "A pagar";
+  }
+
+  switch (Number(statusRemessa)) {
+    case 2:
+      return "Aguardando Pagamento";
+    case 3:
+      return "Pago";
+    case 4:
+      return "Pendente";
+    case 5:
+      return "Pendencia Paga";
+    default:
+      return "A pagar";
+  }
+}
+
+function getPermissionarioBadgeColor(statusRemessa) {
+  if (statusRemessa === null || statusRemessa === undefined || statusRemessa === "") {
+    return "op";
+  }
+
+  switch (Number(statusRemessa)) {
+    case 3:
+      return "success";
+    case 4:
+      return "error";
+    case 5:
+      return "info";
+    case 2:
+      return "wait";
+    case 1:
+      return "warning";
+    case 0:
+      return "warning";
+    default:
+      return "op";
+  }
+}
+
 function isPendingPaymentStatus(status) {
   const normalizedStatus = String(status || "")
     .trim()
@@ -235,35 +284,38 @@ function getTotalPhotosCount(validPhotosCount, rejectedPhotosCount) {
 */
 
 function ValidPhotosStatusBadge({ status, pendingReason }) {
-  if (!isPendingPaymentStatus(status)) {
-    return <StatusBadge status={status} />;
+  return (
+    <Badge
+      className="whitespace-nowrap"
+      color={getPermissionarioBadgeColor(status)}
+      badgeContent={getPermissionarioStatus(status)}
+      sx={statusBadgeSx}
+    />
+  );
+}
+
+function PendingReasonBadge({ status, pendingReason }) {
+  if (Number(status) !== 4) {
+    return null;
   }
 
   return (
     <Tooltip
-      title={pendingReason || "Pendente"}
+      title={pendingReason || ""}
       arrow
       enterTouchDelay={10}
       leaveTouchDelay={10000}
     >
-      <Box
-        component="span"
-        onClick={stopStatusBoxPropagation}
-        onMouseDown={stopStatusBoxPropagation}
-        onTouchStart={stopStatusBoxPropagation}
-        sx={{ display: "inline-flex", alignItems: "center" }}
-      >
-        <Badge
-          className="whitespace-nowrap"
-          color="error"
-          badgeContent={
-            <span className="inline-flex items-center gap-4 underline">
-              Pendentes <InfoOutlinedIcon fontSize="small" />
-            </span>
-          }
-          sx={statusBadgeSx}
-        />
-      </Box>
+      <Badge
+        className="whitespace-nowrap"
+        color="error"
+        badgeContent={
+          <span className="inline-flex items-center gap-4 underline">
+            Erro <InfoOutlinedIcon fontSize="small" />
+          </span>
+        }
+        sx={statusBadgeSx}
+      />
     </Tooltip>
   );
 }
@@ -539,14 +591,14 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   let monthlyPaymentsRows = (
     <EmptyState
       message="Não há pagamentos para o mês selecionado."
-      colSpan={4}
+      colSpan={6}
     />
   );
 
   if (monthlyLoading) {
     monthlyPaymentsRows = [...Array(4)].map((_, index) => (
       <TableRow key={`loading-payment-cycle-${index}`}>
-        <TableCell colSpan={4}>
+        <TableCell colSpan={5}>
           <Skeleton variant="text" height={28} />
         </TableCell>
       </TableRow>
@@ -567,16 +619,29 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           {/* <TableCell>{getTotalPhotosCount(payment.validPhotosCount, payment.rejectedPhotosCount)}</TableCell> */}
           {/* <TableCell>{payment.validPhotosCount}</TableCell> */}
           <TableCell>{formatCurrency(payment.totalPaymentValue)}</TableCell>
+          <TableCell>
+            {areSameCalendarDay(
+              payment.dataTentativaPagamento,
+              payment.dataEfetivaPagamento
+            )
+              ? "-"
+              : formatDateLabel(payment.dataEfetivaPagamento)}
+          </TableCell>
+
           <TableCell
             align="center"
             sx={{ verticalAlign: "middle" }}
           >
             <ValidPhotosStatusBadge
-              status={payment.paymentStatus}
-              pendingReason={payment.pendingReason}
+              status={payment.statusRemessa}
             />
           </TableCell>
-          <TableCell>{payment.rejectedPhotosCount}</TableCell>
+          {/* <TableCell align="center" sx={{ verticalAlign: "middle" }}>
+            <PendingReasonBadge
+              status={payment.statusRemessa}
+              pendingReason={payment.descricaoMotivoStatusRemessa || payment.pendingReason}
+            />
+          </TableCell> */}
         </TableRow>
       );
     });
@@ -656,12 +721,13 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
     <>
       <TableHead>
         <TableRow>
-          <TableCell>Data Pagamento</TableCell>
+              <TableCell>Data Tentativa Pagamento</TableCell>
           {/* <TableCell>Total fotos</TableCell> */}
           {/* <TableCell>Fotos Válidas</TableCell> */}
           <TableCell>Valor Fotos Válidas</TableCell>
+          <TableCell>Data Efetiva Pagamento</TableCell>
           <TableCell align="center">Status Fotos Válidas</TableCell>
-          <TableCell>Fotos NÃO Válidas</TableCell>
+          {/* <TableCell>Fotos NÃO Válidas</TableCell> */}
         </TableRow>
       </TableHead>
       <TableBody>{monthlyPaymentsRows}</TableBody>
@@ -780,7 +846,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
         sx={{ maxHeight: 440, overflowX: "auto" }}
         className="mt-24"
       >
-        <Table stickyHeader sx={{ minWidth: selectedPaymentDate ? 560 : 820 }}>
+        <Table stickyHeader sx={{ minWidth: selectedPaymentDate ? 560 : 1080 }}>
           {tableContent}
         </Table>
       </TableContainer>

@@ -156,11 +156,7 @@ export function CustomTable(data) {
         !searchingDay ? (
           <TableCell component="th" scope="row">
             <Typography className="whitespace-nowrap">
-              {
-                (() => {
-                  return data.data.statusRemessa === 5 ? data.dataPagamento : <></>;
-                })()
-              }
+              {data.dataPagamento || '-'}
             </Typography>
           </TableCell>
         ) : (

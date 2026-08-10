@@ -173,15 +173,21 @@ function normalizeOrderIds(ids) {
     return ids;
 }
 
-export const  getPreviousDays = (idOrdem, userId) => async (dispatch) => {
+function isAgentRole(roleId) {
+    return Number(roleId) === 6;
+}
+
+export const  getPreviousDays = (idOrdem, userId, userRoleId) => async (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
     const normalizedIdOrdem = normalizeOrderIds(idOrdem);
+    const previousDaysRoute = isAgentRole(userRoleId)
+        ? jwtServiceConfig.agentesOdpAnteriores
+        : jwtServiceConfig.odpAnteriores;
    
     if(JwtService.isAuthTokenValid(token)){
         let config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: userId ? jwtServiceConfig.odpAnteriores + `/${normalizedIdOrdem}?userId=${userId}` : jwtServiceConfig.bankStatement + `/${normalizedIdOrdem}`,
             headers: { "Authorization": `Bearer ${token}` },
         }
         try {
@@ -232,8 +238,9 @@ export const  getPreviousDays = (idOrdem, userId) => async (dispatch) => {
 //     }
 // };
 
-export const getStatements = (dateRange, searchingDay, searchingWeek, userId, idOrdem, mocked) => async (dispatch) => {
+export const getStatements = (dateRange, searchingDay, searchingWeek, userId, idOrdem, mocked, userRoleId) => async (dispatch) => {
     const normalizedIdOrdem = normalizeOrderIds(idOrdem);
+    const isAgent = isAgentRole(userRoleId);
 
     if (!normalizedIdOrdem && (searchingDay || searchingWeek)) {
         console.warn("idOrdem está indefinido. Requisição não será feita.");
@@ -252,10 +259,10 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
 
     let apiRoute = '';
     apiRoute = searchingWeek && searchingDay
-        ? jwtServiceConfig.odpDiario + `/?userId=${userId}`
+        ? (isAgent ? jwtServiceConfig.agentesOdpDiario : jwtServiceConfig.odpDiario) + `/?userId=${userId}`
         : searchingWeek
-            ? jwtServiceConfig.odpSemanal 
-            : jwtServiceConfig.odpMensal + `?userId=${userId}`;
+            ? (isAgent ? jwtServiceConfig.agentesOdpSemanal : jwtServiceConfig.odpSemanal)
+            : (isAgent ? jwtServiceConfig.agentesOdpMensal : jwtServiceConfig.odpMensal) + `?userId=${userId}`;
 
     const method = 'get';
     const token = window.localStorage.getItem('jwt_access_token');
@@ -288,7 +295,7 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
 
 
             } else if (searchingWeek) {
-                dispatch(getPreviousDays(normalizedIdOrdem, userId));
+                dispatch(getPreviousDays(normalizedIdOrdem, userId, userRoleId));
 
                 const statementsSort = response.data.sort((a, b) =>
                     compareDesc(parseISO(a.dataCaptura), parseISO(b.dataCaptura))
