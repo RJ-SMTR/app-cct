@@ -7,126 +7,215 @@ function normalizeNumber(value) {
   return Number.isFinite(parsedValue) ? parsedValue : 0;
 }
 
-function normalizeAssociationOption(option) {
-  const parsedValue = Number(option?.value);
-
-  return {
-    value: Number.isFinite(parsedValue) ? parsedValue : 0,
-    label: option?.label || "-",
-  };
+function toDateOnly(value) {
+  const normalizedValue = String(value || "").trim();
+  return normalizedValue ? normalizedValue.slice(0, 10) : "";
 }
 
-function normalizePhoto(photo) {
-  return {
-    id: photo?.id || "",
-    capturedAt: photo?.capturedAt || "",
-    description: photo?.description || "-",
-    status: photo?.status || "-",
-    amount: normalizeNumber(photo?.amount),
-    rejectionReason: photo?.rejectionReason || null,
-  };
-}
-
-function normalizeSelectedPaymentWeek(selectedPaymentWeek) {
-  if (!selectedPaymentWeek) {
-    return null;
+function normalizeCommaIds(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => String(item || "").trim())
+      .filter(Boolean)
+      .join(",");
   }
 
-  return {
-    paymentDate: selectedPaymentWeek?.paymentDate || "",
-    paymentDayType: selectedPaymentWeek?.paymentDayType || "",
-    totalPaymentValue: normalizeNumber(selectedPaymentWeek?.totalPaymentValue),
-    days: Array.isArray(selectedPaymentWeek?.days)
-      ? selectedPaymentWeek.days.map((day) => ({
-          date: day?.date || "",
-          periodLabel: day?.periodLabel || "-",
-          validPhotosCount: normalizeNumber(day?.validPhotosCount),
-          rejectedPhotosCount: normalizeNumber(day?.rejectedPhotosCount),
-          paymentStatus: day?.paymentStatus || "-",
-          pendingReason: day?.pendingReason || null,
-          totalPaymentValue: normalizeNumber(day?.totalPaymentValue),
-        }))
-      : [],
-  };
-}
-
-function normalizeSelectedWorkDayPhotos(selectedWorkDayPhotos) {
-  if (!selectedWorkDayPhotos) {
-    return null;
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .join(",");
   }
 
-  return {
-    paymentDate: selectedWorkDayPhotos?.paymentDate || "",
-    date: selectedWorkDayPhotos?.date || "",
-    periodLabel: selectedWorkDayPhotos?.periodLabel || "-",
-    photos: Array.isArray(selectedWorkDayPhotos?.photos)
-      ? selectedWorkDayPhotos.photos.map((photo) => normalizePhoto(photo))
-      : [],
-  };
+  return "";
 }
 
-function normalizeDashboardResponse(data, requestedMonth) {
-  const monthlyPayments = Array.isArray(data?.monthlyPayments)
-    ? data.monthlyPayments.map((payment) => ({
-        paymentDate: payment?.paymentDate || "",
-        paymentDayType: payment?.paymentDayType || "",
-        validPhotosCount: normalizeNumber(payment?.validPhotosCount),
-        rejectedPhotosCount: normalizeNumber(payment?.rejectedPhotosCount),
-        paymentStatus: payment?.paymentStatus || "-",
-        pendingReason: payment?.pendingReason || null,
-        totalPaymentValue: normalizeNumber(payment?.totalPaymentValue),
-        coveredDaysCount: normalizeNumber(payment?.coveredDaysCount),
-      }))
+function normalizeIdsArray(ids) {
+  if (!Array.isArray(ids)) {
+    return [];
+  }
+
+  return ids
+    .map((item) => Number(item))
+    .filter((item) => Number.isFinite(item) && item > 0);
+}
+
+function getPaymentStatus(statusRemessa, descricaoStatusRemessa) {
+  const normalizedDescription = String(descricaoStatusRemessa || "")
+    .trim()
+    .toLowerCase();
+
+  if (normalizedDescription.includes("efet")) {
+    return "Pago";
+  }
+
+  if (normalizedDescription.includes("aguard")) {
+    return "Aguardando Pagamento";
+  }
+
+  if (Number(statusRemessa) === 5) {
+    return "Pago";
+  }
+
+  if (Number(statusRemessa) === 31) {
+    return "Aguardando Pagamento";
+  }
+
+  return "Rejeitado";
+}
+
+function buildMonthlyPaymentRows(monthlyResponse) {
+  const monthlyOrders = Array.isArray(monthlyResponse?.ordens)
+    ? monthlyResponse.ordens
     : [];
 
-  return {
-    month: data?.month || requestedMonth,
-    currentView: data?.currentView || "monthly",
-    availableMonths: Array.isArray(data?.availableMonths)
-      ? [...data.availableMonths].sort()
-      : [],
-    associacoes: Array.isArray(data?.associacoes)
-      ? data.associacoes.map((option) => normalizeAssociationOption(option))
-      : [],
-    validPhotosCount: normalizeNumber(data?.validPhotosCount),
-    rejectedPhotosCount: normalizeNumber(data?.rejectedPhotosCount),
-    consolidatedPaymentValue: normalizeNumber(data?.consolidatedPaymentValue),
-    rejectionReasons: Array.isArray(data?.rejectionReasons)
-      ? data.rejectionReasons.map((item) => ({
-          reason: item?.reason || "-",
-          count: normalizeNumber(item?.count),
-        }))
-      : [],
-    monthlySummary: data?.monthlySummary || null,
-    monthlyPayments,
-    selectedPaymentWeek: normalizeSelectedPaymentWeek(
-      data?.selectedPaymentWeek
+  return monthlyOrders.map((order) => ({
+    paymentDate: toDateOnly(order?.data || order?.dataTentativaPagamento),
+    dataTentativaPagamento: toDateOnly(
+      order?.dataTentativaPagamento || order?.data
     ),
-    selectedWorkDayPhotos: normalizeSelectedWorkDayPhotos(
-      data?.selectedWorkDayPhotos
+    dataEfetivaPagamento: toDateOnly(
+      order?.dataEfetivaPagamento || order?.dataPagamento
     ),
-  };
+    paymentDayType: "",
+    validPhotosCount: 0,
+    rejectedPhotosCount: 0,
+    statusRemessa:
+      order?.statusRemessa === null || order?.statusRemessa === undefined
+        ? null
+        : Number(order?.statusRemessa),
+    motivoStatusRemessa: order?.motivoStatusRemessa ?? null,
+    descricaoMotivoStatusRemessa: order?.descricaoMotivoStatusRemessa ?? null,
+    paymentStatus: getPaymentStatus(
+      order?.statusRemessa,
+      order?.descricaoStatusRemessa
+    ),
+    pendingReason:
+      order?.descricaoMotivoStatusRemessa || order?.motivoStatusRemessa || null,
+    totalPaymentValue: normalizeNumber(order?.valorTotal),
+    coveredDaysCount: 0,
+    ordemPagamentoAgrupadoIds: normalizeCommaIds(order?.ordemPagamentoAgrupadoIds),
+  }));
 }
 
-function buildDashboardRequestConfig(
-  userId,
-  month,
-  paymentDate,
-  workDate,
-  token
-) {
+function buildWeeklyRows(weeklyResponse) {
+  if (!Array.isArray(weeklyResponse)) {
+    return [];
+  }
+
+  return weeklyResponse.map((row) => ({
+    date: toDateOnly(row?.dataCaptura),
+    periodLabel: "Integral",
+    validPhotosCount: 0,
+    rejectedPhotosCount: 0,
+    paymentStatus: "-",
+    pendingReason: null,
+    totalPaymentValue: normalizeNumber(row?.valor),
+    ids: normalizeIdsArray(row?.ids),
+  }));
+}
+
+function buildDailyPhotos(dailyResponse) {
+  if (!Array.isArray(dailyResponse)) {
+    return [];
+  }
+
+  return dailyResponse.map((row, index) => ({
+    id: String(index + 1),
+    capturedAt: row?.datetime_transacao || "",
+    description: row?.tipo_transacao || "Repasse do guardador",
+    status: "-",
+    amount: normalizeNumber(row?.valor_pagamento),
+    rejectionReason: null,
+  }));
+}
+
+function buildRequestConfig(url, token, params) {
   return {
     method: "get",
-    url: jwtServiceConfig.agentesDashboard,
+    url,
     headers: {
       Authorization: `Bearer ${token}`,
     },
-    params: {
+    params,
+  };
+}
+
+function getPaymentDayTypeLabel(dateValue) {
+  const day = new Date(`${toDateOnly(dateValue)}T12:00:00`).getDay();
+
+  if (day === 2) {
+    return "terça-feira";
+  }
+
+  if (day === 5) {
+    return "sexta-feira";
+  }
+
+  return "outro";
+}
+
+async function getMonthlyData(token, userId, month) {
+  const response = await api.request(
+    buildRequestConfig(jwtServiceConfig.agentesOdpMensal, token, {
       userId,
-      month,
-      ...(paymentDate ? { paymentDate } : {}),
-      ...(workDate ? { workDate } : {}),
-    },
+      yearMonth: month,
+    })
+  );
+
+  return response.data;
+}
+
+async function getWeeklyData(token, userId, ordemPagamentoAgrupadoIds, endDate) {
+  const response = await api.request(
+    buildRequestConfig(jwtServiceConfig.agentesOdpSemanal, token, {
+      userId,
+      ordemPagamentoAgrupadoIds,
+      endDate,
+    })
+  );
+
+  return Array.isArray(response.data) ? response.data : [];
+}
+
+async function getDailyData(token, userId, ordemPagamentoIds) {
+  const response = await api.request(
+    buildRequestConfig(
+      `${jwtServiceConfig.agentesOdpDiario}/?userId=${userId}`,
+      token,
+      {
+        ordemPagamentoIds,
+      }
+    )
+  );
+
+  return Array.isArray(response.data) ? response.data : [];
+}
+
+function buildDashboardResponse({
+  userId,
+  month,
+  monthlyPayments,
+  selectedPaymentWeek,
+  selectedWorkDayPhotos,
+  totalMonthlyValue,
+  currentView,
+}) {
+  return {
+    userId,
+    month,
+    currentView,
+    availableMonths: [],
+    associacoes: [],
+    validPhotosCount: 0,
+    rejectedPhotosCount: 0,
+    consolidatedPaymentValue: totalMonthlyValue,
+    rejectionReasons: [],
+    monthlySummary: null,
+    monthlyPayments,
+    selectedPaymentWeek,
+    selectedWorkDayPhotos,
   };
 }
 
@@ -142,12 +231,67 @@ export async function getAgentesDashboard(
     throw new Error("Sessão inválida. Faça login novamente.");
   }
 
-  const response = await api.request(
-    buildDashboardRequestConfig(userId, month, paymentDate, workDate, token)
-  );
+  const monthlyData = await getMonthlyData(token, userId, month);
+  const monthlyPayments = buildMonthlyPaymentRows(monthlyData);
+  const totalMonthlyValue = normalizeNumber(monthlyData?.valorTotal);
 
-  return {
-    ...normalizeDashboardResponse(response.data, month),
+  let selectedPaymentWeek = null;
+  let selectedWorkDayPhotos = null;
+
+  if (paymentDate) {
+    const selectedMonthlyRow = monthlyPayments.find(
+      (payment) => payment.paymentDate === toDateOnly(paymentDate)
+    );
+
+    const ordemPagamentoAgrupadoIds = normalizeCommaIds(
+      selectedMonthlyRow?.ordemPagamentoAgrupadoIds
+    );
+
+    if (ordemPagamentoAgrupadoIds) {
+      const weeklyData = await getWeeklyData(
+        token,
+        userId,
+        ordemPagamentoAgrupadoIds,
+        toDateOnly(paymentDate)
+      );
+      const weeklyDays = buildWeeklyRows(weeklyData);
+
+      selectedPaymentWeek = {
+        paymentDate: toDateOnly(paymentDate),
+        paymentDayType: getPaymentDayTypeLabel(paymentDate),
+        totalPaymentValue: weeklyDays.reduce(
+          (sum, day) => sum + normalizeNumber(day.totalPaymentValue),
+          0
+        ),
+        days: weeklyDays,
+      };
+
+      if (workDate) {
+        const selectedWorkDay = weeklyDays.find(
+          (day) => day.date === toDateOnly(workDate)
+        );
+        const ordemPagamentoIds = normalizeCommaIds(selectedWorkDay?.ids);
+
+        if (ordemPagamentoIds) {
+          const dailyData = await getDailyData(token, userId, ordemPagamentoIds);
+          selectedWorkDayPhotos = {
+            paymentDate: toDateOnly(paymentDate),
+            date: toDateOnly(workDate),
+            periodLabel: selectedWorkDay?.periodLabel || "Integral",
+            photos: buildDailyPhotos(dailyData),
+          };
+        }
+      }
+    }
+  }
+
+  return buildDashboardResponse({
     userId,
-  };
+    month,
+    monthlyPayments,
+    selectedPaymentWeek,
+    selectedWorkDayPhotos,
+    totalMonthlyValue,
+    currentView: workDate ? "daily" : paymentDate ? "weekly" : "monthly",
+  });
 }

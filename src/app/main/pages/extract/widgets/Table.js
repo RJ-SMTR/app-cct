@@ -56,7 +56,7 @@ import {
   clampVanzeirosMonthDate,
 } from './vanzeirosMonthSelection';
 
-function TableTransactions({ id }) {
+function TableTransactions({ id, userRoleId }) {
   const dispatch = useDispatch()
   const user = useSelector(selectUser)
   const {
@@ -188,7 +188,7 @@ function TableTransactions({ id }) {
   useEffect(() => {
     setPreviousDays("");
     if (user.role.name.includes("Admin")) {
-      dispatch(getStatements(dateRange, searchingDay, searchingWeek, id, ordemPgtoId, mocked))
+      dispatch(getStatements(dateRange, searchingDay, searchingWeek, id, ordemPgtoId, mocked, userRoleId))
         .catch((error) => {
           if (error) {
 
@@ -197,7 +197,7 @@ function TableTransactions({ id }) {
         });
 
     } else {
-      dispatch(getStatements(dateRange, searchingDay, searchingWeek, id, ordemPgtoId))
+      dispatch(getStatements(dateRange, searchingDay, searchingWeek, id, ordemPgtoId, undefined, userRoleId))
         .catch((error) => {
           if (error) {
 
@@ -507,7 +507,11 @@ function TableTransactions({ id }) {
                     : statements
                   ).map((i) => {
                     const tz = 'UTC';
-                    const date = i.data ?? i.dataCaptura ?? i.datetime_processamento;
+                    const date =
+                      i.dataTentativaPagamento ??
+                      i.data ??
+                      i.dataCaptura ??
+                      i.datetime_processamento;
 
                     const rawDate = date ? parseISO(date) : null;
                     const formattedDate = rawDate
@@ -517,8 +521,9 @@ function TableTransactions({ id }) {
                     const idOrdem = searchingWeek ? i.ids : i.ordemPagamentoAgrupadoIds;
 
                     let dataPagamento = '-';
-                    if (i.dataPagamento) {
-                      const zonedEffectiveDate = utcToZonedTime(parseISO(i.dataPagamento), tz);
+                    const rawEffectiveDate = i.dataEfetivaPagamento ?? i.dataPagamento;
+                    if (rawEffectiveDate) {
+                      const zonedEffectiveDate = utcToZonedTime(parseISO(rawEffectiveDate), tz);
                       const formattedEffectiveDate = format(zonedEffectiveDate, 'dd/MM/yyyy');
                       dataPagamento =
                         formattedEffectiveDate === formattedDate ? '-' : formattedEffectiveDate;

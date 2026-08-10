@@ -174,7 +174,7 @@ function UserApp() {
               </div>
               <div className={`flex flex-col `}>
                 <div>
-                  <Table id={id} />
+                  <Table id={id} userRoleId={user?.role?.id} />
                 </div>
                 {searchingWeek && !searchingDay ? <div>
                   <TablePending id={id} />
