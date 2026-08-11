@@ -36,12 +36,17 @@ export function PersonalInfo({
   primaryInfoLabel = 'Código de Permissão',
   primaryInfoValue,
   onUserUpdated,
+  allowAgentFieldEdit = false,
 }) {
   const { patchInfo, success } = useContext(AuthContext)
   const dispatch = useDispatch()
   const currentUser = useSelector(selectUser)
-  const canEditEmail = isAdminUser(currentUser)
-  const canEditPhone = String(currentUser?.id) === String(user?.id)
+  const isPrimaryInfoCpf = String(primaryInfoLabel || '').trim().toLowerCase() === 'cpf'
+  const canEditByException = Boolean(allowAgentFieldEdit)
+  const canEditPermitCode = canEditByException && !isPrimaryInfoCpf
+  const canEditEmail = isAdminUser(currentUser) || canEditByException
+  const canEditPhone = String(currentUser?.id) === String(user?.id) || canEditByException
+  const canEditAnyField = canEditPermitCode || canEditEmail || canEditPhone
   const [isEditable, setIsEditable] = useState(false)
   const [saved, setSaved] = useState(false)
   const resolvedPrimaryInfoValue = primaryInfoValue ?? user?.permitCode ?? '';
@@ -63,9 +68,10 @@ export function PersonalInfo({
   const { isValid, errors } = formState;
 
 
-  function onSubmit({ phone, email }) {
+  function onSubmit({ permitCode, phone, email }) {
     patchInfo(
       {
+        ...(canEditPermitCode ? { permitCode } : {}),
         ...(canEditPhone ? { phone } : {}),
         ...(canEditEmail ? { email } : {}),
       },
@@ -101,6 +107,10 @@ export function PersonalInfo({
   }
 
   const renderButton = () => {
+    if (!canEditAnyField) {
+      return null;
+    }
+
     if (!isEditable) {
       return (
         <button className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-12' onClick={() => { setIsEditable(true), setSaved(false) }}>
@@ -144,8 +154,7 @@ export function PersonalInfo({
                 label={primaryInfoLabel}
                 type="string"
                 variant="outlined"
-                disabled
-                value={resolvedPrimaryInfoValue}
+                disabled={!isEditable || !canEditPermitCode}
                 fullWidth
               />
             )}
