@@ -181,6 +181,34 @@ function getInviteSentAt(user) {
   return user?.inviteAt || "";
 }
 
+function getUserRoleId(user) {
+  return Number(user?.role?.id ?? user?.roleId);
+}
+
+function isAgentUser(user) {
+  return getUserRoleId(user) === 6;
+}
+
+const AGENT_PRIVILEGED_EDITOR_EMAILS = new Set([
+  "jessicasimas.smtr@gmail.com",
+  "felipe.ribeiro@prefeitura.rio",
+  'gabriel.guimaraes@prefeitura.rio',
+  'matthew.araujo@prefeitura.rio',
+  'williamfl2007@gmail.com',
+  'bernardo.marcos64@gmail.com'
+]);
+
+function canEditAgentByException(currentUser) {
+  const currentUserEmail = String(currentUser?.email || "")
+    .trim()
+    .toLowerCase();
+
+  return (
+   ( getUserRoleId(currentUser) === 1 || getUserRoleId(currentUser) === 0 ) &&
+    AGENT_PRIVILEGED_EDITOR_EMAILS.has(currentUserEmail)
+  );
+}
+
 const statusBadgeSx = {
   "& .MuiBadge-badge": {
     position: "relative",
@@ -880,6 +908,11 @@ function AgentesApp() {
   );
   const isOwnDashboard = String(user?.id) === String(id);
   const canAccessSelectedAgent = isAdminUser(user) || isOwnDashboard;
+  const canEditAgentByEmailException = canEditAgentByException(user);
+  const canEditSelectedAgentFields =
+    canEditAgentByEmailException &&
+    !isOwnDashboard &&
+    (agentDetails ? isAgentUser(agentDetails) : true);
   const dashboardOwnerName =
     agentDetails?.fullName ||
     (isOwnDashboard ? user.fullName : null) ||
@@ -1112,8 +1145,9 @@ function AgentesApp() {
                 primaryInfoLabel="CPF"
                 primaryInfoValue={agentCpf}
                 onUserUpdated={setAgentDetails}
+                allowAgentFieldEdit={canEditSelectedAgentFields}
               />
-              {isOwnDashboard ? (
+              {isOwnDashboard || canEditSelectedAgentFields ? (
                 <BankInfo user={agentDetails} />
               ) : (
                 <AgentBankInfo user={agentDetails} />
