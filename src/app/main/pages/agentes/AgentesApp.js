@@ -640,8 +640,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           key={payment.paymentDate}
           hover
           selected={isSelected}
-          onClick={() => handleSelectMonthlyPayment(payment.paymentDate)}
-          className="cursor-pointer"
+          // onClick={() => handleSelectMonthlyPayment(payment.paymentDate)}
         >
           <TableCell>{formatDateLabel(payment.paymentDate)}</TableCell>
           {/* <TableCell>{getTotalPhotosCount(payment.validPhotosCount, payment.rejectedPhotosCount)}</TableCell> */}
@@ -746,7 +745,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   let drilldownSubtitle =
     "Selecione um mês para ver os pagamentos diários consolidados.";
   let tableContent = (
-    <>
+    <Table className="w-full">
       <TableHead>
         <TableRow>
               <TableCell>Data Tentativa Pagamento</TableCell>
@@ -759,7 +758,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
         </TableRow>
       </TableHead>
       <TableBody>{monthlyPaymentsRows}</TableBody>
-    </>
+    </Table>
   );
 
   if (selectedPaymentDate) {
@@ -1155,7 +1154,7 @@ function AgentesApp() {
             </div>
           ) : null}
 
-          <Box className="grid grid-cols-1 gap-16">
+          <Box className="">
             {/* <SummaryCard
               title="Fotos válidas"
               value={dashboard?.validPhotosCount ?? 0}
@@ -1215,7 +1214,7 @@ function AgentesApp() {
             </Paper>
           ) : null}
 
-          <Box className="grid grid-cols-1 xl:grid-cols-3 gap-24">
+          <Box className="gap-24">
             <DashboardDrilldownCard
               agentId={id}
               selectedMonth={selectedMonth}
