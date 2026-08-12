@@ -284,6 +284,12 @@ function getPermissionarioBadgeColor(statusRemessa) {
   }
 }
 
+function shouldShowEffectivePaymentDate(statusRemessa) {
+  const normalizedStatusRemessa = Number(statusRemessa);
+
+  return normalizedStatusRemessa === 3 || normalizedStatusRemessa === 5;
+}
+
 function isPendingPaymentStatus(status) {
   const normalizedStatus = String(status || "")
     .trim()
@@ -647,12 +653,14 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           {/* <TableCell>{payment.validPhotosCount}</TableCell> */}
           <TableCell>{formatCurrency(payment.totalPaymentValue)}</TableCell>
           <TableCell>
-            {areSameCalendarDay(
-              payment.dataTentativaPagamento,
-              payment.dataEfetivaPagamento
-            )
-              ? "-"
-              : formatDateLabel(payment.dataEfetivaPagamento)}
+            {shouldShowEffectivePaymentDate(payment.statusRemessa)
+              ? areSameCalendarDay(
+                  payment.dataTentativaPagamento,
+                  payment.dataEfetivaPagamento
+                )
+                ? "-"
+                : formatDateLabel(payment.dataEfetivaPagamento)
+              : "-"}
           </TableCell>
 
           <TableCell
