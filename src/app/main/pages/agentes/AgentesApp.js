@@ -181,6 +181,24 @@ function getInviteSentAt(user) {
   return user?.inviteAt || "";
 }
 
+function mapFollowingToAssociacoes(user) {
+  if (!Array.isArray(user?.following)) {
+    return [];
+  }
+
+  return user.following
+    .map((relation) => relation?.relatedUser)
+    .filter((relatedUser) => Number(relatedUser?.id) > 0)
+    .map((relatedUser) => ({
+      value: Number(relatedUser.id),
+      label:
+        String(relatedUser.fullName || "").trim() ||
+        String(relatedUser.cpfCnpj || "").trim() ||
+        `Associacao #${relatedUser.id}`,
+      cpfCnpj: relatedUser.cpfCnpj ?? null,
+    }));
+}
+
 function getUserRoleId(user) {
   return Number(user?.role?.id ?? user?.roleId);
 }
@@ -472,6 +490,8 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   selectedMonth,
   selectedMonthDate,
   associacoes,
+  selectedAssociacao,
+  onAssociacaoChange,
   monthlyPayments,
   monthlyLoading,
   onMonthChange,
@@ -481,7 +501,6 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   const [selectedWorkDate, setSelectedWorkDate] = useState("");
   const [selectedPaymentWeek, setSelectedPaymentWeek] = useState(null);
   const [selectedWorkDayPhotos, setSelectedWorkDayPhotos] = useState(null);
-  const [selectedAssociacao, setSelectedAssociacao] = useState(null);
   const [drilldownLoading, setDrilldownLoading] = useState(false);
   const [drilldownError, setDrilldownError] = useState("");
 
@@ -493,24 +512,6 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
     setDrilldownLoading(false);
     setDrilldownError("");
   }, [selectedMonth]);
-
-  useEffect(() => {
-    if (!Array.isArray(associacoes) || associacoes.length === 0) {
-      setSelectedAssociacao(null);
-      return;
-    }
-
-    setSelectedAssociacao((currentValue) => {
-      if (
-        currentValue &&
-        associacoes.some((associacao) => associacao.value === currentValue.value)
-      ) {
-        return currentValue;
-      }
-
-      return associacoes[0];
-    });
-  }, [associacoes]);
 
   const handleDrilldownError = useCallback(
     (message) => {
@@ -533,7 +534,8 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
         const response = await getAgentesDashboard(
           agentId,
           selectedMonth,
-          paymentDate
+          paymentDate,
+          undefined
         );
 
         setSelectedPaymentDate(paymentDate);
@@ -625,7 +627,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   let monthlyPaymentsRows = (
     <EmptyState
       message="Não há pagamentos para o mês selecionado."
-      colSpan={6}
+      colSpan={5}
     />
   );
 
@@ -671,12 +673,12 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
               status={payment.statusRemessa}
             />
           </TableCell>
-          {/* <TableCell align="center" sx={{ verticalAlign: "middle" }}>
+          <TableCell align="center" sx={{ verticalAlign: "middle" }}>
             <PendingReasonBadge
               status={payment.statusRemessa}
               pendingReason={payment.descricaoMotivoStatusRemessa || payment.pendingReason}
             />
-          </TableCell> */}
+          </TableCell>
         </TableRow>
       );
     });
@@ -762,7 +764,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           <TableCell>Valor Fotos Válidas</TableCell>
           <TableCell>Data Efetiva Pagamento</TableCell>
           <TableCell align="center">Status Fotos Válidas</TableCell>
-          {/* <TableCell>Fotos NÃO Válidas</TableCell> */}
+          <TableCell align="center">Motivo</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>{monthlyPaymentsRows}</TableBody>
@@ -821,7 +823,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
             id="agente-associacao"
             options={associacoes}
             value={selectedAssociacao}
-            onChange={(_, newValue) => setSelectedAssociacao(newValue)}
+            onChange={(_, newValue) => onAssociacaoChange(newValue)}
             isOptionEqualToValue={(option, value) => option.value === value?.value}
             getOptionLabel={(option) => option?.label || ""}
             className="min-w-[240px]"
@@ -906,6 +908,7 @@ function AgentesApp() {
   );
   const [dashboard, setDashboard] = useState(null);
   const [agentDetails, setAgentDetails] = useState(null);
+  const [selectedAssociacao, setSelectedAssociacao] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [inviteFeedbackStatus, setInviteFeedbackStatus] = useState(null);
@@ -927,6 +930,41 @@ function AgentesApp() {
   const agentCpf = getUserCpf(agentDetails);
   const inviteSentAt = getInviteSentAt(agentDetails);
   const isResendInviteLoading = inviteFeedbackStatus === "sending";
+  const associacaoOptions = useMemo(() => {
+    const followingAssociacoes = mapFollowingToAssociacoes(agentDetails);
+
+    if (followingAssociacoes.length > 0) {
+      return followingAssociacoes;
+    }
+
+    if (Array.isArray(agentDetails?.associacoes) && agentDetails.associacoes.length > 0) {
+      return agentDetails.associacoes;
+    }
+
+    if (Array.isArray(dashboard?.associacoes) && dashboard.associacoes.length > 0) {
+      return dashboard.associacoes;
+    }
+
+    return [];
+  }, [agentDetails?.associacoes, dashboard?.associacoes]);
+
+  useEffect(() => {
+    if (associacaoOptions.length === 0) {
+      setSelectedAssociacao(null);
+      return;
+    }
+
+    setSelectedAssociacao((currentValue) => {
+      if (
+        currentValue &&
+        associacaoOptions.some((associacao) => associacao.value === currentValue.value)
+      ) {
+        return currentValue;
+      }
+
+      return associacaoOptions[0];
+    });
+  }, [associacaoOptions]);
 
   const handleCloseInviteFeedback = useCallback((event, reason) => {
     if (reason === "clickaway") {
@@ -1026,7 +1064,12 @@ function AgentesApp() {
     setError("");
 
     try {
-      const response = await getAgentesDashboard(id, selectedMonth);
+      const response = await getAgentesDashboard(
+        id,
+        selectedMonth,
+        undefined,
+        undefined
+      );
 
       setDashboard(response);
     } catch (requestError) {
@@ -1227,7 +1270,9 @@ function AgentesApp() {
               agentId={id}
               selectedMonth={selectedMonth}
               selectedMonthDate={selectedMonthDate}
-              associacoes={dashboard?.associacoes || []}
+              associacoes={associacaoOptions}
+              selectedAssociacao={selectedAssociacao}
+              onAssociacaoChange={setSelectedAssociacao}
               monthlyPayments={dashboard?.monthlyPayments || []}
               monthlyLoading={loading}
               onMonthChange={handleSelectedMonth}
