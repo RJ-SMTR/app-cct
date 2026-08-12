@@ -188,7 +188,7 @@ export function AuthProvider({ children }) {
           resolve(response.data)
         })
         .catch((error) => {
-          reject(error.response.data.errors)
+          reject(error.response?.data ?? error)
         })
 
     })
