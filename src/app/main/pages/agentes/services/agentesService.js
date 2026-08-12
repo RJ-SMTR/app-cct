@@ -223,7 +223,8 @@ export async function getAgentesDashboard(
   userId,
   month,
   paymentDate,
-  workDate
+  workDate,
+  associationId
 ) {
   const token = window.localStorage.getItem("jwt_access_token");
 
@@ -231,7 +232,9 @@ export async function getAgentesDashboard(
     throw new Error("Sessão inválida. Faça login novamente.");
   }
 
-  const monthlyData = await getMonthlyData(token, userId, month);
+  const queryUserId = Number(userId);
+
+  const monthlyData = await getMonthlyData(token, queryUserId, month);
   const monthlyPayments = buildMonthlyPaymentRows(monthlyData);
   const totalMonthlyValue = normalizeNumber(monthlyData?.valorTotal);
 
@@ -250,7 +253,7 @@ export async function getAgentesDashboard(
     if (ordemPagamentoAgrupadoIds) {
       const weeklyData = await getWeeklyData(
         token,
-        userId,
+        queryUserId,
         ordemPagamentoAgrupadoIds,
         toDateOnly(paymentDate)
       );
@@ -273,7 +276,11 @@ export async function getAgentesDashboard(
         const ordemPagamentoIds = normalizeCommaIds(selectedWorkDay?.ids);
 
         if (ordemPagamentoIds) {
-          const dailyData = await getDailyData(token, userId, ordemPagamentoIds);
+          const dailyData = await getDailyData(
+            token,
+            queryUserId,
+            ordemPagamentoIds
+          );
           selectedWorkDayPhotos = {
             paymentDate: toDateOnly(paymentDate),
             date: toDateOnly(workDate),
@@ -286,7 +293,7 @@ export async function getAgentesDashboard(
   }
 
   return buildDashboardResponse({
-    userId,
+    userId: queryUserId,
     month,
     monthlyPayments,
     selectedPaymentWeek,
