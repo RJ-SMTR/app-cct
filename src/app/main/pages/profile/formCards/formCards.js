@@ -14,6 +14,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from 'react-redux';
 import { isAdminUser } from 'src/app/auth/utils/accessUtils';
+import { format, isValid, parseISO } from 'date-fns';
 import { createPersonalInfoSchema } from "./personalInfoValidation";
 
 const style = {
@@ -29,6 +30,51 @@ const style = {
 
 export function getUserCpf(user) {
   return user?.cpf || user?.cpfCnpj || '-';
+}
+
+function normalizeDateValue(dateValue) {
+  if (typeof dateValue !== 'string') {
+    return '';
+  }
+
+  const normalizedDateValue = dateValue.trim();
+
+  if (!normalizedDateValue) {
+    return '';
+  }
+
+  const lowerCaseDateValue = normalizedDateValue.toLowerCase();
+
+  if (lowerCaseDateValue === 'null' || lowerCaseDateValue === 'undefined') {
+    return '';
+  }
+
+  return normalizedDateValue;
+}
+
+function parseDateValue(dateValue) {
+  const normalizedDateValue = normalizeDateValue(dateValue);
+
+  if (!normalizedDateValue) {
+    return null;
+  }
+
+  const isoDateValue = normalizedDateValue.includes('T')
+    ? normalizedDateValue
+    : `${normalizedDateValue}T12:00:00`;
+  const parsedDateValue = parseISO(isoDateValue);
+
+  return isValid(parsedDateValue) ? parsedDateValue : null;
+}
+
+function formatDateTimeLabel(dateTime, dateFormat = 'dd/MM/yyyy HH:mm:ss') {
+  const parsedDateTime = parseDateValue(dateTime);
+
+  if (!parsedDateTime) {
+    return '-';
+  }
+
+  return format(parsedDateTime, dateFormat);
 }
 
 export function PersonalInfo({
@@ -230,6 +276,7 @@ export function BankInfo({
   const [selectedBankCode, setSelectedBankCode] = useState(user.bankCode ?? '');
   const { patchInfo, success } = useContext(AuthContext)
   const [bankOptions, setBankOptions] = useState([]);
+  const [previousBank, setPreviousBank] = useState();
   const [saved, setSaved] = useState(false)
   const [userBank, setUserBank] = useState('')
 
@@ -272,7 +319,23 @@ export function BankInfo({
 
       setUserBank(
         response.data.find((bank) => normalizeBankCode(bank.code) === normalizedSelectedBankCode) || null
-      )
+      );
+
+      if (user.previousBankCode) {
+        const normalizedPreviousBankCode = normalizeBankCode(user.previousBankCode);
+        const matchedPreviousBank = response.data.find(
+          (bank) => normalizeBankCode(bank.code) === normalizedPreviousBankCode
+        );
+
+        if (matchedPreviousBank) {
+          setPreviousBank(`${user.previousBankCode} - ${matchedPreviousBank.name}`);
+        } else {
+          setPreviousBank(user.previousBankCode);
+        }
+      } else {
+        setPreviousBank(undefined);
+      }
+
       const filteredData = response.data.filter(({ code }) => !bankCodes.includes(code));
 
       setBankOptions(filteredData);
@@ -465,6 +528,10 @@ export function BankInfo({
             />
           </Box>
         </form>
+        <p className="text-red">
+          Última atualização: {formatDateTimeLabel(user?.updatedAt)}
+        </p>
+        {previousBank ? <p>Banco anterior: {previousBank}</p> : null}
       </Card>
     </>
   );
