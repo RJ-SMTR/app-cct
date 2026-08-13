@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { api } from 'app/configs/api/api';
+import { api } from '../configs/api/api';
 import { setStatements } from './extractSlice';
 import JwtService from '../auth/services/jwtService';
 
@@ -49,7 +49,6 @@ export const getAgentUsers = () => (dispatch) => {
       })
         .then((response) => {
           const filteredUsers = normalizeResponseCollection(response.data)
-            .filter((user) => user.permitCode != null)
             .sort((firstUser, secondUser) => {
               return (firstUser.fullName || '').localeCompare(secondUser.fullName || '');
             });
