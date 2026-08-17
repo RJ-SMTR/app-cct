@@ -55,10 +55,11 @@ const defaultValues = {
 };
 
 const statusOptions = [
-  { label: "Pago", value: "Pago" },
-  { label: "Erros", value: "Erros" },
   { label: "A pagar", value: "A pagar" },
-  { label: "Em processamento", value: "Em processamento" },
+  { label: "Aguardando pagamento", value: "Em processamento" },
+  { label: "Pago", value: "Pago" },
+  { label: "Pendência de pagamento", value: "Erros" },
+  { label: "Pendência paga", value: "Pendencia Paga" },
 ];
 
 const erroStatusOptions = [
@@ -76,6 +77,13 @@ function getFormattedReportFilename(dateRange, extension) {
   }
 
   return `relatorio_agentes_${format(new Date(), "dd-MM-yyyy")}.${extension}`;
+}
+
+function getStatusLabel(statusValue) {
+  return (
+    statusOptions.find((statusOption) => statusOption.value === statusValue)?.label ??
+    statusValue
+  );
 }
 
 export default function AgentsConsolidatedReport() {
@@ -263,7 +271,7 @@ export default function AgentsConsolidatedReport() {
       orientation: "landscape",
     });
     const selectedStatus = getValues("status");
-    const selectedStatusLabel = selectedStatus.join(",");
+    const selectedStatusLabel = selectedStatus.map(getStatusLabel).join(",");
     const tableRows = displayRows.map((row) => [
       row.nome,
       formatter.format(row.valor),
@@ -306,7 +314,7 @@ export default function AgentsConsolidatedReport() {
     const selectedDateRange = getValues("dateRange");
     const selectedStatus = getValues("status");
     const sheetData = [
-      ["Status selecionado", "", selectedStatus.join(",") || "Todos"],
+      ["Status selecionado", "", selectedStatus.map(getStatusLabel).join(",") || "Todos"],
       ["Nome", "Valor"],
       ...displayRows.map((row) => [
         row.nome,
@@ -360,7 +368,7 @@ export default function AgentsConsolidatedReport() {
     if (data.status.includes("Erros") && selectedErroStatus.length === 0) {
       dispatch(
         showMessage({
-          message: "Selecione um motivo para Erros.",
+          message: "Selecione um motivo para Pendência de pagamento.",
         })
       );
       return;
