@@ -13,6 +13,10 @@ import DataGridInfos from './components/DataGrid';
 import ConsolidatedReport from './components/ConsolidatedReport';
 import FinancialMovement from './components/FinancialMovement';
 import SynthReport from './components/SynthReport';
+import {
+  REPORT_AUDIENCE_OPTIONS,
+  shouldShowAudienceSelector,
+} from './reportSelection';
 
 function ReportApp() {
   const dispatch = useDispatch();
@@ -34,6 +38,8 @@ function ReportApp() {
     resetReportState();
     setSelectedAudience(event.target.value);
   };
+
+  const showAudienceSelector = shouldShowAudienceSelector(selectedReport);
 
   useEffect(() => {
     dispatch(setReportType(selectedReport));
@@ -68,19 +74,24 @@ function ReportApp() {
             </Select>
           </FormControl>
 
-          <FormControl style={{ minWidth: '16rem' }}>
-            <InputLabel id="audience-select-label">Selecionar Perfil</InputLabel>
-            <Select
-              labelId="audience-select-label"
-              id="audience-select"
-              value={selectedAudience}
-              label="Selecionar Perfil"
-              onChange={handleAudienceChange}
-            >
-              <MenuItem value="permissionario">Permissionário</MenuItem>
-              <MenuItem value="agente">Agente</MenuItem>
-            </Select>
-          </FormControl>
+          {showAudienceSelector ? (
+            <FormControl style={{ minWidth: '16rem' }}>
+              <InputLabel id="audience-select-label">Selecionar Perfil</InputLabel>
+              <Select
+                labelId="audience-select-label"
+                id="audience-select"
+                value={selectedAudience}
+                label="Selecionar Perfil"
+                onChange={handleAudienceChange}
+              >
+                {REPORT_AUDIENCE_OPTIONS.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          ) : null}
         </Box>
       </Card>
 
@@ -89,7 +100,7 @@ function ReportApp() {
         {selectedReport === 'consolidado' && selectedAudience === 'permissionario' && (
           <ConsolidatedReport />
         )}
-        {selectedReport === 'consolidado' && selectedAudience === 'agente' && (
+        {selectedReport === 'consolidado' && selectedAudience === 'guardador' && (
           <AgentsConsolidatedReport />
         )}
         {selectedReport === 'sintetico' && <SynthReport />}

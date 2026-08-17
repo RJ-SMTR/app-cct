@@ -253,3 +253,12 @@ export function normalizeAgentStatusSelection(options = []) {
     (option) => option.value === AGENT_REPORT_ERROR_STATUS_VALUE
   );
 }
+
+
+export function shouldShowAgentNameFilter(selectedAssociationOptions = []) {
+  return !Array.isArray(selectedAssociationOptions) || selectedAssociationOptions.length === 0;
+}
+
+export function shouldShowAssociationFilter(selectedAgentOptions = []) {
+  return !Array.isArray(selectedAgentOptions) || selectedAgentOptions.length === 0;
+}
