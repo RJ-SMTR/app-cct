@@ -40,6 +40,8 @@ import {
   getAgentConsolidatedReportTotal,
   normalizeAgentStatusSelection,
   normalizeSelectAllAutocompleteValue,
+  shouldShowAgentNameFilter,
+  shouldShowAssociationFilter,
 } from "app/store/agentConsolidatedReportUtils";
 import { normalizeErroStatusSelection } from "./reportUtils";
 
@@ -222,10 +224,18 @@ export default function AgentsConsolidatedReport() {
 
     if (field === "agentNames") {
       setSelectedAgentOptions(normalizedValue);
+      if (normalizedValue.length > 0) {
+        setSelectedAssociationOptions([]);
+        setValue("associations", []);
+      }
     }
 
     if (field === "associations") {
       setSelectedAssociationOptions(normalizedValue);
+      if (normalizedValue.length > 0) {
+        setSelectedAgentOptions([]);
+        setValue("agentNames", []);
+      }
     }
 
     if (field === "status") {
@@ -431,62 +441,66 @@ export default function AgentsConsolidatedReport() {
           <Box className="flex items-center py-10 gap-10">
             <form onSubmit={handleSubmit(onSubmit)} className="w-full">
               <Box className="flex gap-10 flex-wrap mb-20">
-                <Autocomplete
-                  id="agentNames"
-                  multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                  options={agentOptions}
-                  value={selectedAgentOptions}
-                  loading={loadingFilters}
-                  getOptionLabel={(option) => option.label}
-                  isOptionEqualToValue={(option, value) =>
-                    option.value === value.value
-                  }
-                  onChange={(_, newValue) =>
-                    handleAutocompleteChange("agentNames", newValue)
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Selecionar Guardador"
-                      variant="outlined"
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: (
-                          <>
-                            {loadingFilters ? (
-                              <CircularProgress color="inherit" size={20} />
-                            ) : null}
-                            {params.InputProps.endAdornment}
-                          </>
-                        ),
-                      }}
-                    />
-                  )}
-                />
+                {shouldShowAgentNameFilter(selectedAssociationOptions) ? (
+                  <Autocomplete
+                    id="agentNames"
+                    multiple
+                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                    options={agentOptions}
+                    value={selectedAgentOptions}
+                    loading={loadingFilters}
+                    getOptionLabel={(option) => option.label}
+                    isOptionEqualToValue={(option, value) =>
+                      option.value === value.value
+                    }
+                    onChange={(_, newValue) =>
+                      handleAutocompleteChange("agentNames", newValue)
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Selecionar Guardador"
+                        variant="outlined"
+                        InputProps={{
+                          ...params.InputProps,
+                          endAdornment: (
+                            <>
+                              {loadingFilters ? (
+                                <CircularProgress color="inherit" size={20} />
+                              ) : null}
+                              {params.InputProps.endAdornment}
+                            </>
+                          ),
+                        }}
+                      />
+                    )}
+                  />
+                ) : null}
 
-                <Autocomplete
-                  id="associations"
-                  multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                  options={associationOptions}
-                  value={selectedAssociationOptions}
-                  loading={loadingFilters}
-                  getOptionLabel={(option) => option.label}
-                  isOptionEqualToValue={(option, value) =>
-                    option.value === value.value
-                  }
-                  onChange={(_, newValue) =>
-                    handleAutocompleteChange("associations", newValue)
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Selecionar Associacoes"
-                      variant="outlined"
-                    />
-                  )}
-                />
+                {shouldShowAssociationFilter(selectedAgentOptions) ? (
+                  <Autocomplete
+                    id="associations"
+                    multiple
+                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                    options={associationOptions}
+                    value={selectedAssociationOptions}
+                    loading={loadingFilters}
+                    getOptionLabel={(option) => option.label}
+                    isOptionEqualToValue={(option, value) =>
+                      option.value === value.value
+                    }
+                    onChange={(_, newValue) =>
+                      handleAutocompleteChange("associations", newValue)
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Selecionar Associacoes"
+                        variant="outlined"
+                      />
+                    )}
+                  />
+                ) : null}
 
                 <Autocomplete
                   id="status"
