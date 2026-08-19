@@ -42,6 +42,10 @@ function normalizeIdsArray(ids) {
 }
 
 function getPaymentStatus(statusRemessa, descricaoStatusRemessa) {
+  if (Number(statusRemessa) === 4) {
+    return "Pendente";
+  }
+
   const normalizedDescription = String(descricaoStatusRemessa || "")
     .trim()
     .toLowerCase();
@@ -65,12 +69,71 @@ function getPaymentStatus(statusRemessa, descricaoStatusRemessa) {
   return "Rejeitado";
 }
 
+function markPreviousAttemptsAsPending(monthlyPayments) {
+  const paymentAttemptDates = monthlyPayments
+    .map(
+      (payment) =>
+        payment.dataTentativaPagamento || payment.paymentDate
+    )
+    .filter(Boolean);
+  const latestPaymentAttemptDate = paymentAttemptDates.reduce(
+    (latestDate, currentDate) =>
+      currentDate > latestDate ? currentDate : latestDate,
+    paymentAttemptDates[0] || ""
+  );
+  const hasPendingLatestAttempt = monthlyPayments.some(
+    (payment) =>
+      Number(payment.statusRemessa) === 4 &&
+      (payment.dataTentativaPagamento || payment.paymentDate) ===
+        latestPaymentAttemptDate
+  );
+  const hasEarlierPendingAttempt = monthlyPayments.some((payment) => {
+    const paymentAttemptDate =
+      payment.dataTentativaPagamento || payment.paymentDate;
+
+    return (
+      Number(payment.statusRemessa) === 4 &&
+      paymentAttemptDate < latestPaymentAttemptDate
+    );
+  });
+  const shouldMarkLatestPendingAttempt =
+    hasPendingLatestAttempt && hasEarlierPendingAttempt;
+
+  return monthlyPayments.map((payment) => {
+    const paymentAttemptDate =
+      payment.dataTentativaPagamento || payment.paymentDate;
+    const hasLaterPaymentAttempt = monthlyPayments.some(
+      (laterPayment) => {
+        const laterPaymentAttemptDate =
+          laterPayment.dataTentativaPagamento || laterPayment.paymentDate;
+
+        return (
+          paymentAttemptDate &&
+          laterPaymentAttemptDate > paymentAttemptDate
+        );
+      }
+    );
+
+    if (
+      Number(payment.statusRemessa) !== 4 ||
+      (!hasLaterPaymentAttempt && !shouldMarkLatestPendingAttempt)
+    ) {
+      return payment;
+    }
+
+    return {
+      ...payment,
+      paymentStatus: "Pendência de Pagamento",
+    };
+  });
+}
+
 function buildMonthlyPaymentRows(monthlyResponse) {
   const monthlyOrders = Array.isArray(monthlyResponse?.ordens)
     ? monthlyResponse.ordens
     : [];
 
-  return monthlyOrders.map((order) => ({
+  const monthlyPayments = monthlyOrders.map((order) => ({
     paymentDate: toDateOnly(order?.data || order?.dataTentativaPagamento),
     dataTentativaPagamento: toDateOnly(
       order?.dataTentativaPagamento || order?.data
@@ -97,6 +160,8 @@ function buildMonthlyPaymentRows(monthlyResponse) {
     coveredDaysCount: 0,
     ordemPagamentoAgrupadoIds: normalizeCommaIds(order?.ordemPagamentoAgrupadoIds),
   }));
+
+  return markPreviousAttemptsAsPending(monthlyPayments);
 }
 
 function buildWeeklyRows(weeklyResponse) {
