@@ -70,53 +70,29 @@ function getPaymentStatus(statusRemessa, descricaoStatusRemessa) {
 }
 
 function markPreviousAttemptsAsPending(monthlyPayments) {
-  const paymentAttemptDates = monthlyPayments
-    .map(
-      (payment) =>
-        payment.dataTentativaPagamento || payment.paymentDate
-    )
-    .filter(Boolean);
-  const latestPaymentAttemptDate = paymentAttemptDates.reduce(
-    (latestDate, currentDate) =>
-      currentDate > latestDate ? currentDate : latestDate,
-    paymentAttemptDates[0] || ""
-  );
-  const hasPendingLatestAttempt = monthlyPayments.some(
-    (payment) =>
-      Number(payment.statusRemessa) === 4 &&
-      (payment.dataTentativaPagamento || payment.paymentDate) ===
-        latestPaymentAttemptDate
-  );
-  const hasEarlierPendingAttempt = monthlyPayments.some((payment) => {
-    const paymentAttemptDate =
-      payment.dataTentativaPagamento || payment.paymentDate;
-
-    return (
-      Number(payment.statusRemessa) === 4 &&
-      paymentAttemptDate < latestPaymentAttemptDate
-    );
-  });
-  const shouldMarkLatestPendingAttempt =
-    hasPendingLatestAttempt && hasEarlierPendingAttempt;
-
   return monthlyPayments.map((payment) => {
     const paymentAttemptDate =
       payment.dataTentativaPagamento || payment.paymentDate;
-    const hasLaterPaymentAttempt = monthlyPayments.some(
+    const hasLaterPaymentAttemptWithStatus = monthlyPayments.some(
       (laterPayment) => {
         const laterPaymentAttemptDate =
           laterPayment.dataTentativaPagamento || laterPayment.paymentDate;
+        const hasStatus =
+          laterPayment.statusRemessa !== null &&
+          laterPayment.statusRemessa !== undefined &&
+          laterPayment.statusRemessa !== "";
 
         return (
           paymentAttemptDate &&
-          laterPaymentAttemptDate > paymentAttemptDate
+          laterPaymentAttemptDate > paymentAttemptDate &&
+          hasStatus
         );
       }
     );
 
     if (
       Number(payment.statusRemessa) !== 4 ||
-      (!hasLaterPaymentAttempt && !shouldMarkLatestPendingAttempt)
+      !hasLaterPaymentAttemptWithStatus
     ) {
       return payment;
     }

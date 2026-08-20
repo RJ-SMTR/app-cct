@@ -30,6 +30,46 @@ const initialState = {
     mocked: false
 };
 
+function getVanzeirosPaymentStatus(monthlyStatements) {
+    return monthlyStatements.map((statement) => {
+        if (Number(statement.statusRemessa) !== 4) {
+            return statement;
+        }
+
+        const statementDate = statement.dataTentativaPagamento || statement.data;
+        const hasLaterAttemptWithStatus = monthlyStatements.some((laterStatement) => {
+            const laterStatementDate =
+                laterStatement.dataTentativaPagamento || laterStatement.data;
+
+            return (
+                laterStatementDate > statementDate &&
+                laterStatement.statusRemessa !== null &&
+                laterStatement.statusRemessa !== undefined &&
+                laterStatement.statusRemessa !== ''
+            );
+        });
+
+        const isLatestAttempt = !monthlyStatements.some((laterStatement) => {
+            const laterStatementDate =
+                laterStatement.dataTentativaPagamento || laterStatement.data;
+
+            return laterStatementDate > statementDate;
+        });
+
+        if (hasLaterAttemptWithStatus || (isLatestAttempt && ![0, 1, 2].includes(Number(statement.statusRemessa)))) {
+            return {
+                ...statement,
+                paymentStatus: 'Pendência de Pagamento',
+            };
+        }
+
+        return {
+            ...statement,
+            paymentStatus: 'Pendente',
+        };
+    });
+}
+
 const extractSlice = createSlice({
     name: 'extract',
     initialState,
@@ -308,8 +348,9 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
                 const statementsSort = response.data.ordens.sort((a, b) =>
                     compareDesc(parseISO(a.data), parseISO(b.data))
                 );
+                const statementsWithPaymentStatus = getVanzeirosPaymentStatus(statementsSort);
 
-                dispatch(setStatements(statementsSort));
+                dispatch(setStatements(statementsWithPaymentStatus));
                 dispatch(setSumInfo(response.data));
             }
 

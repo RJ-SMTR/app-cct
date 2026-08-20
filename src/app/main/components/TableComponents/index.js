@@ -44,7 +44,7 @@ export function CustomTable(data) {
         case 3:
           return 'Pago';
         case 4:
-          return 'Pendente';
+          return i.paymentStatus || 'Pendente';
         case 5:
           return 'Pendencia Paga';
         default:
