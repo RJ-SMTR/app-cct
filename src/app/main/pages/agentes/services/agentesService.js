@@ -70,6 +70,17 @@ function getPaymentStatus(statusRemessa, descricaoStatusRemessa) {
 }
 
 function markPreviousAttemptsAsPending(monthlyPayments) {
+  const paymentAttemptDates = monthlyPayments
+    .map(
+      (payment) => payment.dataTentativaPagamento || payment.paymentDate
+    )
+    .filter(Boolean);
+  const latestPaymentAttemptDate = paymentAttemptDates.reduce(
+    (latestDate, currentDate) =>
+      currentDate > latestDate ? currentDate : latestDate,
+    paymentAttemptDates[0] || ""
+  );
+
   return monthlyPayments.map((payment) => {
     const paymentAttemptDate =
       payment.dataTentativaPagamento || payment.paymentDate;
@@ -89,10 +100,12 @@ function markPreviousAttemptsAsPending(monthlyPayments) {
         );
       }
     );
+    const isLatestPendingAttempt =
+      paymentAttemptDate === latestPaymentAttemptDate;
 
     if (
       Number(payment.statusRemessa) !== 4 ||
-      !hasLaterPaymentAttemptWithStatus
+      (!hasLaterPaymentAttemptWithStatus && !isLatestPendingAttempt)
     ) {
       return payment;
     }

@@ -173,6 +173,35 @@ function normalizeOrderIds(ids) {
     return ids;
 }
 
+function markMonthlyPendingPayments(statements) {
+    const latestPaymentDate = statements.reduce((latestDate, statement) => {
+        const paymentDate = statement.dataTentativaPagamento ?? statement.data;
+
+        return paymentDate > latestDate ? paymentDate : latestDate;
+    }, '');
+
+    return statements.map((statement) => {
+        if (Number(statement.statusRemessa) !== 4) {
+            return statement;
+        }
+
+        const paymentDate = statement.dataTentativaPagamento ?? statement.data;
+        const isLatestPendingPayment = paymentDate === latestPaymentDate;
+        const hasLaterPaymentWithStatus = statements.some((laterStatement) => {
+            const laterPaymentDate = laterStatement.dataTentativaPagamento ?? laterStatement.data;
+            const hasStatus = laterStatement.statusRemessa !== null &&
+                laterStatement.statusRemessa !== undefined &&
+                laterStatement.statusRemessa !== '';
+
+            return laterPaymentDate > paymentDate && hasStatus;
+        });
+
+        return isLatestPendingPayment || hasLaterPaymentWithStatus
+            ? { ...statement, paymentStatus: 'Pendência de Pagamento' }
+            : statement;
+    });
+}
+
 export const  getPreviousDays = (idOrdem, userId) => async (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
     const normalizedIdOrdem = normalizeOrderIds(idOrdem);
@@ -301,7 +330,7 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
                     compareDesc(parseISO(a.data), parseISO(b.data))
                 );
 
-                dispatch(setStatements(statementsSort));
+                dispatch(setStatements(markMonthlyPendingPayments(statementsSort)));
                 dispatch(setSumInfo(response.data));
             }
 
