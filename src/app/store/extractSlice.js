@@ -30,46 +30,6 @@ const initialState = {
     mocked: false
 };
 
-function getVanzeirosPaymentStatus(monthlyStatements) {
-    return monthlyStatements.map((statement) => {
-        if (Number(statement.statusRemessa) !== 4) {
-            return statement;
-        }
-
-        const statementDate = statement.dataTentativaPagamento || statement.data;
-        const hasLaterAttemptWithStatus = monthlyStatements.some((laterStatement) => {
-            const laterStatementDate =
-                laterStatement.dataTentativaPagamento || laterStatement.data;
-
-            return (
-                laterStatementDate > statementDate &&
-                laterStatement.statusRemessa !== null &&
-                laterStatement.statusRemessa !== undefined &&
-                laterStatement.statusRemessa !== ''
-            );
-        });
-
-        const isLatestAttempt = !monthlyStatements.some((laterStatement) => {
-            const laterStatementDate =
-                laterStatement.dataTentativaPagamento || laterStatement.data;
-
-            return laterStatementDate > statementDate;
-        });
-
-        if (hasLaterAttemptWithStatus || (isLatestAttempt && ![0, 1, 2].includes(Number(statement.statusRemessa)))) {
-            return {
-                ...statement,
-                paymentStatus: 'Pendência de Pagamento',
-            };
-        }
-
-        return {
-            ...statement,
-            paymentStatus: 'Pendente',
-        };
-    });
-}
-
 const extractSlice = createSlice({
     name: 'extract',
     initialState,
@@ -213,22 +173,15 @@ function normalizeOrderIds(ids) {
     return ids;
 }
 
-function isAgentRole(roleId) {
-    return Number(roleId) === 6;
-}
-
-export const  getPreviousDays = (idOrdem, userId, userRoleId) => async (dispatch) => {
+export const  getPreviousDays = (idOrdem, userId) => async (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
     const normalizedIdOrdem = normalizeOrderIds(idOrdem);
-    const previousDaysRoute = isAgentRole(userRoleId)
-        ? jwtServiceConfig.agentesOdpAnteriores
-        : jwtServiceConfig.odpAnteriores;
    
     if(JwtService.isAuthTokenValid(token)){
         let config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: userId ? previousDaysRoute + `/${normalizedIdOrdem}?userId=${userId}` : jwtServiceConfig.bankStatement + `/${normalizedIdOrdem}`,
+            url: userId ? jwtServiceConfig.odpAnteriores + `/${normalizedIdOrdem}?userId=${userId}` : jwtServiceConfig.bankStatement + `/${normalizedIdOrdem}`,
             headers: { "Authorization": `Bearer ${token}` },
         }
         try {
@@ -279,9 +232,8 @@ export const  getPreviousDays = (idOrdem, userId, userRoleId) => async (dispatch
 //     }
 // };
 
-export const getStatements = (dateRange, searchingDay, searchingWeek, userId, idOrdem, mocked, userRoleId) => async (dispatch) => {
+export const getStatements = (dateRange, searchingDay, searchingWeek, userId, idOrdem, mocked) => async (dispatch) => {
     const normalizedIdOrdem = normalizeOrderIds(idOrdem);
-    const isAgent = isAgentRole(userRoleId);
 
     if (!normalizedIdOrdem && (searchingDay || searchingWeek)) {
         console.warn("idOrdem está indefinido. Requisição não será feita.");
@@ -300,10 +252,10 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
 
     let apiRoute = '';
     apiRoute = searchingWeek && searchingDay
-        ? (isAgent ? jwtServiceConfig.agentesOdpDiario : jwtServiceConfig.odpDiario) + `/?userId=${userId}`
+        ? jwtServiceConfig.odpDiario + `/?userId=${userId}`
         : searchingWeek
-            ? (isAgent ? jwtServiceConfig.agentesOdpSemanal : jwtServiceConfig.odpSemanal)
-            : (isAgent ? jwtServiceConfig.agentesOdpMensal : jwtServiceConfig.odpMensal) + `?userId=${userId}`;
+            ? jwtServiceConfig.odpSemanal 
+            : jwtServiceConfig.odpMensal + `?userId=${userId}`;
 
     const method = 'get';
     const token = window.localStorage.getItem('jwt_access_token');
@@ -336,7 +288,7 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
 
 
             } else if (searchingWeek) {
-                dispatch(getPreviousDays(normalizedIdOrdem, userId, userRoleId));
+                dispatch(getPreviousDays(normalizedIdOrdem, userId));
 
                 const statementsSort = response.data.sort((a, b) =>
                     compareDesc(parseISO(a.dataCaptura), parseISO(b.dataCaptura))
@@ -348,9 +300,8 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
                 const statementsSort = response.data.ordens.sort((a, b) =>
                     compareDesc(parseISO(a.data), parseISO(b.data))
                 );
-                const statementsWithPaymentStatus = getVanzeirosPaymentStatus(statementsSort);
 
-                dispatch(setStatements(statementsWithPaymentStatus));
+                dispatch(setStatements(statementsSort));
                 dispatch(setSumInfo(response.data));
             }
 

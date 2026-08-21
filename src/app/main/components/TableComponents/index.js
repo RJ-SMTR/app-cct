@@ -44,7 +44,7 @@ export function CustomTable(data) {
         case 3:
           return 'Pago';
         case 4:
-          return i.paymentStatus || 'Pendente';
+          return 'Pendente';
         case 5:
           return 'Pendencia Paga';
         default:
@@ -156,7 +156,11 @@ export function CustomTable(data) {
         !searchingDay ? (
           <TableCell component="th" scope="row">
             <Typography className="whitespace-nowrap">
-              {data.dataPagamento || '-'}
+              {
+                (() => {
+                  return data.data.statusRemessa === 5 ? data.dataPagamento : <></>;
+                })()
+              }
             </Typography>
           </TableCell>
         ) : (
