@@ -222,7 +222,7 @@ function canEditAgentByException(currentUser) {
     .toLowerCase();
 
   return (
-   ( getUserRoleId(currentUser) === 1 || getUserRoleId(currentUser) === 0 ) &&
+    (getUserRoleId(currentUser) === 1 || getUserRoleId(currentUser) === 0) &&
     AGENT_PRIVILEGED_EDITOR_EMAILS.has(currentUserEmail)
   );
 }
@@ -260,7 +260,7 @@ function StatusBadge({ status }) {
   );
 }
 
-function getPermissionarioStatus(statusRemessa) {
+function getPermissionarioStatus(statusRemessa, paymentStatus) {
   if (statusRemessa === null || statusRemessa === undefined || statusRemessa === "") {
     return "A pagar";
   }
@@ -271,7 +271,9 @@ function getPermissionarioStatus(statusRemessa) {
     case 3:
       return "Pago";
     case 4:
-      return "Pendente";
+      return paymentStatus === "Pendência de Pagamento"
+        ? paymentStatus
+        : "Pendente";
     case 5:
       return "Pendencia Paga";
     default:
@@ -335,12 +337,12 @@ function getTotalPhotosCount(validPhotosCount, rejectedPhotosCount) {
 }
 */
 
-function ValidPhotosStatusBadge({ status, pendingReason }) {
+function ValidPhotosStatusBadge({ status, paymentStatus }) {
   return (
     <Badge
       className="whitespace-nowrap"
       color={getPermissionarioBadgeColor(status)}
-      badgeContent={getPermissionarioStatus(status)}
+      badgeContent={getPermissionarioStatus(status, paymentStatus)}
       sx={statusBadgeSx}
     />
   );
@@ -648,7 +650,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           key={payment.paymentDate}
           hover
           selected={isSelected}
-          // onClick={() => handleSelectMonthlyPayment(payment.paymentDate)}
+        // onClick={() => handleSelectMonthlyPayment(payment.paymentDate)}
         >
           <TableCell>{formatDateLabel(payment.paymentDate)}</TableCell>
           {/* <TableCell>{getTotalPhotosCount(payment.validPhotosCount, payment.rejectedPhotosCount)}</TableCell> */}
@@ -657,9 +659,9 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           <TableCell>
             {shouldShowEffectivePaymentDate(payment.statusRemessa)
               ? areSameCalendarDay(
-                  payment.dataTentativaPagamento,
-                  payment.dataEfetivaPagamento
-                )
+                payment.dataTentativaPagamento,
+                payment.dataEfetivaPagamento
+              )
                 ? "-"
                 : formatDateLabel(payment.dataEfetivaPagamento)
               : "-"}
@@ -671,6 +673,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           >
             <ValidPhotosStatusBadge
               status={payment.statusRemessa}
+              paymentStatus={payment.paymentStatus}
             />
           </TableCell>
           <TableCell align="center" sx={{ verticalAlign: "middle" }}>
@@ -758,7 +761,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
     <Table className="w-full">
       <TableHead>
         <TableRow>
-              <TableCell>Data Tentativa Pagamento</TableCell>
+          <TableCell>Data Tentativa Pagamento</TableCell>
           {/* <TableCell>Total fotos</TableCell> */}
           {/* <TableCell>Fotos Válidas</TableCell> */}
           <TableCell>Valor Fotos Válidas</TableCell>
@@ -1160,11 +1163,10 @@ function AgentesApp() {
                     type="button"
                     onClick={handleResendInvite}
                     disabled={isResendInviteLoading}
-                    className={`rounded p-3 uppercase text-white h-[27px] min-h-[27px] font-medium px-12 mb-12 ${
-                      isResendInviteLoading
+                    className={`rounded p-3 uppercase text-white h-[27px] min-h-[27px] font-medium px-12 mb-12 ${isResendInviteLoading
                         ? "bg-[#7FCFE7] cursor-not-allowed"
                         : "bg-[#0DB1E3]"
-                    }`}
+                      }`}
                   >
                     Reenviar e-mail de cadastro
                   </button>
