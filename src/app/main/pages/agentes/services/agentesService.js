@@ -42,6 +42,10 @@ function normalizeIdsArray(ids) {
 }
 
 function getPaymentStatus(statusRemessa, descricaoStatusRemessa) {
+  if (Number(statusRemessa) === 4) {
+    return "Pendente";
+  }
+
   const normalizedDescription = String(descricaoStatusRemessa || "")
     .trim()
     .toLowerCase();
@@ -65,12 +69,60 @@ function getPaymentStatus(statusRemessa, descricaoStatusRemessa) {
   return "Rejeitado";
 }
 
+function markPreviousAttemptsAsPending(monthlyPayments) {
+  const paymentAttemptDates = monthlyPayments
+    .map(
+      (payment) => payment.dataTentativaPagamento || payment.paymentDate
+    )
+    .filter(Boolean);
+  const latestPaymentAttemptDate = paymentAttemptDates.reduce(
+    (latestDate, currentDate) =>
+      currentDate > latestDate ? currentDate : latestDate,
+    paymentAttemptDates[0] || ""
+  );
+
+  return monthlyPayments.map((payment) => {
+    const paymentAttemptDate =
+      payment.dataTentativaPagamento || payment.paymentDate;
+    const hasLaterPaymentAttemptWithStatus = monthlyPayments.some(
+      (laterPayment) => {
+        const laterPaymentAttemptDate =
+          laterPayment.dataTentativaPagamento || laterPayment.paymentDate;
+        const hasStatus =
+          laterPayment.statusRemessa !== null &&
+          laterPayment.statusRemessa !== undefined &&
+          laterPayment.statusRemessa !== "";
+
+        return (
+          paymentAttemptDate &&
+          laterPaymentAttemptDate > paymentAttemptDate &&
+          hasStatus
+        );
+      }
+    );
+    const isLatestPendingAttempt =
+      paymentAttemptDate === latestPaymentAttemptDate;
+
+    if (
+      Number(payment.statusRemessa) !== 4 ||
+      (!hasLaterPaymentAttemptWithStatus && !isLatestPendingAttempt)
+    ) {
+      return payment;
+    }
+
+    return {
+      ...payment,
+      paymentStatus: "Pendência de Pagamento",
+    };
+  });
+}
+
 function buildMonthlyPaymentRows(monthlyResponse) {
   const monthlyOrders = Array.isArray(monthlyResponse?.ordens)
     ? monthlyResponse.ordens
     : [];
 
-  return monthlyOrders.map((order) => ({
+  const monthlyPayments = monthlyOrders.map((order) => ({
     paymentDate: toDateOnly(order?.data || order?.dataTentativaPagamento),
     dataTentativaPagamento: toDateOnly(
       order?.dataTentativaPagamento || order?.data
@@ -97,6 +149,8 @@ function buildMonthlyPaymentRows(monthlyResponse) {
     coveredDaysCount: 0,
     ordemPagamentoAgrupadoIds: normalizeCommaIds(order?.ordemPagamentoAgrupadoIds),
   }));
+
+  return markPreviousAttemptsAsPending(monthlyPayments);
 }
 
 function buildWeeklyRows(weeklyResponse) {
