@@ -1,4 +1,4 @@
-import { api } from "app/configs/api/api";
+import { api } from "../../../../configs/api/api";
 import JwtService from "../../../../auth/services/jwtService";
 import jwtServiceConfig from "../../../../auth/services/jwtService/jwtServiceConfig";
 
@@ -41,14 +41,26 @@ function normalizeIdsArray(ids) {
     .filter((item) => Number.isFinite(item) && item > 0);
 }
 
-function getPaymentStatus(statusRemessa, descricaoStatusRemessa) {
-  if (Number(statusRemessa) === 4) {
-    return "Pendente";
-  }
+function hasRemittanceStatus(statusRemessa) {
+  return (
+    statusRemessa !== null &&
+    statusRemessa !== undefined &&
+    statusRemessa !== ""
+  );
+}
 
+export function getPaymentStatus(statusRemessa, descricaoStatusRemessa) {
   const normalizedDescription = String(descricaoStatusRemessa || "")
     .trim()
     .toLowerCase();
+
+  if (normalizedDescription.includes("naoefet")) {
+    return "Rejeitado";
+  }
+
+  if (Number(statusRemessa) === 4) {
+    return "Pendente";
+  }
 
   if (normalizedDescription.includes("efet")) {
     return "Pago";
@@ -62,11 +74,26 @@ function getPaymentStatus(statusRemessa, descricaoStatusRemessa) {
     return "Pago";
   }
 
-  if (Number(statusRemessa) === 31) {
+  if (Number(statusRemessa) === 1) {
     return "Aguardando Pagamento";
   }
 
+  if (!hasRemittanceStatus(statusRemessa) && !normalizedDescription) {
+    return "A pagar";
+  }
+
   return "Rejeitado";
+}
+
+function shouldMarkPaymentAsPendingWithoutStatus(payment) {
+  const hasPositiveValue = normalizeNumber(payment?.totalPaymentValue) > 0;
+  const hasMissingStatus = !hasRemittanceStatus(payment?.statusRemessa);
+  const hasMissingReason =
+    payment?.motivoStatusRemessa == null &&
+    payment?.descricaoMotivoStatusRemessa == null &&
+    !String(payment?.pendingReason || "").trim();
+
+  return hasPositiveValue && hasMissingStatus && hasMissingReason;
 }
 
 function markPreviousAttemptsAsPending(monthlyPayments) {
@@ -88,10 +115,7 @@ function markPreviousAttemptsAsPending(monthlyPayments) {
       (laterPayment) => {
         const laterPaymentAttemptDate =
           laterPayment.dataTentativaPagamento || laterPayment.paymentDate;
-        const hasStatus =
-          laterPayment.statusRemessa !== null &&
-          laterPayment.statusRemessa !== undefined &&
-          laterPayment.statusRemessa !== "";
+        const hasStatus = hasRemittanceStatus(laterPayment.statusRemessa);
 
         return (
           paymentAttemptDate &&
@@ -102,6 +126,13 @@ function markPreviousAttemptsAsPending(monthlyPayments) {
     );
     const isLatestPendingAttempt =
       paymentAttemptDate === latestPaymentAttemptDate;
+
+    if (shouldMarkPaymentAsPendingWithoutStatus(payment)) {
+      return {
+        ...payment,
+        paymentStatus: "Pendência de Pagamento",
+      };
+    }
 
     if (
       Number(payment.statusRemessa) !== 4 ||
@@ -117,7 +148,26 @@ function markPreviousAttemptsAsPending(monthlyPayments) {
   });
 }
 
-function buildMonthlyPaymentRows(monthlyResponse) {
+export function buildMonthlyPaymentRowKey(payment, index) {
+  const groupedIds = normalizeCommaIds(payment?.ordemPagamentoAgrupadoIds);
+
+  if (groupedIds) {
+    return groupedIds;
+  }
+
+  return [
+    toDateOnly(payment?.paymentDate),
+    toDateOnly(payment?.dataTentativaPagamento),
+    toDateOnly(payment?.dataEfetivaPagamento),
+    normalizeNumber(payment?.totalPaymentValue).toFixed(2),
+    String(payment?.statusRemessa ?? "null"),
+    String(payment?.motivoStatusRemessa ?? "null"),
+    String(payment?.descricaoMotivoStatusRemessa ?? "null"),
+    index,
+  ].join(":");
+}
+
+export function buildMonthlyPaymentRows(monthlyResponse) {
   const monthlyOrders = Array.isArray(monthlyResponse?.ordens)
     ? monthlyResponse.ordens
     : [];
