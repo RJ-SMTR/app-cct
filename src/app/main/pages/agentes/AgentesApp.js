@@ -38,6 +38,7 @@ import JwtService from "src/app/auth/services/jwtService";
 import { isAdminUser } from "src/app/auth/utils/accessUtils";
 import { BankInfo, getUserCpf, PersonalInfo } from "../profile/formCards/formCards";
 import {
+  buildMonthlyPaymentRowKey,
   getAgentesDashboard,
 } from "./services/agentesService";
 import {
@@ -262,6 +263,10 @@ function StatusBadge({ status }) {
 
 function getPermissionarioStatus(statusRemessa, paymentStatus) {
   if (statusRemessa === null || statusRemessa === undefined || statusRemessa === "") {
+    if (paymentStatus === "Pendência de Pagamento") {
+      return paymentStatus;
+    }
+
     return "A pagar";
   }
 
@@ -281,8 +286,12 @@ function getPermissionarioStatus(statusRemessa, paymentStatus) {
   }
 }
 
-function getPermissionarioBadgeColor(statusRemessa) {
+function getPermissionarioBadgeColor(statusRemessa, paymentStatus) {
   if (statusRemessa === null || statusRemessa === undefined || statusRemessa === "") {
+    if (paymentStatus === "Pendência de Pagamento") {
+      return "error";
+    }
+
     return "op";
   }
 
@@ -341,7 +350,7 @@ function ValidPhotosStatusBadge({ status, paymentStatus }) {
   return (
     <Badge
       className="whitespace-nowrap"
-      color={getPermissionarioBadgeColor(status)}
+      color={getPermissionarioBadgeColor(status, paymentStatus)}
       badgeContent={getPermissionarioStatus(status, paymentStatus)}
       sx={statusBadgeSx}
     />
@@ -642,12 +651,12 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
       </TableRow>
     ));
   } else if (monthlyPayments?.length) {
-    monthlyPaymentsRows = monthlyPayments.map((payment) => {
+    monthlyPaymentsRows = monthlyPayments.map((payment, index) => {
       const isSelected = selectedPaymentDate === payment.paymentDate;
 
       return (
         <TableRow
-          key={payment.paymentDate}
+          key={buildMonthlyPaymentRowKey(payment, index)}
           hover
           selected={isSelected}
         // onClick={() => handleSelectMonthlyPayment(payment.paymentDate)}
