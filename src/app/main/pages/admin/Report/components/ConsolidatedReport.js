@@ -87,6 +87,7 @@ export default function BasicEditingGrid() {
 
   const consorcios = [
     { label: 'Todos', value: "Todos" },
+    { label: 'GTU', value: "GTU" },
     { label: 'Internorte', value: "Internorte" },
     { label: 'Intersul', value: "Intersul" },
     { label: 'MobiRio', value: "MobiRio" },
