@@ -17,7 +17,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { DateRangePicker } from "rsuite";
 import { useForm, Controller } from "react-hook-form";
 
-import { handleFinancialMovementPage, handleFinancialMovementSummary, setReportList } from "app/store/reportSlice";
+import { handleFinancialMovementPage, setReportList } from "app/store/reportSlice";
 import { selectUser } from "app/store/userSlice";
 
 import "jspdf-autotable";
@@ -79,8 +79,7 @@ export default function ReportVanzeiro() {
     pageRequestData.page = 1;
     pageRequestData.pageSize = 9999;
 
-    try {
-      await dispatch(handleFinancialMovementSummary(summaryRequestData, { resetData: true }));
+    try {     
       await dispatch(handleFinancialMovementPage(pageRequestData));
       setIsLoading(false);
     } catch {

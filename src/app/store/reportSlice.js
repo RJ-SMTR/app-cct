@@ -298,28 +298,6 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
   }
 };
 
-export const handleFinancialMovementSummary = (data, options = {}) => async (dispatch) => {
-  const token = window.localStorage.getItem('jwt_access_token');
-
-  if (JwtService.isAuthTokenValid(token)) {
-    return new Promise(async (resolve, reject) => {
-      const requestData = handleData(data);
-      const reportTypeUrl = `${jwtServiceConfig.report}/report/summary`;
-
-      try {
-        const responseData = await requestReport(reportTypeUrl, requestData, token);
-        if (options.resetData) {
-          dispatch(setReportList({ ...responseData, data: [] }));
-        } else {
-          dispatch(mergeReportList(responseData));
-        }
-        resolve(responseData);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-};
 
 export const handleFinancialMovementPage = (data) => async (dispatch) => {
   const token = window.localStorage.getItem('jwt_access_token');

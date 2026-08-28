@@ -24,7 +24,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { DateRangePicker } from "rsuite";
 import { useForm, Controller } from "react-hook-form";
 
-import { handleFinancialMovementExport, handleFinancialMovementPage, handleFinancialMovementSummary, setReportList } from "app/store/reportSlice";
+import { handleFinancialMovementExport, handleFinancialMovementPage,setReportList } from "app/store/reportSlice";
 
 import { getUser } from "app/store/adminSlice";
 import { NumericFormat } from "react-number-format";
@@ -195,7 +195,6 @@ export default function BasicEditingGrid() {
     setIsLoading(true);
 
     try {
-      await dispatch(handleFinancialMovementSummary(summaryRequestData, { resetData: true }));
       const pageResponse = await dispatch(handleFinancialMovementPage(pageRequestData));
       const newNextCursor = pageResponse?.nextCursor ?? null;
       setPageCursors([null, newNextCursor]);
