@@ -52,6 +52,18 @@ export function TableUsers() {
     const onSubmit = (data) => {
         const { selectedQuery, query, inviteStatus } = data;
 
+
+        if (selectedQuery === "permitCode") {
+            const userFound = userList.find(u => u.permitCode === query);
+
+            if (userFound && userFound.bloqueado) {
+                dispatch(showMessage({ message: 'Este usuário está inativo.' }));
+                return;
+            }
+        }
+
+
+
         dispatch(getUserByInfo(selectedQuery, query, inviteStatus))
                 .then((response) => {
                     handleClose()
