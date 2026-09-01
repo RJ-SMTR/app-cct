@@ -180,7 +180,27 @@ function markMonthlyPendingPayments(statements) {
         return paymentDate > latestDate ? paymentDate : latestDate;
     }, '');
 
+    const hasRemittanceStatus = (statusRemessa) =>
+        statusRemessa !== null &&
+        statusRemessa !== undefined &&
+        statusRemessa !== '';
+
+    const shouldMarkMissingRemittanceAsPending = (statement) => {
+        const hasPositiveValue = Number(statement?.valorTotal ?? statement?.valor ?? 0) > 0;
+        const hasMissingStatus = !hasRemittanceStatus(statement?.statusRemessa);
+        const hasMissingReason =
+            statement?.motivoStatusRemessa == null &&
+            statement?.descricaoMotivoStatusRemessa == null &&
+            !String(statement?.pendingReason || '').trim();
+
+        return hasPositiveValue && hasMissingStatus && hasMissingReason;
+    };
+
     return statements.map((statement) => {
+        if (shouldMarkMissingRemittanceAsPending(statement)) {
+            return { ...statement, paymentStatus: 'Pendência de Pagamento' };
+        }
+
         if (Number(statement.statusRemessa) !== 4) {
             return statement;
         }

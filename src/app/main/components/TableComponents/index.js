@@ -38,6 +38,10 @@ export function CustomTable(data) {
     const i = data.data.data;
 
     const getStatus = (i) => {
+      if (i.paymentStatus === 'Pendência de Pagamento') {
+        return i.paymentStatus;
+      }
+
       switch (i.statusRemessa) {
         case 2:
           return 'Aguardando Pagamento';
@@ -55,6 +59,10 @@ export function CustomTable(data) {
     };
 
     const getColor = (status) => {
+      if (i.paymentStatus === 'Pendência de Pagamento') {
+        return 'error';
+      }
+
       switch (status) {
         case 3:
           return 'success';
@@ -90,7 +98,7 @@ export function CustomTable(data) {
         <span className='underline'> Erro  <InfoOutlinedIcon fontSize='small' /></span>
       )
     }
-    if (i.statusRemessa === 4) {
+    if (i.statusRemessa === 4 || i.paymentStatus === 'Pendência de Pagamento') {
       return (
 
         <Tooltip title={errorDescription} arrow enterTouchDelay={10} leaveTouchDelay={10000}>
