@@ -109,8 +109,7 @@ export default function BasicEditingGrid() {
       const statusSet = new Set(requestData.status);
 
       if (selectedErroLabels.includes("Todos")) {
-        statusSet.add("Erro");
-        statusSet.add("Pendentes");
+        statusSet.add("Erro");        
         requestData.erro = true;
       } else {
         if (selectedErroLabels.includes("Estorno")) {
