@@ -31,6 +31,7 @@ import 'jspdf-autotable';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import { ClearIcon } from '@mui/x-date-pickers';
 import { utils, writeFile as writeFileXLSX } from 'xlsx';
+import { buildReportConsorcioOptions } from './consorcioOptions';
 
 
 export default function BasicEditingGrid() {
@@ -66,20 +67,7 @@ export default function BasicEditingGrid() {
   ];
 
 
-  const consorcios = [
-    { label: 'Todos', value: "Todos" },
-    { label: 'Internorte', value: "Internorte" },
-    { label: 'Intersul', value: "Intersul" },
-    { label: 'MobiRio', value: "MobiRio" },
-    { label: 'MOBI-Rio BUM', value: "MOBI-Rio BUM" },
-    { label: 'Santa Cruz', value: "Santa Cruz" },
-    { label: 'STPC', value: "STPC", disabled: selected === 'name' ? true : false },
-    { label: 'STPL', value: "STPL", disabled: selected === 'name' ? true : false },
-    { label: 'Transcarioca', value: "Transcarioca" },
-    { label: 'VLT', value: "VLT" },
-    { label: 'TEC', value: "TEC", disabled: selected === 'name' ? true : false }
-
-  ];
+  const consorcios = buildReportConsorcioOptions({ selectedField: selected });
 
   const dispatch = useDispatch()
 

@@ -31,6 +31,7 @@ import { NumericFormat } from "react-number-format";
 import { showMessage } from "app/store/fuse/messageSlice";
 import { ClearIcon } from "@mui/x-date-pickers";
 import { normalizeErroStatusSelection } from "./reportUtils";
+import { buildReportConsorcioOptions } from "./consorcioOptions";
 
 export default function BasicEditingGrid() {
   const minSelectableDate = new Date(2024, 3, 30);
@@ -75,19 +76,7 @@ export default function BasicEditingGrid() {
 
 
 
-  const consorcios = [
-    { label: "Todos", value: "Todos" },
-    { label: "Internorte", value: "Internorte" },
-    { label: "Intersul", value: "Intersul" },
-    { label: "MobiRio", value: "MobiRio" },
-    { label: 'MOBI-Rio BUM', value: "MOBI-Rio BUM" },
-    { label: "Santa Cruz", value: "Santa Cruz" },
-    { label: "STPC", value: "STPC", disabled: selected === "name" },
-    { label: "STPL", value: "STPL", disabled: selected === "name" },
-    { label: "Transcarioca", value: "Transcarioca" },
-    { label: "VLT", value: "VLT" },
-    { label: "TEC", value: "TEC", disabled: selected === "name" },
-  ];
+  const consorcios = buildReportConsorcioOptions({ selectedField: selected });
 
   const especificos = [
     { label: 'Eleição' },
