@@ -152,7 +152,7 @@ export function buildMonthlyPaymentRowKey(payment, index) {
   const groupedIds = normalizeCommaIds(payment?.ordemPagamentoAgrupadoIds);
 
   if (groupedIds) {
-    return groupedIds;
+    return `group:${groupedIds}:${index}`;
   }
 
   return [

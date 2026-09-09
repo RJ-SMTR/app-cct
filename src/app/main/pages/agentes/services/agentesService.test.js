@@ -65,6 +65,18 @@ describe("agentesService payment normalization", () => {
     expect(getPaymentStatus(4, "NaoEfetivado")).toBe("Rejeitado");
   });
 
+  it("distinguishes repeated grouped order rows, including identical records", () => {
+    const order = {
+      ordemPagamentoAgrupadoIds: "491928",
+      data: "2026-08-18",
+      dataEfetivaPagamento: "2026-09-03",
+      valorTotal: 271.6,
+      statusRemessa: 5,
+    };
+    const rows = buildMonthlyPaymentRows({ ordens: [order, order, order] });
+    expect(new Set(rows.map(buildMonthlyPaymentRowKey)).size).toBe(3);
+  });
+
   it("builds distinct row keys for same-date monthly rows", () => {
     const monthlyRows = buildMonthlyPaymentRows({
       ordens: [

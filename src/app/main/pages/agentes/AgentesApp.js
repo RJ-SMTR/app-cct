@@ -28,6 +28,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { format, isValid, parseISO } from "date-fns";
 import ptBR from "date-fns/locale/pt-BR";
+import useAgentesDashboard from "./useAgentesDashboard";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, Navigate, useParams } from "react-router-dom";
@@ -918,11 +919,8 @@ function AgentesApp() {
   const [selectedMonthDate, setSelectedMonthDate] = useState(
     clampAgentesMonthDate(buildMonthDate())
   );
-  const [dashboard, setDashboard] = useState(null);
   const [agentDetails, setAgentDetails] = useState(null);
   const [selectedAssociacao, setSelectedAssociacao] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [inviteFeedbackStatus, setInviteFeedbackStatus] = useState(null);
   const selectedMonth = useMemo(
     () => format(selectedMonthDate, "yyyy-MM"),
@@ -930,6 +928,16 @@ function AgentesApp() {
   );
   const isOwnDashboard = String(user?.id) === String(id);
   const canAccessSelectedAgent = isAdminUser(user) || isOwnDashboard;
+  const handleDashboardError = useCallback(
+    (message) => dispatch(showMessage({ message })),
+    [dispatch]
+  );
+  const { dashboard, loading, error, reload: loadDashboard } = useAgentesDashboard({
+    id,
+    month: selectedMonth,
+    enabled: canAccessSelectedAgent,
+    onError: handleDashboardError,
+  });
   const canEditAgentByEmailException = canEditAgentByException(user);
   const canEditSelectedAgentFields =
     canEditAgentByEmailException &&
@@ -1071,31 +1079,6 @@ function AgentesApp() {
     }
   }, [dispatch, id, loadAgentDetails]);
 
-  const loadDashboard = useCallback(async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      const response = await getAgentesDashboard(
-        id,
-        selectedMonth,
-        undefined,
-        undefined
-      );
-
-      setDashboard(response);
-    } catch (requestError) {
-      setError("Não foi possível carregar o painel de guardador.");
-      dispatch(
-        showMessage({
-          message: "Não foi possível carregar o painel de guardador.",
-        })
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [dispatch, id, selectedMonth]);
-
   useEffect(() => {
     if (!canAccessSelectedAgent) {
       return;
@@ -1103,14 +1086,6 @@ function AgentesApp() {
 
     loadAgentDetails();
   }, [canAccessSelectedAgent, loadAgentDetails]);
-
-  useEffect(() => {
-    if (!canAccessSelectedAgent) {
-      return;
-    }
-
-    loadDashboard();
-  }, [canAccessSelectedAgent, loadDashboard]);
 
   const handleSelectedMonth = (newValue) => {
     if (!newValue) {

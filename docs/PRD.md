@@ -37,3 +37,29 @@ Allow the shared profile form to save changes without requiring celular. The fie
 ## Further Notes
 
 - This PRD is intentionally narrow because the requested work is a targeted bug fix on an existing shared form.
+
+
+## Monthly payment switching regression (2026-09-09)
+
+### Problem Statement
+Switching months on an agent dashboard can leave previous orders visible. Monthly row keys reuse grouped order IDs without distinguishing repeated rows, and overlapping requests can overwrite the current dashboard.
+
+### Solution and User Stories
+1. As an administrator, I want the table to show only the latest selected month's response.
+2. As an administrator, I want repeated order groups to render and disappear correctly when switching months.
+3. As an administrator, I want loading, errors, and retry to follow the current selection.
+
+### Acceptance Criteria
+- AC-M1: Rows have distinct React identities even when grouped order IDs repeat, including identical records.
+- AC-M2: Previous requests cannot replace current data, report stale errors, or end current loading.
+- AC-M3: Switching month clears previous data; empty results and failures do not show old orders. Retry remains available. Unmounted views ignore pending results.
+- AC-M4: Preserve API parameters, payment status/value/date semantics and all rows returned for the selected month.
+
+### Implementation Decisions
+Keep normalization in the agent service. Isolate monthly request state in a local hook with effect cleanup and retry. Include row position in grouped row identities.
+
+### Testing Decisions
+Use existing service tests for repeated keys and React DOM hook integration tests with controlled promises for month switching, loading, stale success/error, empty responses, retry and unmount. Run focused Jest checks.
+
+### Out of Scope
+Backend changes, filtering orders by attempted payment date, deduplication of legitimate records, redesign, and weekly/daily request behavior.
