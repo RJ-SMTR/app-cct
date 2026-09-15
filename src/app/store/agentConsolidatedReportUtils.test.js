@@ -37,6 +37,19 @@ describe("agentConsolidatedReportUtils", () => {
     });
   });
 
+  it("serializes the pendenciaPaga filter when Pendencia Paga status is selected", () => {
+    const params = buildAgentConsolidatedReportParams({
+      dateRange: [julyStartDate, julyEndDate],
+      status: ["Pendencia Paga"],
+    });
+
+    expect(params).toEqual({
+      dataInicio: "2026-07-01",
+      dataFim: "2026-07-31",
+      pendenciaPaga: true,
+    });
+  });
+
   it("serializes the erros filter using pago=false and keeps error detail flags", () => {
     const params = buildAgentConsolidatedReportParams({
       dateRange: [julyStartDate, julyEndDate],

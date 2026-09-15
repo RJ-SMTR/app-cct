@@ -85,16 +85,22 @@ export function PersonalInfo({
 
       })
       .catch((_errors) => {
-        if (_errors.email) {
+        const normalizedErrors = _errors && typeof _errors === 'object' ? _errors : {};
+
+        if (normalizedErrors.email) {
           setError('email', {
             message: 'E-mail inválido'
           });
         }
 
-        if (_errors.phone) {
+        if (normalizedErrors.phone) {
           setError('phone', {
             message: 'Telefone inválido'
           });
+        }
+
+        if (!normalizedErrors.email && !normalizedErrors.phone) {
+          dispatch(showMessage({ message: 'Nao foi possivel salvar os dados.' }));
         }
       });
 

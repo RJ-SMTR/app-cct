@@ -10,6 +10,7 @@ export const AGENT_REPORT_STATUS_LABELS = {
   erros: "Erros",
   aPagar: "A pagar",
   emProcessamento: "Em processamento",
+  pendenciaPaga: "Pendência paga",
   rejeitado: "Rejeitado",
   estorno: "Estorno",
 };
@@ -98,6 +99,9 @@ export function buildAgentConsolidatedReportParams(filters = {}) {
   }
   if (selectedStatuses.has("Em processamento")) {
     params.emProcessamento = true;
+  }
+  if (selectedStatuses.has("Pendencia Paga")) {
+    params.pendenciaPaga = true;
   }
   if (
     hasErrorStatus &&

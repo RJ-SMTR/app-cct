@@ -9,6 +9,7 @@ import {
   setTotalSynth,
 } from 'app/store/reportSlice';
 import AgentsConsolidatedReport from './components/AgentsConsolidatedReport';
+import AgentsFinancialMovement from './components/AgentsFinancialMovement';
 import DataGridInfos from './components/DataGrid';
 import ConsolidatedReport from './components/ConsolidatedReport';
 import FinancialMovement from './components/FinancialMovement';
@@ -21,7 +22,7 @@ import {
 function ReportApp() {
   const dispatch = useDispatch();
   const [selectedReport, setSelectedReport] = useState('');
-  const [selectedAudience, setSelectedAudience] = useState('permissionario');
+  const [selectedAudience, setSelectedAudience] = useState('');
 
   const resetReportState = () => {
     dispatch(setSynthData([]));
@@ -32,6 +33,7 @@ function ReportApp() {
   const handleSelectChange = (event) => {
     resetReportState();
     setSelectedReport(event.target.value);
+    setSelectedAudience('');
   };
 
   const handleAudienceChange = (event) => {
@@ -104,7 +106,12 @@ function ReportApp() {
           <AgentsConsolidatedReport />
         )}
         {selectedReport === 'sintetico' && <SynthReport />}
-        {selectedReport === 'Movimentação Financeira' && <FinancialMovement />}
+        {selectedReport === 'Movimentação Financeira' && selectedAudience === 'permissionario' && (
+          <FinancialMovement />
+        )}
+        {selectedReport === 'Movimentação Financeira' && selectedAudience === 'guardador' && (
+          <AgentsFinancialMovement />
+        )}
       </Box>
     </div>
   );
