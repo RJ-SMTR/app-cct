@@ -13,7 +13,7 @@ import {
   useThemeMediaQuery
 } from '@fuse/hooks';
 import { Link, useParams } from 'react-router-dom';
-import { Button } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { api } from 'app/configs/api/api';
 import Table from '../../extract/widgets/Table';
@@ -176,6 +176,11 @@ function UserApp() {
                 <div>
                   <Table id={id} userRoleId={user?.role?.id} />
                 </div>
+                {
+                  searchingDay ? <Box className='flex flex-col md:flex-row   justify-around'>
+                    <TableTypes />
+                  </Box> : <></>
+                }
                 {searchingWeek && !searchingDay ? <div>
                   <TablePending id={id} />
                 </div> : <></>}
