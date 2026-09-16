@@ -3,7 +3,10 @@ export const REPORT_AUDIENCE_OPTIONS = [
   { value: "guardador", label: "Guardador" },
 ];
 
-const REPORTS_WITH_AUDIENCE_SELECTOR = new Set(["consolidado"]);
+const REPORTS_WITH_AUDIENCE_SELECTOR = new Set([
+  "consolidado",
+  "Movimentação Financeira",
+]);
 
 export function shouldShowAudienceSelector(selectedReport) {
   return REPORTS_WITH_AUDIENCE_SELECTOR.has(selectedReport);

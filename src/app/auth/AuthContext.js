@@ -6,6 +6,7 @@ import { logoutUser, setUser } from 'app/store/userSlice';
 import jwtServiceConfig from './services/jwtService/jwtServiceConfig';
 import jwtService from './services/jwtService';
 import { api } from 'app/configs/api/api';
+import { redirect } from 'react-router-dom';
 
 export const AuthContext = createContext();
 
@@ -188,7 +189,7 @@ export function AuthProvider({ children }) {
           resolve(response.data)
         })
         .catch((error) => {
-          reject(error.response.data.errors)
+          reject(error?.response?.data?.errors || error?.response?.data || error)
         })
 
     })

@@ -22,6 +22,7 @@ const jwtServiceConfig = {
   finanGetByStatus: 'lancamento/getbystatus',
   report: 'cnab/relatorio-novo-remessa',
   consolidadoGuardador: '/cnab/relatorio/consolidadoGuardador',
+  guardadorFinancialMovement: 'cnab/relatorio-novo-remessa/guardador',
   agentesDashboard: '/agentes/dashboard',
   odpMensal: '/ordem-pagamento/mensal',
   odpSemanal: '/ordem-pagamento/semanal',
