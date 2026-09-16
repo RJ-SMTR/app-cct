@@ -208,6 +208,58 @@ function StatusBadge({ status }) {
   );
 }
 
+function getPermissionarioStatus(statusRemessa) {
+  if (statusRemessa === null || statusRemessa === undefined || statusRemessa === "") {
+    return "A pagar";
+  }
+
+  switch (Number(statusRemessa)) {
+    case 2:
+      return "Aguardando Pagamento";
+    case 3:
+      return "Pago";
+    case 4:
+      return "Pendente";
+    case 5:
+      return "Pendencia Paga";
+    case 6:
+      return "Pendencia de Pagamento";
+    default:
+      return "A pagar";
+  }
+}
+
+function getPermissionarioBadgeColor(statusRemessa) {
+  if (statusRemessa === null || statusRemessa === undefined || statusRemessa === "") {
+    return "op";
+  }
+
+  switch (Number(statusRemessa)) {
+    case 3:
+      return "success";
+    case 4:
+      return "error";
+    case 5:
+      return "info";
+    case 6:
+      return "error";
+    case 2:
+      return "wait";
+    case 1:
+      return "warning";
+    case 0:
+      return "warning";
+    default:
+      return "op";
+  }
+}
+
+function shouldShowEffectivePaymentDate(statusRemessa) {
+  const normalizedStatusRemessa = Number(statusRemessa);
+
+  return normalizedStatusRemessa === 3 || normalizedStatusRemessa === 5;
+}
+
 function isPendingPaymentStatus(status) {
   const normalizedStatus = String(status || "")
     .trim()
