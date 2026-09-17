@@ -16,7 +16,6 @@ const initialState = {
     fullReport: false,
     todayStatements: [],
     multipliedEntries: [],
-    listByType: [],
     listByType: {},
     firstDate: [],
     valorAcumuladoLabel:'Valor Operação - Acumulado Mensal',
@@ -330,7 +329,6 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
             const response = await api(config);
 
             if (searchingDay) {
-                const statementsSort = response.data.sort((a, b) =>
                 const rawData = Array.isArray(response.data) ? response.data : [];
                 const statementsSort = rawData.sort((a, b) =>
                     compareDesc(parseISO(a.datetime_transacao), parseISO(b.datetime_transacao))
