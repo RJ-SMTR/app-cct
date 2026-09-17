@@ -4,6 +4,7 @@ import { compareAsc, compareDesc, format, parseISO } from 'date-fns';
 import accounting from 'accounting';
 import jwtServiceConfig from '../auth/services/jwtService/jwtServiceConfig';
 import JwtService from '../auth/services/jwtService';
+import { groupTransactionsByType } from './extractUtils';
 
 const initialState = {
     searchingWeek: false,
@@ -16,6 +17,7 @@ const initialState = {
     todayStatements: [],
     multipliedEntries: [],
     listByType: [],
+    listByType: {},
     firstDate: [],
     valorAcumuladoLabel:'Valor Operação - Acumulado Mensal',
     valorPagoLabel:'Valor  - Acumulado Mensal',
@@ -286,6 +288,7 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
 
     if (!normalizedIdOrdem && (searchingDay || searchingWeek)) {
         console.warn("idOrdem está indefinido. Requisição não será feita.");
+        dispatch(setLoadingWeek(false));
         return;
     }
 
@@ -328,15 +331,19 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
 
             if (searchingDay) {
                 const statementsSort = response.data.sort((a, b) =>
+                const rawData = Array.isArray(response.data) ? response.data : [];
+                const statementsSort = rawData.sort((a, b) =>
                     compareDesc(parseISO(a.datetime_transacao), parseISO(b.datetime_transacao))
                 );
 
                 dispatch(setStatements(statementsSort));
                 
+                dispatch(setListByType(groupTransactionsByType(statementsSort)));
 
 
 
             } else if (searchingWeek) {
+                dispatch(setListByType({}));
                 dispatch(getPreviousDays(normalizedIdOrdem, userId));
 
                 const statementsSort = response.data.sort((a, b) =>
@@ -346,6 +353,7 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
                 
 
             } else {
+                dispatch(setListByType({}));
                 const statementsSort = response.data.ordens.sort((a, b) =>
                     compareDesc(parseISO(a.data), parseISO(b.data))
                 );
@@ -361,6 +369,7 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
 
         } finally {
             dispatch(setLoading(false));
+            dispatch(setLoadingWeek(false));
         }
     }
 };
