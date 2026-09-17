@@ -121,6 +121,18 @@ export function AuthProvider({ children }) {
         });
     });
   }
+  function getResetPasswordRole(hash) {
+    return new Promise((resolve, reject) => {
+      api
+        .get(`${jwtServiceConfig.resetPassword}/${hash}`)
+        .then((response) => {
+          resolve(response)
+        })
+        .catch((error) => {
+          reject(error)
+        });
+    });
+  }
   function handlePreRegister(licensee, cpfCnpj){
     return new Promise((resolve, reject) => {
       api.post(jwtServiceConfig.preRegister, {
@@ -198,7 +210,7 @@ export function AuthProvider({ children }) {
     <FuseSplashScreen />
   ) : (
     <AuthContext.Provider
-      value={{ isAuthenticated, forgotPasswordFunction, resetPasswordFunction, handlePreRegister, validPermitCode, handleRegister, handleInvite, patchInfo, success }}
+      value={{ isAuthenticated, forgotPasswordFunction, resetPasswordFunction, getResetPasswordRole, handlePreRegister, validPermitCode, handleRegister, handleInvite, patchInfo, success }}
     >
       {children}
     </AuthContext.Provider>

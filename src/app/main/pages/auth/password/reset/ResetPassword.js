@@ -7,7 +7,7 @@ import * as yup from 'yup';
 import _ from '@lodash';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from 'src/app/auth/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -15,6 +15,7 @@ import IconButton from '@mui/material/IconButton';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { getResetPasswordRedirectTo } from './resetPasswordRedirect';
+import { getResetPasswordCoverImage } from './resetPasswordCoverImage';
 
 const getCharacterValidationError = (str) => {
   return `Sua senha deve conter 1 ${str}`;
@@ -34,7 +35,7 @@ const schema = yup.object().shape({
 function ResetPassword() {
   const navigate = useNavigate();
   const { hash } = useParams();
-  const { resetPasswordFunction } = useContext(AuthContext);
+  const { resetPasswordFunction, getResetPasswordRole } = useContext(AuthContext);
   const { control, formState, handleSubmit } = useForm({
     mode: 'onChange',
     resolver: yupResolver(schema),
@@ -44,6 +45,23 @@ function ResetPassword() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [roleId, setRoleId] = useState(null);
+
+  useEffect(() => {
+    if (!hash) {
+      return;
+    }
+
+    getResetPasswordRole(hash)
+      .then((response) => {
+        setRoleId(response?.data?.roleId ?? null);
+      })
+      .catch(() => {
+        setRoleId(null);
+      });
+  }, [getResetPasswordRole, hash]);
+
+  const coverImage = getResetPasswordCoverImage(roleId);
 
   const togglePassword = () => {
     const input = document.getElementById('password');
@@ -190,7 +208,7 @@ function ResetPassword() {
       </Paper>
 
       <Box className="relative hidden md:flex flex-auto items-center justify-center h-screen overflow-hidden">
-        <img src="assets/images/etc/kombi.jpg" className="h-full w-full object-fill" alt="Kombis CCT" />
+        <img src={coverImage} className="h-full w-full object-fill" alt="Capa CCT" />
       </Box>
     </div>
   );
