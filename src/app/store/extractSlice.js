@@ -16,7 +16,6 @@ const initialState = {
     fullReport: false,
     todayStatements: [],
     multipliedEntries: [],
-    listByType: [],
     listByType: {},
     firstDate: [],
     valorAcumuladoLabel:'Valor Operação - Acumulado Mensal',
