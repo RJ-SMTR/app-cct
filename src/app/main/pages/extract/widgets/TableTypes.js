@@ -57,11 +57,11 @@ function TableTypes() {
                                             Catracadas
                                         </Typography>
                                     </TableCell>
-                                    <TableCell>
+                                    {/* <TableCell>
                                         <Typography variant="body2" className="font-semibold whitespace-nowrap">
                                             Valor Operação
                                         </Typography>
-                                    </TableCell>
+                                    </TableCell> */}
                                 </TableRow>
                             </TableHead>
                         ) : (
@@ -71,7 +71,7 @@ function TableTypes() {
                         <TableBody>
                             {isLoadingWeek ? 
                                     <TableRow>
-                                        <TableCell colSpan={5}>
+                                        <TableCell colSpan={2}>
                                         <Box className="flex justify-center items-center m-10">
                                             <CircularProgress />
                                         </Box> 
@@ -90,16 +90,16 @@ function TableTypes() {
                                                 <TableCell component="th" scope="row">
                                                     {count.count.toLocaleString()}
                                                 </TableCell>
-                                                <TableCell component="th" scope="row">
+                                                {/* <TableCell component="th" scope="row">
                                                     <Typography className="whitespace-nowrap">
                                                         {formatter.format(count.transactionValue)}
                                                     </Typography>
-                                                </TableCell>
+                                                </TableCell> */}
                                             </TableRow>
                                         );
                                     })
                             :  
-                                    <TableCell colSpan={4}> 
+                                    <TableCell colSpan={2}>
                                         <p>Não há dados para sem exibidos</p>
                                     </TableCell> 
                          }
