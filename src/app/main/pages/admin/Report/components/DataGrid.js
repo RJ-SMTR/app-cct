@@ -39,6 +39,7 @@ import { ClearIcon } from '@mui/x-date-pickers';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import 'jspdf-autotable';
 import ptBR from 'rsuite/locales/pt_BR';
+import { buildReportConsorcioOptions } from './consorcioOptions';
 
 
 
@@ -49,19 +50,7 @@ const consorciosStatus = [
     { label: 'Aguardando Pagamento' },
     { label: 'Erro' },
 ];
-const consorcios = [
-    { label: 'Todos', value: "Todos" },
-    { label: 'Internorte', value: "Internorte" },
-    { label: 'Intersul', value: "Intersul" },
-    { label: 'MobiRio', value: "MobiRio" },
-    { label: 'MOBI-Rio BUM', value: "MOBI-Rio BUM" },
-    { label: 'Santa Cruz', value: "Santa Cruz" },
-    { label: 'STPC', value: "STPC" },
-    { label: 'STPL', value: "STPL" },
-    { label: 'Transcarioca', value: "Transcarioca" },
-    { label: 'VLT', value: "VLT" },
-{label: 'TEC', value: "TEC"}
-];
+const consorcios = buildReportConsorcioOptions();
 
 const específicos = [
     { label: 'Todos' },

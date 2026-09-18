@@ -58,3 +58,13 @@ export function getConcludeRegistrationCoverImage(data) {
     ? 'assets/images/etc/agentes.jpeg'
     : 'assets/images/etc/kombi.jpg';
 }
+
+const DEFAULT_EXPIRED_LINK_REDIRECT = '/sign-in';
+
+/**
+ * @param {{ response?: { data?: { error?: { roleId?: number | null, redirectTo?: string } } } } | undefined} error
+ * @returns {string}
+ */
+export function getConcludeRegistrationExpiredRedirectTo(error) {
+  return error?.response?.data?.error?.redirectTo ?? DEFAULT_EXPIRED_LINK_REDIRECT;
+}

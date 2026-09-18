@@ -14,6 +14,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from 'react-redux';
 import { isAdminUser } from 'src/app/auth/utils/accessUtils';
+import { format, isValid, parseISO } from 'date-fns';
 import { createPersonalInfoSchema } from "./personalInfoValidation";
 
 const style = {
@@ -31,41 +32,105 @@ export function getUserCpf(user) {
   return user?.cpf || user?.cpfCnpj || '-';
 }
 
+function normalizeDateValue(dateValue) {
+  if (typeof dateValue !== 'string') {
+    return '';
+  }
+
+  const normalizedDateValue = dateValue.trim();
+
+  if (!normalizedDateValue) {
+    return '';
+  }
+
+  const lowerCaseDateValue = normalizedDateValue.toLowerCase();
+
+  if (lowerCaseDateValue === 'null' || lowerCaseDateValue === 'undefined') {
+    return '';
+  }
+
+  return normalizedDateValue;
+}
+
+function parseDateValue(dateValue) {
+  const normalizedDateValue = normalizeDateValue(dateValue);
+
+  if (!normalizedDateValue) {
+    return null;
+  }
+
+  const isoDateValue = normalizedDateValue.includes('T')
+    ? normalizedDateValue
+    : `${normalizedDateValue}T12:00:00`;
+  const parsedDateValue = parseISO(isoDateValue);
+
+  return isValid(parsedDateValue) ? parsedDateValue : null;
+}
+
+function formatDateTimeLabel(dateTime, dateFormat = 'dd/MM/yyyy HH:mm:ss') {
+  const parsedDateTime = parseDateValue(dateTime);
+
+  if (!parsedDateTime) {
+    return '-';
+  }
+
+  return format(parsedDateTime, dateFormat);
+}
+
 export function PersonalInfo({
   user,
   primaryInfoLabel = 'Código de Permissão',
   primaryInfoValue,
   onUserUpdated,
+  allowAgentFieldEdit = false,
 }) {
   const { patchInfo, success } = useContext(AuthContext)
   const dispatch = useDispatch()
   const currentUser = useSelector(selectUser)
-  const canEditEmail = isAdminUser(currentUser)
-  const canEditPhone = String(currentUser?.id) === String(user?.id)
+  const isPrimaryInfoCpf = String(primaryInfoLabel || '').trim().toLowerCase() === 'cpf'
+  const canEditByException = Boolean(allowAgentFieldEdit)
+  const canEditPermitCode = canEditByException && !isPrimaryInfoCpf
+  const canEditFullName = canEditByException
+  const canEditEmail = isAdminUser(currentUser) || canEditByException
+  const canEditPhone = String(currentUser?.id) === String(user?.id) || canEditByException
+  const canEditAnyField = canEditPermitCode || canEditFullName || canEditEmail || canEditPhone
   const [isEditable, setIsEditable] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [open, setOpen] = useState(false)
+  const handleOpen = () => setOpen(true)
+  const handleClose = () => setOpen(false)
   const resolvedPrimaryInfoValue = primaryInfoValue ?? user?.permitCode ?? '';
   const personalInfoSchema = createPersonalInfoSchema();
+  const defaultFormValues = {
+    permitCode: resolvedPrimaryInfoValue,
+    email: user.email,
+    fullName: user.fullName ?? '',
+    phone: user.phone ?? '',
+    bankAccount: '',
+    bankCode: '',
+    bankAccountDigit: '',
+    bankAgency: ''
+  };
 
-  const { handleSubmit, control, setError, formState } = useForm({
-    defaultValues: {
-      permitCode: resolvedPrimaryInfoValue,
-      email: user.email,
-      fullName: user.fullName ?? '',
-      phone: user.phone ?? '',
-      bankAccount: '',
-      bankCode: '',
-      bankAccountDigit: '',
-      bankAgency: ''
-    },
+  const { handleSubmit, control, setError, formState, reset } = useForm({
+    defaultValues: defaultFormValues,
     resolver: yupResolver(personalInfoSchema),
   });
   const { isValid, errors } = formState;
 
+  function clear() {
+    reset(defaultFormValues)
+    setIsEditable(false)
+    setSaved(false)
+    handleOpen()
+  }
 
-  function onSubmit({ phone, email }) {
+
+  function onSubmit({ permitCode, phone, email, fullName }) {
     patchInfo(
       {
+        ...(canEditPermitCode ? { permitCode } : {}),
+        ...(canEditFullName ? { fullName } : {}),
         ...(canEditPhone ? { phone } : {}),
         ...(canEditEmail ? { email } : {}),
       },
@@ -107,6 +172,10 @@ export function PersonalInfo({
   }
 
   const renderButton = () => {
+    if (!canEditAnyField) {
+      return null;
+    }
+
     if (!isEditable) {
       return (
         <button className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-12' onClick={() => { setIsEditable(true), setSaved(false) }}>
@@ -116,6 +185,9 @@ export function PersonalInfo({
     } else {
       return (
         <div className='flex'>
+          <button type="button" className='flex items-center rounded p-3 uppercase text-white bg-[#707070] hover:bg-[#4a4a4a] mr-2 h-[27px] min-h-[27px]' onClick={() => clear()}>
+            <FuseSvgIcon className="text-48 text-white" size={24} color="action">heroicons-outline:x</FuseSvgIcon>
+          </button>
           <button type='submit' className='rounded p-3 uppercase text-white bg-[#0DB1E3] h-[27px] min-h-[27px] font-medium px-10' onClick={() => setIsEditable(true)}>
             Salvar
           </button>
@@ -125,6 +197,36 @@ export function PersonalInfo({
   }
   return (
     <>
+      <Modal
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+          <Box className="text-center flex flex-col content-center items-center">
+            {saved ? (
+              <>
+                <Box className="bg-green rounded-[100%]">
+                  <FuseSvgIcon className="text-48 text-white " size={48} color="action">heroicons-solid:check</FuseSvgIcon>
+                </Box>
+                <Typography id="modal-modal-title" variant="h6" component="h2">
+                  Seus dados foram salvos!
+                </Typography>
+              </>
+            ) : (
+              <>
+                <Box className="bg-red rounded-[100%]">
+                  <FuseSvgIcon className="text-48 text-white " size={48} color="action">heroicons-outline:x</FuseSvgIcon>
+                </Box>
+                <Typography id="modal-modal-title" variant="h6" component="h2">
+                  Seus dados não foram salvos!
+                </Typography>
+              </>
+            )}
+          </Box>
+        </Box>
+      </Modal>
 
       <Card className=" w-full md:mx-9 p-24 relative">
         <header className="flex justify-between items-center">
@@ -150,8 +252,7 @@ export function PersonalInfo({
                 label={primaryInfoLabel}
                 type="string"
                 variant="outlined"
-                disabled
-                value={resolvedPrimaryInfoValue}
+                disabled={!isEditable || !canEditPermitCode}
                 fullWidth
               />
             )}
@@ -166,9 +267,10 @@ export function PersonalInfo({
                 label="Nome"
                 type="string"
                 variant="outlined"
-                disabled
-                value={user.fullName}
+                disabled={!isEditable || !canEditFullName}
                 fullWidth
+                error={!!errors.fullName}
+                helperText={errors?.fullName?.message}
               />
             )}
           />
@@ -227,6 +329,7 @@ export function BankInfo({
   const [selectedBankCode, setSelectedBankCode] = useState(user.bankCode ?? '');
   const { patchInfo, success } = useContext(AuthContext)
   const [bankOptions, setBankOptions] = useState([]);
+  const [previousBank, setPreviousBank] = useState();
   const [saved, setSaved] = useState(false)
   const [userBank, setUserBank] = useState('')
 
@@ -269,7 +372,23 @@ export function BankInfo({
 
       setUserBank(
         response.data.find((bank) => normalizeBankCode(bank.code) === normalizedSelectedBankCode) || null
-      )
+      );
+
+      if (user.previousBankCode) {
+        const normalizedPreviousBankCode = normalizeBankCode(user.previousBankCode);
+        const matchedPreviousBank = response.data.find(
+          (bank) => normalizeBankCode(bank.code) === normalizedPreviousBankCode
+        );
+
+        if (matchedPreviousBank) {
+          setPreviousBank(`${user.previousBankCode} - ${matchedPreviousBank.name}`);
+        } else {
+          setPreviousBank(user.previousBankCode);
+        }
+      } else {
+        setPreviousBank(undefined);
+      }
+
       const filteredData = response.data.filter(({ code }) => !bankCodes.includes(code));
 
       setBankOptions(filteredData);
@@ -462,6 +581,10 @@ export function BankInfo({
             />
           </Box>
         </form>
+        <p className="text-red">
+          Última atualização: {formatDateTimeLabel(user?.updatedAt)}
+        </p>
+        {previousBank ? <p>Banco anterior: {previousBank}</p> : null}
       </Card>
     </>
   );

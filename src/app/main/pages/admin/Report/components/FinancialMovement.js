@@ -24,13 +24,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { DateRangePicker } from "rsuite";
 import { useForm, Controller } from "react-hook-form";
 
-import { handleFinancialMovementExport, handleFinancialMovementPage, handleFinancialMovementSummary, setReportList } from "app/store/reportSlice";
+import { handleFinancialMovementExport, handleFinancialMovementPage,setReportList } from "app/store/reportSlice";
 
 import { getUser } from "app/store/adminSlice";
 import { NumericFormat } from "react-number-format";
 import { showMessage } from "app/store/fuse/messageSlice";
 import { ClearIcon } from "@mui/x-date-pickers";
 import { normalizeErroStatusSelection } from "./reportUtils";
+import { buildReportConsorcioOptions } from "./consorcioOptions";
 
 export default function BasicEditingGrid() {
   const minSelectableDate = new Date(2024, 3, 30);
@@ -75,19 +76,7 @@ export default function BasicEditingGrid() {
 
 
 
-  const consorcios = [
-    { label: "Todos", value: "Todos" },
-    { label: "Internorte", value: "Internorte" },
-    { label: "Intersul", value: "Intersul" },
-    { label: "MobiRio", value: "MobiRio" },
-    { label: 'MOBI-Rio BUM', value: "MOBI-Rio BUM" },
-    { label: "Santa Cruz", value: "Santa Cruz" },
-    { label: "STPC", value: "STPC", disabled: selected === "name" },
-    { label: "STPL", value: "STPL", disabled: selected === "name" },
-    { label: "Transcarioca", value: "Transcarioca" },
-    { label: "VLT", value: "VLT" },
-    { label: "TEC", value: "TEC", disabled: selected === "name" },
-  ];
+  const consorcios = buildReportConsorcioOptions({ selectedField: selected });
 
   const especificos = [
     { label: 'Eleição' },
@@ -120,8 +109,7 @@ export default function BasicEditingGrid() {
       const statusSet = new Set(requestData.status);
 
       if (selectedErroLabels.includes("Todos")) {
-        statusSet.add("Erro");
-        statusSet.add("Pendentes");
+        statusSet.add("Erro");        
         requestData.erro = true;
       } else {
         if (selectedErroLabels.includes("Estorno")) {
@@ -195,7 +183,6 @@ export default function BasicEditingGrid() {
     setIsLoading(true);
 
     try {
-      await dispatch(handleFinancialMovementSummary(summaryRequestData, { resetData: true }));
       const pageResponse = await dispatch(handleFinancialMovementPage(pageRequestData));
       const newNextCursor = pageResponse?.nextCursor ?? null;
       setPageCursors([null, newNextCursor]);

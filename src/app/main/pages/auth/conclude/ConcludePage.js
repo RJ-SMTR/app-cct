@@ -20,6 +20,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import {
     getConcludeRegistrationCoverImage,
+    getConcludeRegistrationExpiredRedirectTo,
     getConcludeRegistrationInviteData,
     getConcludeRegistrationPrimaryInfo,
     getConcludeRegistrationRegisterData,
@@ -55,6 +56,7 @@ function ConcludePage() {
     const [skipped, setSkipped] = useState(new Set());
     const [inviteData, setInviteData] = useState(null)
     const [isInviteInfoCalled, setIsInviteInfoCalled] = useState(false);
+    const [expiredRedirectTo, setExpiredRedirectTo] = useState('/sign-in');
     const [registrationResult, setRegistrationResult] = useState(null);
     const { handleInvite, handleRegister } = useContext(AuthContext)
     const useStyles = makeStyles(() => ({
@@ -89,7 +91,8 @@ function ConcludePage() {
                     setIsInviteInfoCalled(true);
                 }
             })
-            .catch((_error)=> {
+            .catch((error) => {
+                setExpiredRedirectTo(getConcludeRegistrationExpiredRedirectTo(error));
             });
     }, [handleInvite, hash, isInviteInfoCalled]);
     
@@ -319,7 +322,7 @@ function ConcludePage() {
                    
                         <Box className="flex flex-col items-center mt-40">
                         <FuseSvgIcon className="text-48" size={48} color="action">material-outline:link_off</FuseSvgIcon>
-                        <h2 className='text-center'> Aparentemente esse link já expirou para que<br></br>  possamos te ajudar <Link to='/sign-in'>clique aqui</Link></h2>
+                        <h2 className='text-center'> Aparentemente esse link já expirou para que<br></br>  possamos te ajudar <Link to={expiredRedirectTo}>clique aqui</Link></h2>
                         </Box>
 
                 </div>

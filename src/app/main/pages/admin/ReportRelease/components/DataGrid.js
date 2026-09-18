@@ -41,20 +41,12 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import ptBR from 'date-fns/locale/pt-BR';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { buildReleaseConsorcioFilters } from '../../Report/components/consorcioOptions';
 
 
 const locale = pt;
 
-const predefinedFilters = [
-    { label: 'Todos', filterFn: () => true },
-    { label: 'COMPANHIA MUNICIPAL DE TRANSPORTES COLETIVOS CMTC RIO', filterFn: (row) => row.consorcio.includes('CMTC') },
-    { label: 'CONSORCIO SANTA CRUZ TRANSPORTES', filterFn: (row) => row.consorcio.includes('Internorte') },
-    { label: 'CONSORCIO INTERSUL TRANSPORTES', filterFn: (row) => row.consorcio.includes('Intersul') },
-    { label: 'CONSORCIO TRANSCARIOCA DE TRANSPORTES', filterFn: (row) => row.consorcio.includes('Transcarioca') },
-    { label: 'CONSORCIO SANTA CRUZ TRANSPORTES', filterFn: (row) => row.consorcio.includes('Santa Cruz') },
-    { label: 'CONCESSIONARIA DO VLT CARIOCA S.A.', filterFn: (row) => row.consorcio.includes('VLT') },
-    { label: 'TEC', filterFn: (row) => row.consorcio.includes('TEC') },
-];
+const predefinedFilters = buildReleaseConsorcioFilters();
 
 const predefinedFiltersStatus = [
     { label: 'Todos', filterFn: () => true },

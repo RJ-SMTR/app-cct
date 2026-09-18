@@ -28,6 +28,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { format, isValid, parseISO } from "date-fns";
 import ptBR from "date-fns/locale/pt-BR";
+import useAgentesDashboard from "./useAgentesDashboard";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, Navigate, useParams } from "react-router-dom";
@@ -38,6 +39,7 @@ import JwtService from "src/app/auth/services/jwtService";
 import { isAdminUser } from "src/app/auth/utils/accessUtils";
 import { BankInfo, getUserCpf, PersonalInfo } from "../profile/formCards/formCards";
 import {
+  buildMonthlyPaymentRowKey,
   getAgentesDashboard,
 } from "./services/agentesService";
 import {
@@ -126,6 +128,13 @@ function formatDateLabel(date) {
   return format(parsedDate, "dd/MM/yyyy");
 }
 
+function areSameCalendarDay(firstDate, secondDate) {
+  const firstDateLabel = normalizeDateValue(firstDate).slice(0, 10);
+  const secondDateLabel = normalizeDateValue(secondDate).slice(0, 10);
+
+  return Boolean(firstDateLabel && secondDateLabel && firstDateLabel === secondDateLabel);
+}
+
 function normalizeDateValue(dateValue) {
   if (typeof dateValue !== "string") {
     return "";
@@ -175,6 +184,52 @@ function getInviteSentAt(user) {
   return user?.inviteAt || "";
 }
 
+function mapFollowingToAssociacoes(user) {
+  if (!Array.isArray(user?.following)) {
+    return [];
+  }
+
+  return user.following
+    .map((relation) => relation?.relatedUser)
+    .filter((relatedUser) => Number(relatedUser?.id) > 0)
+    .map((relatedUser) => ({
+      value: Number(relatedUser.id),
+      label:
+        String(relatedUser.fullName || "").trim() ||
+        String(relatedUser.cpfCnpj || "").trim() ||
+        `Associacao #${relatedUser.id}`,
+      cpfCnpj: relatedUser.cpfCnpj ?? null,
+    }));
+}
+
+function getUserRoleId(user) {
+  return Number(user?.role?.id ?? user?.roleId);
+}
+
+function isAgentUser(user) {
+  return getUserRoleId(user) === 6;
+}
+
+const AGENT_PRIVILEGED_EDITOR_EMAILS = new Set([
+  "jessicasimas.smtr@gmail.com",
+  "felipe.ribeiro@prefeitura.rio",
+  'gabriel.guimaraes@prefeitura.rio',
+  'matthew.araujo@prefeitura.rio',
+  'williamfl2007@gmail.com',
+  'bernardo.marcos64@gmail.com'
+]);
+
+function canEditAgentByException(currentUser) {
+  const currentUserEmail = String(currentUser?.email || "")
+    .trim()
+    .toLowerCase();
+
+  return (
+    (getUserRoleId(currentUser) === 1 || getUserRoleId(currentUser) === 0) &&
+    AGENT_PRIVILEGED_EDITOR_EMAILS.has(currentUserEmail)
+  );
+}
+
 const statusBadgeSx = {
   "& .MuiBadge-badge": {
     position: "relative",
@@ -208,8 +263,12 @@ function StatusBadge({ status }) {
   );
 }
 
-function getPermissionarioStatus(statusRemessa) {
+function getPermissionarioStatus(statusRemessa, paymentStatus) {
   if (statusRemessa === null || statusRemessa === undefined || statusRemessa === "") {
+    if (paymentStatus === "Pendência de Pagamento") {
+      return paymentStatus;
+    }
+
     return "A pagar";
   }
 
@@ -219,18 +278,22 @@ function getPermissionarioStatus(statusRemessa) {
     case 3:
       return "Pago";
     case 4:
-      return "Pendente";
+      return paymentStatus === "Pendência de Pagamento"
+        ? paymentStatus
+        : "Pendente";
     case 5:
       return "Pendencia Paga";
-    case 6:
-      return "Pendencia de Pagamento";
     default:
       return "A pagar";
   }
 }
 
-function getPermissionarioBadgeColor(statusRemessa) {
+function getPermissionarioBadgeColor(statusRemessa, paymentStatus) {
   if (statusRemessa === null || statusRemessa === undefined || statusRemessa === "") {
+    if (paymentStatus === "Pendência de Pagamento") {
+      return "error";
+    }
+
     return "op";
   }
 
@@ -241,8 +304,6 @@ function getPermissionarioBadgeColor(statusRemessa) {
       return "error";
     case 5:
       return "info";
-    case 6:
-      return "error";
     case 2:
       return "wait";
     case 1:
@@ -278,42 +339,48 @@ function formatPhotoCount(count) {
   return Number.isFinite(parsedCount) ? parsedCount : 0;
 }
 
+/*
+ * Preserved for future reactivation of the hidden monthly photo-count columns.
 function getTotalPhotosCount(validPhotosCount, rejectedPhotosCount) {
   return (
     formatPhotoCount(validPhotosCount) + formatPhotoCount(rejectedPhotosCount)
   );
 }
+*/
 
-function ValidPhotosStatusBadge({ status, pendingReason }) {
-  if (!isPendingPaymentStatus(status)) {
-    return <StatusBadge status={status} />;
+function ValidPhotosStatusBadge({ status, paymentStatus }) {
+  return (
+    <Badge
+      className="whitespace-nowrap"
+      color={getPermissionarioBadgeColor(status, paymentStatus)}
+      badgeContent={getPermissionarioStatus(status, paymentStatus)}
+      sx={statusBadgeSx}
+    />
+  );
+}
+
+function PendingReasonBadge({ status, pendingReason }) {
+  if (Number(status) !== 4) {
+    return null;
   }
 
   return (
     <Tooltip
-      title={pendingReason || "Pendente"}
+      title={pendingReason || ""}
       arrow
       enterTouchDelay={10}
       leaveTouchDelay={10000}
     >
-      <Box
-        component="span"
-        onClick={stopStatusBoxPropagation}
-        onMouseDown={stopStatusBoxPropagation}
-        onTouchStart={stopStatusBoxPropagation}
-        sx={{ display: "inline-flex", alignItems: "center" }}
-      >
-        <Badge
-          className="whitespace-nowrap"
-          color="error"
-          badgeContent={
-            <span className="inline-flex items-center gap-4 underline">
-              Pendentes <InfoOutlinedIcon fontSize="small" />
-            </span>
-          }
-          sx={statusBadgeSx}
-        />
-      </Box>
+      <Badge
+        className="whitespace-nowrap"
+        color="error"
+        badgeContent={
+          <span className="inline-flex items-center gap-4 underline">
+            Erro <InfoOutlinedIcon fontSize="small" />
+          </span>
+        }
+        sx={statusBadgeSx}
+      />
     </Tooltip>
   );
 }
@@ -436,6 +503,8 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   selectedMonth,
   selectedMonthDate,
   associacoes,
+  selectedAssociacao,
+  onAssociacaoChange,
   monthlyPayments,
   monthlyLoading,
   onMonthChange,
@@ -445,7 +514,6 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   const [selectedWorkDate, setSelectedWorkDate] = useState("");
   const [selectedPaymentWeek, setSelectedPaymentWeek] = useState(null);
   const [selectedWorkDayPhotos, setSelectedWorkDayPhotos] = useState(null);
-  const [selectedAssociacao, setSelectedAssociacao] = useState(null);
   const [drilldownLoading, setDrilldownLoading] = useState(false);
   const [drilldownError, setDrilldownError] = useState("");
 
@@ -457,24 +525,6 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
     setDrilldownLoading(false);
     setDrilldownError("");
   }, [selectedMonth]);
-
-  useEffect(() => {
-    if (!Array.isArray(associacoes) || associacoes.length === 0) {
-      setSelectedAssociacao(null);
-      return;
-    }
-
-    setSelectedAssociacao((currentValue) => {
-      if (
-        currentValue &&
-        associacoes.some((associacao) => associacao.value === currentValue.value)
-      ) {
-        return currentValue;
-      }
-
-      return associacoes[0];
-    });
-  }, [associacoes]);
 
   const handleDrilldownError = useCallback(
     (message) => {
@@ -497,7 +547,8 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
         const response = await getAgentesDashboard(
           agentId,
           selectedMonth,
-          paymentDate
+          paymentDate,
+          undefined
         );
 
         setSelectedPaymentDate(paymentDate);
@@ -589,48 +640,59 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   let monthlyPaymentsRows = (
     <EmptyState
       message="Não há pagamentos para o mês selecionado."
-      colSpan={6}
+      colSpan={5}
     />
   );
 
   if (monthlyLoading) {
     monthlyPaymentsRows = [...Array(4)].map((_, index) => (
       <TableRow key={`loading-payment-cycle-${index}`}>
-        <TableCell colSpan={6}>
+        <TableCell colSpan={5}>
           <Skeleton variant="text" height={28} />
         </TableCell>
       </TableRow>
     ));
   } else if (monthlyPayments?.length) {
-    monthlyPaymentsRows = monthlyPayments.map((payment) => {
+    monthlyPaymentsRows = monthlyPayments.map((payment, index) => {
       const isSelected = selectedPaymentDate === payment.paymentDate;
-      const totalPhotosCount = getTotalPhotosCount(
-        payment.validPhotosCount,
-        payment.rejectedPhotosCount
-      );
 
       return (
         <TableRow
-          key={payment.paymentDate}
+          key={buildMonthlyPaymentRowKey(payment, index)}
           hover
           selected={isSelected}
-          onClick={() => handleSelectMonthlyPayment(payment.paymentDate)}
-          className="cursor-pointer"
+        // onClick={() => handleSelectMonthlyPayment(payment.paymentDate)}
         >
           <TableCell>{formatDateLabel(payment.paymentDate)}</TableCell>
-          <TableCell>{totalPhotosCount}</TableCell>
-          <TableCell>{payment.validPhotosCount}</TableCell>
+          {/* <TableCell>{getTotalPhotosCount(payment.validPhotosCount, payment.rejectedPhotosCount)}</TableCell> */}
+          {/* <TableCell>{payment.validPhotosCount}</TableCell> */}
           <TableCell>{formatCurrency(payment.totalPaymentValue)}</TableCell>
+          <TableCell>
+            {shouldShowEffectivePaymentDate(payment.statusRemessa)
+              ? areSameCalendarDay(
+                payment.dataTentativaPagamento,
+                payment.dataEfetivaPagamento
+              )
+                ? "-"
+                : formatDateLabel(payment.dataEfetivaPagamento)
+              : "-"}
+          </TableCell>
+
           <TableCell
             align="center"
             sx={{ verticalAlign: "middle" }}
           >
             <ValidPhotosStatusBadge
-              status={payment.paymentStatus}
-              pendingReason={payment.pendingReason}
+              status={payment.statusRemessa}
+              paymentStatus={payment.paymentStatus}
             />
           </TableCell>
-          <TableCell>{payment.rejectedPhotosCount}</TableCell>
+          <TableCell align="center" sx={{ verticalAlign: "middle" }}>
+            <PendingReasonBadge
+              status={payment.statusRemessa}
+              pendingReason={payment.descricaoMotivoStatusRemessa || payment.pendingReason}
+            />
+          </TableCell>
         </TableRow>
       );
     });
@@ -639,14 +701,14 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   let weeklyDayRows = (
     <EmptyState
       message="Nenhum dia encontrado para este pagamento."
-      colSpan={3}
+      colSpan={2}
     />
   );
 
   if (drilldownLoading) {
     weeklyDayRows = [...Array(4)].map((_, index) => (
       <TableRow key={`loading-week-day-${index}`}>
-        <TableCell colSpan={3}>
+        <TableCell colSpan={2}>
           <Skeleton variant="text" height={28} />
         </TableCell>
       </TableRow>
@@ -664,7 +726,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           className="cursor-pointer"
         >
           <TableCell>{formatDateLabel(day.date)}</TableCell>
-          <TableCell>{day.validPhotosCount}</TableCell>
+          {/* <TableCell>{day.validPhotosCount}</TableCell> */}
           <TableCell>{formatCurrency(day.totalPaymentValue)}</TableCell>
         </TableRow>
       );
@@ -672,13 +734,16 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   }
 
   let selectedWorkDayPhotoRows = (
-    <EmptyState message="Nenhuma foto encontrada para o dia selecionado." />
+    <EmptyState
+      message="Nenhuma foto encontrada para o dia selecionado."
+      colSpan={3}
+    />
   );
 
   if (drilldownLoading) {
     selectedWorkDayPhotoRows = [...Array(4)].map((_, index) => (
       <TableRow key={`loading-photo-row-${index}`}>
-        <TableCell colSpan={5}>
+        <TableCell colSpan={3}>
           <Skeleton variant="text" height={28} />
         </TableCell>
       </TableRow>
@@ -694,7 +759,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           <TableCell align="center">
             {normalizePaymentStatus(photo.status) === "Pago" ? "-" : photo.status}
           </TableCell>
-          <TableCell>{photo.rejectionReason || "-"}</TableCell>
+          {/* <TableCell>{photo.rejectionReason || "-"}</TableCell> */}
         </TableRow>
       )
     );
@@ -704,19 +769,20 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   let drilldownSubtitle =
     "Selecione um mês para ver os pagamentos diários consolidados.";
   let tableContent = (
-    <>
+    <Table className="w-full">
       <TableHead>
         <TableRow>
-          <TableCell>Data Pagamento</TableCell>
-          <TableCell>Total fotos</TableCell>
-          <TableCell>Fotos Válidas</TableCell>
+          <TableCell>Data Tentativa Pagamento</TableCell>
+          {/* <TableCell>Total fotos</TableCell> */}
+          {/* <TableCell>Fotos Válidas</TableCell> */}
           <TableCell>Valor Fotos Válidas</TableCell>
-              <TableCell align="center">Status Fotos Válidas</TableCell>
-          <TableCell>Fotos NÃO Válidas</TableCell>
+          <TableCell>Data Efetiva Pagamento</TableCell>
+          <TableCell align="center">Status Fotos Válidas</TableCell>
+          <TableCell align="center">Motivo</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>{monthlyPaymentsRows}</TableBody>
-    </>
+    </Table>
   );
 
   if (selectedPaymentDate) {
@@ -731,7 +797,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
               <TableCell>Capturada em</TableCell>
               <TableCell>Valor</TableCell>
               <TableCell align="center">Status </TableCell>
-              <TableCell>Motivo da rejeição</TableCell>
+              {/* <TableCell>Motivo da rejeição</TableCell> */}
             </TableRow>
           </TableHead>
           <TableBody>{selectedWorkDayPhotoRows}</TableBody>
@@ -746,7 +812,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           <TableHead>
             <TableRow>
               <TableCell>Data Pagamento</TableCell>
-              <TableCell>Fotos Válidas</TableCell>
+              {/* <TableCell>Fotos Válidas</TableCell> */}
               <TableCell>Valor Fotos Válidas</TableCell>
             </TableRow>
           </TableHead>
@@ -771,7 +837,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
             id="agente-associacao"
             options={associacoes}
             value={selectedAssociacao}
-            onChange={(_, newValue) => setSelectedAssociacao(newValue)}
+            onChange={(_, newValue) => onAssociacaoChange(newValue)}
             isOptionEqualToValue={(option, value) => option.value === value?.value}
             getOptionLabel={(option) => option?.label || ""}
             className="min-w-[240px]"
@@ -831,7 +897,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
         sx={{ maxHeight: 440, overflowX: "auto" }}
         className="mt-24"
       >
-        <Table stickyHeader sx={{ minWidth: selectedPaymentDate ? 560 : 820 }}>
+        <Table stickyHeader sx={{ minWidth: selectedPaymentDate ? 560 : 1080 }}>
           {tableContent}
         </Table>
       </TableContainer>
@@ -852,12 +918,10 @@ function AgentesApp() {
   const { id } = useParams();
   const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down("lg"));
   const [selectedMonthDate, setSelectedMonthDate] = useState(
-    getInitialAgentesMonthDate()
+    clampAgentesMonthDate(buildMonthDate())
   );
-  const [dashboard, setDashboard] = useState(null);
   const [agentDetails, setAgentDetails] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [selectedAssociacao, setSelectedAssociacao] = useState(null);
   const [inviteFeedbackStatus, setInviteFeedbackStatus] = useState(null);
   const selectedMonth = useMemo(
     () => format(selectedMonthDate, "yyyy-MM"),
@@ -865,6 +929,21 @@ function AgentesApp() {
   );
   const isOwnDashboard = String(user?.id) === String(id);
   const canAccessSelectedAgent = isAdminUser(user) || isOwnDashboard;
+  const handleDashboardError = useCallback(
+    (message) => dispatch(showMessage({ message })),
+    [dispatch]
+  );
+  const { dashboard, loading, error, reload: loadDashboard } = useAgentesDashboard({
+    id,
+    month: selectedMonth,
+    enabled: canAccessSelectedAgent,
+    onError: handleDashboardError,
+  });
+  const canEditAgentByEmailException = canEditAgentByException(user);
+  const canEditSelectedAgentFields =
+    canEditAgentByEmailException &&
+    !isOwnDashboard &&
+    (agentDetails ? isAgentUser(agentDetails) : true);
   const dashboardOwnerName =
     agentDetails?.fullName ||
     (isOwnDashboard ? user.fullName : null) ||
@@ -872,6 +951,41 @@ function AgentesApp() {
   const agentCpf = getUserCpf(agentDetails);
   const inviteSentAt = getInviteSentAt(agentDetails);
   const isResendInviteLoading = inviteFeedbackStatus === "sending";
+  const associacaoOptions = useMemo(() => {
+    const followingAssociacoes = mapFollowingToAssociacoes(agentDetails);
+
+    if (followingAssociacoes.length > 0) {
+      return followingAssociacoes;
+    }
+
+    if (Array.isArray(agentDetails?.associacoes) && agentDetails.associacoes.length > 0) {
+      return agentDetails.associacoes;
+    }
+
+    if (Array.isArray(dashboard?.associacoes) && dashboard.associacoes.length > 0) {
+      return dashboard.associacoes;
+    }
+
+    return [];
+  }, [agentDetails?.associacoes, dashboard?.associacoes]);
+
+  useEffect(() => {
+    if (associacaoOptions.length === 0) {
+      setSelectedAssociacao(null);
+      return;
+    }
+
+    setSelectedAssociacao((currentValue) => {
+      if (
+        currentValue &&
+        associacaoOptions.some((associacao) => associacao.value === currentValue.value)
+      ) {
+        return currentValue;
+      }
+
+      return associacaoOptions[0];
+    });
+  }, [associacaoOptions]);
 
   const handleCloseInviteFeedback = useCallback((event, reason) => {
     if (reason === "clickaway") {
@@ -966,25 +1080,6 @@ function AgentesApp() {
     }
   }, [dispatch, id, loadAgentDetails]);
 
-  const loadDashboard = useCallback(async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      const response = await getAgentesDashboard(id, selectedMonth);
-      setDashboard(response);
-    } catch (requestError) {
-      setError("Não foi possível carregar o painel de guardador.");
-      dispatch(
-        showMessage({
-          message: "Não foi possível carregar o painel de guardador.",
-        })
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [dispatch, id, selectedMonth]);
-
   useEffect(() => {
     if (!canAccessSelectedAgent) {
       return;
@@ -992,14 +1087,6 @@ function AgentesApp() {
 
     loadAgentDetails();
   }, [canAccessSelectedAgent, loadAgentDetails]);
-
-  useEffect(() => {
-    if (!canAccessSelectedAgent) {
-      return;
-    }
-
-    loadDashboard();
-  }, [canAccessSelectedAgent, loadDashboard]);
 
   const handleSelectedMonth = (newValue) => {
     if (!newValue) {
@@ -1009,6 +1096,8 @@ function AgentesApp() {
     setSelectedMonthDate(clampAgentesMonthDate(newValue));
   };
 
+  /*
+   * Preserved for future reactivation of the hidden rejection-reasons dashboard block.
   let rejectionReasonRows = (
     <EmptyState
       message="Não há rejeições no período selecionado."
@@ -1032,6 +1121,7 @@ function AgentesApp() {
       </TableRow>
     ));
   }
+  */
 
   if (!canAccessSelectedAgent) {
     return <Navigate to={`/agentes/${user?.id}`} replace />;
@@ -1058,11 +1148,10 @@ function AgentesApp() {
                     type="button"
                     onClick={handleResendInvite}
                     disabled={isResendInviteLoading}
-                    className={`rounded p-3 uppercase text-white h-[27px] min-h-[27px] font-medium px-12 mb-12 ${
-                      isResendInviteLoading
+                    className={`rounded p-3 uppercase text-white h-[27px] min-h-[27px] font-medium px-12 mb-12 ${isResendInviteLoading
                         ? "bg-[#7FCFE7] cursor-not-allowed"
                         : "bg-[#0DB1E3]"
-                    }`}
+                      }`}
                   >
                     Reenviar e-mail de cadastro
                   </button>
@@ -1093,8 +1182,9 @@ function AgentesApp() {
                 primaryInfoLabel="CPF"
                 primaryInfoValue={agentCpf}
                 onUserUpdated={setAgentDetails}
+                allowAgentFieldEdit={canEditSelectedAgentFields}
               />
-              {isOwnDashboard ? (
+              {isOwnDashboard || canEditSelectedAgentFields ? (
                 <BankInfo user={agentDetails} />
               ) : (
                 <AgentBankInfo user={agentDetails} />
@@ -1102,19 +1192,19 @@ function AgentesApp() {
             </div>
           ) : null}
 
-          <Box className="grid grid-cols-1 md:grid-cols-3 gap-16">
-            <SummaryCard
+          <Box className="">
+            {/* <SummaryCard
               title="Fotos válidas"
               value={dashboard?.validPhotosCount ?? 0}
               icon="heroicons-outline:badge-check"
               loading={loading}
-            />
-            <SummaryCard
+            /> */}
+            {/* <SummaryCard
               title="Fotos rejeitadas"
               value={dashboard?.rejectedPhotosCount ?? 0}
               icon="heroicons-outline:x-circle"
               loading={loading}
-            />
+            /> */}
             <SummaryCard
               title="Valor consolidado"
               value={formatCurrency(dashboard?.consolidatedPaymentValue)}
@@ -1162,18 +1252,20 @@ function AgentesApp() {
             </Paper>
           ) : null}
 
-          <Box className="grid grid-cols-1 xl:grid-cols-3 gap-24">
+          <Box className="gap-24">
             <DashboardDrilldownCard
               agentId={id}
               selectedMonth={selectedMonth}
               selectedMonthDate={selectedMonthDate}
-              associacoes={dashboard?.associacoes || []}
+              associacoes={associacaoOptions}
+              selectedAssociacao={selectedAssociacao}
+              onAssociacaoChange={setSelectedAssociacao}
               monthlyPayments={dashboard?.monthlyPayments || []}
               monthlyLoading={loading}
               onMonthChange={handleSelectedMonth}
             />
 
-            <Paper className="flex flex-col flex-auto p-16 rounded-2xl shadow overflow-hidden">
+            {/* <Paper className="flex flex-col flex-auto p-16 rounded-2xl shadow overflow-hidden">
               <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
                 Motivos de rejeição
               </Typography>
@@ -1195,7 +1287,7 @@ function AgentesApp() {
                   <TableBody>{rejectionReasonRows}</TableBody>
                 </Table>
               </TableContainer>
-            </Paper>
+            </Paper> */}
           </Box>
         </div>
       }
