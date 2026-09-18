@@ -28,6 +28,10 @@ const jwtServiceConfig = {
   odpSemanal: '/ordem-pagamento/semanal',
   odpDiario: '/ordem-pagamento/diario',
   odpAnteriores: '/ordem-pagamento/transacoes-dias-anteriores',
+  agentesOdpMensal: '/agentes/ordem-pagamento/mensal',
+  agentesOdpSemanal: '/agentes/ordem-pagamento/semanal',
+  agentesOdpDiario: '/agentes/ordem-pagamento/diario',
+  agentesOdpAnteriores: '/agentes/ordem-pagamento/transacoes-dias-anteriores',
   extrato: '/cnab/relatorio/extrato/',
 };
 

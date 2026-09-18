@@ -4,6 +4,7 @@ import { compareAsc, compareDesc, format, parseISO } from 'date-fns';
 import accounting from 'accounting';
 import jwtServiceConfig from '../auth/services/jwtService/jwtServiceConfig';
 import JwtService from '../auth/services/jwtService';
+import { groupTransactionsByType } from './extractUtils';
 
 const initialState = {
     searchingWeek: false,
@@ -15,7 +16,7 @@ const initialState = {
     fullReport: false,
     todayStatements: [],
     multipliedEntries: [],
-    listByType: [],
+    listByType: {},
     firstDate: [],
     valorAcumuladoLabel:'Valor Operação - Acumulado Mensal',
     valorPagoLabel:'Valor  - Acumulado Mensal',
@@ -173,6 +174,55 @@ function normalizeOrderIds(ids) {
     return ids;
 }
 
+function markMonthlyPendingPayments(statements) {
+    const latestPaymentDate = statements.reduce((latestDate, statement) => {
+        const paymentDate = statement.dataTentativaPagamento ?? statement.data;
+
+        return paymentDate > latestDate ? paymentDate : latestDate;
+    }, '');
+
+    const hasRemittanceStatus = (statusRemessa) =>
+        statusRemessa !== null &&
+        statusRemessa !== undefined &&
+        statusRemessa !== '';
+
+    const shouldMarkMissingRemittanceAsPending = (statement) => {
+        const hasPositiveValue = Number(statement?.valorTotal ?? statement?.valor ?? 0) > 0;
+        const hasMissingStatus = !hasRemittanceStatus(statement?.statusRemessa);
+        const hasMissingReason =
+            statement?.motivoStatusRemessa == null &&
+            statement?.descricaoMotivoStatusRemessa == null &&
+            !String(statement?.pendingReason || '').trim();
+
+        return hasPositiveValue && hasMissingStatus && hasMissingReason;
+    };
+
+    return statements.map((statement) => {
+        if (shouldMarkMissingRemittanceAsPending(statement)) {
+            return { ...statement, paymentStatus: 'Pendência de Pagamento' };
+        }
+
+        if (Number(statement.statusRemessa) !== 4) {
+            return statement;
+        }
+
+        const paymentDate = statement.dataTentativaPagamento ?? statement.data;
+        const isLatestPendingPayment = paymentDate === latestPaymentDate;
+        const hasLaterPaymentWithStatus = statements.some((laterStatement) => {
+            const laterPaymentDate = laterStatement.dataTentativaPagamento ?? laterStatement.data;
+            const hasStatus = laterStatement.statusRemessa !== null &&
+                laterStatement.statusRemessa !== undefined &&
+                laterStatement.statusRemessa !== '';
+
+            return laterPaymentDate > paymentDate && hasStatus;
+        });
+
+        return isLatestPendingPayment || hasLaterPaymentWithStatus
+            ? { ...statement, paymentStatus: 'Pendência de Pagamento' }
+            : statement;
+    });
+}
+
 export const  getPreviousDays = (idOrdem, userId) => async (dispatch) => {
     const token = window.localStorage.getItem('jwt_access_token');
     const normalizedIdOrdem = normalizeOrderIds(idOrdem);
@@ -237,6 +287,7 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
 
     if (!normalizedIdOrdem && (searchingDay || searchingWeek)) {
         console.warn("idOrdem está indefinido. Requisição não será feita.");
+        dispatch(setLoadingWeek(false));
         return;
     }
 
@@ -278,16 +329,19 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
             const response = await api(config);
 
             if (searchingDay) {
-                const statementsSort = response.data.sort((a, b) =>
+                const rawData = Array.isArray(response.data) ? response.data : [];
+                const statementsSort = rawData.sort((a, b) =>
                     compareDesc(parseISO(a.datetime_transacao), parseISO(b.datetime_transacao))
                 );
 
                 dispatch(setStatements(statementsSort));
                 
+                dispatch(setListByType(groupTransactionsByType(statementsSort)));
 
 
 
             } else if (searchingWeek) {
+                dispatch(setListByType({}));
                 dispatch(getPreviousDays(normalizedIdOrdem, userId));
 
                 const statementsSort = response.data.sort((a, b) =>
@@ -297,11 +351,12 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
                 
 
             } else {
+                dispatch(setListByType({}));
                 const statementsSort = response.data.ordens.sort((a, b) =>
                     compareDesc(parseISO(a.data), parseISO(b.data))
                 );
 
-                dispatch(setStatements(statementsSort));
+                dispatch(setStatements(markMonthlyPendingPayments(statementsSort)));
                 dispatch(setSumInfo(response.data));
             }
 
@@ -312,6 +367,7 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
 
         } finally {
             dispatch(setLoading(false));
+            dispatch(setLoadingWeek(false));
         }
     }
 };

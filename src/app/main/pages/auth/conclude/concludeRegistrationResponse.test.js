@@ -1,5 +1,6 @@
 import {
   getConcludeRegistrationCoverImage,
+  getConcludeRegistrationExpiredRedirectTo,
   getConcludeRegistrationInviteData,
   getConcludeRegistrationRegisterData,
   getConcludeRegistrationPrimaryInfo,
@@ -149,5 +150,41 @@ describe('concludeRegistrationResponse', () => {
       value: '1234',
     });
     expect(getConcludeRegistrationCoverImage(inviteData)).toBe('assets/images/etc/kombi.jpg');
+  });
+
+  it('redirects an expired agente invite link to the agentes sign-in page', () => {
+    const error = {
+      response: {
+        data: {
+          error: {
+            roleId: 6,
+            redirectTo: '/agentes/sign-in',
+          },
+        },
+      },
+    };
+
+    expect(getConcludeRegistrationExpiredRedirectTo(error)).toBe('/agentes/sign-in');
+  });
+
+  it('redirects an expired non-agente invite link to the generic sign-in page', () => {
+    const error = {
+      response: {
+        data: {
+          error: {
+            roleId: null,
+            redirectTo: '/sign-in',
+          },
+        },
+      },
+    };
+
+    expect(getConcludeRegistrationExpiredRedirectTo(error)).toBe('/sign-in');
+  });
+
+  it('falls back to the generic sign-in page when the backend sends no role data', () => {
+    expect(getConcludeRegistrationExpiredRedirectTo(undefined)).toBe('/sign-in');
+    expect(getConcludeRegistrationExpiredRedirectTo({})).toBe('/sign-in');
+    expect(getConcludeRegistrationExpiredRedirectTo({ response: { data: {} } })).toBe('/sign-in');
   });
 });
