@@ -4,6 +4,10 @@ import { api } from 'app/configs/api/api';
 import accounting from 'accounting';
 import dayjs from 'dayjs';
 import JwtService from '../auth/services/jwtService';
+import {
+  buildAgentConsolidatedReportParams,
+  normalizeAgentConsolidatedReportBlocks,
+} from './agentConsolidatedReportUtils';
 
 
 const initialState = {
@@ -298,6 +302,45 @@ export const handleReportInfo = (data, reportType) => async (dispatch) => {
   }
 };
 
+export const fetchAgentConsolidatedReport = (data) => async () => {
+  const token = window.localStorage.getItem('jwt_access_token');
+
+  if (!JwtService.isAuthTokenValid(token)) {
+    return Promise.reject(new Error('Sessão inválida. Faça login novamente.'));
+  }
+
+  const requestData = buildAgentConsolidatedReportParams(data);
+  const responseData = await requestReport(
+    jwtServiceConfig.consolidadoGuardador,
+    requestData,
+    token
+  );
+
+  return normalizeAgentConsolidatedReportBlocks(responseData);
+};
+
+export const handleFinancialMovementSummary = (data, options = {}) => async (dispatch) => {
+  const token = window.localStorage.getItem('jwt_access_token');
+
+  if (JwtService.isAuthTokenValid(token)) {
+    return new Promise(async (resolve, reject) => {
+      const requestData = handleData(data);
+      const reportTypeUrl = `${jwtServiceConfig.report}/report/summary`;
+
+      try {
+        const responseData = await requestReport(reportTypeUrl, requestData, token);
+        if (options.resetData) {
+          dispatch(setReportList({ ...responseData, data: [] }));
+        } else {
+          dispatch(mergeReportList(responseData));
+        }
+        resolve(responseData);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+};
 
 export const handleFinancialMovementPage = (data) => async (dispatch) => {
   const token = window.localStorage.getItem('jwt_access_token');
@@ -336,6 +379,183 @@ export const handleFinancialMovementExport = (data) => async () => {
           filename: extractFilenameFromDisposition(
             response.headers?.['content-disposition'],
             `financial-report.${data.format}`,
+          ),
+          contentType: response.headers?.['content-type'],
+        });
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+};
+
+export function handleAgentFinancialData(data) {
+  let requestData = {};
+
+  if (data.dateRange && data.dateRange.length === 2 && data.dateRange[0] && data.dateRange[1]) {
+    requestData.dataInicio = dayjs(data.dateRange[0]).format('YYYY-MM-DD');
+    requestData.dataFim = dayjs(data.dateRange[1]).format('YYYY-MM-DD');
+  }
+
+  if (data.agentNames && data.agentNames.length > 0) {
+    const userIds = data.agentNames
+      .map((i) => (typeof i === 'object' ? (i.id || i.userId || i.value) : i))
+      .filter((id) => id && id !== 'Todos');
+    if (userIds.length > 0 && !data.agentNames.some((i) => (typeof i === 'object' ? (i.value || i.label) : i) === 'Todos')) {
+      requestData.userIds = userIds.join(',');
+    }
+  } else if (data.name && data.name.length > 0) {
+    const userIds = data.name
+      .map((i) => (typeof i === 'object' ? (i.userId || i.id || i.value) : i))
+      .filter((id) => id && id !== 'Todos');
+    if (userIds.length > 0 && !data.name.some((i) => (typeof i === 'object' ? (i.fullName || i.value) : i) === 'Todos')) {
+      requestData.userIds = userIds.join(',');
+    }
+  }
+
+  if (data.associations && data.associations.length > 0) {
+    const assocValues = data.associations
+      .map((i) => (typeof i === 'object' ? (i.value || i.label) : i))
+      .filter((v) => v && v !== 'Todos');
+    if (assocValues.length > 0 && !data.associations.some((i) => (typeof i === 'object' ? (i.value || i.label) : i) === 'Todos')) {
+      requestData.consorcioNome = assocValues.join(',');
+    }
+  } else if (data.consorcioName && data.consorcioName.length > 0) {
+    const assocValues = data.consorcioName
+      .map((i) => (typeof i === 'object' ? (i.value || i.label) : i))
+      .filter((v) => v && v !== 'Todos');
+    if (assocValues.length > 0 && !data.consorcioName.some((i) => (typeof i === 'object' ? (i.value || i.label) : i) === 'Todos')) {
+      requestData.consorcioNome = assocValues.join(',');
+    }
+  }
+
+  if (data.status && data.status.length > 0) {
+    data.status.forEach((status) => {
+      const s = typeof status === 'object' ? (status.value || status.label) : status;
+      switch (s) {
+        case 'Pago':
+          requestData.pago = true;
+          break;
+        case 'Erro':
+        case 'Erros':
+          requestData.erro = true;
+          break;
+        case 'Aguardando Pagamento':
+        case 'Em processamento':
+          requestData.emProcessamento = true;
+          break;
+        case 'Estorno':
+          requestData.estorno = true;
+          break;
+        case 'Rejeitado':
+          requestData.rejeitado = true;
+          break;
+        case 'Pendencia Paga':
+        case 'Pendência paga':
+          requestData.pendenciaPaga = true;
+          break;
+        case 'Pendentes':
+        case 'OPs atrasadas':
+          requestData.pendentes = true;
+          break;
+        case 'A pagar':
+        case 'A Pagar':
+          requestData.aPagar = true;
+          break;
+        default:
+          break;
+      }
+    });
+  }
+
+  const addIfValid = (key, value) => {
+    if (value !== null && value !== undefined && value !== '') {
+      const unformattedValue = accounting.unformat(String(value).replace(/\./g, '').replace(',', '.'));
+      requestData[key] = parseFloat(unformattedValue).toFixed(2);
+    }
+  };
+
+  addIfValid('valorMax', data.valorMax);
+  addIfValid('valorMin', data.valorMin);
+
+  const pageNumber = Number(data.page);
+  if (Number.isInteger(pageNumber) && pageNumber > 0) {
+    requestData.page = pageNumber;
+  }
+
+  const pageSizeNumber = Number(data.pageSize);
+  if (Number.isInteger(pageSizeNumber) && pageSizeNumber > 0) {
+    requestData.pageSize = pageSizeNumber;
+  }
+
+  if (data.cursorDataReferencia) requestData.cursorDataReferencia = data.cursorDataReferencia;
+  if (data.cursorNome) requestData.cursorNome = data.cursorNome;
+  if (data.cursorStatus) requestData.cursorStatus = data.cursorStatus;
+  if (data.cursorCpfCnpj) requestData.cursorCpfCnpj = data.cursorCpfCnpj;
+
+  return requestData;
+}
+
+export const handleAgentFinancialMovementSummary = (data, options = {}) => async (dispatch) => {
+  const token = window.localStorage.getItem('jwt_access_token');
+
+  if (JwtService.isAuthTokenValid(token)) {
+    return new Promise(async (resolve, reject) => {
+      const requestData = handleAgentFinancialData(data);
+      const reportTypeUrl = `${jwtServiceConfig.guardadorFinancialMovement}/report/summary`;
+
+      try {
+        const responseData = await requestReport(reportTypeUrl, requestData, token);
+        if (options.resetData) {
+          dispatch(setReportList({ ...responseData, data: [] }));
+        } else {
+          dispatch(mergeReportList(responseData));
+        }
+        resolve(responseData);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+};
+
+export const handleAgentFinancialMovementPage = (data) => async (dispatch) => {
+  const token = window.localStorage.getItem('jwt_access_token');
+
+  if (JwtService.isAuthTokenValid(token)) {
+    return new Promise(async (resolve, reject) => {
+      const requestData = handleAgentFinancialData(data);
+      const reportTypeUrl = `${jwtServiceConfig.guardadorFinancialMovement}/report/page`;
+
+      try {
+        const responseData = await requestReport(reportTypeUrl, requestData, token);
+        dispatch(mergeReportList(responseData));
+        resolve(responseData);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+};
+
+export const handleAgentFinancialMovementExport = (data) => async () => {
+  const token = window.localStorage.getItem('jwt_access_token');
+
+  if (JwtService.isAuthTokenValid(token)) {
+    return new Promise(async (resolve, reject) => {
+      const requestData = handleAgentFinancialData(data);
+      const reportTypeUrl = `${jwtServiceConfig.guardadorFinancialMovement}/report/export/download`;
+
+      try {
+        const response = await requestReportDownload(reportTypeUrl, {
+          ...requestData,
+          format: data.format,
+        }, token);
+        resolve({
+          blob: response.data,
+          filename: extractFilenameFromDisposition(
+            response.headers?.['content-disposition'],
+            `relatorio-financeiro-guardadores.${data.format}`,
           ),
           contentType: response.headers?.['content-type'],
         });

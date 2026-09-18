@@ -46,6 +46,7 @@ import {
   MIN_AGENTES_SELECTABLE_MONTH_DATE,
   buildMonthDate,
   clampAgentesMonthDate,
+  getInitialAgentesMonthDate,
 } from "./agentesMonthSelection";
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
