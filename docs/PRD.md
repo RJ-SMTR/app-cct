@@ -1,34 +1,5 @@
 ## Problem Statement
 
-## Active Feature: Forgot-password role presentation
-
-### Problem and solution
-
-Recovery currently always displays the kombi photo. Both permissionário and guardador login links must pass their originating role so recovery displays the appropriate existing photo.
-
-### User stories
-
-1. As a guardador, I want recovery to show the agentes photo after following my login screen's link.
-2. As a permissionário, I want recovery to show the kombi photo after following my login screen's link.
-3. As a visitor opening recovery directly, I want its existing default photo to remain available.
-
-### Implementation decisions and acceptance criteria
-
-- AC-F1: guardador login links to `/forgot-password?role=guardador`; recovery shows `assets/images/etc/agentes.jpeg`.
-- AC-F2: permissionário login links to `/forgot-password?role=permissionario`; recovery shows `assets/images/etc/kombi.jpg`.
-- AC-F3: missing or unsupported role values display the existing kombi photo.
-- The role is presentation context only. Recovery submission and authorization remain unchanged.
-
-### Testing decisions
-
-Use focused image selection tests, following the existing reset-password test pattern. Review login link destinations and recovery query wiring. Verify both cover subjects manually in a browser when available.
-
-### Out of scope
-
-Backend changes, recovery redirects, other login screens, and visual redesign.
-
-## Previous Feature: Optional profile phone
-
 On the `agentes/:id` screen, an admin can edit a guardador's email in the shared `PersonalInfo` form. When the guardador has no celular saved, the form currently blocks submission because `phone` is always required, even when the field is disabled and cannot be edited in that context.
 
 ## Solution
