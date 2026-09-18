@@ -192,7 +192,7 @@ function AgentesSignInPage() {
                 )}
               />
 
-              <Link className="text-md font-medium" to="/forgot-password">
+              <Link className="text-md font-medium" to="/forgot-password?role=guardador">
                 Esqueceu sua senha?
               </Link>
             </div>

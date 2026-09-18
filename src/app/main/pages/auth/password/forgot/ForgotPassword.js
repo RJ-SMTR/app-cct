@@ -7,16 +7,19 @@ import * as yup from 'yup';
 import _ from '@lodash';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useContext } from 'react';
 import { AuthContext } from 'src/app/auth/AuthContext';
+import { getForgotPasswordCoverImage } from './forgotPasswordCoverImage';
 
 const schema = yup.object().shape({
   email: yup.string().email('Insira um e-mail válido').required('Insira seu e-mail'),
 });
 
 function ForgotPassword() {
-  const navigate = useNavigate()
+  const [searchParams] = useSearchParams();
+  const role = searchParams.get('role');
+  const coverImage = getForgotPasswordCoverImage(role);
   const { forgotPasswordFunction } = useContext(AuthContext);
   const { control, formState, handleSubmit } = useForm({
     mode: 'onChange',
@@ -105,7 +108,11 @@ function ForgotPassword() {
       </Paper>
 
       <Box className="relative hidden md:flex flex-auto items-center justify-center h-screen  overflow-hidden ">
-    <img src="assets/images/etc/kombi.jpg" className="h-full w-full object-fill" alt="Kombis CCT" />
+        <img
+          src={coverImage}
+          className="h-full w-full object-fill"
+          alt={role === 'guardador' ? 'Agentes CCT' : 'Kombis CCT'}
+        />
       </Box>
     </div>
   );
