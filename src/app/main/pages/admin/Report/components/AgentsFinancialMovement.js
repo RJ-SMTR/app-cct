@@ -35,6 +35,7 @@ import { showMessage } from "app/store/fuse/messageSlice";
 import {
   buildAgentAutocompleteOptions,
   buildAssociationAutocompleteOptions,
+  getAgentEffectivePaymentDateLabel,
   getAssociationDisplayName,
   normalizeSelectAllAutocompleteValue,
   shouldShowAgentNameFilter,
@@ -671,9 +672,7 @@ export default function AgentsFinancialMovement() {
                         <TableCell className="text-xs py-1">{getAssociationDisplayName(report.consorcio) || "-"}</TableCell>
                         {!showErroStatus && (
                           <TableCell className="text-xs py-1">
-                            {report.status === "Pendencia Paga" || report.status === "Pago"
-                              ? report.dataPagamento
-                              : "-"}
+                            {getAgentEffectivePaymentDateLabel(report)}
                           </TableCell>
                         )}
                         <TableCell className="text-xs py-6 px-1">{formatCurrency(report.valor)}</TableCell>
