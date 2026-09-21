@@ -16,6 +16,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { isAdminUser } from 'src/app/auth/utils/accessUtils';
 import { format, isValid, parseISO } from 'date-fns';
 import { createPersonalInfoSchema } from "./personalInfoValidation";
+import { getEmailErrorMessage } from "./personalInfoEmailError";
 
 const style = {
   position: 'absolute',
@@ -154,7 +155,7 @@ export function PersonalInfo({
 
         if (normalizedErrors.email) {
           setError('email', {
-            message: 'E-mail inválido'
+            message: getEmailErrorMessage(normalizedErrors.email)
           });
         }
 
