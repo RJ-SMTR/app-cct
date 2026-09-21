@@ -23,6 +23,33 @@ function getOptionValue(option) {
   return option?.value ?? option?.label ?? "";
 }
 
+function normalizeAssociationName(name) {
+  return String(name)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toUpperCase();
+}
+
+// Purely visual: the full names of these two associations are too long for the tables.
+export function getAssociationDisplayName(name) {
+  if (!name) {
+    return name;
+  }
+
+  const normalizedName = normalizeAssociationName(name);
+
+  if (normalizedName.includes("SINGAERJ")) {
+    return "SINGAERJ";
+  }
+
+  if (normalizedName.startsWith("ASSOCIACAO NACIONAL DOS GUARDADORES E LAVADORES")) {
+    return "ANGLAE";
+  }
+
+  return name;
+}
+
 export function normalizeCurrencyFilterValue(value) {
   if (value == null || value === "") {
     return null;
@@ -213,7 +240,7 @@ export function buildAssociationAutocompleteOptions(agentUsers = []) {
   return [
     { label: AGENT_REPORT_SELECT_ALL_VALUE, value: AGENT_REPORT_SELECT_ALL_VALUE },
     ...uniqueAssociations.map((association) => ({
-      label: association,
+      label: getAssociationDisplayName(association),
       value: association,
     })),
   ];
