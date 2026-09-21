@@ -6,8 +6,11 @@ import {
   buildAssociationAutocompleteOptions,
   flattenAgentConsolidatedReportBlocks,
   getAgentConsolidatedReportTotal,
+  getAssociationDisplayName,
   normalizeAgentStatusSelection,
   normalizeAgentConsolidatedReportBlocks,
+  shouldShowAgentNameFilter,
+  shouldShowAssociationFilter,
 } from "./agentConsolidatedReportUtils";
 
 describe("agentConsolidatedReportUtils", () => {
@@ -166,6 +169,51 @@ describe("agentConsolidatedReportUtils", () => {
       { label: "Associacao X", value: "Associacao X" },
       { label: "Associacao Y", value: "Associacao Y" },
     ]);
+  });
+
+  describe("association display", () => {
+    const singaerj =
+      "SINDICATO DOS GUARDADORES DE AUTOMOVEIS NO ESTADO DO RIO DE JANEIRO E REGIAO - SINGAERJ";
+    const anglae =
+      "ASSOCIACAO NACIONAL DOS GUARDADORES E LAVADORES DE AUTOMOVEIS CONGENERES E AFINS";
+
+    it("shortens SINGAERJ and ANGLAE and keeps any other name untouched", () => {
+      expect(getAssociationDisplayName(singaerj)).toBe("SINGAERJ");
+      expect(getAssociationDisplayName(anglae)).toBe("ANGLAE");
+      expect(
+        getAssociationDisplayName("Associação Nacional dos Guardadores e Lavadores de Automóveis Congêneres e Afins")
+      ).toBe("ANGLAE");
+      expect(getAssociationDisplayName("Associacao X")).toBe("Associacao X");
+      expect(getAssociationDisplayName(undefined)).toBeUndefined();
+    });
+
+    it("shows the short label in the association options but keeps the full name as value", () => {
+      const options = buildAssociationAutocompleteOptions([
+        { fullName: "Maria", associacoes: [{ label: singaerj }, { label: anglae }] },
+      ]);
+
+      expect(options).toEqual([
+        { label: "Todos", value: "Todos" },
+        { label: "ANGLAE", value: anglae },
+        { label: "SINGAERJ", value: singaerj },
+      ]);
+    });
+  });
+
+  describe("agent and association filters", () => {
+    const todos = { label: "Todos", value: "Todos" };
+    const maria = { label: "Maria", value: "Maria" };
+
+    it("hides the association filter as soon as any guardador option is selected, including Todos", () => {
+      expect(shouldShowAssociationFilter([])).toBe(true);
+      expect(shouldShowAssociationFilter([todos])).toBe(false);
+      expect(shouldShowAssociationFilter([maria])).toBe(false);
+    });
+
+    it("hides the guardador filter once an association is selected", () => {
+      expect(shouldShowAgentNameFilter([])).toBe(true);
+      expect(shouldShowAgentNameFilter([{ label: "ANGLAE", value: "x" }])).toBe(false);
+    });
   });
 
   it("keeps the erros selection exclusive with paid-status options", () => {

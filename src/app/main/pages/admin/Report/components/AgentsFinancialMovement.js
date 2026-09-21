@@ -35,6 +35,7 @@ import { showMessage } from "app/store/fuse/messageSlice";
 import {
   buildAgentAutocompleteOptions,
   buildAssociationAutocompleteOptions,
+  getAssociationDisplayName,
   normalizeSelectAllAutocompleteValue,
   shouldShowAgentNameFilter,
   shouldShowAssociationFilter,
@@ -667,7 +668,7 @@ export default function AgentsFinancialMovement() {
                               )
                             : "-"}
                         </TableCell>
-                        <TableCell className="text-xs py-1">{report.consorcio || "-"}</TableCell>
+                        <TableCell className="text-xs py-1">{getAssociationDisplayName(report.consorcio) || "-"}</TableCell>
                         {!showErroStatus && (
                           <TableCell className="text-xs py-1">
                             {report.status === "Pendencia Paga" || report.status === "Pago"
