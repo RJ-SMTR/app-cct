@@ -32,4 +32,17 @@ describe('handleAgentFinancialData status flags', () => {
     expect(requestData.aPagar).toBe(true);
     expect(requestData.pendenciaPaga).toBeUndefined();
   });
+  describe('guardador selector', () => {
+    it('sends the selected user ids as userIds', () => {
+      const requestData = handleAgentFinancialData({ dateRange, agentNames: [2, 5] });
+
+      expect(requestData.userIds).toBe('2,5');
+    });
+
+    it('sends no userIds when Todos is selected', () => {
+      const requestData = handleAgentFinancialData({ dateRange, agentNames: ['Todos'] });
+
+      expect(requestData.userIds).toBeUndefined();
+    });
+  });
 });

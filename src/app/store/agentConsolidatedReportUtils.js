@@ -96,6 +96,19 @@ function buildCommaSeparatedFilter(values) {
   return values.join(",");
 }
 
+// The guardador selector holds user ids. "Todos" is not a filter, so no ids are sent.
+function buildUserIdsFilter(values) {
+  if (!Array.isArray(values) || values.length === 0) {
+    return null;
+  }
+
+  if (values.includes(AGENT_REPORT_SELECT_ALL_VALUE)) {
+    return null;
+  }
+
+  return values.join(",");
+}
+
 export function buildAgentConsolidatedReportParams(filters = {}) {
   const params = {};
 
@@ -109,9 +122,9 @@ export function buildAgentConsolidatedReportParams(filters = {}) {
     }
   }
 
-  const favorecidoNome = buildCommaSeparatedFilter(filters.agentNames);
-  if (favorecidoNome) {
-    params.favorecidoNome = favorecidoNome;
+  const userIds = buildUserIdsFilter(filters.agentNames);
+  if (userIds) {
+    params.userIds = userIds;
   }
 
   const consorcioNome = buildCommaSeparatedFilter(filters.associations);
@@ -232,17 +245,32 @@ export function getAgentAssociationNames(agentUser) {
   ].filter(Boolean);
 }
 
+// The selector value is the user id (sent to the API), not the name: two guardadores can
+// share a name and the API filters by id.
+function getAgentUserId(agentUser) {
+  return agentUser?.id ?? agentUser?.userId ?? null;
+}
+
 export function buildAgentAutocompleteOptions(agentUsers = []) {
-  const uniqueNames = Array.from(
-    new Set(agentUsers.map((agentUser) => getAgentOptionLabel(agentUser)).filter(Boolean))
-  ).sort((firstName, secondName) => firstName.localeCompare(secondName));
+  const optionsById = new Map();
+
+  agentUsers.forEach((agentUser) => {
+    const userId = getAgentUserId(agentUser);
+
+    if (userId != null && !optionsById.has(userId)) {
+      optionsById.set(userId, { label: getAgentOptionLabel(agentUser), value: userId });
+    }
+  });
+
+  const agentOptions = Array.from(optionsById.values()).sort(
+    (firstOption, secondOption) =>
+      firstOption.label.localeCompare(secondOption.label) ||
+      Number(firstOption.value) - Number(secondOption.value)
+  );
 
   return [
     { label: AGENT_REPORT_SELECT_ALL_VALUE, value: AGENT_REPORT_SELECT_ALL_VALUE },
-    ...uniqueNames.map((name) => ({
-      label: name,
-      value: name,
-    })),
+    ...agentOptions,
   ];
 }
 

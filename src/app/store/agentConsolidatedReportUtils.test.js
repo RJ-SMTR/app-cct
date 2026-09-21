@@ -21,7 +21,7 @@ describe("agentConsolidatedReportUtils", () => {
   it("serializes agentes filters according to the consolidated contract", () => {
     const params = buildAgentConsolidatedReportParams({
       dateRange: [julyStartDate, julyEndDate],
-      agentNames: ["Maria", "Joao"],
+      agentNames: [2, 5],
       associations: ["Associacao X", "Associacao Y"],
       status: ["Pago", "A pagar", "Em processamento"],
       valorMin: "1.234,56",
@@ -31,7 +31,7 @@ describe("agentConsolidatedReportUtils", () => {
     expect(params).toEqual({
       dataInicio: "2026-07-01",
       dataFim: "2026-07-31",
-      favorecidoNome: "Maria,Joao",
+      userIds: "2,5",
       consorcioNome: "Associacao X,Associacao Y",
       valorMin: "1234.56",
       valorMax: "9876.54",
@@ -84,7 +84,7 @@ describe("agentConsolidatedReportUtils", () => {
     });
   });
 
-  it("preserves the special Todos value for nomes and associacoes", () => {
+  it("sends no userIds for Todos guardadores and preserves Todos for associacoes", () => {
     const params = buildAgentConsolidatedReportParams({
       dateRange: [julyStartDate, julyEndDate],
       agentNames: [AGENT_REPORT_SELECT_ALL_VALUE],
@@ -94,7 +94,6 @@ describe("agentConsolidatedReportUtils", () => {
     expect(params).toEqual({
       dataInicio: "2026-07-01",
       dataFim: "2026-07-31",
-      favorecidoNome: "Todos",
       consorcioNome: "Todos",
     });
   });
@@ -147,22 +146,29 @@ describe("agentConsolidatedReportUtils", () => {
     expect(getAgentConsolidatedReportTotal(normalizedBlocks)).toBe(150.5);
   });
 
-  it("builds unique autocomplete options from agentes data", () => {
+  it("builds the guardador options with the user id as value and unique association options", () => {
     const agentUsers = [
       {
+        id: 5,
         fullName: "Maria da Silva",
         associacoes: [{ label: "Associacao X" }, { label: "Associacao Y" }],
       },
       {
+        id: 2,
         fullName: "Joao Pereira",
         associacoes: [{ label: "Associacao X" }],
       },
+      // same name, different user: both stay selectable because the value is the id
+      { id: 9, fullName: "Joao Pereira", associacoes: [] },
+      // no id: it could not be sent to the API
+      { fullName: "Sem Id", associacoes: [] },
     ];
 
     expect(buildAgentAutocompleteOptions(agentUsers)).toEqual([
       { label: "Todos", value: "Todos" },
-      { label: "Joao Pereira", value: "Joao Pereira" },
-      { label: "Maria da Silva", value: "Maria da Silva" },
+      { label: "Joao Pereira", value: 2 },
+      { label: "Joao Pereira", value: 9 },
+      { label: "Maria da Silva", value: 5 },
     ]);
 
     expect(buildAssociationAutocompleteOptions(agentUsers)).toEqual([
