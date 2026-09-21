@@ -167,7 +167,7 @@ function SignInPage() {
                 )}
               />
 
-              <Link className="text-md font-medium" to="/forgot-password">
+              <Link className="text-md font-medium" to="/forgot-password?role=permissionario">
                 Esqueceu sua senha?
               </Link>
             </div>
