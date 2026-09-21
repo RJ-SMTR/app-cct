@@ -31,12 +31,10 @@ function normalizeAssociationName(name) {
     .toUpperCase();
 }
 
-// Purely visual: the full names of these two associations are too long for the tables.
-export function getAssociationDisplayName(name) {
-  if (!name) {
-    return name;
-  }
+// Separator the API uses when a guardador belongs to more than one association.
+const ASSOCIATION_SEPARATOR = " / ";
 
+function getSingleAssociationDisplayName(name) {
   const normalizedName = normalizeAssociationName(name);
 
   if (normalizedName.includes("SINGAERJ")) {
@@ -48,6 +46,19 @@ export function getAssociationDisplayName(name) {
   }
 
   return name;
+}
+
+// Purely visual: the full names of these two associations are too long for the tables.
+// A guardador with several associations arrives as one joined value, so each one is shortened.
+export function getAssociationDisplayName(name) {
+  if (!name) {
+    return name;
+  }
+
+  return String(name)
+    .split(ASSOCIATION_SEPARATOR)
+    .map(getSingleAssociationDisplayName)
+    .join(ASSOCIATION_SEPARATOR);
 }
 
 // Only a paid pendência has an effective payment date to show; a plain "Pago" row shows "-".

@@ -210,6 +210,12 @@ describe("agentConsolidatedReportUtils", () => {
       expect(getAssociationDisplayName(undefined)).toBeUndefined();
     });
 
+    it("shortens each association when a guardador belongs to more than one", () => {
+      expect(getAssociationDisplayName(`${anglae} / ${singaerj}`)).toBe("ANGLAE / SINGAERJ");
+      expect(getAssociationDisplayName(`${singaerj} / ${anglae}`)).toBe("SINGAERJ / ANGLAE");
+      expect(getAssociationDisplayName(`Associacao X / ${singaerj}`)).toBe("Associacao X / SINGAERJ");
+    });
+
     it("shows the short label in the association options but keeps the full name as value", () => {
       const options = buildAssociationAutocompleteOptions([
         { fullName: "Maria", associacoes: [{ label: singaerj }, { label: anglae }] },
