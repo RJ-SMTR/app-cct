@@ -452,6 +452,7 @@ export function handleAgentFinancialData(data) {
           break;
         case 'Pendencia Paga':
         case 'Pendência paga':
+        case 'Pendência Paga':
           requestData.pendenciaPaga = true;
           break;
         case 'Pendentes':
