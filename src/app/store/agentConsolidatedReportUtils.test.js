@@ -6,6 +6,7 @@ import {
   buildAssociationAutocompleteOptions,
   flattenAgentConsolidatedReportBlocks,
   getAgentConsolidatedReportTotal,
+  getAgentEffectivePaymentDateLabel,
   getAssociationDisplayName,
   normalizeAgentStatusSelection,
   normalizeAgentConsolidatedReportBlocks,
@@ -169,6 +170,28 @@ describe("agentConsolidatedReportUtils", () => {
       { label: "Associacao X", value: "Associacao X" },
       { label: "Associacao Y", value: "Associacao Y" },
     ]);
+  });
+
+  describe("effective payment date", () => {
+    it("never shows the effective payment date of a Pago row", () => {
+      expect(
+        getAgentEffectivePaymentDateLabel({ status: "Pago", dataPagamento: "21/08/2026" })
+      ).toBe("-");
+    });
+
+    it("shows the effective payment date of a Pendencia Paga row", () => {
+      expect(
+        getAgentEffectivePaymentDateLabel({ status: "Pendencia Paga", dataPagamento: "03/09/2026" })
+      ).toBe("03/09/2026");
+    });
+
+    it("shows a dash when a Pendencia Paga row has no payment date or for any other status", () => {
+      expect(getAgentEffectivePaymentDateLabel({ status: "Pendencia Paga" })).toBe("-");
+      expect(
+        getAgentEffectivePaymentDateLabel({ status: "A Pagar", dataPagamento: "21/08/2026" })
+      ).toBe("-");
+      expect(getAgentEffectivePaymentDateLabel(undefined)).toBe("-");
+    });
   });
 
   describe("association display", () => {

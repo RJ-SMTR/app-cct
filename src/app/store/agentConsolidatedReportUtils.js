@@ -50,6 +50,13 @@ export function getAssociationDisplayName(name) {
   return name;
 }
 
+// Only a paid pendência has an effective payment date to show; a plain "Pago" row shows "-".
+export function getAgentEffectivePaymentDateLabel(report) {
+  return report?.status === "Pendencia Paga" && report?.dataPagamento
+    ? report.dataPagamento
+    : "-";
+}
+
 export function normalizeCurrencyFilterValue(value) {
   if (value == null || value === "") {
     return null;
