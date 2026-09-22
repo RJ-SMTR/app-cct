@@ -37,6 +37,7 @@ import {
   buildAssociationAutocompleteOptions,
   getAgentEffectivePaymentDateLabel,
   getAssociationDisplayName,
+  isKnownAssociationName,
   normalizeSelectAllAutocompleteValue,
   shouldShowAgentNameFilter,
   shouldShowAssociationFilter,
@@ -665,7 +666,9 @@ export default function AgentsFinancialMovement() {
                         <TableCell className="text-xs py-6 px-1" style={{ whiteSpace: "nowrap" }}>
                           {getAssociationDisplayName(report.nomes)}
                         </TableCell>
-                        <TableCell className="text-xs py-6 px-1">{report.email || "-"}</TableCell>
+                        <TableCell className="text-xs py-6 px-1">
+                          {isKnownAssociationName(report.nomes) ? "-" : report.email || "-"}
+                        </TableCell>
                         <TableCell className="text-xs py-1">{report.codBanco || "-"}</TableCell>
                         <TableCell className="text-xs py-6 px-1">{report.nomeBanco || "-"}</TableCell>
                         <TableCell className="text-xs py-6 px-1">

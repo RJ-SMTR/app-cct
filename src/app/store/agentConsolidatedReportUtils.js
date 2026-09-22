@@ -34,9 +34,7 @@ function normalizeAssociationName(name) {
 // Separator the API uses when a guardador belongs to more than one association.
 const ASSOCIATION_SEPARATOR = " / ";
 
-function getSingleAssociationDisplayName(name) {
-  const normalizedName = normalizeAssociationName(name);
-
+function matchKnownAssociation(normalizedName) {
   if (normalizedName.includes("SINGAERJ")) {
     return "SINGAERJ";
   }
@@ -45,7 +43,11 @@ function getSingleAssociationDisplayName(name) {
     return "ANGLAE";
   }
 
-  return name;
+  return null;
+}
+
+function getSingleAssociationDisplayName(name) {
+  return matchKnownAssociation(normalizeAssociationName(name)) ?? name;
 }
 
 // Purely visual: the full names of these two associations are too long for the tables.
@@ -59,6 +61,17 @@ export function getAssociationDisplayName(name) {
     .split(ASSOCIATION_SEPARATOR)
     .map(getSingleAssociationDisplayName)
     .join(ASSOCIATION_SEPARATOR);
+}
+
+// True when `name` is one of the two known associations' own payee name (SINGAERJ/ANGLAE),
+// as opposed to a guardador linked to it. Used to hide fields that only make sense for a
+// guardador (e.g. email) on the association's own report row.
+export function isKnownAssociationName(name) {
+  if (!name) {
+    return false;
+  }
+
+  return matchKnownAssociation(normalizeAssociationName(name)) !== null;
 }
 
 // Only a paid pendência has an effective payment date to show; a plain "Pago" row shows "-".
