@@ -34,6 +34,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { api } from "app/configs/api/api";
 import { selectUser } from "app/store/userSlice";
+import { invalidateAgentsList } from "app/store/adminSlice";
 import { showMessage } from "app/store/fuse/messageSlice";
 import JwtService from "src/app/auth/services/jwtService";
 import { isAdminUser } from "src/app/auth/utils/accessUtils";
@@ -1027,6 +1028,15 @@ function AgentesApp() {
     }
   }, [dispatch, id, isOwnDashboard, user]);
 
+  // PersonalInfo edits fullName/email/phone/permitCode, all shown in the AgentesHome list.
+  const handlePersonalInfoUpdated = useCallback(
+    (updatedUser) => {
+      setAgentDetails(updatedUser);
+      dispatch(invalidateAgentsList());
+    },
+    [dispatch]
+  );
+
   const handleResendInvite = useCallback(async () => {
     const token = window.localStorage.getItem("jwt_access_token");
     const data = {
@@ -1047,6 +1057,7 @@ function AgentesApp() {
       });
 
       await loadAgentDetails();
+      dispatch(invalidateAgentsList());
       setInviteFeedbackStatus("success");
     } catch (requestError) {
       setInviteFeedbackStatus(null);
@@ -1181,7 +1192,7 @@ function AgentesApp() {
                 user={agentDetails}
                 primaryInfoLabel="CPF"
                 primaryInfoValue={agentCpf}
-                onUserUpdated={setAgentDetails}
+                onUserUpdated={handlePersonalInfoUpdated}
                 allowAgentFieldEdit={canEditSelectedAgentFields}
               />
               {isOwnDashboard || canEditSelectedAgentFields ? (
