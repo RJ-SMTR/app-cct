@@ -8,6 +8,7 @@ import {
   getAgentConsolidatedReportTotal,
   getAgentEffectivePaymentDateLabel,
   getAssociationDisplayName,
+  isKnownAssociationName,
   normalizeAgentStatusSelection,
   normalizeAgentConsolidatedReportBlocks,
   shouldShowAgentNameFilter,
@@ -220,6 +221,13 @@ describe("agentConsolidatedReportUtils", () => {
       expect(getAssociationDisplayName(`${anglae} / ${singaerj}`)).toBe("ANGLAE / SINGAERJ");
       expect(getAssociationDisplayName(`${singaerj} / ${anglae}`)).toBe("SINGAERJ / ANGLAE");
       expect(getAssociationDisplayName(`Associacao X / ${singaerj}`)).toBe("Associacao X / SINGAERJ");
+    });
+
+    it("recognizes a row's own name as one of the two known associations", () => {
+      expect(isKnownAssociationName(singaerj)).toBe(true);
+      expect(isKnownAssociationName(anglae)).toBe(true);
+      expect(isKnownAssociationName("JOAO DA SILVA")).toBe(false);
+      expect(isKnownAssociationName(undefined)).toBe(false);
     });
 
     it("shows the short label in the association options but keeps the full name as value", () => {

@@ -981,10 +981,12 @@ export default function BasicEditingGrid() {
                           {isConsorcio(report, report.nomeBanco)}
                         </TableCell>
                         <TableCell className="text-xs py-6 px-1 " >
-                          {report.cpfCnpj.replace(
-                            /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
-                            "$1.$2.$3/$4-$5"
-                          )}
+                          {report.cpfCnpj
+                            ? report.cpfCnpj.replace(
+                                /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
+                                "$1.$2.$3/$4-$5"
+                              )
+                            : '-'}
                         </TableCell>
                         <TableCell className="text-xs py-1 ">{report.consorcio}</TableCell>
 

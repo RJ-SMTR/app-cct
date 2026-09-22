@@ -37,6 +37,7 @@ import {
   buildAssociationAutocompleteOptions,
   getAgentEffectivePaymentDateLabel,
   getAssociationDisplayName,
+  isKnownAssociationName,
   normalizeSelectAllAutocompleteValue,
   shouldShowAgentNameFilter,
   shouldShowAssociationFilter,
@@ -52,6 +53,7 @@ export default function AgentsFinancialMovement() {
   const [associationOptions, setAssociationOptions] = useState([]);
   const [selectedAgentOptions, setSelectedAgentOptions] = useState([]);
   const [selectedAssociationOptions, setSelectedAssociationOptions] = useState([]);
+  const [selectedStatusOptions, setSelectedStatusOptions] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const [showClearMin, setShowClearMin] = useState(false);
   const [showClearMax, setShowClearMax] = useState(false);
@@ -266,6 +268,7 @@ export default function AgentsFinancialMovement() {
     }
 
     if (field === "status") {
+      setSelectedStatusOptions(normalizedValue);
       const statusValues = newValue.map((v) => (typeof v === "object" ? v.label : v));
       setWhichStatus(statusValues);
       const hasErroStatus = statusValues.includes("Pendência de Pagamento");
@@ -295,6 +298,7 @@ export default function AgentsFinancialMovement() {
     });
     setSelectedAgentOptions([]);
     setSelectedAssociationOptions([]);
+    setSelectedStatusOptions([]);
     setSelectedErroStatus([]);
     setShowErroStatus(false);
     setWhichStatus([]);
@@ -452,6 +456,7 @@ export default function AgentsFinancialMovement() {
                   className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
                   getOptionLabel={(option) => option.label || option}
                   options={guardadorStatusBase}
+                  value={selectedStatusOptions}
                   onChange={(_, newValue) => handleAutocompleteChange("status", newValue)}
                   renderInput={(params) => (
                     <TextField {...params} label="Selecionar Status" variant="outlined" />
@@ -497,7 +502,10 @@ export default function AgentsFinancialMovement() {
                     <DateRangePicker
                       {...field}
                       size="lg"
-                      placeholder="Intervalo de Data"
+                      showOneCalendar
+                      showHeader={false}
+                      placement="auto"
+                      placeholder="Selecionar Data"
                       format="dd-MM-yyyy"
                       character=" a "
                       cleanable
@@ -656,9 +664,11 @@ export default function AgentsFinancialMovement() {
                       <TableRow key={index} className="hover:bg-gray-50">
                         <TableCell className="text-xs py-1">{report.dataReferencia}</TableCell>
                         <TableCell className="text-xs py-6 px-1" style={{ whiteSpace: "nowrap" }}>
-                          {report.nomes}
+                          {getAssociationDisplayName(report.nomes)}
                         </TableCell>
-                        <TableCell className="text-xs py-6 px-1">{report.email || "-"}</TableCell>
+                        <TableCell className="text-xs py-6 px-1">
+                          {isKnownAssociationName(report.nomes) ? "-" : report.email || "-"}
+                        </TableCell>
                         <TableCell className="text-xs py-1">{report.codBanco || "-"}</TableCell>
                         <TableCell className="text-xs py-6 px-1">{report.nomeBanco || "-"}</TableCell>
                         <TableCell className="text-xs py-6 px-1">
@@ -713,8 +723,8 @@ export default function AgentsFinancialMovement() {
                   reportList?.valorPendente > 0 ||
                   showErroStatus) && (
                   <TableRow>
-                    <TableCell colSpan={10} className="py-8">
-                      <Box className="flex gap-16 flex-wrap justify-end font-semibold text-xs">
+                    <TableCell colSpan={10} className="py-8 text-black">
+                      <Box className="flex gap-16 flex-wrap justify-end font-bold text-base">
                         {reportList?.valorPago > 0 && (
                           <span>Pago: {formatCurrency(reportList.valorPago)}</span>
                         )}
@@ -734,9 +744,7 @@ export default function AgentsFinancialMovement() {
                           <span>Rejeitado: {formatCurrency(reportList.valorRejeitado)}</span>
                         )}
                         {reportList?.valorTotal > 0 && (
-                          <span className="text-sm font-bold">
-                            Total Geral: {formatCurrency(reportList.valorTotal)}
-                          </span>
+                          <span>Total Geral: {formatCurrency(reportList.valorTotal)}</span>
                         )}
                       </Box>
                     </TableCell>

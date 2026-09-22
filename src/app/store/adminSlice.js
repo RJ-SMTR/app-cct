@@ -5,6 +5,7 @@ import JwtService from '../auth/services/jwtService';
 
 const initialState = {
   agentsList: [],
+  agentsListStatus: 'idle', // 'idle' | 'loaded' — drives the getAgentUsers cache below
   userList: [],
   sendEmailValue: Boolean,
 };
@@ -27,6 +28,10 @@ const stepSlice = createSlice({
   reducers: {
     setAgentsList: (state, action) => {
       state.agentsList = action.payload;
+      state.agentsListStatus = 'loaded';
+    },
+    invalidateAgentsList: (state) => {
+      state.agentsListStatus = 'idle';
     },
     setUsersList: (state, action) => {
       state.userList = action.payload;
@@ -37,32 +42,60 @@ const stepSlice = createSlice({
   },
 });
 
-export const { setAgentsList, setUsersList, userList, sendEmailValue, setSendEmailValue } = stepSlice.actions;
+export const {
+  setAgentsList,
+  invalidateAgentsList,
+  setUsersList,
+  userList,
+  sendEmailValue,
+  setSendEmailValue,
+} = stepSlice.actions;
 export default stepSlice.reducer;
 
-export const getAgentUsers = () => (dispatch) => {
-  const token = window.localStorage.getItem('jwt_access_token');
-  if (JwtService.isAuthTokenValid(token)) {
-    return new Promise((resolve, reject) => {
-      api.get('/agentes/users', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((response) => {
-          const filteredUsers = normalizeResponseCollection(response.data)
-            .sort((firstUser, secondUser) => {
-              return (firstUser.fullName || '').localeCompare(secondUser.fullName || '');
-            });
+// Every report/filter/admin page that needs the guardador list called this on every mount,
+// so navigating between them re-fetched the same data over and over. agentsListStatus caches
+// it across the app; agentsListRequest dedupes callers that mount at the same time, before the
+// first request has resolved. Call dispatch(invalidateAgentsList()) after a mutation that
+// changes what this list should show (e.g. editing a guardador's name/email/invite status).
+let agentsListRequest = null;
 
-          dispatch(setAgentsList(filteredUsers));
-          resolve(filteredUsers);
-        })
-        .catch((error) => {
-          reject(error);
-        });
-    });
+export const getAgentUsers = () => (dispatch, getState) => {
+  const { admin } = getState();
+
+  if (admin.agentsListStatus === 'loaded') {
+    return Promise.resolve(admin.agentsList);
   }
 
-  return Promise.resolve([]);
+  if (agentsListRequest) {
+    return agentsListRequest;
+  }
+
+  const token = window.localStorage.getItem('jwt_access_token');
+  if (!JwtService.isAuthTokenValid(token)) {
+    return Promise.resolve([]);
+  }
+
+  agentsListRequest = new Promise((resolve, reject) => {
+    api.get('/agentes/users', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((response) => {
+        const filteredUsers = normalizeResponseCollection(response.data)
+          .sort((firstUser, secondUser) => {
+            return (firstUser.fullName || '').localeCompare(secondUser.fullName || '');
+          });
+
+        dispatch(setAgentsList(filteredUsers));
+        resolve(filteredUsers);
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  }).finally(() => {
+    agentsListRequest = null;
+  });
+
+  return agentsListRequest;
 };
 
 export const getUser = () => (dispatch) => {

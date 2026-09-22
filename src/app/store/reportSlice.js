@@ -414,18 +414,26 @@ export function handleAgentFinancialData(data) {
   }
 
   if (data.associations && data.associations.length > 0) {
-    const assocValues = data.associations
-      .map((i) => (typeof i === 'object' ? (i.value || i.label) : i))
-      .filter((v) => v && v !== 'Todos');
-    if (assocValues.length > 0 && !data.associations.some((i) => (typeof i === 'object' ? (i.value || i.label) : i) === 'Todos')) {
-      requestData.consorcioNome = assocValues.join(',');
+    if (data.associations.some((i) => (typeof i === 'object' ? (i.value || i.label) : i) === 'Todos')) {
+      requestData.todosConsorcios = true;
+    } else {
+      const assocValues = data.associations
+        .map((i) => (typeof i === 'object' ? (i.value || i.label) : i))
+        .filter((v) => v && v !== 'Todos');
+      if (assocValues.length > 0) {
+        requestData.consorcioNome = assocValues.join(',');
+      }
     }
   } else if (data.consorcioName && data.consorcioName.length > 0) {
-    const assocValues = data.consorcioName
-      .map((i) => (typeof i === 'object' ? (i.value || i.label) : i))
-      .filter((v) => v && v !== 'Todos');
-    if (assocValues.length > 0 && !data.consorcioName.some((i) => (typeof i === 'object' ? (i.value || i.label) : i) === 'Todos')) {
-      requestData.consorcioNome = assocValues.join(',');
+    if (data.consorcioName.some((i) => (typeof i === 'object' ? (i.value || i.label) : i) === 'Todos')) {
+      requestData.todosConsorcios = true;
+    } else {
+      const assocValues = data.consorcioName
+        .map((i) => (typeof i === 'object' ? (i.value || i.label) : i))
+        .filter((v) => v && v !== 'Todos');
+      if (assocValues.length > 0) {
+        requestData.consorcioNome = assocValues.join(',');
+      }
     }
   }
 
