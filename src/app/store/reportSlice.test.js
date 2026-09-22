@@ -45,4 +45,23 @@ describe('handleAgentFinancialData status flags', () => {
       expect(requestData.userIds).toBeUndefined();
     });
   });
+
+  describe('associação selector', () => {
+    it('sends the selected association names as consorcioNome', () => {
+      const requestData = handleAgentFinancialData({
+        dateRange,
+        associations: ['SINGAERJ', 'ANGLAE'],
+      });
+
+      expect(requestData.consorcioNome).toBe('SINGAERJ,ANGLAE');
+      expect(requestData.todosConsorcios).toBeUndefined();
+    });
+
+    it('sends todosConsorcios instead of consorcioNome when Todos is selected', () => {
+      const requestData = handleAgentFinancialData({ dateRange, associations: ['Todos'] });
+
+      expect(requestData.todosConsorcios).toBe(true);
+      expect(requestData.consorcioNome).toBeUndefined();
+    });
+  });
 });
