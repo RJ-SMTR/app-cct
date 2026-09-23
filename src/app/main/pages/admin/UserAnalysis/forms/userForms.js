@@ -311,7 +311,9 @@ export function BankInfo({user}) {
                     </Box>
 
                 </form>
-                <p className="text-red">Última atualização: {format(parseISO(user?.updatedAt), 'dd/MM/yyyy HH:mm:ss')}</p>
+                {user?.previousBankCode != null && (
+                    <p className="text-red">Última atualização: {format(parseISO(user?.updatedAt), 'dd/MM/yyyy HH:mm:ss')}</p>
+                )}
                 {previousBank && (
                     <p>Banco anterior: {previousBank}</p>
                 )}
