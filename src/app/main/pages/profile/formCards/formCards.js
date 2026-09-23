@@ -581,9 +581,11 @@ export function BankInfo({
             />
           </Box>
         </form>
-        <p className="text-red">
-          Última atualização: {formatDateTimeLabel(user?.updatedAt)}
-        </p>
+        {user?.previousBankCode != null ? (
+          <p className="text-red">
+            Última atualização: {formatDateTimeLabel(user?.updatedAt)}
+          </p>
+        ) : null}
         {previousBank ? <p>Banco anterior: {previousBank}</p> : null}
       </Card>
     </>

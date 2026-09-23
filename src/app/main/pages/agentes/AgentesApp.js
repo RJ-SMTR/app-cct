@@ -490,10 +490,12 @@ function AgentBankInfo({ user }) {
           />
         </Box>
       </form>
-      <p className="text-red">
-        Última atualização:{" "}
-        {formatDateTimeLabel(user?.updatedAt, "dd/MM/yyyy HH:mm:ss")}
-      </p>
+      {user?.previousBankCode != null ? (
+        <p className="text-red">
+          Última atualização:{" "}
+          {formatDateTimeLabel(user?.updatedAt, "dd/MM/yyyy HH:mm:ss")}
+        </p>
+      ) : null}
       {previousBank ? <p>Banco anterior: {previousBank}</p> : null}
     </Card>
   );
