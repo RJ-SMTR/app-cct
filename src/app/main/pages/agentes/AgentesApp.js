@@ -501,7 +501,7 @@ function AgentBankInfo({ user }) {
       ) : (
         <p className="text-red">
           Primeiro cadastro realizado em:{" "}
-          {formatDateTimeLabel(user?.updatedAt, "dd/MM/yyyy HH:mm:ss")}
+          {formatDateTimeLabel(user?.createdAt, "dd/MM/yyyy HH:mm:ss")}
         </p>
       )}
     </Card>

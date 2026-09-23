@@ -590,7 +590,7 @@ export function BankInfo({
           </>
         ) : (
           <p className="text-red">
-            Primeiro cadastro realizado em: {formatDateTimeLabel(user?.updatedAt)}
+            Primeiro cadastro realizado em: {formatDateTimeLabel(user?.createdAt)}
           </p>
         )}
       </Card>

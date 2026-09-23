@@ -319,7 +319,7 @@ export function BankInfo({user}) {
                         <p className="text-red">Última atualização em: {format(parseISO(user?.updatedAt), 'dd/MM/yyyy HH:mm:ss')}</p>
                     </>
                 ) : (
-                    <p className="text-red">Primeiro cadastro realizado em: {format(parseISO(user?.updatedAt), 'dd/MM/yyyy HH:mm:ss')}</p>
+                    <p className="text-red">Primeiro cadastro realizado em: {format(parseISO(user?.createdAt), 'dd/MM/yyyy HH:mm:ss')}</p>
                 )}
             </Card>
         </>
