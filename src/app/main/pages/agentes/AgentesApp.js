@@ -491,12 +491,19 @@ function AgentBankInfo({ user }) {
         </Box>
       </form>
       {user?.previousBankCode != null ? (
+        <>
+          {previousBank ? <p>Banco anterior: {previousBank}</p> : null}
+          <p className="text-red">
+            Última atualização em:{" "}
+            {formatDateTimeLabel(user?.updatedAt, "dd/MM/yyyy HH:mm:ss")}
+          </p>
+        </>
+      ) : (
         <p className="text-red">
-          Última atualização:{" "}
+          Primeiro cadastro realizado em:{" "}
           {formatDateTimeLabel(user?.updatedAt, "dd/MM/yyyy HH:mm:ss")}
         </p>
-      ) : null}
-      {previousBank ? <p>Banco anterior: {previousBank}</p> : null}
+      )}
     </Card>
   );
 }
