@@ -955,6 +955,7 @@ export default function BasicEditingGrid() {
                   }
                   <TableCell className="font-semibold p-1 text-sm ">Valor</TableCell>
                   <TableCell className="font-semibold p-1 text-sm ">Status</TableCell>
+                  <TableCell className="font-semibold p-1 text-sm ">Descrição do Erro</TableCell>
                 </TableRow>
               </TableHead>
 
@@ -1008,6 +1009,9 @@ export default function BasicEditingGrid() {
                           >
                             {report.status === "Pendentes" ? "OP Atrasada" : report.status}
                           </span>
+                        </TableCell>
+                        <TableCell className="text-xs py-6 px-1" style={{ maxWidth: 280, overflowWrap: 'break-word' }}>
+                          {report.descricaoErro || '-'}
                         </TableCell>
                       </TableRow>
                     ))
