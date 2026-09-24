@@ -654,6 +654,7 @@ export default function AgentsFinancialMovement() {
                   )}
                   <TableCell className="font-semibold p-1 text-sm">Valor</TableCell>
                   <TableCell className="font-semibold p-1 text-sm">Status</TableCell>
+                  <TableCell className="font-semibold p-1 text-sm">Descrição do Erro</TableCell>
                 </TableRow>
               </TableHead>
 
@@ -695,18 +696,21 @@ export default function AgentsFinancialMovement() {
                             {report.status === "Pendentes" ? "OP Atrasada" : report.status}
                           </span>
                         </TableCell>
+                        <TableCell className="text-xs py-6 px-1" style={{ maxWidth: 280, overflowWrap: "break-word" }}>
+                          {report.descricaoErro || "-"}
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={10} className="text-center py-4">
+                      <TableCell colSpan={11} className="text-center py-4">
                         Não há dados para serem exibidos
                       </TableCell>
                     </TableRow>
                   )
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={10}>
+                    <TableCell colSpan={11}>
                       <Box className="flex justify-center items-center m-10">
                         <CircularProgress />
                       </Box>
@@ -723,7 +727,7 @@ export default function AgentsFinancialMovement() {
                   reportList?.valorPendente > 0 ||
                   showErroStatus) && (
                   <TableRow>
-                    <TableCell colSpan={10} className="py-8 text-black">
+                    <TableCell colSpan={11} className="py-8 text-black">
                       <Box className="flex gap-16 flex-wrap justify-end font-bold text-base">
                         {reportList?.valorPago > 0 && (
                           <span>Pago: {formatCurrency(reportList.valorPago)}</span>
