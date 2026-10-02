@@ -3,6 +3,8 @@ import dayjs from "dayjs";
 
 export const AGENT_REPORT_SELECT_ALL_VALUE = "Todos";
 export const AGENT_REPORT_ERROR_STATUS_VALUE = "Erros";
+export const AGENT_FINANCIAL_MOVEMENT_DATE_FORMAT = "dd/MM/yy";
+export const AGENT_FINANCIAL_MOVEMENT_DATE_SEPARATOR = " - ";
 
 export const AGENT_REPORT_STATUS_LABELS = {
   todos: "Todos",
@@ -79,6 +81,10 @@ export function getAgentEffectivePaymentDateLabel(report) {
   return report?.status === "Pendencia Paga" && report?.dataPagamento
     ? report.dataPagamento
     : "-";
+}
+
+export function shouldShowAgentEffectivePaymentDateColumn(selectedStatuses) {
+  return Array.isArray(selectedStatuses) && selectedStatuses.includes("Pendência Paga");
 }
 
 export function normalizeCurrencyFilterValue(value) {
