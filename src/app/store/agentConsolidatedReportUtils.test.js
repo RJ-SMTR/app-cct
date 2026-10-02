@@ -1,4 +1,6 @@
 import {
+  AGENT_FINANCIAL_MOVEMENT_DATE_FORMAT,
+  AGENT_FINANCIAL_MOVEMENT_DATE_SEPARATOR,
   AGENT_REPORT_ERROR_STATUS_VALUE,
   AGENT_REPORT_SELECT_ALL_VALUE,
   buildAgentAutocompleteOptions,
@@ -11,6 +13,7 @@ import {
   isKnownAssociationName,
   normalizeAgentStatusSelection,
   normalizeAgentConsolidatedReportBlocks,
+  shouldShowAgentEffectivePaymentDateColumn,
   shouldShowAgentNameFilter,
   shouldShowAssociationFilter,
 } from "./agentConsolidatedReportUtils";
@@ -18,6 +21,11 @@ import {
 describe("agentConsolidatedReportUtils", () => {
   const julyStartDate = new Date(2026, 6, 1);
   const julyEndDate = new Date(2026, 6, 31);
+
+  it("uses the concise guardador financial movement date range format", () => {
+    expect(AGENT_FINANCIAL_MOVEMENT_DATE_FORMAT).toBe("dd/MM/yy");
+    expect(AGENT_FINANCIAL_MOVEMENT_DATE_SEPARATOR).toBe(" - ");
+  });
 
   it("serializes agentes filters according to the consolidated contract", () => {
     const params = buildAgentConsolidatedReportParams({
@@ -180,6 +188,19 @@ describe("agentConsolidatedReportUtils", () => {
   });
 
   describe("effective payment date", () => {
+    it("shows the column whenever Pendência Paga is selected, including mixed filters", () => {
+      expect(shouldShowAgentEffectivePaymentDateColumn(["Pendência Paga"])).toBe(true);
+      expect(
+        shouldShowAgentEffectivePaymentDateColumn([
+          "Pendência de Pagamento",
+          "Pendência Paga",
+        ])
+      ).toBe(true);
+      expect(shouldShowAgentEffectivePaymentDateColumn(["Pendência de Pagamento"])).toBe(false);
+      expect(shouldShowAgentEffectivePaymentDateColumn([])).toBe(false);
+      expect(shouldShowAgentEffectivePaymentDateColumn()).toBe(false);
+    });
+
     it("never shows the effective payment date of a Pago row", () => {
       expect(
         getAgentEffectivePaymentDateLabel({ status: "Pago", dataPagamento: "21/08/2026" })

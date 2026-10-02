@@ -16,6 +16,7 @@ import {
   Menu,
   TableFooter,
   TablePagination,
+  TableContainer,
 } from "@mui/material";
 import { format } from "date-fns";
 import { useDispatch, useSelector } from "react-redux";
@@ -33,12 +34,15 @@ import {
 import { getAgentUsers } from "app/store/adminSlice";
 import { showMessage } from "app/store/fuse/messageSlice";
 import {
+  AGENT_FINANCIAL_MOVEMENT_DATE_FORMAT,
+  AGENT_FINANCIAL_MOVEMENT_DATE_SEPARATOR,
   buildAgentAutocompleteOptions,
   buildAssociationAutocompleteOptions,
   getAgentEffectivePaymentDateLabel,
   getAssociationDisplayName,
   isKnownAssociationName,
   normalizeSelectAllAutocompleteValue,
+  shouldShowAgentEffectivePaymentDateColumn,
   shouldShowAgentNameFilter,
   shouldShowAssociationFilter,
 } from "app/store/agentConsolidatedReportUtils";
@@ -66,6 +70,7 @@ export default function AgentsFinancialMovement() {
   const [hasSearched, setHasSearched] = useState(false);
   const [pageCursors, setPageCursors] = useState([null]);
   const hasNextPage = Boolean(pageCursors[page + 1]);
+  const showEffectivePaymentDate = shouldShowAgentEffectivePaymentDateColumn(whichStatusShow);
 
   const guardadorStatusBase = [
     { label: "A Pagar", value: "A Pagar" },
@@ -506,8 +511,8 @@ export default function AgentsFinancialMovement() {
                       showHeader={false}
                       placement="auto"
                       placeholder="Selecionar Data"
-                      format="dd-MM-yyyy"
-                      character=" a "
+                      format={AGENT_FINANCIAL_MOVEMENT_DATE_FORMAT}
+                      character={AGENT_FINANCIAL_MOVEMENT_DATE_SEPARATOR}
                       cleanable
                       disabledDate={(date) => date < minSelectableDate}
                     />
@@ -638,8 +643,10 @@ export default function AgentsFinancialMovement() {
             nextIconButtonProps={{ disabled: !hasNextPage }}
           />
 
-          <div style={{ height: "50vh", width: "100%" }} className="overflow-scroll">
-            <Table size="small">
+          <TableContainer
+            sx={{ height: "50vh", width: "100%", overflowX: "auto", overflowY: "auto" }}
+          >
+            <Table size="small" sx={{ minWidth: 1280 }}>
               <TableHead>
                 <TableRow className="sticky top-0 bg-white z-10">
                   <TableCell className="font-semibold py-1 text-sm">Data Tentativa Pagamento</TableCell>
@@ -649,7 +656,7 @@ export default function AgentsFinancialMovement() {
                   <TableCell className="font-semibold p-1 text-sm">Banco</TableCell>
                   <TableCell className="font-semibold p-1 text-sm">CPF/CNPJ</TableCell>
                   <TableCell className="font-semibold py-1 text-sm">Associação</TableCell>
-                  {!showErroStatus && (
+                  {showEffectivePaymentDate && (
                     <TableCell className="font-semibold py-1 text-sm">Data Efetiva Pagamento</TableCell>
                   )}
                   <TableCell className="font-semibold p-1 text-sm">Valor</TableCell>
@@ -681,7 +688,7 @@ export default function AgentsFinancialMovement() {
                             : "-"}
                         </TableCell>
                         <TableCell className="text-xs py-1">{getAssociationDisplayName(report.consorcio) || "-"}</TableCell>
-                        {!showErroStatus && (
+                        {showEffectivePaymentDate && (
                           <TableCell className="text-xs py-1">
                             {getAgentEffectivePaymentDateLabel(report)}
                           </TableCell>
@@ -756,10 +763,9 @@ export default function AgentsFinancialMovement() {
                 )}
               </TableFooter>
             </Table>
-          </div>
+          </TableContainer>
         </Box>
       </Paper>
     </>
   );
 }
-
