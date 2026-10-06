@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import ptBR from "date-fns/locale/pt-BR";
@@ -20,6 +21,8 @@ export default function PeriodDatePicker({
   minDate,
   maxDate,
   labels = { start: "De", end: "Até", single: "Data" },
+  error = false,
+  helperText,
   className,
 }) {
   // Datas parciais digitadas no campo chegam como Invalid Date: tratamos como vazio.
@@ -50,37 +53,44 @@ export default function PeriodDatePicker({
     minDate,
     maxDate,
     format: "dd/MM/yyyy",
-    slotProps: { textField: { size: "medium", variant: "outlined" } },
+    slotProps: { textField: { size: "medium", variant: "outlined", error: Boolean(error) } },
   };
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-      <Box className={className} sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-        {singleDay ? (
-          <DatePicker
-            {...sharedProps}
-            label={labels.single}
-            value={start}
-            onChange={handleStart}
-          />
-        ) : (
-          <>
+      <Box className={className} sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+          {singleDay ? (
             <DatePicker
               {...sharedProps}
-              label={labels.start}
+              label={labels.single}
               value={start}
-              maxDate={end ?? maxDate}
               onChange={handleStart}
             />
-            <DatePicker
-              {...sharedProps}
-              label={labels.end}
-              value={end}
-              minDate={start ?? minDate}
-              onChange={handleEnd}
-            />
-          </>
-        )}
+          ) : (
+            <>
+              <DatePicker
+                {...sharedProps}
+                label={labels.start}
+                value={start}
+                maxDate={end ?? maxDate}
+                onChange={handleStart}
+              />
+              <DatePicker
+                {...sharedProps}
+                label={labels.end}
+                value={end}
+                minDate={start ?? minDate}
+                onChange={handleEnd}
+              />
+            </>
+          )}
+        </Box>
+        {error && helperText ? (
+          <Typography variant="caption" color="error">
+            {helperText}
+          </Typography>
+        ) : null}
       </Box>
     </LocalizationProvider>
   );

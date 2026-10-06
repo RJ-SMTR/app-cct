@@ -509,14 +509,19 @@ export default function AgentsFinancialMovement() {
                 <Controller
                   name="dateRange"
                   control={control}
-                  rules={{ required: true }}
-                  render={({ field }) => (
+                  rules={{
+                    validate: (value) =>
+                      (Array.isArray(value) && value[0] && value[1]) || "Informe a data inicial e a data final",
+                  }}
+                  render={({ field, fieldState: { error } }) => (
                     <PeriodDatePicker
                       value={field.value}
                       onChange={field.onChange}
                       singleDay={isPendenciaPagaSelected}
                       minDate={minSelectableDate}
                       labels={{ start: "De", end: "Até", single: "Data" }}
+                      error={Boolean(error)}
+                      helperText={error?.message}
                     />
                   )}
                 />

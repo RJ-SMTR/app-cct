@@ -674,12 +674,18 @@ export default function BasicEditingGrid() {
                   <Controller
                     name="dateRange"
                     control={control}
-                    render={({ field }) => (
+                    rules={{
+                      validate: (value) =>
+                        (Array.isArray(value) && value[0] && value[1]) || "Informe a data inicial e a data final",
+                    }}
+                    render={({ field, fieldState: { error } }) => (
                       <PeriodDatePicker
                         value={field.value}
                         onChange={field.onChange}
                         singleDay={isPendenciaPagaSelected}
                         minDate={minSelectableDate}
+                        error={Boolean(error)}
+                        helperText={error?.message}
                       />
                     )}
                   />
