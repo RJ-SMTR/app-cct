@@ -656,9 +656,9 @@ export default function AgentsFinancialMovement() {
                   <TableCell className="font-semibold p-1 text-sm">Banco</TableCell>
                   <TableCell className="font-semibold p-1 text-sm">CPF/CNPJ</TableCell>
                   <TableCell className="font-semibold py-1 text-sm">Associação</TableCell>
-                  {showEffectivePaymentDate && (
+                  {showEffectivePaymentDate || reportList?.valorPendenciaPaga > 0 ? (
                     <TableCell className="font-semibold py-1 text-sm">Data Efetiva Pagamento</TableCell>
-                  )}
+                  ) : null}
                   <TableCell className="font-semibold p-1 text-sm">Valor</TableCell>
                   <TableCell className="font-semibold p-1 text-sm">Status</TableCell>
                   <TableCell className="font-semibold p-1 text-sm">Descrição do Erro</TableCell>
@@ -688,11 +688,11 @@ export default function AgentsFinancialMovement() {
                             : "-"}
                         </TableCell>
                         <TableCell className="text-xs py-1">{getAssociationDisplayName(report.consorcio) || "-"}</TableCell>
-                        {showEffectivePaymentDate && (
+                        {showEffectivePaymentDate || reportList?.valorPendenciaPaga > 0 ? (
                           <TableCell className="text-xs py-1">
                             {getAgentEffectivePaymentDateLabel(report)}
                           </TableCell>
-                        )}
+                        ) : null}
                         <TableCell className="text-xs py-6 px-1">{formatCurrency(report.valor)}</TableCell>
                         <TableCell className="text-xs py-6 px-1">
                           <span
