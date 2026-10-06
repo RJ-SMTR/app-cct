@@ -20,7 +20,7 @@ import {
 } from "@mui/material";
 import { format } from "date-fns";
 import { useDispatch, useSelector } from "react-redux";
-import { DateRangePicker } from "rsuite";
+import PeriodDatePicker from "app/shared-components/PeriodDatePicker";
 import { hasSingleDayStatus, toSingleDayRange } from "app/store/pendenciaPagaDateRange";
 import { useForm, Controller } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
@@ -511,21 +511,12 @@ export default function AgentsFinancialMovement() {
                   control={control}
                   rules={{ required: true }}
                   render={({ field }) => (
-                    <DateRangePicker
-                      {...field}
-                      onChange={(value) =>
-                        field.onChange(isPendenciaPagaSelected ? toSingleDayRange(value) : value)
-                      }
-                      oneTap={isPendenciaPagaSelected}
-                      size="lg"
-                      showOneCalendar
-                      showHeader={false}
-                      placement="auto"
-                      placeholder="Selecionar Data"
-                      format={AGENT_FINANCIAL_MOVEMENT_DATE_FORMAT}
-                      character={AGENT_FINANCIAL_MOVEMENT_DATE_SEPARATOR}
-                      cleanable
-                      disabledDate={(date) => date < minSelectableDate}
+                    <PeriodDatePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      singleDay={isPendenciaPagaSelected}
+                      minDate={minSelectableDate}
+                      labels={{ start: "De", end: "Até", single: "Data" }}
                     />
                   )}
                 />

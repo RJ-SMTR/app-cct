@@ -21,7 +21,7 @@ import {
 
 import { format } from "date-fns";
 import { useDispatch, useSelector } from "react-redux";
-import { DateRangePicker } from "rsuite";
+import PeriodDatePicker from "app/shared-components/PeriodDatePicker";
 import { useForm, Controller } from "react-hook-form";
 
 import { handleFinancialMovementExport, handleFinancialMovementPage,setReportList } from "app/store/reportSlice";
@@ -675,23 +675,11 @@ export default function BasicEditingGrid() {
                     name="dateRange"
                     control={control}
                     render={({ field }) => (
-                      <DateRangePicker
-                        {...field}
-                        onChange={(value) =>
-                          field.onChange(isPendenciaPagaSelected ? toSingleDayRange(value) : value)
-                        }
-                        oneTap={isPendenciaPagaSelected}
-                        id="custom-date-input"
-                        showOneCalendar
-                        showHeader
-                        placement="auto"
-                        placeholder="Selecionar Data"
-                        format="dd/MM/yy"
-                        character=" - "
-                        className="custom-date-range-picker"
-                        shouldDisableDate={DateRangePicker.allowedRange(
-                          minSelectableDate
-                        )}
+                      <PeriodDatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        singleDay={isPendenciaPagaSelected}
+                        minDate={minSelectableDate}
                       />
                     )}
                   />
