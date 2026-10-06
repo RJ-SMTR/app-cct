@@ -3,6 +3,7 @@ import { api } from 'app/configs/api/api';
 import { compareAsc, compareDesc, format, parseISO } from 'date-fns';
 import accounting from 'accounting';
 import jwtServiceConfig from '../auth/services/jwtService/jwtServiceConfig';
+import { markMonthlyPendingPayments } from './extractUtils';
 import JwtService from '../auth/services/jwtService';
 import { groupTransactionsByType } from './extractUtils';
 
@@ -172,55 +173,6 @@ function normalizeOrderIds(ids) {
     }
 
     return ids;
-}
-
-function markMonthlyPendingPayments(statements) {
-    const latestPaymentDate = statements.reduce((latestDate, statement) => {
-        const paymentDate = statement.dataTentativaPagamento ?? statement.data;
-
-        return paymentDate > latestDate ? paymentDate : latestDate;
-    }, '');
-
-    const hasRemittanceStatus = (statusRemessa) =>
-        statusRemessa !== null &&
-        statusRemessa !== undefined &&
-        statusRemessa !== '';
-
-    const shouldMarkMissingRemittanceAsPending = (statement) => {
-        const hasPositiveValue = Number(statement?.valorTotal ?? statement?.valor ?? 0) > 0;
-        const hasMissingStatus = !hasRemittanceStatus(statement?.statusRemessa);
-        const hasMissingReason =
-            statement?.motivoStatusRemessa == null &&
-            statement?.descricaoMotivoStatusRemessa == null &&
-            !String(statement?.pendingReason || '').trim();
-
-        return hasPositiveValue && hasMissingStatus && hasMissingReason;
-    };
-
-    return statements.map((statement) => {
-        if (shouldMarkMissingRemittanceAsPending(statement)) {
-            return { ...statement, paymentStatus: 'Pendência de Pagamento' };
-        }
-
-        if (Number(statement.statusRemessa) !== 4) {
-            return statement;
-        }
-
-        const paymentDate = statement.dataTentativaPagamento ?? statement.data;
-        const isLatestPendingPayment = paymentDate === latestPaymentDate;
-        const hasLaterPaymentWithStatus = statements.some((laterStatement) => {
-            const laterPaymentDate = laterStatement.dataTentativaPagamento ?? laterStatement.data;
-            const hasStatus = laterStatement.statusRemessa !== null &&
-                laterStatement.statusRemessa !== undefined &&
-                laterStatement.statusRemessa !== '';
-
-            return laterPaymentDate > paymentDate && hasStatus;
-        });
-
-        return isLatestPendingPayment || hasLaterPaymentWithStatus
-            ? { ...statement, paymentStatus: 'Pendência de Pagamento' }
-            : statement;
-    });
 }
 
 export const  getPreviousDays = (idOrdem, userId) => async (dispatch) => {
