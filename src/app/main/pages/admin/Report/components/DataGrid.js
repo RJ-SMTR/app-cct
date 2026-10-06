@@ -20,7 +20,8 @@ import {
 import { format } from 'date-fns';
 import { CSVLink } from 'react-csv';
 import { useDispatch, useSelector } from 'react-redux';
-import { CustomProvider, DateRangePicker } from 'rsuite';
+import { CustomProvider } from 'rsuite';
+import PeriodDatePicker from "app/shared-components/PeriodDatePicker";
 import { useForm, Controller } from 'react-hook-form';
 import { handleReportInfo } from 'app/store/reportSlice';
 import { getUser } from 'app/store/adminSlice';
@@ -428,23 +429,23 @@ export default function BasicEditingGrid() {
                     <Controller
                       name="dateRange"
                       control={control}
-                      render={({ field }) => (
-                        <DateRangePicker
-                          {...field}
-                          id="custom-date-input"
-                          showOneCalendar
-                          showHeader={false}
-                          placement="auto"
-                          placeholder="Selecionar Data"
-                          format="dd/MM/yy"
-                          character=" - "
-                          className="custom-date-range-picker"
-                        />
-                      )}
+                    rules={{
+                      validate: (value) =>
+                        (Array.isArray(value) && value[0] && value[1]) || "Informe a data inicial e a data final",
+                    }}
+                    
+                      render={({ field, fieldState: { error } }) => (
+                      <PeriodDatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        error={Boolean(error)}
+                        helperText={error?.message}
+                        inGrid
+                      />
+                    )}
                     />
                   </CustomProvider>
                   <br />
-                  <span className="absolute text-xs text-red-600">Campo data obrigatório*</span>
                 </Box>
               </Box>
               <Box className="contents">

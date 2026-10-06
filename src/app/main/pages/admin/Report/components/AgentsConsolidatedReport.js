@@ -20,7 +20,7 @@ import { ClearIcon } from "@mui/x-date-pickers";
 import { format } from "date-fns";
 import { Controller, useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
-import { DateRangePicker } from "rsuite";
+import PeriodDatePicker from "app/shared-components/PeriodDatePicker";
 import { NumericFormat } from "react-number-format";
 import { CSVLink } from "react-csv";
 import JsPDF from "jspdf";
@@ -557,38 +557,26 @@ export default function AgentsConsolidatedReport() {
               </Box>
 
               <Box className="contents">
-                <Box className="w-full">
+                <Box className="contents">
                   <Controller
                     name="dateRange"
                     control={control}
-                    render={({ field }) => (
-                      <DateRangePicker
-                        {...field}
-                        id="agentes-date-range-input"
-                        showOneCalendar
-                        showHeader={false}
-                        placement="auto"
-                        placeholder="Selecionar Data"
-                        format="dd/MM/yy"
-                        character=" - "
-                        className="custom-date-range-picker"
-                        shouldDisableDate={DateRangePicker.allowedRange(
-                          minSelectableDate
-                        )}
-                        onChange={(value) => {
-                          field.onChange(value);
-                          if (value?.[0] && value?.[1]) {
-                            setDateError(false);
-                          }
-                        }}
+                    rules={{
+                      validate: (value) =>
+                        (Array.isArray(value) && value[0] && value[1]) || "Informe a data inicial e a data final",
+                    }}
+                    
+                    render={({ field, fieldState: { error } }) => (
+                      <PeriodDatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        minDate={minSelectableDate}
+                        error={Boolean(error)}
+                        helperText={error?.message}
+                        inGrid
                       />
                     )}
                   />
-                  {dateError ? (
-                    <span className="absolute text-xs text-red-600">
-                      Campo data obrigatorio*
-                    </span>
-                  ) : null}
                 </Box>
 
                 <Controller
