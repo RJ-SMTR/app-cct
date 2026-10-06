@@ -91,7 +91,11 @@ export default function PeriodDatePicker({
           )}
         </Box>
         {error && helperText ? (
-          <Typography variant="caption" color="error" sx={inGrid ? { gridColumn: "1 / -1" } : undefined}>
+          <Typography
+            variant="caption"
+            color="error"
+            sx={{ mt: "3px", ...(inGrid ? { gridColumn: "1 / -1" } : {}) }}
+          >
             {helperText}
           </Typography>
         ) : null}

@@ -439,13 +439,13 @@ export default function AgentsConsolidatedReport() {
           <header>Filtros de Pesquisa</header>
 
           <Box className="flex items-center py-10 gap-10">
-            <form onSubmit={handleSubmit(onSubmit)} className="w-full">
-              <Box className="flex gap-10 flex-wrap mb-20">
+            <form onSubmit={handleSubmit(onSubmit)} className="grid w-full grid-cols-4 gap-x-10 gap-y-16 mb-20">
+              <Box className="contents">
                 {shouldShowAgentNameFilter(selectedAssociationOptions) ? (
                   <Autocomplete
                     id="agentNames"
                     multiple
-                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                    className="w-full p-1"
                     options={agentOptions}
                     value={selectedAgentOptions}
                     loading={loadingFilters}
@@ -481,7 +481,7 @@ export default function AgentsConsolidatedReport() {
                   <Autocomplete
                     id="associations"
                     multiple
-                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                    className="w-full p-1"
                     options={associationOptions}
                     value={selectedAssociationOptions}
                     loading={loadingFilters}
@@ -505,7 +505,7 @@ export default function AgentsConsolidatedReport() {
                 <Autocomplete
                   id="status"
                   multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                  className="w-full p-1"
                   options={statusOptions}
                   value={selectedStatusOptions}
                   getOptionLabel={(option) => option.label}
@@ -528,7 +528,7 @@ export default function AgentsConsolidatedReport() {
                   <Autocomplete
                     id="erroStatus"
                     multiple
-                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                    className="w-full p-1"
                     options={erroStatusOptions}
                     value={selectedErroStatus}
                     getOptionLabel={(option) => option.label}
@@ -556,8 +556,8 @@ export default function AgentsConsolidatedReport() {
                 ) : null}
               </Box>
 
-              <Box className="flex items-center gap-10 flex-wrap">
-                <Box>
+              <Box className="contents">
+                <Box className="w-full">
                   <Controller
                     name="dateRange"
                     control={control}

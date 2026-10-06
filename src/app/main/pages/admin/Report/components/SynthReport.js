@@ -379,14 +379,14 @@ export default function BasicEditingGrid() {
           <header>Filtros de Pesquisa</header>
 
           <Box className="flex items-center py-10 gap-10">
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <Box className="flex gap-10 flex-wrap mb-20">
+            <form onSubmit={handleSubmit(onSubmit)} className="grid w-full grid-cols-4 gap-x-10 gap-y-16 mb-20">
+              <Box className="contents">
 
 
                 <Autocomplete
                   id="favorecidos"
                   multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                  className="w-full p-1"
                   getOptionLabel={(option) => option.value.fullName}
                   filterSelectedOptions
                   options={userOptions}
@@ -421,7 +421,7 @@ export default function BasicEditingGrid() {
                 <Autocomplete
                   id="consorcio"
                   multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                  className="w-full p-1"
                   getOptionLabel={(option) => option.label}
                   filterSelectedOptions
                   options={consorcios}
@@ -445,7 +445,7 @@ export default function BasicEditingGrid() {
                 <Autocomplete
                   id="status"
                   multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                  className="w-full p-1"
                   options={específicos}
                   getOptionLabel={(option) => option.label}
                   filterSelectedOptions
@@ -471,14 +471,14 @@ export default function BasicEditingGrid() {
 
               </Box>
 
-              <Box className="flex items-center gap-10 flex-wrap">
+              <Box className="contents">
                 <Box>
 
 
                   <Autocomplete
                     id="status"
                     multiple
-                    className="w-[25rem] md:min-w-[25rem] md:w-auto  p-1"
+                    className="w-full p-1"
                     getOptionLabel={(option) => option.label}
                     filterSelectedOptions
                     options={consorciosStatus}
@@ -501,7 +501,7 @@ export default function BasicEditingGrid() {
                   />
                 </Box>
 
-                <Box>
+                <Box className="w-full">
                   <Controller
                     name="dateRange"
                     control={control}
@@ -522,7 +522,7 @@ export default function BasicEditingGrid() {
                   <span className='absolute text-xs text-red-600'>Campo data obrigatório*</span>
                 </Box>
               </Box>
-              <Box className="flex items-center my-[3.5rem] gap-10 flex-wrap">
+              <Box className="contents">
                 <Controller
                   name="valorMin"
                   control={control}
@@ -655,7 +655,7 @@ export default function BasicEditingGrid() {
 
                 </span>
               )}
-              <Box>
+              <Box className="col-span-4 flex gap-10">
                 <Button
                   variant="contained"
                   color="secondary"
