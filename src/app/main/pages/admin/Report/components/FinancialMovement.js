@@ -21,7 +21,7 @@ import {
 
 import { format } from "date-fns";
 import { useDispatch, useSelector } from "react-redux";
-import PeriodDatePicker from "app/shared-components/PeriodDatePicker";
+import PeriodDatePicker, { periodRequiredRules } from "app/shared-components/PeriodDatePicker";
 import { useForm, Controller } from "react-hook-form";
 
 import { handleFinancialMovementExport, handleFinancialMovementPage,setReportList } from "app/store/reportSlice";
@@ -674,12 +674,10 @@ export default function BasicEditingGrid() {
                   <Controller
                     name="dateRange"
                     control={control}
-                    rules={{
-                      validate: (value) =>
-                        (Array.isArray(value) && value[0] && value[1]) || "Informe a data inicial e a data final",
-                    }}
+                    rules={periodRequiredRules}
                     render={({ field, fieldState: { error } }) => (
                       <PeriodDatePicker
+                        required
                         value={field.value}
                         onChange={field.onChange}
                         singleDay={isPendenciaPagaSelected}

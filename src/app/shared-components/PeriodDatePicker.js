@@ -14,6 +14,18 @@ import ptBR from "date-fns/locale/pt-BR";
  * - minDate / maxDate: limites opcionais.
  * - labels: rótulos dos campos (padrão "De" e "Até"; em singleDay usa "Data").
  */
+export const PERIOD_REQUIRED_MESSAGE = "Informe a data inicial e a data final";
+export const PERIOD_ORDER_MESSAGE = "A data final não pode ser anterior à data inicial";
+
+// Regras de validação (espelham o back): início e fim obrigatórios e fim não anterior ao início.
+export const periodRequiredRules = {
+  validate: (value) => {
+    if (!Array.isArray(value) || !value[0] || !value[1]) return PERIOD_REQUIRED_MESSAGE;
+    if (value[1] < value[0]) return PERIOD_ORDER_MESSAGE;
+    return true;
+  },
+};
+
 export default function PeriodDatePicker({
   value = [],
   onChange,
@@ -24,6 +36,7 @@ export default function PeriodDatePicker({
   error = false,
   helperText,
   inGrid = false,
+  required = false,
   className,
 }) {
   // Datas parciais digitadas no campo chegam como Invalid Date: tratamos como vazio.
@@ -54,7 +67,7 @@ export default function PeriodDatePicker({
     minDate,
     maxDate,
     format: "dd/MM/yyyy",
-    slotProps: { textField: { size: "medium", variant: "outlined", error: Boolean(error), fullWidth: true } },
+    slotProps: { textField: { size: "medium", variant: "outlined", error: Boolean(error), fullWidth: true, required } },
   };
 
   return (
@@ -90,13 +103,13 @@ export default function PeriodDatePicker({
             </>
           )}
         </Box>
-        {error && helperText ? (
+        {error && (helperText || required) ? (
           <Typography
             variant="caption"
             color="error"
             sx={{ mt: "3px", ...(inGrid ? { gridColumn: "1 / -1" } : {}) }}
           >
-            {helperText}
+            {helperText || PERIOD_REQUIRED_MESSAGE}
           </Typography>
         ) : null}
       </Box>
