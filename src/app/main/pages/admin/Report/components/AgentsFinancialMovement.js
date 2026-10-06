@@ -400,7 +400,88 @@ export default function AgentsFinancialMovement() {
           <header className="font-semibold text-base mb-16">Filtros de Pesquisa - Guardadores</header>
 
           <Box className="flex items-center py-10 gap-10">
-            <form onSubmit={handleSubmit(onSubmit)} className="grid w-full grid-cols-4 gap-x-10 gap-y-16 mb-20">
+            <form noValidate onSubmit={handleSubmit(onSubmit)} className="grid w-full grid-cols-4 gap-x-10 gap-y-16 mb-20">
+                <Controller
+                  name="dateRange"
+                  control={control}
+                  rules={periodRequiredRules}
+                  render={({ field, fieldState: { error } }) => (
+                    <PeriodDatePicker
+                      required
+                      value={field.value}
+                      onChange={field.onChange}
+                      singleDay={isPendenciaPagaSelected}
+                      minDate={minSelectableDate}
+                      labels={{ start: "De", end: "Até", single: "Data" }}
+                      error={Boolean(error)}
+                      helperText={error?.message}
+                      inGrid
+                    />
+                  )}
+                />
+
+                <Controller
+                  name="valorMin"
+                  control={control}
+                  render={({ field }) => (
+                    <NumericFormat
+                      {...field}
+                      customInput={TextField}
+                      label="Valor Mínimo"
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      prefix="R$ "
+                      decimalScale={2}
+                      fixedDecimalScale
+                      variant="outlined"
+                      onFocus={() => setShowClearMin(true)}
+                      onBlur={() => setShowClearMin(false)}
+                      InputProps={{
+                        endAdornment: showClearMin && field.value && (
+                          <InputAdornment position="end">
+                            <ClearIcon
+                              className="cursor-pointer"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => setValue("valorMin", "")}
+                            />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  )}
+                />
+
+                <Controller
+                  name="valorMax"
+                  control={control}
+                  render={({ field }) => (
+                    <NumericFormat
+                      {...field}
+                      customInput={TextField}
+                      label="Valor Máximo"
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      prefix="R$ "
+                      decimalScale={2}
+                      fixedDecimalScale
+                      variant="outlined"
+                      onFocus={() => setShowClearMax(true)}
+                      onBlur={() => setShowClearMax(false)}
+                      InputProps={{
+                        endAdornment: showClearMax && field.value && (
+                          <InputAdornment position="end">
+                            <ClearIcon
+                              className="cursor-pointer"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => setValue("valorMax", "")}
+                            />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  )}
+                />
+
               <Box className="contents">
                 {shouldShowAgentNameFilter(selectedAssociationOptions) ? (
                   <Autocomplete
@@ -505,94 +586,12 @@ export default function AgentsFinancialMovement() {
                 ) : null}
               </Box>
 
-              <Box className="contents">
-                <Controller
-                  name="dateRange"
-                  control={control}
-                  rules={periodRequiredRules}
-                  render={({ field, fieldState: { error } }) => (
-                    <PeriodDatePicker
-                      required
-                      value={field.value}
-                      onChange={field.onChange}
-                      singleDay={isPendenciaPagaSelected}
-                      minDate={minSelectableDate}
-                      labels={{ start: "De", end: "Até", single: "Data" }}
-                      error={Boolean(error)}
-                      helperText={error?.message}
-                      inGrid
-                    />
-                  )}
-                />
 
-                <Controller
-                  name="valorMin"
-                  control={control}
-                  render={({ field }) => (
-                    <NumericFormat
-                      {...field}
-                      customInput={TextField}
-                      label="Valor Mínimo"
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      prefix="R$ "
-                      decimalScale={2}
-                      fixedDecimalScale
-                      variant="outlined"
-                      onFocus={() => setShowClearMin(true)}
-                      onBlur={() => setShowClearMin(false)}
-                      InputProps={{
-                        endAdornment: showClearMin && field.value && (
-                          <InputAdornment position="end">
-                            <ClearIcon
-                              className="cursor-pointer"
-                              onMouseDown={(e) => e.preventDefault()}
-                              onClick={() => setValue("valorMin", "")}
-                            />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  )}
-                />
-
-                <Controller
-                  name="valorMax"
-                  control={control}
-                  render={({ field }) => (
-                    <NumericFormat
-                      {...field}
-                      customInput={TextField}
-                      label="Valor Máximo"
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      prefix="R$ "
-                      decimalScale={2}
-                      fixedDecimalScale
-                      variant="outlined"
-                      onFocus={() => setShowClearMax(true)}
-                      onBlur={() => setShowClearMax(false)}
-                      InputProps={{
-                        endAdornment: showClearMax && field.value && (
-                          <InputAdornment position="end">
-                            <ClearIcon
-                              className="cursor-pointer"
-                              onMouseDown={(e) => e.preventDefault()}
-                              onClick={() => setValue("valorMax", "")}
-                            />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  )}
-                />
-              </Box>
-
-              <Box className="col-span-4 flex gap-10 mt-16">
-                <Button variant="contained" color="secondary" type="submit" size="medium">
+              <Box className="col-span-4 flex gap-10">
+                <Button variant="contained" color="secondary" type="submit" size="medium" className="z-10">
                   Pesquisar
                 </Button>
-                <Button variant="contained" type="button" size="medium" onClick={handleClear}>
+                <Button variant="contained" type="button" size="medium" className="z-10" onClick={handleClear}>
                   Limpar Filtros
                 </Button>
               </Box>

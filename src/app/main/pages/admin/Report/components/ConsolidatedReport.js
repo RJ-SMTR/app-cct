@@ -454,7 +454,146 @@ export default function BasicEditingGrid() {
           <header>Filtros de Pesquisa</header>
 
           <Box className="flex items-center py-10 gap-10">
-            <form onSubmit={handleSubmit(onSubmit)} className="grid w-full grid-cols-4 gap-x-10 gap-y-16 mb-20">
+            <form noValidate onSubmit={handleSubmit(onSubmit)} className="grid w-full grid-cols-4 gap-x-10 gap-y-16 mb-20">
+                  <Controller
+                    name="dateRange"
+                    control={control}
+                    rules={periodRequiredRules}
+                    
+                    render={({ field, fieldState: { error } }) => (
+                      <PeriodDatePicker
+                        required
+                        value={field.value}
+                        onChange={field.onChange}
+                        minDate={minSelectableDate}
+                        error={Boolean(error)}
+                        helperText={error?.message}
+                        inGrid
+                      />
+                    )}
+                  />
+
+                <Controller
+                  name="valorMin"
+                  control={control}
+                  rules={{
+                    validate: (value) => {
+                      if (!value) return true;
+                      const valorMin = parseFloat(value.replace(/\./g, '').replace(',', '.'))
+                      const valorMax = parseFloat(getValues("valorMax").replace(/\./g, '').replace(',', '.'));
+
+                      return valorMin <= valorMax || "Valor Mínimo não pode ser maior que o Valor Máximo";
+                    }
+                  }}
+
+                  render={({ field, fieldState: { error } }) => (
+                    <NumericFormat
+                      {...field}
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      fixedDecimalScale
+                      decimalScale={2}
+                      customInput={TextField}
+                      label="Valor Mínimo"
+                      value={field.value}
+                      onChange={(e) => {
+                        field.onChange(e);
+
+                        const valorMin = parseFloat(e.target.value.replace(/\./g, '').replace(',', '.'))
+                        const valorMax = parseFloat(getValues("valorMax").replace(/\./g, '').replace(',', '.'));
+
+                        if (valorMin <= valorMax) {
+                          clearErrors("valorMin");
+                          clearErrors("valorMax");
+                        } else {
+                          trigger("valorMax");
+                        }
+                      }}
+                      error={!!error}
+                      helperText={error ? error.message : null}
+                      onMouseEnter={() => {
+                        if (field.value) setShowClearMin(true);
+
+                      }}
+                      onMouseLeave={() => setShowClearMin(false)}
+                      FormHelperTextProps={{
+                        sx: { color: 'red', fontSize: '1rem', position: 'absolute', bottom: '-3.5rem' }
+                      }}
+                      InputProps={{
+                        endAdornment: showClearMin && field.value && (
+                          <InputAdornment sx={{ position: "absolute", right: '1rem' }} position="end">
+                            <IconButton onClick={() => clearSelect('valorMin')} sx={{ height: '2rem', width: '2rem' }}>
+                              <ClearIcon sx={{ height: '2rem' }} />
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                        ...valueProps,
+                      }}
+                    />
+                  )}
+                />
+
+                <Controller
+                  name="valorMax"
+                  control={control}
+                  rules={{
+                    validate: (value) => {
+                      if (!value) return true;
+
+                      const valorMax = parseFloat(value.replace(/\./g, '').replace(',', '.'));
+                      const valorMin = parseFloat(getValues("valorMin").replace(/\./g, '').replace(',', '.'));
+
+                      return valorMax >= valorMin || "Valor Máximo não pode ser menor que o Valor Mínimo";
+                    }
+                  }}
+                  render={({ field, fieldState: { error } }) => (
+                    <NumericFormat
+                      {...field}
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      fixedDecimalScale
+                      decimalScale={2}
+                      customInput={TextField}
+                      label="Valor Máximo"
+                      value={field.value}
+                      onChange={(e) => {
+                        field.onChange(e);
+
+                        const valorMax = parseFloat(e.target.value.split(',')[0].replace('.', ''));
+                        const valorMin = parseFloat(getValues("valorMin").split(',')[0].replace('.', ''));
+
+
+                        if (valorMax >= valorMin) {
+                          clearErrors("valorMax");
+                          clearErrors("valorMin");
+                        } else {
+                          trigger("valorMin");
+                        }
+                      }}
+                      onMouseEnter={() => {
+                        if (field.value) setShowClearMax(true);
+                      }}
+                      onMouseLeave={() => setShowClearMax(false)}
+                      error={!!error}
+                      helperText={error ? error.message : null}
+                      FormHelperTextProps={{
+                        sx: { color: 'red', fontSize: '1rem', position: 'absolute', bottom: '-3.5rem' }
+                      }}
+                      InputProps={{
+                        endAdornment: showClearMax && field.value && (
+                          <InputAdornment sx={{ position: "absolute", right: '1rem' }} position="end">
+                            <IconButton onClick={() => clearSelect('valorMax')} sx={{ height: '2rem', width: '2rem' }}>
+                              <ClearIcon sx={{ height: '2rem' }} />
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+
+                        ...valueProps,
+                      }}
+                    />
+                  )}
+                />
+
               <Box className="contents">
 
 
@@ -605,148 +744,8 @@ export default function BasicEditingGrid() {
                   />
                 )}
 
-
-                <Box className="contents">
-                  <Controller
-                    name="dateRange"
-                    control={control}
-                    rules={periodRequiredRules}
-                    
-                    render={({ field, fieldState: { error } }) => (
-                      <PeriodDatePicker
-                        required
-                        value={field.value}
-                        onChange={field.onChange}
-                        minDate={minSelectableDate}
-                        error={Boolean(error)}
-                        helperText={error?.message}
-                        inGrid
-                      />
-                    )}
-                  />
-                </Box>
-              </Box>
-              <Box className="contents">
-                <Controller
-                  name="valorMin"
-                  control={control}
-                  rules={{
-                    validate: (value) => {
-                      if (!value) return true;
-                      const valorMin = parseFloat(value.replace(/\./g, '').replace(',', '.'))
-                      const valorMax = parseFloat(getValues("valorMax").replace(/\./g, '').replace(',', '.'));
-
-                      return valorMin <= valorMax || "Valor Mínimo não pode ser maior que o Valor Máximo";
-                    }
-                  }}
-
-                  render={({ field, fieldState: { error } }) => (
-                    <NumericFormat
-                      {...field}
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      fixedDecimalScale
-                      decimalScale={2}
-                      customInput={TextField}
-                      label="Valor Mínimo"
-                      value={field.value}
-                      onChange={(e) => {
-                        field.onChange(e);
-
-                        const valorMin = parseFloat(e.target.value.replace(/\./g, '').replace(',', '.'))
-                        const valorMax = parseFloat(getValues("valorMax").replace(/\./g, '').replace(',', '.'));
-
-                        if (valorMin <= valorMax) {
-                          clearErrors("valorMin");
-                          clearErrors("valorMax");
-                        } else {
-                          trigger("valorMax");
-                        }
-                      }}
-                      error={!!error}
-                      helperText={error ? error.message : null}
-                      onMouseEnter={() => {
-                        if (field.value) setShowClearMin(true);
-
-                      }}
-                      onMouseLeave={() => setShowClearMin(false)}
-                      FormHelperTextProps={{
-                        sx: { color: 'red', fontSize: '1rem', position: 'absolute', bottom: '-3.5rem' }
-                      }}
-                      InputProps={{
-                        endAdornment: showClearMin && field.value && (
-                          <InputAdornment sx={{ position: "absolute", right: '1rem' }} position="end">
-                            <IconButton onClick={() => clearSelect('valorMin')} sx={{ height: '2rem', width: '2rem' }}>
-                              <ClearIcon sx={{ height: '2rem' }} />
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                        ...valueProps,
-                      }}
-                    />
-                  )}
-                />
-                <Controller
-                  name="valorMax"
-                  control={control}
-                  rules={{
-                    validate: (value) => {
-                      if (!value) return true;
-
-                      const valorMax = parseFloat(value.replace(/\./g, '').replace(',', '.'));
-                      const valorMin = parseFloat(getValues("valorMin").replace(/\./g, '').replace(',', '.'));
-
-                      return valorMax >= valorMin || "Valor Máximo não pode ser menor que o Valor Mínimo";
-                    }
-                  }}
-                  render={({ field, fieldState: { error } }) => (
-                    <NumericFormat
-                      {...field}
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      fixedDecimalScale
-                      decimalScale={2}
-                      customInput={TextField}
-                      label="Valor Máximo"
-                      value={field.value}
-                      onChange={(e) => {
-                        field.onChange(e);
-
-                        const valorMax = parseFloat(e.target.value.split(',')[0].replace('.', ''));
-                        const valorMin = parseFloat(getValues("valorMin").split(',')[0].replace('.', ''));
-
-
-                        if (valorMax >= valorMin) {
-                          clearErrors("valorMax");
-                          clearErrors("valorMin");
-                        } else {
-                          trigger("valorMin");
-                        }
-                      }}
-                      onMouseEnter={() => {
-                        if (field.value) setShowClearMax(true);
-                      }}
-                      onMouseLeave={() => setShowClearMax(false)}
-                      error={!!error}
-                      helperText={error ? error.message : null}
-                      FormHelperTextProps={{
-                        sx: { color: 'red', fontSize: '1rem', position: 'absolute', bottom: '-3.5rem' }
-                      }}
-                      InputProps={{
-                        endAdornment: showClearMax && field.value && (
-                          <InputAdornment sx={{ position: "absolute", right: '1rem' }} position="end">
-                            <IconButton onClick={() => clearSelect('valorMax')} sx={{ height: '2rem', width: '2rem' }}>
-                              <ClearIcon sx={{ height: '2rem' }} />
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-
-                        ...valueProps,
-                      }}
-                    />
-                  )}
-                />
-              </Box>
+
+              </Box>
 
               <Box>
 
@@ -762,7 +761,7 @@ export default function BasicEditingGrid() {
                 <Button
                   variant="contained"
                   color="secondary"
-                  className=" w-35% mt-16 z-10"
+                  className="z-10"
                   aria-label="Pesquisar"
                   type="submit"
                   size="medium"
@@ -771,7 +770,7 @@ export default function BasicEditingGrid() {
                 </Button>
                 <Button
                   variant="contained"
-                  className=" w-35% mt-16 mx-10 z-10"
+                  className="z-10"
                   aria-label="Limpar Filtros"
                   type="button"
                   size="medium"

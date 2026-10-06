@@ -74,7 +74,16 @@ export default function PeriodDatePicker({
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
       <Box
         className={className}
-        sx={inGrid ? { display: "contents" } : { display: "flex", flexDirection: "column", gap: 0.5 }}
+        sx={
+          inGrid
+            ? {
+                gridColumn: singleDay ? "span 1" : "span 2",
+                display: "grid",
+                gridTemplateColumns: singleDay ? "1fr" : "1fr 1fr",
+                columnGap: 2,
+              }
+            : { display: "flex", flexDirection: "column", gap: 0.5 }
+        }
       >
         <Box sx={inGrid ? { display: "contents" } : { display: "flex", gap: 2, flexWrap: "wrap" }}>
           {singleDay ? (
