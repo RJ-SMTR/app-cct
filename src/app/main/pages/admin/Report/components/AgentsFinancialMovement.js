@@ -21,6 +21,7 @@ import {
 import { format } from "date-fns";
 import { useDispatch, useSelector } from "react-redux";
 import { DateRangePicker } from "rsuite";
+import { hasSingleDayStatus, toSingleDayRange } from "app/store/pendenciaPagaDateRange";
 import { useForm, Controller } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
 import { ClearIcon } from "@mui/x-date-pickers";
@@ -62,6 +63,7 @@ export default function AgentsFinancialMovement() {
   const [showClearMin, setShowClearMin] = useState(false);
   const [showClearMax, setShowClearMax] = useState(false);
   const [whichStatusShow, setWhichStatus] = useState([]);
+  const isPendenciaPagaSelected = hasSingleDayStatus(whichStatusShow);
   const [showErroStatus, setShowErroStatus] = useState(false);
   const [selectedErroStatus, setSelectedErroStatus] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
@@ -276,6 +278,11 @@ export default function AgentsFinancialMovement() {
       setSelectedStatusOptions(normalizedValue);
       const statusValues = newValue.map((v) => (typeof v === "object" ? v.label : v));
       setWhichStatus(statusValues);
+
+      // Pendencia Paga aceita um único dia: ao selecionar o status, o intervalo já preenchido vira um dia.
+      if (hasSingleDayStatus(statusValues) && getValues("dateRange")?.length === 2) {
+        setValue("dateRange", toSingleDayRange(getValues("dateRange")));
+      }
       const hasErroStatus = statusValues.includes("Pendência de Pagamento");
       setShowErroStatus(hasErroStatus);
 
@@ -506,6 +513,10 @@ export default function AgentsFinancialMovement() {
                   render={({ field }) => (
                     <DateRangePicker
                       {...field}
+                      onChange={(value) =>
+                        field.onChange(isPendenciaPagaSelected ? toSingleDayRange(value) : value)
+                      }
+                      oneTap={isPendenciaPagaSelected}
                       size="lg"
                       showOneCalendar
                       showHeader={false}

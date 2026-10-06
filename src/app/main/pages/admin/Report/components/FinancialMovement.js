@@ -25,6 +25,7 @@ import { DateRangePicker } from "rsuite";
 import { useForm, Controller } from "react-hook-form";
 
 import { handleFinancialMovementExport, handleFinancialMovementPage,setReportList } from "app/store/reportSlice";
+import { hasSingleDayStatus, toSingleDayRange } from "app/store/pendenciaPagaDateRange";
 
 import { getUser } from "app/store/adminSlice";
 import { NumericFormat } from "react-number-format";
@@ -146,6 +147,8 @@ export default function BasicEditingGrid() {
   const hasMissingErroStatusSelection =
     whichStatusShow.includes("Pendência de Pagamento") &&
     selectedErroStatus.length === 0;
+
+  const isPendenciaPagaSelected = hasSingleDayStatus(whichStatusShow);
 
   const validateErroStatusSelection = () => {
     if (!hasMissingErroStatusSelection) {
@@ -316,6 +319,11 @@ export default function BasicEditingGrid() {
     if (field === "status") {
       const status = newValue.map((i) => i.label);
       setWhichStatus(status);
+
+      // Pendencia Paga aceita um único dia: ao selecionar o status, o intervalo já preenchido vira um dia.
+      if (hasSingleDayStatus(status) && getValues("dateRange")?.length === 2) {
+        setValue("dateRange", toSingleDayRange(getValues("dateRange")));
+      }
 
       const hasErro = status.includes("Pendência de Pagamento");
       setShowErroStatus(hasErro);
@@ -669,9 +677,13 @@ export default function BasicEditingGrid() {
                     render={({ field }) => (
                       <DateRangePicker
                         {...field}
+                        onChange={(value) =>
+                          field.onChange(isPendenciaPagaSelected ? toSingleDayRange(value) : value)
+                        }
+                        oneTap={isPendenciaPagaSelected}
                         id="custom-date-input"
                         showOneCalendar
-                        showHeader={false}
+                        showHeader
                         placement="auto"
                         placeholder="Selecionar Data"
                         format="dd/MM/yy"
