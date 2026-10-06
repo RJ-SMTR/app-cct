@@ -531,12 +531,12 @@ export default function BasicEditingGrid() {
           <header>Filtros de Pesquisa</header>
 
           <Box className="flex items-center py-10 gap-10">
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <Box className="flex gap-10 flex-wrap mb-20">
+            <form onSubmit={handleSubmit(onSubmit)} className="grid w-full grid-cols-4 gap-x-10 gap-y-16 mb-20">
+              <Box className="contents">
                 <Autocomplete
                   id="favorecidos"
                   multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                  className="w-full p-1"
                   getOptionLabel={(option) => option.value.fullName}
                   filterSelectedOptions
                   options={userOptions}
@@ -575,7 +575,7 @@ export default function BasicEditingGrid() {
                 <Autocomplete
                   id="consorcio"
                   multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                  className="w-full p-1"
                   getOptionLabel={(option) => option.label}
                   filterSelectedOptions
                   options={consorcios}
@@ -598,7 +598,7 @@ export default function BasicEditingGrid() {
                 <Autocomplete
                   id="especificos"
                   multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                  className="w-full p-1"
                   options={especificos}
                   getOptionLabel={(option) => option.label}
                   filterSelectedOptions
@@ -623,12 +623,12 @@ export default function BasicEditingGrid() {
                 />
               </Box>
 
-              <Box className="flex items-center gap-10 flex-wrap">
+              <Box className="contents">
 
                 <Autocomplete
                   id="status"
                   multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                  className="w-full p-1"
                   getOptionLabel={(option) => option.label}
                   filterSelectedOptions
                   options={consorciosStatusBase}
@@ -648,7 +648,7 @@ export default function BasicEditingGrid() {
                   <Autocomplete
                     id="erroStatus"
                     multiple
-                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                    className="w-full p-1"
                     options={erroStatus}
                     getOptionLabel={(option) => option.label}
                     filterSelectedOptions
@@ -670,7 +670,7 @@ export default function BasicEditingGrid() {
                     )}
                   />
                 )}
-                <Box>
+                <Box className="contents">
                   <Controller
                     name="dateRange"
                     control={control}
@@ -686,13 +686,13 @@ export default function BasicEditingGrid() {
                         minDate={minSelectableDate}
                         error={Boolean(error)}
                         helperText={error?.message}
+                        inGrid
                       />
                     )}
                   />
-                  <br />
                 </Box>
               </Box>
-              <Box className="flex items-center my-[3.5rem] gap-10 flex-wrap">
+              <Box className="contents">
                 <Controller
                   name="valorMin"
                   control={control}
@@ -844,14 +844,13 @@ export default function BasicEditingGrid() {
                 />
               </Box>
 
-              <Box />
               {whichStatusShow.includes("A pagar") && (
-                <span className="text-sm text-red-600">
+                <span className="col-span-4 text-sm text-red-600">
                   Atenção: Para o status "a pagar", a data escolhida deve ser
                   referente a Data Ordem de Pagamento (sexta a quinta-feira).
                 </span>
               )}
-              <Box>
+              <Box className="col-span-4 flex gap-10">
                 <Button
                   variant="contained"
                   color="secondary"

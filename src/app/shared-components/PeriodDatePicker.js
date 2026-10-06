@@ -23,6 +23,7 @@ export default function PeriodDatePicker({
   labels = { start: "De", end: "Até", single: "Data" },
   error = false,
   helperText,
+  inGrid = false,
   className,
 }) {
   // Datas parciais digitadas no campo chegam como Invalid Date: tratamos como vazio.
@@ -53,13 +54,16 @@ export default function PeriodDatePicker({
     minDate,
     maxDate,
     format: "dd/MM/yyyy",
-    slotProps: { textField: { size: "medium", variant: "outlined", error: Boolean(error) } },
+    slotProps: { textField: { size: "medium", variant: "outlined", error: Boolean(error), fullWidth: true } },
   };
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-      <Box className={className} sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+      <Box
+        className={className}
+        sx={inGrid ? { display: "contents" } : { display: "flex", flexDirection: "column", gap: 0.5 }}
+      >
+        <Box sx={inGrid ? { display: "contents" } : { display: "flex", gap: 2, flexWrap: "wrap" }}>
           {singleDay ? (
             <DatePicker
               {...sharedProps}
@@ -87,7 +91,7 @@ export default function PeriodDatePicker({
           )}
         </Box>
         {error && helperText ? (
-          <Typography variant="caption" color="error">
+          <Typography variant="caption" color="error" sx={inGrid ? { gridColumn: "1 / -1" } : undefined}>
             {helperText}
           </Typography>
         ) : null}
