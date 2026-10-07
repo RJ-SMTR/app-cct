@@ -85,15 +85,21 @@ export function getPaymentStatus(statusRemessa, descricaoStatusRemessa) {
   return "Rejeitado";
 }
 
-function shouldMarkPaymentAsPendingWithoutStatus(payment) {
-  const hasPositiveValue = normalizeNumber(payment?.totalPaymentValue) > 0;
-  const hasMissingStatus = !hasRemittanceStatus(payment?.statusRemessa);
-  const hasMissingReason =
-    payment?.motivoStatusRemessa == null &&
-    payment?.descricaoMotivoStatusRemessa == null &&
-    !String(payment?.pendingReason || "").trim();
+// Data passada sem status de remessa venceu e não foi enviada: "Pendência de Pagamento", sem badge de erro (#1164).
+function markUnsentPastPayments(monthlyPayments) {
+  const today = new Date().toISOString().slice(0, 10);
 
-  return hasPositiveValue && hasMissingStatus && hasMissingReason;
+  return monthlyPayments.map((payment) => {
+    const paymentDate = payment.dataTentativaPagamento || payment.paymentDate;
+    const isPast = Boolean(paymentDate) && paymentDate < today;
+    const isUnsent = !hasRemittanceStatus(payment.statusRemessa);
+
+    if (isPast && isUnsent && payment.totalPaymentValue > 0) {
+      return { ...payment, paymentStatus: "Pendência de Pagamento" };
+    }
+
+    return payment;
+  });
 }
 
 function markPreviousAttemptsAsPending(monthlyPayments) {
@@ -126,13 +132,6 @@ function markPreviousAttemptsAsPending(monthlyPayments) {
     );
     const isLatestPendingAttempt =
       paymentAttemptDate === latestPaymentAttemptDate;
-
-    if (shouldMarkPaymentAsPendingWithoutStatus(payment)) {
-      return {
-        ...payment,
-        paymentStatus: "Pendência de Pagamento",
-      };
-    }
 
     if (
       Number(payment.statusRemessa) !== 4 ||
@@ -198,9 +197,10 @@ export function buildMonthlyPaymentRows(monthlyResponse) {
     totalPaymentValue: normalizeNumber(order?.valorTotal),
     coveredDaysCount: 0,
     ordemPagamentoAgrupadoIds: normalizeCommaIds(order?.ordemPagamentoAgrupadoIds),
+    dadosBancariosFaltando: Boolean(order?.dadosBancariosFaltando),
   }));
 
-  return markPreviousAttemptsAsPending(monthlyPayments);
+  return markUnsentPastPayments(markPreviousAttemptsAsPending(monthlyPayments));
 }
 
 function buildWeeklyRows(weeklyResponse) {

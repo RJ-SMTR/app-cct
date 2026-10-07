@@ -41,24 +41,62 @@ describe("agentesService payment normalization", () => {
     expect(monthlyRows[0].paymentStatus).toBe("A pagar");
   });
 
-  it("marks rows with value and no remittance status as Pendência de Pagamento", () => {
+  it("keeps a future-dated row with value and no remittance status as A pagar (#1164)", () => {
     const monthlyRows = buildMonthlyPaymentRows({
       ordens: [
         {
-          data: "2026-08-28T00:00:00.000Z",
+          data: "2999-08-28T00:00:00.000Z",
           valorTotal: 142.35,
           statusRemessa: null,
           descricaoStatusRemessa: null,
           motivoStatusRemessa: null,
           descricaoMotivoStatusRemessa: null,
-          dataTentativaPagamento: "2026-08-28T00:00:00.000Z",
+          dataTentativaPagamento: "2999-08-28T00:00:00.000Z",
         },
       ],
     });
 
     expect(monthlyRows).toHaveLength(1);
     expect(monthlyRows[0].statusRemessa).toBeNull();
+    expect(monthlyRows[0].paymentStatus).toBe("A pagar");
+  });
+
+  it("marks a past-dated row without remittance status as Pendência de Pagamento (#1164)", () => {
+    const monthlyRows = buildMonthlyPaymentRows({
+      ordens: [
+        {
+          data: "2000-10-02T00:00:00.000Z",
+          valorTotal: 258.8,
+          statusRemessa: null,
+          descricaoStatusRemessa: null,
+          motivoStatusRemessa: null,
+          descricaoMotivoStatusRemessa: null,
+          dataTentativaPagamento: "2000-10-02T00:00:00.000Z",
+          dadosBancariosFaltando: true,
+        },
+      ],
+    });
+
     expect(monthlyRows[0].paymentStatus).toBe("Pendência de Pagamento");
+    expect(monthlyRows[0].dadosBancariosFaltando).toBe(true);
+  });
+
+  it("keeps a future-dated row without remittance status as A pagar (#1164)", () => {
+    const monthlyRows = buildMonthlyPaymentRows({
+      ordens: [
+        {
+          data: "2999-10-02T00:00:00.000Z",
+          valorTotal: 258.8,
+          statusRemessa: null,
+          descricaoStatusRemessa: null,
+          motivoStatusRemessa: null,
+          descricaoMotivoStatusRemessa: null,
+          dataTentativaPagamento: "2999-10-02T00:00:00.000Z",
+        },
+      ],
+    });
+
+    expect(monthlyRows[0].paymentStatus).toBe("A pagar");
   });
 
   it("treats NaoEfetivado as Rejeitado instead of Pago", () => {

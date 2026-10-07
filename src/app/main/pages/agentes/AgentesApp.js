@@ -692,10 +692,21 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
             align="center"
             sx={{ verticalAlign: "middle" }}
           >
-            <ValidPhotosStatusBadge
-              status={payment.statusRemessa}
-              paymentStatus={payment.paymentStatus}
-            />
+            {payment.dadosBancariosFaltando && payment.paymentStatus === "Pendência de Pagamento" ? (
+              <Tooltip title="Motivo não informado pelo banco: dados bancários do permissionário não cadastrados" arrow>
+                <span>
+                  <ValidPhotosStatusBadge
+                    status={payment.statusRemessa}
+                    paymentStatus={payment.paymentStatus}
+                  />
+                </span>
+              </Tooltip>
+            ) : (
+              <ValidPhotosStatusBadge
+                status={payment.statusRemessa}
+                paymentStatus={payment.paymentStatus}
+              />
+            )}
           </TableCell>
           <TableCell align="center" sx={{ verticalAlign: "middle" }}>
             <PendingReasonBadge
