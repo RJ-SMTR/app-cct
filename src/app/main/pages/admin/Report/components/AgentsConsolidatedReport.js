@@ -459,6 +459,122 @@ export default function AgentsConsolidatedReport() {
                     )}
                   />
                 </Box>
+
+                <Autocomplete
+                  id="status"
+                  multiple
+                  className="w-full p-1"
+                  options={statusOptions}
+                  value={selectedStatusOptions}
+                  getOptionLabel={(option) => option.label}
+                  isOptionEqualToValue={(option, value) =>
+                    option.value === value.value
+                  }
+                  onChange={(_, newValue) =>
+                    handleAutocompleteChange("status", newValue)
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Selecionar Status"
+                      variant="outlined"
+                    />
+                  )}
+                />
+
+                {showErroStatus ? (
+                  <Autocomplete
+                    id="erroStatus"
+                    multiple
+                    className="w-full p-1"
+                    options={erroStatusOptions}
+                    value={selectedErroStatus}
+                    getOptionLabel={(option) => option.label}
+                    isOptionEqualToValue={(option, value) =>
+                      option.value === value.value
+                    }
+                    onChange={(_, newValue) => {
+                      const normalizedValue =
+                        normalizeErroStatusSelection(newValue);
+
+                      setSelectedErroStatus(normalizedValue);
+                      setValue(
+                        "erroStatus",
+                        normalizedValue.map((option) => option.value)
+                      );
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Motivos"
+                        variant="outlined"
+                      />
+                    )}
+                  />
+                ) : null}
+
+              <Box className="contents">
+                {shouldShowAgentNameFilter(selectedAssociationOptions) ? (
+                  <Autocomplete
+                    id="agentNames"
+                    multiple
+                    className="w-full p-1"
+                    options={agentOptions}
+                    value={selectedAgentOptions}
+                    loading={loadingFilters}
+                    getOptionLabel={(option) => option.label}
+                    isOptionEqualToValue={(option, value) =>
+                      option.value === value.value
+                    }
+                    onChange={(_, newValue) =>
+                      handleAutocompleteChange("agentNames", newValue)
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Selecionar Guardador"
+                        variant="outlined"
+                        InputProps={{
+                          ...params.InputProps,
+                          endAdornment: (
+                            <>
+                              {loadingFilters ? (
+                                <CircularProgress color="inherit" size={20} />
+                              ) : null}
+                              {params.InputProps.endAdornment}
+                            </>
+                          ),
+                        }}
+                      />
+                    )}
+                  />
+                ) : null}
+
+                {shouldShowAssociationFilter(selectedAgentOptions) ? (
+                  <Autocomplete
+                    id="associations"
+                    multiple
+                    className="w-full p-1"
+                    options={associationOptions}
+                    value={selectedAssociationOptions}
+                    loading={loadingFilters}
+                    getOptionLabel={(option) => option.label}
+                    isOptionEqualToValue={(option, value) =>
+                      option.value === value.value
+                    }
+                    onChange={(_, newValue) =>
+                      handleAutocompleteChange("associations", newValue)
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Selecionar Associacoes"
+                        variant="outlined"
+                      />
+                    )}
+                  />
+                ) : null}
+
                 <Controller
                   name="valorMin"
                   control={control}
@@ -623,122 +739,8 @@ export default function AgentsConsolidatedReport() {
                     />
                   )}
                 />
-              <Box className="contents">
-                {shouldShowAgentNameFilter(selectedAssociationOptions) ? (
-                  <Autocomplete
-                    id="agentNames"
-                    multiple
-                    className="w-full p-1"
-                    options={agentOptions}
-                    value={selectedAgentOptions}
-                    loading={loadingFilters}
-                    getOptionLabel={(option) => option.label}
-                    isOptionEqualToValue={(option, value) =>
-                      option.value === value.value
-                    }
-                    onChange={(_, newValue) =>
-                      handleAutocompleteChange("agentNames", newValue)
-                    }
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Selecionar Guardador"
-                        variant="outlined"
-                        InputProps={{
-                          ...params.InputProps,
-                          endAdornment: (
-                            <>
-                              {loadingFilters ? (
-                                <CircularProgress color="inherit" size={20} />
-                              ) : null}
-                              {params.InputProps.endAdornment}
-                            </>
-                          ),
-                        }}
-                      />
-                    )}
-                  />
-                ) : null}
-
-                {shouldShowAssociationFilter(selectedAgentOptions) ? (
-                  <Autocomplete
-                    id="associations"
-                    multiple
-                    className="w-full p-1"
-                    options={associationOptions}
-                    value={selectedAssociationOptions}
-                    loading={loadingFilters}
-                    getOptionLabel={(option) => option.label}
-                    isOptionEqualToValue={(option, value) =>
-                      option.value === value.value
-                    }
-                    onChange={(_, newValue) =>
-                      handleAutocompleteChange("associations", newValue)
-                    }
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Selecionar Associacoes"
-                        variant="outlined"
-                      />
-                    )}
-                  />
-                ) : null}
-
-                <Autocomplete
-                  id="status"
-                  multiple
-                  className="w-full p-1"
-                  options={statusOptions}
-                  value={selectedStatusOptions}
-                  getOptionLabel={(option) => option.label}
-                  isOptionEqualToValue={(option, value) =>
-                    option.value === value.value
-                  }
-                  onChange={(_, newValue) =>
-                    handleAutocompleteChange("status", newValue)
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Selecionar Status"
-                      variant="outlined"
-                    />
-                  )}
-                />
-
-                {showErroStatus ? (
-                  <Autocomplete
-                    id="erroStatus"
-                    multiple
-                    className="w-full p-1"
-                    options={erroStatusOptions}
-                    value={selectedErroStatus}
-                    getOptionLabel={(option) => option.label}
-                    isOptionEqualToValue={(option, value) =>
-                      option.value === value.value
-                    }
-                    onChange={(_, newValue) => {
-                      const normalizedValue =
-                        normalizeErroStatusSelection(newValue);
-
-                      setSelectedErroStatus(normalizedValue);
-                      setValue(
-                        "erroStatus",
-                        normalizedValue.map((option) => option.value)
-                      );
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Motivos"
-                        variant="outlined"
-                      />
-                    )}
-                  />
-                ) : null}
               </Box>
-
+
 
               <Box className="col-span-4 flex gap-10">
                 <Button
