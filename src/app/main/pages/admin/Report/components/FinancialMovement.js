@@ -580,6 +580,151 @@ export default function BasicEditingGrid() {
                     )}
                   />
 
+                <Autocomplete
+                  id="status"
+                  multiple
+                  className="w-full p-1"
+                  getOptionLabel={(option) => option.label}
+                  filterSelectedOptions
+                  options={consorciosStatusBase}
+                  value={selectedStatusOptions}
+                  onChange={(_, newValue) =>
+                    handleAutocompleteChange("status", newValue)
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Selecionar Status *"
+                      variant="outlined"
+                      error={hasSearched && hasMissingStatusSelection}
+                      helperText={
+                        hasSearched && hasMissingStatusSelection
+                          ? "Selecione um status para pesquisar."
+                          : ""
+                      }
+                    />
+                  )}
+                />
+
+                {showErroStatus && (
+                  <Autocomplete
+                    id="erroStatus"
+                    multiple
+                    className="w-full p-1"
+                    options={erroStatus}
+                    getOptionLabel={(option) => option.label}
+                    filterSelectedOptions
+                    value={selectedErroStatus}
+                    onChange={(_, newValue) => {
+                      const normalizedValue = normalizeErroStatusSelection(newValue);
+                      setSelectedErroStatus(normalizedValue);
+                      setValue(
+                        "erroStatus",
+                        normalizedValue.map((option) => option.label),
+                      );
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Motivos"
+                        variant="outlined"
+                      />
+                    )}
+                  />
+                )}
+
+              <Box className="contents">
+                <Autocomplete
+                  id="favorecidos"
+                  multiple
+                  className="w-full p-1"
+                  getOptionLabel={(option) => option.value.fullName}
+                  filterSelectedOptions
+                  options={userOptions}
+                  filterOptions={(options, state) =>
+                    options.filter(
+                      (option) =>
+                        option.value?.cpfCnpj?.includes(state.inputValue) ||
+                        option.value?.permitCode?.includes(state.inputValue) ||
+                        option.value?.fullName
+                          ?.toLowerCase()
+                          .includes(state.inputValue.toLowerCase()),
+                    )
+                  }
+                  loading={loadingUsers}
+                  onChange={(_, newValue) => handleSelection("name", newValue)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Selecionar Favorecido"
+                      variant="outlined"
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {loadingUsers ? (
+                              <CircularProgress color="inherit" size={20} />
+                            ) : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                />
+
+                <Autocomplete
+                  id="consorcio"
+                  multiple
+                  className="w-full p-1"
+                  getOptionLabel={(option) => option.label}
+                  filterSelectedOptions
+                  options={consorcios}
+                  value={selectedConsorcios}
+                  getOptionDisabled={(option) => option.disabled}
+                  isOptionEqualToValue={(option, value) => option.value === value.value}
+                  onChange={(_, newValue) => handleSelection("consorcioName", newValue)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Selecionar Consórcios | Modais"
+                      variant="outlined"
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: <>{params.InputProps.endAdornment}</>,
+                      }}
+                    />
+                  )}
+                />
+                <Autocomplete
+                  id="especificos"
+                  multiple
+                  className="w-full p-1"
+                  options={especificos}
+                  getOptionLabel={(option) => option.label}
+                  filterSelectedOptions
+                  onChange={(_, newValue) =>
+                    handleAutocompleteChange("especificos", newValue)
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Selecionar Específicos"
+                      variant="outlined"
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                />
+              </Box>
+
+              <Box className="contents">
                 <Controller
                   name="valorMin"
                   control={control}
@@ -730,152 +875,6 @@ export default function BasicEditingGrid() {
                     />
                   )}
                 />
-
-              <Box className="contents">
-                <Autocomplete
-                  id="favorecidos"
-                  multiple
-                  className="w-full p-1"
-                  getOptionLabel={(option) => option.value.fullName}
-                  filterSelectedOptions
-                  options={userOptions}
-                  filterOptions={(options, state) =>
-                    options.filter(
-                      (option) =>
-                        option.value?.cpfCnpj?.includes(state.inputValue) ||
-                        option.value?.permitCode?.includes(state.inputValue) ||
-                        option.value?.fullName
-                          ?.toLowerCase()
-                          .includes(state.inputValue.toLowerCase()),
-                    )
-                  }
-                  loading={loadingUsers}
-                  onChange={(_, newValue) => handleSelection("name", newValue)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Selecionar Favorecido"
-                      variant="outlined"
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: (
-                          <>
-                            {loadingUsers ? (
-                              <CircularProgress color="inherit" size={20} />
-                            ) : null}
-                            {params.InputProps.endAdornment}
-                          </>
-                        ),
-                      }}
-                    />
-                  )}
-                />
-
-                <Autocomplete
-                  id="consorcio"
-                  multiple
-                  className="w-full p-1"
-                  getOptionLabel={(option) => option.label}
-                  filterSelectedOptions
-                  options={consorcios}
-                  value={selectedConsorcios}
-                  getOptionDisabled={(option) => option.disabled}
-                  isOptionEqualToValue={(option, value) => option.value === value.value}
-                  onChange={(_, newValue) => handleSelection("consorcioName", newValue)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Selecionar Consórcios | Modais"
-                      variant="outlined"
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: <>{params.InputProps.endAdornment}</>,
-                      }}
-                    />
-                  )}
-                />
-                <Autocomplete
-                  id="especificos"
-                  multiple
-                  className="w-full p-1"
-                  options={especificos}
-                  getOptionLabel={(option) => option.label}
-                  filterSelectedOptions
-                  onChange={(_, newValue) =>
-                    handleAutocompleteChange("especificos", newValue)
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Selecionar Específicos"
-                      variant="outlined"
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: (
-                          <>
-                            {params.InputProps.endAdornment}
-                          </>
-                        ),
-                      }}
-                    />
-                  )}
-                />
-              </Box>
-
-              <Box className="contents">
-
-                <Autocomplete
-                  id="status"
-                  multiple
-                  className="w-full p-1"
-                  getOptionLabel={(option) => option.label}
-                  filterSelectedOptions
-                  options={consorciosStatusBase}
-                  value={selectedStatusOptions}
-                  onChange={(_, newValue) =>
-                    handleAutocompleteChange("status", newValue)
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Selecionar Status *"
-                      variant="outlined"
-                      error={hasSearched && hasMissingStatusSelection}
-                      helperText={
-                        hasSearched && hasMissingStatusSelection
-                          ? "Selecione um status para pesquisar."
-                          : ""
-                      }
-                    />
-                  )}
-                />
-
-                {showErroStatus && (
-                  <Autocomplete
-                    id="erroStatus"
-                    multiple
-                    className="w-full p-1"
-                    options={erroStatus}
-                    getOptionLabel={(option) => option.label}
-                    filterSelectedOptions
-                    value={selectedErroStatus}
-                    onChange={(_, newValue) => {
-                      const normalizedValue = normalizeErroStatusSelection(newValue);
-                      setSelectedErroStatus(normalizedValue);
-                      setValue(
-                        "erroStatus",
-                        normalizedValue.map((option) => option.label),
-                      );
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Motivos"
-                        variant="outlined"
-                      />
-                    )}
-                  />
-                )}
               </Box>
 
               {whichStatusShow.includes("A pagar") && (

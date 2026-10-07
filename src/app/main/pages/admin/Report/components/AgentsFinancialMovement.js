@@ -420,67 +420,47 @@ export default function AgentsFinancialMovement() {
                   )}
                 />
 
-                <Controller
-                  name="valorMin"
-                  control={control}
-                  render={({ field }) => (
-                    <NumericFormat
-                      {...field}
-                      customInput={TextField}
-                      label="Valor Mínimo"
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      prefix="R$ "
-                      decimalScale={2}
-                      fixedDecimalScale
-                      variant="outlined"
-                      onFocus={() => setShowClearMin(true)}
-                      onBlur={() => setShowClearMin(false)}
-                      InputProps={{
-                        endAdornment: showClearMin && field.value && (
-                          <InputAdornment position="end">
-                            <ClearIcon
-                              className="cursor-pointer"
-                              onMouseDown={(e) => e.preventDefault()}
-                              onClick={() => setValue("valorMin", "")}
-                            />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
+                <Autocomplete
+                  id="status"
+                  multiple
+                  className="w-full p-1"
+                  getOptionLabel={(option) => option.label || option}
+                  options={guardadorStatusBase}
+                  value={selectedStatusOptions}
+                  onChange={(_, newValue) => handleAutocompleteChange("status", newValue)}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Selecionar Status" variant="outlined" />
                   )}
                 />
 
-                <Controller
-                  name="valorMax"
-                  control={control}
-                  render={({ field }) => (
-                    <NumericFormat
-                      {...field}
-                      customInput={TextField}
-                      label="Valor Máximo"
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      prefix="R$ "
-                      decimalScale={2}
-                      fixedDecimalScale
-                      variant="outlined"
-                      onFocus={() => setShowClearMax(true)}
-                      onBlur={() => setShowClearMax(false)}
-                      InputProps={{
-                        endAdornment: showClearMax && field.value && (
-                          <InputAdornment position="end">
-                            <ClearIcon
-                              className="cursor-pointer"
-                              onMouseDown={(e) => e.preventDefault()}
-                              onClick={() => setValue("valorMax", "")}
-                            />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  )}
-                />
+                {showErroStatus ? (
+                  <Autocomplete
+                    id="erroStatus"
+                    multiple
+                    className="w-full p-1"
+                    getOptionLabel={(option) => option.label || option}
+                    options={erroStatus}
+                    value={selectedErroStatus}
+                    onChange={(_, newValue) => {
+                      const normalized = normalizeErroStatusSelection(newValue);
+                      setSelectedErroStatus(normalized);
+                      setValue("erroStatus", normalized.map((item) => item.label));
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Motivo da Pendência"
+                        variant="outlined"
+                        error={hasMissingErroStatusSelection}
+                        helperText={
+                          hasMissingErroStatusSelection
+                            ? "Selecione um motivo para a Pendência de Pagamento."
+                            : ""
+                        }
+                      />
+                    )}
+                  />
+                ) : null}
 
               <Box className="contents">
                 {shouldShowAgentNameFilter(selectedAssociationOptions) ? (
@@ -543,47 +523,67 @@ export default function AgentsFinancialMovement() {
                   />
                 ) : null}
 
-                <Autocomplete
-                  id="status"
-                  multiple
-                  className="w-full p-1"
-                  getOptionLabel={(option) => option.label || option}
-                  options={guardadorStatusBase}
-                  value={selectedStatusOptions}
-                  onChange={(_, newValue) => handleAutocompleteChange("status", newValue)}
-                  renderInput={(params) => (
-                    <TextField {...params} label="Selecionar Status" variant="outlined" />
+                <Controller
+                  name="valorMin"
+                  control={control}
+                  render={({ field }) => (
+                    <NumericFormat
+                      {...field}
+                      customInput={TextField}
+                      label="Valor Mínimo"
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      prefix="R$ "
+                      decimalScale={2}
+                      fixedDecimalScale
+                      variant="outlined"
+                      onFocus={() => setShowClearMin(true)}
+                      onBlur={() => setShowClearMin(false)}
+                      InputProps={{
+                        endAdornment: showClearMin && field.value && (
+                          <InputAdornment position="end">
+                            <ClearIcon
+                              className="cursor-pointer"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => setValue("valorMin", "")}
+                            />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
                   )}
                 />
 
-                {showErroStatus ? (
-                  <Autocomplete
-                    id="erroStatus"
-                    multiple
-                    className="w-full p-1"
-                    getOptionLabel={(option) => option.label || option}
-                    options={erroStatus}
-                    value={selectedErroStatus}
-                    onChange={(_, newValue) => {
-                      const normalized = normalizeErroStatusSelection(newValue);
-                      setSelectedErroStatus(normalized);
-                      setValue("erroStatus", normalized.map((item) => item.label));
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Motivo da Pendência"
-                        variant="outlined"
-                        error={hasMissingErroStatusSelection}
-                        helperText={
-                          hasMissingErroStatusSelection
-                            ? "Selecione um motivo para a Pendência de Pagamento."
-                            : ""
-                        }
-                      />
-                    )}
-                  />
-                ) : null}
+                <Controller
+                  name="valorMax"
+                  control={control}
+                  render={({ field }) => (
+                    <NumericFormat
+                      {...field}
+                      customInput={TextField}
+                      label="Valor Máximo"
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      prefix="R$ "
+                      decimalScale={2}
+                      fixedDecimalScale
+                      variant="outlined"
+                      onFocus={() => setShowClearMax(true)}
+                      onBlur={() => setShowClearMax(false)}
+                      InputProps={{
+                        endAdornment: showClearMax && field.value && (
+                          <InputAdornment position="end">
+                            <ClearIcon
+                              className="cursor-pointer"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => setValue("valorMax", "")}
+                            />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  )}
+                />
               </Box>
 
 
