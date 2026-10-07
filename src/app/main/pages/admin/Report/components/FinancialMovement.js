@@ -1032,7 +1032,8 @@ export default function BasicEditingGrid() {
 
                         {(!showErroStatus && (
                           <TableCell className="text-xs py-1 ">
-                            {report.status === 'Pendencia Paga'
+                            {['Pendencia Paga', 'Pago'].includes(report.status) &&
+                              report.dataReferencia !== report.dataPagamento
                               ? report.dataPagamento
                               : '-'}
                           </TableCell>
