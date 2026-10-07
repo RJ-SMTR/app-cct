@@ -20,7 +20,7 @@ import { ClearIcon } from "@mui/x-date-pickers";
 import { format } from "date-fns";
 import { Controller, useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
-import { DateRangePicker } from "rsuite";
+import PeriodDatePicker, { periodRequiredRules } from "app/shared-components/PeriodDatePicker";
 import { NumericFormat } from "react-number-format";
 import { CSVLink } from "react-csv";
 import JsPDF from "jspdf";
@@ -104,6 +104,8 @@ export default function AgentsConsolidatedReport() {
   const [showClearMin, setShowClearMin] = useState(false);
   const [showClearMax, setShowClearMax] = useState(false);
   const [dateError, setDateError] = useState(false);
+
+  const hasMissingErroStatusSelection = showErroStatus && selectedErroStatus.length === 0;
 
   const {
     control,
@@ -375,7 +377,7 @@ export default function AgentsConsolidatedReport() {
       return;
     }
 
-    if (data.status.includes("Erros") && selectedErroStatus.length === 0) {
+    if (hasMissingErroStatusSelection) {
       dispatch(
         showMessage({
           message: "Selecione um motivo para Pendência de pagamento.",
@@ -439,13 +441,91 @@ export default function AgentsConsolidatedReport() {
           <header>Filtros de Pesquisa</header>
 
           <Box className="flex items-center py-10 gap-10">
-            <form onSubmit={handleSubmit(onSubmit)} className="w-full">
-              <Box className="flex gap-10 flex-wrap mb-20">
+            <form noValidate onSubmit={handleSubmit(onSubmit)} className="grid w-full grid-cols-4 gap-x-10 gap-y-16 mb-20">
+                <Autocomplete
+                  id="status"
+                  multiple
+                  className="w-full p-1"
+                  options={statusOptions}
+                  value={selectedStatusOptions}
+                  getOptionLabel={(option) => option.label}
+                  isOptionEqualToValue={(option, value) =>
+                    option.value === value.value
+                  }
+                  onChange={(_, newValue) =>
+                    handleAutocompleteChange("status", newValue)
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Selecionar Status"
+                      variant="outlined"
+                    />
+                  )}
+                />
+
+                {showErroStatus ? (
+                  <Autocomplete
+                    id="erroStatus"
+                    multiple
+                    className="w-full p-1"
+                    options={erroStatusOptions}
+                    value={selectedErroStatus}
+                    getOptionLabel={(option) => option.label}
+                    isOptionEqualToValue={(option, value) =>
+                      option.value === value.value
+                    }
+                    onChange={(_, newValue) => {
+                      const normalizedValue =
+                        normalizeErroStatusSelection(newValue);
+
+                      setSelectedErroStatus(normalizedValue);
+                      setValue(
+                        "erroStatus",
+                        normalizedValue.map((option) => option.value)
+                      );
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Motivos"
+                        variant="outlined"
+                        error={hasMissingErroStatusSelection}
+                        helperText={
+                          hasMissingErroStatusSelection
+                            ? "Selecione um motivo para Pendência de pagamento."
+                            : ""
+                        }
+                      />
+                    )}
+                  />
+                ) : null}
+
+                <Box className="contents">
+                  <Controller
+                    name="dateRange"
+                    control={control}
+                    rules={periodRequiredRules}
+                    
+                    render={({ field, fieldState: { error } }) => (
+                      <PeriodDatePicker
+                        required
+                        value={field.value}
+                        onChange={field.onChange}
+                        minDate={minSelectableDate}
+                        error={Boolean(error)}
+                        helperText={error?.message}
+                        inGrid
+                      />
+                    )}
+                  />
+                </Box>
+
                 {shouldShowAgentNameFilter(selectedAssociationOptions) ? (
                   <Autocomplete
                     id="agentNames"
                     multiple
-                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                    className="w-full p-1"
                     options={agentOptions}
                     value={selectedAgentOptions}
                     loading={loadingFilters}
@@ -481,7 +561,7 @@ export default function AgentsConsolidatedReport() {
                   <Autocomplete
                     id="associations"
                     multiple
-                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                    className="w-full p-1"
                     options={associationOptions}
                     value={selectedAssociationOptions}
                     loading={loadingFilters}
@@ -501,95 +581,6 @@ export default function AgentsConsolidatedReport() {
                     )}
                   />
                 ) : null}
-
-                <Autocomplete
-                  id="status"
-                  multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                  options={statusOptions}
-                  value={selectedStatusOptions}
-                  getOptionLabel={(option) => option.label}
-                  isOptionEqualToValue={(option, value) =>
-                    option.value === value.value
-                  }
-                  onChange={(_, newValue) =>
-                    handleAutocompleteChange("status", newValue)
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Selecionar Status"
-                      variant="outlined"
-                    />
-                  )}
-                />
-
-                {showErroStatus ? (
-                  <Autocomplete
-                    id="erroStatus"
-                    multiple
-                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                    options={erroStatusOptions}
-                    value={selectedErroStatus}
-                    getOptionLabel={(option) => option.label}
-                    isOptionEqualToValue={(option, value) =>
-                      option.value === value.value
-                    }
-                    onChange={(_, newValue) => {
-                      const normalizedValue =
-                        normalizeErroStatusSelection(newValue);
-
-                      setSelectedErroStatus(normalizedValue);
-                      setValue(
-                        "erroStatus",
-                        normalizedValue.map((option) => option.value)
-                      );
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Motivos"
-                        variant="outlined"
-                      />
-                    )}
-                  />
-                ) : null}
-              </Box>
-
-              <Box className="flex items-center gap-10 flex-wrap">
-                <Box>
-                  <Controller
-                    name="dateRange"
-                    control={control}
-                    render={({ field }) => (
-                      <DateRangePicker
-                        {...field}
-                        id="agentes-date-range-input"
-                        showOneCalendar
-                        showHeader={false}
-                        placement="auto"
-                        placeholder="Selecionar Data"
-                        format="dd/MM/yy"
-                        character=" - "
-                        className="custom-date-range-picker"
-                        shouldDisableDate={DateRangePicker.allowedRange(
-                          minSelectableDate
-                        )}
-                        onChange={(value) => {
-                          field.onChange(value);
-                          if (value?.[0] && value?.[1]) {
-                            setDateError(false);
-                          }
-                        }}
-                      />
-                    )}
-                  />
-                  {dateError ? (
-                    <span className="absolute text-xs text-red-600">
-                      Campo data obrigatorio*
-                    </span>
-                  ) : null}
-                </Box>
 
                 <Controller
                   name="valorMin"
@@ -673,7 +664,6 @@ export default function AgentsConsolidatedReport() {
                     />
                   )}
                 />
-
                 <Controller
                   name="valorMax"
                   control={control}
@@ -756,13 +746,11 @@ export default function AgentsConsolidatedReport() {
                     />
                   )}
                 />
-              </Box>
-
-              <Box className="mt-24">
+              <Box className="col-span-4 flex gap-10">
                 <Button
                   variant="contained"
                   color="secondary"
-                  className="w-35% mt-16 z-10"
+                  className="z-10"
                   aria-label="Pesquisar"
                   type="submit"
                   size="medium"
@@ -771,7 +759,7 @@ export default function AgentsConsolidatedReport() {
                 </Button>
                 <Button
                   variant="contained"
-                  className="w-35% mt-16 mx-10 z-10"
+                  className="z-10"
                   aria-label="Limpar Filtros"
                   type="button"
                   size="medium"

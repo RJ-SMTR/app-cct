@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 import { format } from "date-fns";
 import { useDispatch, useSelector } from "react-redux";
-import { DateRangePicker } from "rsuite";
+import PeriodDatePicker, { periodRequiredRules } from "app/shared-components/PeriodDatePicker";
 import { useForm, Controller } from "react-hook-form";
 
 import { handleReportInfo, setReportList } from "app/store/reportSlice";
@@ -370,138 +370,24 @@ export default function BasicEditingGrid() {
 					<header>Filtros de Pesquisa</header>
 
 					<Box className="flex items-center py-10 gap-10">
-						<form onSubmit={handleSubmit(onSubmit)}>
-							<Box className="flex gap-10 flex-wrap mb-20">
-								<Autocomplete
-									id="favorecidos"
-									multiple
-									className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-									getOptionLabel={(option) => option.value.fullName}
-									filterSelectedOptions
-									options={userOptions}
-									filterOptions={(options, state) =>
-										options.filter(
-											(option) =>
-												option.value?.cpfCnpj?.includes(state.inputValue) ||
-												option.value?.permitCode?.includes(state.inputValue) ||
-												option.value?.fullName
-													?.toLowerCase()
-													.includes(state.inputValue.toLowerCase()),
-										)
-									}
-									loading={loadingUsers}
-									onChange={(_, newValue) => handleSelection("name", newValue)}
-									renderInput={(params) => (
-										<TextField
-											{...params}
-											label="Selecionar Favorecido"
-											variant="outlined"
-											InputProps={{
-												...params.InputProps,
-												endAdornment: (
-													<>
-														{loadingUsers ? (
-															<CircularProgress color="inherit" size={20} />
-														) : null}
-														{params.InputProps.endAdornment}
-													</>
-												),
-											}}
-										/>
-									)}
-								/>
-
-								<Autocomplete
-									id="consorcio"
-									multiple
-									className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-									getOptionLabel={(option) => option.label}
-									filterSelectedOptions
-									options={consorcios}
-									getOptionDisabled={(option) => option.disabled}
-									onChange={(_, newValue) =>
-										handleSelection("consorcioName", newValue)
-									}
-									renderInput={(params) => (
-										<TextField
-											{...params}
-											label="Selecionar Consórcios"
-											variant="outlined"
-											InputProps={{
-												...params.InputProps,
-												endAdornment: <>{params.InputProps.endAdornment}</>,
-											}}
-										/>
-									)}
-								/>
-							</Box>
-
-							<Box className="flex items-center gap-10 flex-wrap">
-								<Autocomplete
-									id="status"
-									multiple
-									className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-									getOptionLabel={(option) => option.label}
-									filterSelectedOptions
-									options={consorciosStatus}
-									onChange={(_, newValue) =>
-										handleAutocompleteChange("status", newValue)
-									}
-									renderOption={(props, option) => (
-										<li
-											{...props}
-											onMouseEnter={(event) => handleMouseEnter(event, option)}
-											onMouseLeave={handleMouseLeave}
-										>
-											{option.label}
-										</li>
-									)}
-									renderInput={(params) => (
-										<TextField
-											{...params}
-											label="Selecionar Status"
-											variant="outlined"
-										/>
-									)}
-								/>
-								<Popover
-									open={Boolean(anchorEl)}
-									anchorEl={anchorEl}
-									onClose={handleMouseLeave}
-									anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-									transformOrigin={{ vertical: "top", horizontal: "left" }}
-								>
-									<List>
-										{erroStatus.map((status, index) => (
-											<ListItem key={index}>{status.label}</ListItem>
-										))}
-									</List>
-								</Popover>
-								<Box>
+						<form noValidate onSubmit={handleSubmit(onSubmit)} className="grid w-full grid-cols-4 gap-x-10 gap-y-16 mb-20">
 									<Controller
 										name="dateRange"
 										control={control}
-										render={({ field }) => (
-											<DateRangePicker
-												{...field}
-												id="custom-date-input"
-												showOneCalendar
-												showHeader={false}
-												placement="auto"
-												placeholder="Selecionar Data"
-												format="dd/MM/yy"
-												character=" - "
-												className="custom-date-range-picker"
-											/>
-										)}
+                    rules={periodRequiredRules}
+                    
+										render={({ field, fieldState: { error } }) => (
+                      <PeriodDatePicker
+                        required
+                        value={field.value}
+                        onChange={field.onChange}
+                        error={Boolean(error)}
+                        helperText={error?.message}
+                        inGrid
+                      />
+                    )}
 									/>
-									<br />
-									<span className="absolute text-xs text-red-600">
-										Campo data obrigatório*
-									</span>
-								</Box>
-							</Box>
-							<Box className="flex items-center my-[3.5rem] gap-10 flex-wrap">
+
 								<Controller
 									name="valorMin"
 									control={control}
@@ -582,6 +468,7 @@ export default function BasicEditingGrid() {
 										/>
 									)}
 								/>
+
 								<Controller
 									name="valorMax"
 									control={control}
@@ -663,6 +550,111 @@ export default function BasicEditingGrid() {
 										/>
 									)}
 								/>
+
+							<Box className="contents">
+								<Autocomplete
+									id="status"
+									multiple
+									className="w-full p-1"
+									getOptionLabel={(option) => option.label}
+									filterSelectedOptions
+									options={consorciosStatus}
+									onChange={(_, newValue) =>
+										handleAutocompleteChange("status", newValue)
+									}
+									renderOption={(props, option) => (
+										<li
+											{...props}
+											onMouseEnter={(event) => handleMouseEnter(event, option)}
+											onMouseLeave={handleMouseLeave}
+										>
+											{option.label}
+										</li>
+									)}
+									renderInput={(params) => (
+										<TextField
+											{...params}
+											label="Selecionar Status"
+											variant="outlined"
+										/>
+									)}
+								/>
+								<Popover
+									open={Boolean(anchorEl)}
+									anchorEl={anchorEl}
+									onClose={handleMouseLeave}
+									anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+									transformOrigin={{ vertical: "top", horizontal: "left" }}
+								>
+									<List>
+										{erroStatus.map((status, index) => (
+											<ListItem key={index}>{status.label}</ListItem>
+										))}
+									</List>
+								</Popover>
+
+								<Autocomplete
+									id="favorecidos"
+									multiple
+									className="w-full p-1"
+									getOptionLabel={(option) => option.value.fullName}
+									filterSelectedOptions
+									options={userOptions}
+									filterOptions={(options, state) =>
+										options.filter(
+											(option) =>
+												option.value?.cpfCnpj?.includes(state.inputValue) ||
+												option.value?.permitCode?.includes(state.inputValue) ||
+												option.value?.fullName
+													?.toLowerCase()
+													.includes(state.inputValue.toLowerCase()),
+										)
+									}
+									loading={loadingUsers}
+									onChange={(_, newValue) => handleSelection("name", newValue)}
+									renderInput={(params) => (
+										<TextField
+											{...params}
+											label="Selecionar Favorecido"
+											variant="outlined"
+											InputProps={{
+												...params.InputProps,
+												endAdornment: (
+													<>
+														{loadingUsers ? (
+															<CircularProgress color="inherit" size={20} />
+														) : null}
+														{params.InputProps.endAdornment}
+													</>
+												),
+											}}
+										/>
+									)}
+								/>
+
+								<Autocomplete
+									id="consorcio"
+									multiple
+									className="w-full p-1"
+									getOptionLabel={(option) => option.label}
+									filterSelectedOptions
+									options={consorcios}
+									getOptionDisabled={(option) => option.disabled}
+									onChange={(_, newValue) =>
+										handleSelection("consorcioName", newValue)
+									}
+									renderInput={(params) => (
+										<TextField
+											{...params}
+											label="Selecionar Consórcios"
+											variant="outlined"
+											InputProps={{
+												...params.InputProps,
+												endAdornment: <>{params.InputProps.endAdornment}</>,
+											}}
+										/>
+									)}
+								/>
 							</Box>
 
 							<Box />
@@ -672,11 +664,11 @@ export default function BasicEditingGrid() {
 									referente a Data Ordem de Pagamento (sexta a quinta-feira).
 								</span>
 							)}
-							<Box>
+							<Box className="col-span-4 flex gap-10">
 								<Button
 									variant="contained"
 									color="secondary"
-									className=" w-35% mt-16 z-10"
+									className="z-10"
 									aria-label="Pesquisar"
 									type="submit"
 									size="medium"
@@ -685,7 +677,7 @@ export default function BasicEditingGrid() {
 								</Button>
 								<Button
 									variant="contained"
-									className=" w-35% mt-16 mx-10 z-10"
+									className="z-10"
 									aria-label="Limpar Filtros"
 									type="button"
 									size="medium"

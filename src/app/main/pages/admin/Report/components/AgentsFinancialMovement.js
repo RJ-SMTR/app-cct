@@ -20,7 +20,8 @@ import {
 } from "@mui/material";
 import { format } from "date-fns";
 import { useDispatch, useSelector } from "react-redux";
-import { DateRangePicker } from "rsuite";
+import PeriodDatePicker, { periodRequiredRules } from "app/shared-components/PeriodDatePicker";
+import { hasSingleDayStatus, toSingleDayRange } from "app/store/pendenciaPagaDateRange";
 import { useForm, Controller } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
 import { ClearIcon } from "@mui/x-date-pickers";
@@ -62,6 +63,7 @@ export default function AgentsFinancialMovement() {
   const [showClearMin, setShowClearMin] = useState(false);
   const [showClearMax, setShowClearMax] = useState(false);
   const [whichStatusShow, setWhichStatus] = useState([]);
+  const isPendenciaPagaSelected = hasSingleDayStatus(whichStatusShow);
   const [showErroStatus, setShowErroStatus] = useState(false);
   const [selectedErroStatus, setSelectedErroStatus] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
@@ -276,6 +278,11 @@ export default function AgentsFinancialMovement() {
       setSelectedStatusOptions(normalizedValue);
       const statusValues = newValue.map((v) => (typeof v === "object" ? v.label : v));
       setWhichStatus(statusValues);
+
+      // Pendencia Paga aceita um único dia: ao selecionar o status, o intervalo já preenchido vira um dia.
+      if (hasSingleDayStatus(statusValues) && getValues("dateRange")?.length === 2) {
+        setValue("dateRange", toSingleDayRange(getValues("dateRange")));
+      }
       const hasErroStatus = statusValues.includes("Pendência de Pagamento");
       setShowErroStatus(hasErroStatus);
 
@@ -393,13 +400,73 @@ export default function AgentsFinancialMovement() {
           <header className="font-semibold text-base mb-16">Filtros de Pesquisa - Guardadores</header>
 
           <Box className="flex items-center py-10 gap-10">
-            <form onSubmit={handleSubmit(onSubmit)} className="w-full">
-              <Box className="flex gap-10 flex-wrap mb-20">
+            <form noValidate onSubmit={handleSubmit(onSubmit)} className="grid w-full grid-cols-4 gap-x-10 gap-y-16 mb-20">
+                <Autocomplete
+                  id="status"
+                  multiple
+                  className="w-full p-1"
+                  getOptionLabel={(option) => option.label || option}
+                  options={guardadorStatusBase}
+                  value={selectedStatusOptions}
+                  onChange={(_, newValue) => handleAutocompleteChange("status", newValue)}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Selecionar Status" variant="outlined" />
+                  )}
+                />
+
+                {showErroStatus ? (
+                  <Autocomplete
+                    id="erroStatus"
+                    multiple
+                    className="w-full p-1"
+                    getOptionLabel={(option) => option.label || option}
+                    options={erroStatus}
+                    value={selectedErroStatus}
+                    onChange={(_, newValue) => {
+                      const normalized = normalizeErroStatusSelection(newValue);
+                      setSelectedErroStatus(normalized);
+                      setValue("erroStatus", normalized.map((item) => item.label));
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Motivo da Pendência"
+                        variant="outlined"
+                        error={hasMissingErroStatusSelection}
+                        helperText={
+                          hasMissingErroStatusSelection
+                            ? "Selecione um motivo para a Pendência de Pagamento."
+                            : ""
+                        }
+                      />
+                    )}
+                  />
+                ) : null}
+
+                <Controller
+                  name="dateRange"
+                  control={control}
+                  rules={periodRequiredRules}
+                  render={({ field, fieldState: { error } }) => (
+                    <PeriodDatePicker
+                      required
+                      value={field.value}
+                      onChange={field.onChange}
+                      singleDay={isPendenciaPagaSelected}
+                      minDate={minSelectableDate}
+                      labels={{ start: "De", end: "Até", single: "Data" }}
+                      error={Boolean(error)}
+                      helperText={error?.message}
+                      inGrid
+                    />
+                  )}
+                />
+
                 {shouldShowAgentNameFilter(selectedAssociationOptions) ? (
                   <Autocomplete
                     id="agentNames"
                     multiple
-                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                    className="w-full p-1"
                     options={agentOptions}
                     value={selectedAgentOptions}
                     loading={loadingFilters}
@@ -429,7 +496,7 @@ export default function AgentsFinancialMovement() {
                   <Autocomplete
                     id="associations"
                     multiple
-                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                    className="w-full p-1"
                     options={associationOptions}
                     value={selectedAssociationOptions}
                     loading={loadingFilters}
@@ -454,70 +521,6 @@ export default function AgentsFinancialMovement() {
                     )}
                   />
                 ) : null}
-
-                <Autocomplete
-                  id="status"
-                  multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                  getOptionLabel={(option) => option.label || option}
-                  options={guardadorStatusBase}
-                  value={selectedStatusOptions}
-                  onChange={(_, newValue) => handleAutocompleteChange("status", newValue)}
-                  renderInput={(params) => (
-                    <TextField {...params} label="Selecionar Status" variant="outlined" />
-                  )}
-                />
-
-                {showErroStatus ? (
-                  <Autocomplete
-                    id="erroStatus"
-                    multiple
-                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                    getOptionLabel={(option) => option.label || option}
-                    options={erroStatus}
-                    value={selectedErroStatus}
-                    onChange={(_, newValue) => {
-                      const normalized = normalizeErroStatusSelection(newValue);
-                      setSelectedErroStatus(normalized);
-                      setValue("erroStatus", normalized.map((item) => item.label));
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Motivo da Pendência"
-                        variant="outlined"
-                        error={hasMissingErroStatusSelection}
-                        helperText={
-                          hasMissingErroStatusSelection
-                            ? "Selecione um motivo para a Pendência de Pagamento."
-                            : ""
-                        }
-                      />
-                    )}
-                  />
-                ) : null}
-              </Box>
-
-              <Box className="flex items-center gap-10 flex-wrap mb-20">
-                <Controller
-                  name="dateRange"
-                  control={control}
-                  rules={{ required: true }}
-                  render={({ field }) => (
-                    <DateRangePicker
-                      {...field}
-                      size="lg"
-                      showOneCalendar
-                      showHeader={false}
-                      placement="auto"
-                      placeholder="Selecionar Data"
-                      format={AGENT_FINANCIAL_MOVEMENT_DATE_FORMAT}
-                      character={AGENT_FINANCIAL_MOVEMENT_DATE_SEPARATOR}
-                      cleanable
-                      disabledDate={(date) => date < minSelectableDate}
-                    />
-                  )}
-                />
 
                 <Controller
                   name="valorMin"
@@ -580,13 +583,12 @@ export default function AgentsFinancialMovement() {
                     />
                   )}
                 />
-              </Box>
 
-              <Box className="flex gap-10 mt-16">
-                <Button variant="contained" color="secondary" type="submit" size="medium">
+              <Box className="col-span-4 flex gap-10">
+                <Button variant="contained" color="secondary" type="submit" size="medium" className="z-10">
                   Pesquisar
                 </Button>
-                <Button variant="contained" type="button" size="medium" onClick={handleClear}>
+                <Button variant="contained" type="button" size="medium" className="z-10" onClick={handleClear}>
                   Limpar Filtros
                 </Button>
               </Box>

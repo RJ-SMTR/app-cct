@@ -21,10 +21,11 @@ import {
 
 import { format } from "date-fns";
 import { useDispatch, useSelector } from "react-redux";
-import { DateRangePicker } from "rsuite";
+import PeriodDatePicker, { periodRequiredRules } from "app/shared-components/PeriodDatePicker";
 import { useForm, Controller } from "react-hook-form";
 
 import { handleFinancialMovementExport, handleFinancialMovementPage,setReportList } from "app/store/reportSlice";
+import { hasSingleDayStatus, toSingleDayRange } from "app/store/pendenciaPagaDateRange";
 
 import { getUser } from "app/store/adminSlice";
 import { NumericFormat } from "react-number-format";
@@ -46,6 +47,7 @@ export default function BasicEditingGrid() {
   const [showClearMax, setShowClearMax] = useState(false);
   const [showButton, setShowButton] = useState(false);
   const [whichStatusShow, setWhichStatus] = useState([]);
+  const [selectedStatusOptions, setSelectedStatusOptions] = useState([]);
   const [selected, setSelected] = useState(null);
   const [showErroStatus, setShowErroStatus] = useState(false);
   const [selectedErroStatus, setSelectedErroStatus] = useState([]);
@@ -147,6 +149,10 @@ export default function BasicEditingGrid() {
     whichStatusShow.includes("Pendência de Pagamento") &&
     selectedErroStatus.length === 0;
 
+  const hasMissingStatusSelection = whichStatusShow.length === 0;
+
+  const isPendenciaPagaSelected = hasSingleDayStatus(whichStatusShow);
+
   const validateErroStatusSelection = () => {
     if (!hasMissingErroStatusSelection) {
       return true;
@@ -160,8 +166,21 @@ export default function BasicEditingGrid() {
     return false;
   };
 
+  const validateStatusSelection = () => {
+    if (!hasMissingStatusSelection) {
+      return true;
+    }
+
+    dispatch(
+      showMessage({
+        message: "Selecione um status para pesquisar.",
+      }),
+    );
+    return false;
+  };
+
   const getValidatedRequestData = (data, pageIndex, pageSize, options = {}) => {
-    if (!validateErroStatusSelection()) {
+    if (!validateStatusSelection() || !validateErroStatusSelection()) {
       return null;
     }
 
@@ -169,7 +188,7 @@ export default function BasicEditingGrid() {
   };
 
   const submitReport = async (data, pageIndex, pageSize) => {
-    if (!validateErroStatusSelection()) {
+    if (!validateStatusSelection() || !validateErroStatusSelection()) {
       return;
     }
 
@@ -265,6 +284,7 @@ export default function BasicEditingGrid() {
     setSelectedErroStatus([]);
     setShowErroStatus(false);
     setWhichStatus([]);
+    setSelectedStatusOptions([]);
     setPage(0);
     setHasSearched(false);
     setPageCursors([null]);
@@ -314,8 +334,26 @@ export default function BasicEditingGrid() {
 
   const handleAutocompleteChange = (field, newValue) => {
     if (field === "status") {
+      // Pendencia Paga tem regra de data diferente (data de pagamento, dia único) dos demais
+      // status (data de vencimento, intervalo). Por isso não pode ser combinada com eles.
+      const hasPendenciaPaga = newValue.some((i) => i.label === "Pendencia Paga");
+      if (hasPendenciaPaga && newValue.length > 1) {
+        newValue = newValue.filter((i) => i.label === "Pendencia Paga");
+        dispatch(
+          showMessage({
+            message: "Pendência Paga não pode ser combinada com outros status; os demais foram removidos.",
+          }),
+        );
+      }
+      setSelectedStatusOptions(newValue);
+
       const status = newValue.map((i) => i.label);
       setWhichStatus(status);
+
+      // Pendencia Paga aceita um único dia: ao selecionar o status, o intervalo já preenchido vira um dia.
+      if (hasSingleDayStatus(status) && getValues("dateRange")?.length === 2) {
+        setValue("dateRange", toSingleDayRange(getValues("dateRange")));
+      }
 
       const hasErro = status.includes("Pendência de Pagamento");
       setShowErroStatus(hasErro);
@@ -523,12 +561,82 @@ export default function BasicEditingGrid() {
           <header>Filtros de Pesquisa</header>
 
           <Box className="flex items-center py-10 gap-10">
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <Box className="flex gap-10 flex-wrap mb-20">
+            <form noValidate onSubmit={handleSubmit(onSubmit)} className="grid w-full grid-cols-4 gap-x-10 gap-y-16 mb-20">
+                <Autocomplete
+                  id="status"
+                  multiple
+                  className="w-full p-1"
+                  getOptionLabel={(option) => option.label}
+                  filterSelectedOptions
+                  options={consorciosStatusBase}
+                  value={selectedStatusOptions}
+                  onChange={(_, newValue) =>
+                    handleAutocompleteChange("status", newValue)
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Selecionar Status *"
+                      variant="outlined"
+                      error={hasSearched && hasMissingStatusSelection}
+                      helperText={
+                        hasSearched && hasMissingStatusSelection
+                          ? "Selecione um status para pesquisar."
+                          : ""
+                      }
+                    />
+                  )}
+                />
+
+                {showErroStatus && (
+                  <Autocomplete
+                    id="erroStatus"
+                    multiple
+                    className="w-full p-1"
+                    options={erroStatus}
+                    getOptionLabel={(option) => option.label}
+                    filterSelectedOptions
+                    value={selectedErroStatus}
+                    onChange={(_, newValue) => {
+                      const normalizedValue = normalizeErroStatusSelection(newValue);
+                      setSelectedErroStatus(normalizedValue);
+                      setValue(
+                        "erroStatus",
+                        normalizedValue.map((option) => option.label),
+                      );
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Motivos"
+                        variant="outlined"
+                      />
+                    )}
+                  />
+                )}
+
+                  <Controller
+                    name="dateRange"
+                    control={control}
+                    rules={periodRequiredRules}
+                    render={({ field, fieldState: { error } }) => (
+                      <PeriodDatePicker
+                        required
+                        value={field.value}
+                        onChange={field.onChange}
+                        singleDay={isPendenciaPagaSelected}
+                        minDate={minSelectableDate}
+                        error={Boolean(error)}
+                        helperText={error?.message}
+                        inGrid
+                      />
+                    )}
+                  />
+
                 <Autocomplete
                   id="favorecidos"
                   multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                  className="w-full p-1"
                   getOptionLabel={(option) => option.value.fullName}
                   filterSelectedOptions
                   options={userOptions}
@@ -564,10 +672,11 @@ export default function BasicEditingGrid() {
                   )}
                 />
 
+              <Box className="contents">
                 <Autocomplete
                   id="consorcio"
                   multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                  className="w-full p-1"
                   getOptionLabel={(option) => option.label}
                   filterSelectedOptions
                   options={consorcios}
@@ -590,7 +699,7 @@ export default function BasicEditingGrid() {
                 <Autocomplete
                   id="especificos"
                   multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
+                  className="w-full p-1"
                   options={especificos}
                   getOptionLabel={(option) => option.label}
                   filterSelectedOptions
@@ -613,80 +722,7 @@ export default function BasicEditingGrid() {
                     />
                   )}
                 />
-              </Box>
 
-              <Box className="flex items-center gap-10 flex-wrap">
-
-                <Autocomplete
-                  id="status"
-                  multiple
-                  className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                  getOptionLabel={(option) => option.label}
-                  filterSelectedOptions
-                  options={consorciosStatusBase}
-                  onChange={(_, newValue) =>
-                    handleAutocompleteChange("status", newValue)
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Selecionar Status"
-                      variant="outlined"
-                    />
-                  )}
-                />
-
-                {showErroStatus && (
-                  <Autocomplete
-                    id="erroStatus"
-                    multiple
-                    className="w-[25rem] md:min-w-[25rem] md:w-auto p-1"
-                    options={erroStatus}
-                    getOptionLabel={(option) => option.label}
-                    filterSelectedOptions
-                    value={selectedErroStatus}
-                    onChange={(_, newValue) => {
-                      const normalizedValue = normalizeErroStatusSelection(newValue);
-                      setSelectedErroStatus(normalizedValue);
-                      setValue(
-                        "erroStatus",
-                        normalizedValue.map((option) => option.label),
-                      );
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Motivos"
-                        variant="outlined"
-                      />
-                    )}
-                  />
-                )}
-                <Box>
-                  <Controller
-                    name="dateRange"
-                    control={control}
-                    render={({ field }) => (
-                      <DateRangePicker
-                        {...field}
-                        id="custom-date-input"
-                        showOneCalendar
-                        showHeader={false}
-                        placement="auto"
-                        placeholder="Selecionar Data"
-                        format="dd/MM/yy"
-                        character=" - "
-                        className="custom-date-range-picker"
-                        shouldDisableDate={DateRangePicker.allowedRange(
-                          minSelectableDate
-                        )}
-                      />
-                    )}
-                  />
-                  <br />
-                </Box>
-              </Box>
-              <Box className="flex items-center my-[3.5rem] gap-10 flex-wrap">
                 <Controller
                   name="valorMin"
                   control={control}
@@ -759,6 +795,7 @@ export default function BasicEditingGrid() {
                     />
                   )}
                 />
+
                 <Controller
                   name="valorMax"
                   control={control}
@@ -838,18 +875,17 @@ export default function BasicEditingGrid() {
                 />
               </Box>
 
-              <Box />
               {whichStatusShow.includes("A pagar") && (
-                <span className="text-sm text-red-600">
+                <span className="col-span-4 text-sm text-red-600">
                   Atenção: Para o status "a pagar", a data escolhida deve ser
                   referente a Data Ordem de Pagamento (sexta a quinta-feira).
                 </span>
               )}
-              <Box>
+              <Box className="col-span-4 flex gap-10">
                 <Button
                   variant="contained"
                   color="secondary"
-                  className=" w-35% mt-16 z-10"
+                  className="z-10"
                   aria-label="Pesquisar"
                   type="submit"
                   size="medium"
@@ -858,7 +894,7 @@ export default function BasicEditingGrid() {
                 </Button>
                 <Button
                   variant="contained"
-                  className=" w-35% mt-16 mx-10 z-10"
+                  className="z-10"
                   aria-label="Limpar Filtros"
                   type="button"
                   size="medium"
