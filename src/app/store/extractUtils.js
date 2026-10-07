@@ -61,3 +61,42 @@ export function groupTransactionsByType(transactions) {
   return Object.fromEntries(sortedEntries);
 }
 
+// Data passada sem status de remessa venceu e não foi enviada: "Pendência de Pagamento", sem badge de erro (#1164).
+const hasRemittanceStatus = (statusRemessa) =>
+  statusRemessa !== null && statusRemessa !== undefined && statusRemessa !== '';
+
+export function markMonthlyPendingPayments(statements) {
+  const today = new Date().toISOString().slice(0, 10);
+  const latestPaymentDate = statements.reduce((latestDate, statement) => {
+    const paymentDate = statement.dataTentativaPagamento ?? statement.data;
+
+    return paymentDate > latestDate ? paymentDate : latestDate;
+  }, '');
+
+  return statements.map((statement) => {
+    const paymentDate = statement.dataTentativaPagamento ?? statement.data;
+    const isPast = Boolean(paymentDate) && String(paymentDate).slice(0, 10) < today;
+    const isUnsent = !hasRemittanceStatus(statement.statusRemessa);
+    const hasValue = Number(statement.valorTotal ?? statement.valor ?? 0) > 0;
+
+    if (isPast && isUnsent && hasValue) {
+      return { ...statement, paymentStatus: 'Pendência de Pagamento' };
+    }
+
+    if (Number(statement.statusRemessa) !== 4) {
+      return statement;
+    }
+
+    const isLatestPendingPayment = paymentDate === latestPaymentDate;
+    const hasLaterPaymentWithStatus = statements.some((laterStatement) => {
+      const laterPaymentDate = laterStatement.dataTentativaPagamento ?? laterStatement.data;
+
+      return laterPaymentDate > paymentDate && hasRemittanceStatus(laterStatement.statusRemessa);
+    });
+
+    return isLatestPendingPayment || hasLaterPaymentWithStatus
+      ? { ...statement, paymentStatus: 'Pendência de Pagamento' }
+      : statement;
+  });
+}
+

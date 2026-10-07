@@ -1,4 +1,4 @@
-import { groupTransactionsByType } from "./extractUtils";
+import { groupTransactionsByType, markMonthlyPendingPayments } from "./extractUtils";
 
 describe("groupTransactionsByType", () => {
   it("returns empty object if input is empty or not an array", () => {
@@ -41,3 +41,30 @@ describe("groupTransactionsByType", () => {
   });
 });
 
+describe("markMonthlyPendingPayments (#1164)", () => {
+  it("marks a past-dated row without remittance status as Pendência de Pagamento", () => {
+    const [row] = markMonthlyPendingPayments([
+      {
+        data: "2000-10-02T00:00:00.000Z",
+        dataTentativaPagamento: "2000-10-02",
+        valorTotal: 258.8,
+        statusRemessa: null,
+      },
+    ]);
+
+    expect(row.paymentStatus).toBe("Pendência de Pagamento");
+  });
+
+  it("keeps a future-dated row without remittance status without a pending mark", () => {
+    const [row] = markMonthlyPendingPayments([
+      {
+        data: "2999-10-02T00:00:00.000Z",
+        dataTentativaPagamento: "2999-10-02",
+        valorTotal: 258.8,
+        statusRemessa: null,
+      },
+    ]);
+
+    expect(row.paymentStatus).toBeUndefined();
+  });
+});
