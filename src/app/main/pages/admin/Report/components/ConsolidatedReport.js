@@ -59,6 +59,7 @@ export default function BasicEditingGrid() {
   const [selected, setSelected] = useState(null)
   const [motivos, setShowMotivos] = useState(false)
   const [selectedConsorcios, setSelectedConsorcios] = useState([]);
+  const [selectedStatusOptions, setSelectedStatusOptions] = useState([]);
   const [selectedErroStatus, setSelectedErroStatus] = useState([]);
   const [selectedEspecificos, setSelectedEspecificos] = useState([]);
 
@@ -179,6 +180,7 @@ export default function BasicEditingGrid() {
     setValue('valorMin', '')
     setValue('consorcioName', [])
     setValue('status', [])
+    setSelectedStatusOptions([])
     document.querySelectorAll('.MuiAutocomplete-clearIndicator').forEach(button => button.click());
   }
 
@@ -226,6 +228,17 @@ export default function BasicEditingGrid() {
 
   const handleAutocompleteChange = (field, newValue) => {
     if (field === 'status') {
+      // Pendencia Paga tem regra de data diferente (data de pagamento, dia único) dos demais
+      // status (data de vencimento, intervalo). Por isso não pode ser combinada com eles.
+      const hasPendenciaPaga = newValue.some((i) => i.label === 'Pendencia Paga');
+      if (hasPendenciaPaga && newValue.length > 1) {
+        newValue = newValue.filter((i) => i.label === 'Pendencia Paga');
+        dispatch(showMessage({
+          message: "Pendência Paga não pode ser combinada com outros status; os demais foram removidos.",
+        }));
+      }
+      setSelectedStatusOptions(newValue);
+
       const status = newValue.map(i => i.label)
       setWhichStatus(status)
       if (status.includes?.('Pendência de Pagamento')) {
@@ -699,6 +712,7 @@ export default function BasicEditingGrid() {
                     getOptionLabel={(option) => option.label}
                     filterSelectedOptions
                     options={consorciosStatus}
+                    value={selectedStatusOptions}
                     onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
                     renderInput={(params) => (
                       <TextField
@@ -744,8 +758,8 @@ export default function BasicEditingGrid() {
                   />
                 )}
 
-
-              </Box>
+
+              </Box>
 
               <Box>
 
