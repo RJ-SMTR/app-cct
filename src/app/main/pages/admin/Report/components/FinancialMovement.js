@@ -25,7 +25,6 @@ import PeriodDatePicker, { periodRequiredRules } from "app/shared-components/Per
 import { useForm, Controller } from "react-hook-form";
 
 import { handleFinancialMovementExport, handleFinancialMovementPage,setReportList } from "app/store/reportSlice";
-import { hasSingleDayStatus, toSingleDayRange } from "app/store/pendenciaPagaDateRange";
 
 import { getUser } from "app/store/adminSlice";
 import { NumericFormat } from "react-number-format";
@@ -150,8 +149,6 @@ export default function BasicEditingGrid() {
     selectedErroStatus.length === 0;
 
   const hasMissingStatusSelection = whichStatusShow.length === 0;
-
-  const isPendenciaPagaSelected = hasSingleDayStatus(whichStatusShow);
 
   const validateErroStatusSelection = () => {
     if (!hasMissingErroStatusSelection) {
@@ -349,11 +346,6 @@ export default function BasicEditingGrid() {
 
       const status = newValue.map((i) => i.label);
       setWhichStatus(status);
-
-      // Pendencia Paga aceita um único dia: ao selecionar o status, o intervalo já preenchido vira um dia.
-      if (hasSingleDayStatus(status) && getValues("dateRange")?.length === 2) {
-        setValue("dateRange", toSingleDayRange(getValues("dateRange")));
-      }
 
       const hasErro = status.includes("Pendência de Pagamento");
       setShowErroStatus(hasErro);
@@ -624,7 +616,6 @@ export default function BasicEditingGrid() {
                         required
                         value={field.value}
                         onChange={field.onChange}
-                        singleDay={isPendenciaPagaSelected}
                         minDate={minSelectableDate}
                         error={Boolean(error)}
                         helperText={error?.message}
