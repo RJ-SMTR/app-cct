@@ -180,6 +180,18 @@ function handleData(data) {
   if (data.cursorCpfCnpj) {
     requestData.cursorCpfCnpj = data.cursorCpfCnpj;
   }
+  if (data.cursorNomeConsorcio) {
+    requestData.cursorNomeConsorcio = data.cursorNomeConsorcio;
+  }
+  if (data.cursorCodBanco) {
+    requestData.cursorCodBanco = data.cursorCodBanco;
+  }
+  if (data.cursorDataPagamento) {
+    requestData.cursorDataPagamento = data.cursorDataPagamento;
+  }
+  if (data.cursorEmail) {
+    requestData.cursorEmail = data.cursorEmail;
+  }
 
   return requestData;
 }
@@ -498,6 +510,11 @@ export function handleAgentFinancialData(data) {
   if (data.cursorNome) requestData.cursorNome = data.cursorNome;
   if (data.cursorStatus) requestData.cursorStatus = data.cursorStatus;
   if (data.cursorCpfCnpj) requestData.cursorCpfCnpj = data.cursorCpfCnpj;
+  if (data.cursorNomeConsorcio) requestData.cursorNomeConsorcio = data.cursorNomeConsorcio;
+  if (data.cursorCodBanco) requestData.cursorCodBanco = data.cursorCodBanco;
+  if (data.cursorDataPagamento) requestData.cursorDataPagamento = data.cursorDataPagamento;
+  if (data.cursorCodigoErro) requestData.cursorCodigoErro = data.cursorCodigoErro;
+  if (data.cursorEmail) requestData.cursorEmail = data.cursorEmail;
 
   return requestData;
 }

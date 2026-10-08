@@ -242,6 +242,10 @@ export default function BasicEditingGrid() {
       pageRequestData.cursorNome = cursor.nomes;
       pageRequestData.cursorStatus = cursor.status;
       pageRequestData.cursorCpfCnpj = cursor.cpfCnpj;
+      pageRequestData.cursorNomeConsorcio = cursor.nomeConsorcio;
+      pageRequestData.cursorCodBanco = cursor.codBanco;
+      pageRequestData.cursorDataPagamento = cursor.dataPagamento;
+      pageRequestData.cursorEmail = cursor.email;
     }
 
     try {

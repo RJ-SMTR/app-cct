@@ -240,6 +240,11 @@ export default function AgentsFinancialMovement() {
       cursorNome: cursor?.nomes,
       cursorStatus: cursor?.status,
       cursorCpfCnpj: cursor?.cpfCnpj,
+      cursorNomeConsorcio: cursor?.nomeConsorcio,
+      cursorCodBanco: cursor?.codBanco,
+      cursorDataPagamento: cursor?.dataPagamento,
+      cursorCodigoErro: cursor?.codigoErro,
+      cursorEmail: cursor?.email,
     };
 
     await submitReport(pageData, newPage, rowsPerPage);
