@@ -777,6 +777,12 @@ export default function AgentsConsolidatedReport() {
                 />
               </Box>
 
+              {isAPagarSelected && (
+                <span className="col-span-4 text-sm text-red-600">
+                  Atenção: Para o status "a pagar", a data escolhida deve ser
+                  referente a Data Ordem de Pagamento (terça a quinta ou sexta a segunda).
+                </span>
+              )}
 
               <Box className="col-span-4 flex gap-10">
                 <Button
