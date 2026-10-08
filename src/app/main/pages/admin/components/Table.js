@@ -25,7 +25,10 @@ const style = {
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
-    width: 400,
+    width: 600,
+    maxWidth: '90%',
+    maxHeight: '85vh',
+    overflowY: 'auto',
     borderRadius: '.5rem',
     bgcolor: 'background.paper',
     boxShadow: 24,
@@ -244,13 +247,13 @@ export function TableUsers() {
                     </Typography>
 
                     <form onSubmit={handleSubmit(onSubmit)}>
-                        <div className='mb-4'>
+                        <div className="flex flex-col sm:flex-row gap-16 mb-16">
                             <Controller
                                 name="selectedQuery"
                                 control={control}
                                 defaultValue=""
                                 render={({ field }) => (
-                                    <Select displayEmpty {...field}>
+                                    <Select displayEmpty className="w-full" {...field}>
                                         <MenuItem value="" selected disabled>
                                             Pesquisar por...
                                         </MenuItem>
@@ -265,7 +268,7 @@ export function TableUsers() {
                                 control={control}
                                 render={({ field }) => (
                                     <Select
-                                        className="mx-4 p-0"
+                                        className="w-full"
                                         displayEmpty
                                         {...field}
                                         defaultValue=""
@@ -280,10 +283,10 @@ export function TableUsers() {
                                     </Select>
                                 )}
                             />
-                            {errors.selectedQuery && (
-                                <p className="text-red-500">Campo obrigatório</p>
-                            )}
                         </div>
+                        {errors.selectedQuery && (
+                            <p className="text-red-500 mb-4">Campo obrigatório</p>
+                        )}
                         <div>
                             <Controller
                                 name="query"
@@ -292,7 +295,7 @@ export function TableUsers() {
                                 render={({ field }) => (
                                     <TextField
                                         color='black'
-                                        className='w-[100%]'
+                                        className='w-full'
                                         placeholder="Pesquisar"
                                         {...field}
                                     />

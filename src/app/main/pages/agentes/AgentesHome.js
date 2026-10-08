@@ -31,7 +31,10 @@ const style = {
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: 400,
+  width: 600,
+  maxWidth: '90%',
+  maxHeight: '85vh',
+  overflowY: 'auto',
   borderRadius: '.5rem',
   bgcolor: 'background.paper',
   boxShadow: 24,
@@ -406,12 +409,12 @@ function AgentesHome() {
           </Typography>
 
           <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="mb-4">
+            <div className="mb-16">
               <Controller
                 name="selectedQuery"
                 control={control}
                 render={({ field }) => (
-                  <Select displayEmpty {...field}>
+                  <Select displayEmpty className="w-full" {...field}>
                     <MenuItem value="" disabled>
                       Pesquisar por...
                     </MenuItem>
@@ -431,7 +434,7 @@ function AgentesHome() {
                 render={({ field }) => (
                   <TextField
                     color="black"
-                    className="w-[100%]"
+                    className="w-full"
                     placeholder="Pesquisar"
                     {...field}
                   />
