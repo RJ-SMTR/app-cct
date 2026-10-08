@@ -30,6 +30,7 @@ import { utils, writeFile as writeFileXLSX } from "xlsx";
 
 import { getAgentUsers } from "app/store/adminSlice";
 import { showMessage } from "app/store/fuse/messageSlice";
+import { hasAPagarStatus, isValidOpaStartDate, toOpaWindowRange } from "app/store/aPagarDateRange";
 import {
   fetchAgentConsolidatedReport,
   setReportList,
@@ -100,6 +101,7 @@ export default function AgentsConsolidatedReport() {
   const [selectedAgentOptions, setSelectedAgentOptions] = useState([]);
   const [selectedAssociationOptions, setSelectedAssociationOptions] = useState([]);
   const [selectedStatusOptions, setSelectedStatusOptions] = useState([]);
+  const isAPagarSelected = hasAPagarStatus(selectedStatusOptions.map((option) => option.value ?? option.label));
   const [selectedErroStatus, setSelectedErroStatus] = useState([]);
   const [showErroStatus, setShowErroStatus] = useState(false);
   const [showClearMin, setShowClearMin] = useState(false);
@@ -252,8 +254,25 @@ export default function AgentsConsolidatedReport() {
     }
 
     if (field === "status") {
-      setSelectedStatusOptions(normalizedValue);
+      const previousValues = selectedStatusOptions.map((option) => option.value ?? option.label);
       const selectedStatusValues = normalizedValue.map((option) => option.value);
+
+      // A Pagar segue a janela da OPA (início só terça ou sexta); combinado com outros status,
+      // essa janela passa a valer para a busca inteira, não só para A Pagar.
+      if (hasAPagarStatus(selectedStatusValues) && selectedStatusValues.length > 1) {
+        dispatch(
+          showMessage({
+            message: "A Pagar está combinado com outros status; o filtro de data seguirá a regra do A Pagar (início só terça ou sexta).",
+          }),
+        );
+      }
+
+      const isAddingStatus = selectedStatusValues.some((value) => !previousValues.includes(value));
+      if (isAddingStatus) {
+        setValue("dateRange", []);
+      }
+
+      setSelectedStatusOptions(normalizedValue);
       const hasErroStatus = selectedStatusValues.includes("Erros");
 
       setShowErroStatus(hasErroStatus);
@@ -520,6 +539,8 @@ export default function AgentsConsolidatedReport() {
                         value={field.value}
                         onChange={field.onChange}
                         minDate={minSelectableDate}
+                        shouldDisableStart={isAPagarSelected ? (date) => !isValidOpaStartDate(date) : undefined}
+                        deriveRange={isAPagarSelected ? toOpaWindowRange : undefined}
                         error={Boolean(error)}
                         helperText={error?.message}
                         inGrid

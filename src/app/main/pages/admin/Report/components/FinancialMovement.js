@@ -337,6 +337,8 @@ export default function BasicEditingGrid() {
 
   const handleAutocompleteChange = (field, newValue) => {
     if (field === "status") {
+      const previousLabels = selectedStatusOptions.map((i) => i.label);
+
       // Pendencia Paga tem regra de data diferente (data de pagamento, dia único) dos demais
       // status (data de vencimento, intervalo). Por isso não pode ser combinada com eles.
       const hasPendenciaPaga = newValue.some((i) => i.label === "Pendencia Paga");
@@ -348,6 +350,22 @@ export default function BasicEditingGrid() {
           }),
         );
       }
+
+      // A Pagar segue a janela da OPA (início só terça ou sexta); combinado com outros status,
+      // essa janela passa a valer para a busca inteira, não só para A Pagar.
+      if (hasAPagarStatus(newValue.map((i) => i.label)) && newValue.length > 1) {
+        dispatch(
+          showMessage({
+            message: "A Pagar está combinado com outros status; o filtro de data seguirá a regra do A Pagar (início só terça ou sexta).",
+          }),
+        );
+      }
+
+      const isAddingStatus = newValue.some((i) => !previousLabels.includes(i.label));
+      if (isAddingStatus) {
+        setValue("dateRange", []);
+      }
+
       setSelectedStatusOptions(newValue);
 
       const status = newValue.map((i) => i.label);

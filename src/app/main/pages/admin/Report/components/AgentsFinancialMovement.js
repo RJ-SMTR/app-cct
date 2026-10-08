@@ -21,7 +21,7 @@ import {
 import { format } from "date-fns";
 import { useDispatch, useSelector } from "react-redux";
 import PeriodDatePicker, { periodRequiredRules } from "app/shared-components/PeriodDatePicker";
-import { hasSingleDayStatus, toSingleDayRange } from "app/store/pendenciaPagaDateRange";
+import { hasSingleDayStatus } from "app/store/pendenciaPagaDateRange";
 import { hasAPagarStatus, isValidOpaStartDate, toOpaWindowRange } from "app/store/aPagarDateRange";
 import { useForm, Controller } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
@@ -282,14 +282,27 @@ export default function AgentsFinancialMovement() {
     }
 
     if (field === "status") {
-      setSelectedStatusOptions(normalizedValue);
+      const previousLabels = selectedStatusOptions.map((v) => (typeof v === "object" ? v.label : v));
       const statusValues = newValue.map((v) => (typeof v === "object" ? v.label : v));
+
+      // A Pagar segue a janela da OPA (início só terça ou sexta); combinado com outros status,
+      // essa janela passa a valer para a busca inteira, não só para A Pagar.
+      if (hasAPagarStatus(statusValues) && statusValues.length > 1) {
+        dispatch(
+          showMessage({
+            message: "A Pagar está combinado com outros status; o filtro de data seguirá a regra do A Pagar (início só terça ou sexta).",
+          }),
+        );
+      }
+
+      const isAddingStatus = statusValues.some((label) => !previousLabels.includes(label));
+      if (isAddingStatus) {
+        setValue("dateRange", []);
+      }
+
+      setSelectedStatusOptions(normalizedValue);
       setWhichStatus(statusValues);
 
-      // Pendencia Paga aceita um único dia: ao selecionar o status, o intervalo já preenchido vira um dia.
-      if (hasSingleDayStatus(statusValues) && getValues("dateRange")?.length === 2) {
-        setValue("dateRange", toSingleDayRange(getValues("dateRange")));
-      }
       const hasErroStatus = statusValues.includes("Pendência de Pagamento");
       setShowErroStatus(hasErroStatus);
 
