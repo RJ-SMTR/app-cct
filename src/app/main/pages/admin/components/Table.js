@@ -18,6 +18,8 @@ import Modal from '@mui/material/Modal';
 import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
 import { showMessage } from 'app/store/fuse/messageSlice';
 
 const style = {
@@ -246,47 +248,54 @@ export function TableUsers() {
                        Pesquisar por usuário:
                     </Typography>
 
-                    <form onSubmit={handleSubmit(onSubmit)}>
+                    <form onSubmit={handleSubmit(onSubmit)} className="mt-24">
                         <div className="flex flex-col sm:flex-row gap-16 mb-16">
                             <Controller
                                 name="selectedQuery"
                                 control={control}
                                 defaultValue=""
+                                rules={{ required: 'Campo obrigatório' }}
                                 render={({ field }) => (
-                                    <Select displayEmpty className="w-full" {...field}>
-                                        <MenuItem value="" selected disabled>
-                                            Pesquisar por...
-                                        </MenuItem>
-                                        <MenuItem value="fullName">Nome</MenuItem>
-                                        <MenuItem value="email">E-mail</MenuItem>
-                                        <MenuItem value="permitCode">Código de permissão</MenuItem>
-                                    </Select>
+                                    <FormControl className="w-full" error={!!errors.selectedQuery}>
+                                        <InputLabel id="selected-query-label">Pesquisar por</InputLabel>
+                                        <Select
+                                            labelId="selected-query-label"
+                                            label="Pesquisar por"
+                                            {...field}
+                                        >
+                                            <MenuItem value="fullName">Nome</MenuItem>
+                                            <MenuItem value="email">E-mail</MenuItem>
+                                            <MenuItem value="permitCode">Código de permissão</MenuItem>
+                                        </Select>
+                                        {errors.selectedQuery && (
+                                            <Typography variant="caption" color="error">
+                                                {errors.selectedQuery.message}
+                                            </Typography>
+                                        )}
+                                    </FormControl>
                                 )}
                             />
                             <Controller
                                 name="inviteStatus"
                                 control={control}
                                 render={({ field }) => (
-                                    <Select
-                                        className="w-full"
-                                        displayEmpty
-                                        {...field}
-                                        defaultValue=""
-                                    >
-                                        <MenuItem value="" selected disabled>
-                                            Status de convite
-                                        </MenuItem>
-                                        <MenuItem value="queued">Não enviado</MenuItem>
-                                        {/* <MenuItem value="created">Criado</MenuItem> */}
-                                        <MenuItem value="sent">Enviado</MenuItem>
-                                        <MenuItem value="used">Acessado</MenuItem>
-                                    </Select>
+                                    <FormControl className="w-full">
+                                        <InputLabel id="invite-status-label">Status de convite</InputLabel>
+                                        <Select
+                                            labelId="invite-status-label"
+                                            label="Status de convite"
+                                            {...field}
+                                            defaultValue=""
+                                        >
+                                            <MenuItem value="queued">Não enviado</MenuItem>
+                                            {/* <MenuItem value="created">Criado</MenuItem> */}
+                                            <MenuItem value="sent">Enviado</MenuItem>
+                                            <MenuItem value="used">Acessado</MenuItem>
+                                        </Select>
+                                    </FormControl>
                                 )}
                             />
                         </div>
-                        {errors.selectedQuery && (
-                            <p className="text-red-500 mb-4">Campo obrigatório</p>
-                        )}
                         <div>
                             <Controller
                                 name="query"
@@ -296,6 +305,7 @@ export function TableUsers() {
                                     <TextField
                                         color='black'
                                         className='w-full'
+                                        label="Pesquisar"
                                         placeholder="Pesquisar"
                                         {...field}
                                     />
