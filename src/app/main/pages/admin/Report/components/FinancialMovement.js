@@ -25,7 +25,6 @@ import PeriodDatePicker, { periodRequiredRules } from "app/shared-components/Per
 import { useForm, Controller } from "react-hook-form";
 
 import { handleFinancialMovementExport, handleFinancialMovementPage,setReportList } from "app/store/reportSlice";
-import { hasAPagarStatus, isValidOpaStartDate, toOpaWindowRange } from "app/store/aPagarDateRange";
 
 import { getUser } from "app/store/adminSlice";
 import { NumericFormat } from "react-number-format";
@@ -47,7 +46,6 @@ export default function BasicEditingGrid() {
   const [showClearMax, setShowClearMax] = useState(false);
   const [showButton, setShowButton] = useState(false);
   const [whichStatusShow, setWhichStatus] = useState([]);
-  const isAPagarSelected = hasAPagarStatus(whichStatusShow);
   const [selectedStatusOptions, setSelectedStatusOptions] = useState([]);
   const [selected, setSelected] = useState(null);
   const [showErroStatus, setShowErroStatus] = useState(false);
@@ -351,16 +349,6 @@ export default function BasicEditingGrid() {
         );
       }
 
-      // A Pagar segue a janela da OPA (início só terça ou sexta); combinado com outros status,
-      // essa janela passa a valer para a busca inteira, não só para A Pagar.
-      if (hasAPagarStatus(newValue.map((i) => i.label)) && newValue.length > 1) {
-        dispatch(
-          showMessage({
-            message: "A Pagar está combinado com outros status; o filtro de data seguirá a regra do A Pagar (início só terça ou sexta).",
-          }),
-        );
-      }
-
       const isAddingStatus = newValue.some((i) => !previousLabels.includes(i.label));
       if (isAddingStatus) {
         setValue("dateRange", []);
@@ -641,8 +629,6 @@ export default function BasicEditingGrid() {
                         value={field.value}
                         onChange={field.onChange}
                         minDate={minSelectableDate}
-                        shouldDisableStart={isAPagarSelected ? (date) => !isValidOpaStartDate(date) : undefined}
-                        deriveRange={isAPagarSelected ? toOpaWindowRange : undefined}
                         error={Boolean(error)}
                         helperText={error?.message}
                         inGrid
@@ -894,12 +880,6 @@ export default function BasicEditingGrid() {
                 />
               </Box>
 
-              {isAPagarSelected && (
-                <span className="col-span-4 text-sm text-red-600">
-                  Atenção: Para o status "a pagar", a data escolhida deve ser
-                  referente a Data Ordem de Pagamento (terça a quinta ou sexta a segunda).
-                </span>
-              )}
               <Box className="col-span-4 flex gap-10">
                 <Button
                   variant="contained"
