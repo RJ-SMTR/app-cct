@@ -22,6 +22,7 @@ import { format } from "date-fns";
 import { useDispatch, useSelector } from "react-redux";
 import PeriodDatePicker, { periodRequiredRules } from "app/shared-components/PeriodDatePicker";
 import { hasSingleDayStatus, toSingleDayRange } from "app/store/pendenciaPagaDateRange";
+import { hasAPagarStatus, isValidOpaStartDate, toOpaWindowRange } from "app/store/aPagarDateRange";
 import { useForm, Controller } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
 import { ClearIcon } from "@mui/x-date-pickers";
@@ -64,6 +65,7 @@ export default function AgentsFinancialMovement() {
   const [showClearMax, setShowClearMax] = useState(false);
   const [whichStatusShow, setWhichStatus] = useState([]);
   const isPendenciaPagaSelected = hasSingleDayStatus(whichStatusShow);
+  const isAPagarSelected = hasAPagarStatus(whichStatusShow);
   const [showErroStatus, setShowErroStatus] = useState(false);
   const [selectedErroStatus, setSelectedErroStatus] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
@@ -411,6 +413,8 @@ export default function AgentsFinancialMovement() {
                       value={field.value}
                       onChange={field.onChange}
                       singleDay={isPendenciaPagaSelected}
+                      shouldDisableStart={isAPagarSelected ? (date) => !isValidOpaStartDate(date) : undefined}
+                      deriveRange={isAPagarSelected ? toOpaWindowRange : undefined}
                       minDate={minSelectableDate}
                       labels={{ start: "De", end: "Até", single: "Data" }}
                       error={Boolean(error)}
@@ -586,7 +590,12 @@ export default function AgentsFinancialMovement() {
                 />
               </Box>
 
-
+              {isAPagarSelected && (
+                <span className="col-span-4 text-sm text-red-600">
+                  Atenção: Para o status "a pagar", a data escolhida deve ser
+                  referente a Data Ordem de Pagamento (terça a quinta ou sexta a segunda).
+                </span>
+              )}
               <Box className="col-span-4 flex gap-10">
                 <Button variant="contained" color="secondary" type="submit" size="medium" className="z-10">
                   Pesquisar
