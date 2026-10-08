@@ -13,6 +13,7 @@ import {
   TableBody,
   TableCell,
   TableHead,
+  TablePagination,
   TableRow,
   TextField,
 } from "@mui/material";
@@ -104,6 +105,8 @@ export default function AgentsConsolidatedReport() {
   const [showClearMin, setShowClearMin] = useState(false);
   const [showClearMax, setShowClearMax] = useState(false);
   const [dateError, setDateError] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
   const {
     control,
@@ -177,6 +180,16 @@ export default function AgentsConsolidatedReport() {
     [reportBlocks]
   );
   const hasRows = displayRows.length > 0;
+  const paginatedRows = displayRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  const handleChangePage = (_event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
   let reportContent = (
     <div style={{ height: "50vh", width: "100%" }} className="overflow-scroll">
       <Table size="small">
@@ -261,6 +274,7 @@ export default function AgentsConsolidatedReport() {
   };
 
   const handleClear = () => {
+    setPage(0);
     reset(defaultValues);
     setSelectedAgentOptions([]);
     setSelectedAssociationOptions([]);
@@ -386,6 +400,7 @@ export default function AgentsConsolidatedReport() {
 
     setDateError(false);
     setIsLoading(true);
+    setPage(0);
 
     try {
       const responseBlocks = await dispatch(fetchAgentConsolidatedReport(data));
@@ -420,7 +435,7 @@ export default function AgentsConsolidatedReport() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {displayRows.map((row) => (
+            {paginatedRows.map((row) => (
               <TableRow key={`${row.nome}-${row.valor}`}>
                 <TableCell>{row.nome}</TableCell>
                 <TableCell>{formatter.format(row.valor)}</TableCell>
@@ -813,6 +828,18 @@ export default function AgentsConsolidatedReport() {
               className="hidden"
             />
           </header>
+
+          <TablePagination
+            component="div"
+            count={displayRows.length}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            labelRowsPerPage="Linhas por página"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+            rowsPerPageOptions={[10, 50, 100, 500, 1000]}
+          />
 
           {reportContent}
 

@@ -21,7 +21,8 @@ import {
   InputAdornment,
   TableFooter,
   Menu,
-  IconButton
+  IconButton,
+  TablePagination
 } from '@mui/material';
 import { ptBR as pt } from '@mui/x-data-grid';
 import { format } from 'date-fns';
@@ -62,6 +63,8 @@ export default function BasicEditingGrid() {
   const [selectedStatusOptions, setSelectedStatusOptions] = useState([]);
   const [selectedErroStatus, setSelectedErroStatus] = useState([]);
   const [selectedEspecificos, setSelectedEspecificos] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
 
   const consorciosStatus = [
@@ -109,6 +112,7 @@ export default function BasicEditingGrid() {
 
   const onSubmit = (data) => {
     setIsLoading(true);
+    setPage(0);
 
     const requestData = { ...data };
 
@@ -173,6 +177,7 @@ export default function BasicEditingGrid() {
 
   const handleClear = () => {
     // reset()
+    setPage(0);
     dispatch(setReportList([]))
     setValue('name', [])
     setValue('dateRange', [])
@@ -456,6 +461,17 @@ export default function BasicEditingGrid() {
       a.nomefavorecido.localeCompare(b.nomefavorecido)
     )
     : [];
+
+  const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  const handleChangePage = (_event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
 
 
@@ -841,6 +857,18 @@ export default function BasicEditingGrid() {
             />
           </header>
 
+          <TablePagination
+            component="div"
+            count={sortedData.length}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            labelRowsPerPage="Linhas por página"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+            rowsPerPageOptions={[10, 50, 100, 500, 1000]}
+          />
+
           <div style={{ height: '50vh', width: '100%' }} className="overflow-scroll">
             <Table size='small'>
               <TableHead className="items-center mb-4">
@@ -853,7 +881,7 @@ export default function BasicEditingGrid() {
                 {!isLoading ? (
 
                   reportList.count > 0 ? (
-                    sortedData.map((report, index) => (
+                    paginatedData.map((report, index) => (
                       <TableRow key={index}>
                         <TableCell>{report.nomefavorecido}</TableCell>
                         <TableCell>{formatter.format(report.valor)}</TableCell>
