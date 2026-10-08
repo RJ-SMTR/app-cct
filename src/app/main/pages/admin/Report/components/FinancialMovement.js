@@ -26,6 +26,7 @@ import { useForm, Controller } from "react-hook-form";
 
 import { handleFinancialMovementExport, handleFinancialMovementPage,setReportList } from "app/store/reportSlice";
 import { hasSingleDayStatus, toSingleDayRange } from "app/store/pendenciaPagaDateRange";
+import { hasAPagarStatus, isValidOpaStartDate, toOpaWindowRange } from "app/store/aPagarDateRange";
 
 import { getUser } from "app/store/adminSlice";
 import { NumericFormat } from "react-number-format";
@@ -47,6 +48,7 @@ export default function BasicEditingGrid() {
   const [showClearMax, setShowClearMax] = useState(false);
   const [showButton, setShowButton] = useState(false);
   const [whichStatusShow, setWhichStatus] = useState([]);
+  const isAPagarSelected = hasAPagarStatus(whichStatusShow);
   const [selectedStatusOptions, setSelectedStatusOptions] = useState([]);
   const [selected, setSelected] = useState(null);
   const [showErroStatus, setShowErroStatus] = useState(false);
@@ -573,6 +575,8 @@ export default function BasicEditingGrid() {
                         onChange={field.onChange}
                         singleDay={isPendenciaPagaSelected}
                         minDate={minSelectableDate}
+                        shouldDisableStart={isAPagarSelected ? (date) => !isValidOpaStartDate(date) : undefined}
+                        deriveRange={isAPagarSelected ? toOpaWindowRange : undefined}
                         error={Boolean(error)}
                         helperText={error?.message}
                         inGrid
@@ -877,10 +881,10 @@ export default function BasicEditingGrid() {
                 />
               </Box>
 
-              {whichStatusShow.includes("A pagar") && (
+              {isAPagarSelected && (
                 <span className="col-span-4 text-sm text-red-600">
                   Atenção: Para o status "a pagar", a data escolhida deve ser
-                  referente a Data Ordem de Pagamento (sexta a quinta-feira).
+                  referente a Data Ordem de Pagamento (terça a quinta ou sexta a segunda).
                 </span>
               )}
               <Box className="col-span-4 flex gap-10">
