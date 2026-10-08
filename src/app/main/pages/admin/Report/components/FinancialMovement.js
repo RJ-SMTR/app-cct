@@ -556,25 +556,6 @@ export default function BasicEditingGrid() {
 
           <Box className="flex items-center py-10 gap-10">
             <form noValidate onSubmit={handleSubmit(onSubmit)} className="grid w-full grid-cols-4 gap-x-10 gap-y-16 mb-20">
-                  <Controller
-                    name="dateRange"
-                    control={control}
-                    rules={periodRequiredRules}
-                    render={({ field, fieldState: { error } }) => (
-                      <PeriodDatePicker
-                        required
-                        value={field.value}
-                        onChange={field.onChange}
-                        minDate={minSelectableDate}
-                        shouldDisableStart={isAPagarSelected ? (date) => !isValidOpaStartDate(date) : undefined}
-                        deriveRange={isAPagarSelected ? toOpaWindowRange : undefined}
-                        error={Boolean(error)}
-                        helperText={error?.message}
-                        inGrid
-                      />
-                    )}
-                  />
-
                 <Autocomplete
                   id="status"
                   multiple
@@ -627,6 +608,25 @@ export default function BasicEditingGrid() {
                     )}
                   />
                 )}
+
+                  <Controller
+                    name="dateRange"
+                    control={control}
+                    rules={periodRequiredRules}
+                    render={({ field, fieldState: { error } }) => (
+                      <PeriodDatePicker
+                        required
+                        value={field.value}
+                        onChange={field.onChange}
+                        minDate={minSelectableDate}
+                        shouldDisableStart={isAPagarSelected ? (date) => !isValidOpaStartDate(date) : undefined}
+                        deriveRange={isAPagarSelected ? toOpaWindowRange : undefined}
+                        error={Boolean(error)}
+                        helperText={error?.message}
+                        inGrid
+                      />
+                    )}
+                  />
 
               <Box className="contents">
                 <Autocomplete

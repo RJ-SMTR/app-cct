@@ -455,26 +455,6 @@ export default function AgentsConsolidatedReport() {
 
           <Box className="flex items-center py-10 gap-10">
             <form noValidate onSubmit={handleSubmit(onSubmit)} className="grid w-full grid-cols-4 gap-x-10 gap-y-16 mb-20">
-                <Box className="contents">
-                  <Controller
-                    name="dateRange"
-                    control={control}
-                    rules={periodRequiredRules}
-                    
-                    render={({ field, fieldState: { error } }) => (
-                      <PeriodDatePicker
-                        required
-                        value={field.value}
-                        onChange={field.onChange}
-                        minDate={minSelectableDate}
-                        error={Boolean(error)}
-                        helperText={error?.message}
-                        inGrid
-                      />
-                    )}
-                  />
-                </Box>
-
                 <Autocomplete
                   id="status"
                   multiple
@@ -527,6 +507,26 @@ export default function AgentsConsolidatedReport() {
                     )}
                   />
                 ) : null}
+
+                <Box className="contents">
+                  <Controller
+                    name="dateRange"
+                    control={control}
+                    rules={periodRequiredRules}
+
+                    render={({ field, fieldState: { error } }) => (
+                      <PeriodDatePicker
+                        required
+                        value={field.value}
+                        onChange={field.onChange}
+                        minDate={minSelectableDate}
+                        error={Boolean(error)}
+                        helperText={error?.message}
+                        inGrid
+                      />
+                    )}
+                  />
+                </Box>
 
               <Box className="contents">
                 {shouldShowAgentNameFilter(selectedAssociationOptions) ? (
