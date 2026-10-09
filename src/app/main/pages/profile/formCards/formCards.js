@@ -17,6 +17,7 @@ import { isAdminUser } from 'src/app/auth/utils/accessUtils';
 import { format, isValid, parseISO } from 'date-fns';
 import { createPersonalInfoSchema } from "./personalInfoValidation";
 import { getEmailErrorMessage } from "./personalInfoEmailError";
+import { getBankDataDateInfo } from "./bankDataDateInfo";
 
 const style = {
   position: 'absolute',
@@ -495,6 +496,8 @@ export function BankInfo({
     }
   };
 
+  const bankDataDateInfo = getBankDataDateInfo(user);
+
   return (
     <>
       <Card className="w-full md:mx-9 p-24 relative mt-24 md:mt-0">
@@ -582,18 +585,14 @@ export function BankInfo({
             />
           </Box>
         </form>
-        {user?.previousBankCode != null ? (
-          <>
-            {previousBank ? <p>Banco anterior: {previousBank}</p> : null}
-            <p className="text-red">
-              Última atualização em: {formatDateTimeLabel(user?.updatedAt)}
-            </p>
-          </>
-        ) : (
+        {user?.previousBankCode != null && previousBank ? (
+          <p>Banco anterior: {previousBank}</p>
+        ) : null}
+        {bankDataDateInfo ? (
           <p className="text-red">
-            Primeiro cadastro realizado em: {formatDateTimeLabel(user?.createdAt)}
+            {bankDataDateInfo.label}: {formatDateTimeLabel(bankDataDateInfo.date)}
           </p>
-        )}
+        ) : null}
       </Card>
     </>
   );
