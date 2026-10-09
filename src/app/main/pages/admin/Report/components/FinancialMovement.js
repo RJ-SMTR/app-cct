@@ -733,6 +733,7 @@ export default function BasicEditingGrid() {
                   options={especificos}
                   getOptionLabel={(option) => option.label}
                   filterSelectedOptions
+                  value={especificos.filter((o) => selectedEspecificos.includes(o.label))}
                   onChange={(_, newValue) =>
                     handleAutocompleteChange("especificos", newValue)
                   }
