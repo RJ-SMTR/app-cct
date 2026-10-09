@@ -18,6 +18,8 @@ import {
   TableRow,
   TextField,
   MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import { Link, Navigate } from 'react-router-dom';
@@ -31,7 +33,10 @@ const style = {
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: 400,
+  width: 600,
+  maxWidth: '90%',
+  maxHeight: '85vh',
+  overflowY: 'auto',
   borderRadius: '.5rem',
   bgcolor: 'background.paper',
   boxShadow: 24,
@@ -131,7 +136,12 @@ function AgentesHome() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [open, setOpen] = useState(false);
   const [filtered, setFiltered] = useState(false);
-  const { control, handleSubmit, reset } = useForm({
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
     defaultValues: {
       selectedQuery: '',
       query: '',
@@ -405,21 +415,27 @@ function AgentesHome() {
             Pesquisar por usuário:
           </Typography>
 
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="mb-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-24">
+            <div className="mb-16">
               <Controller
                 name="selectedQuery"
                 control={control}
+                rules={{ required: 'Campo obrigatório' }}
                 render={({ field }) => (
-                  <Select displayEmpty {...field}>
-                    <MenuItem value="" disabled>
-                      Pesquisar por...
-                    </MenuItem>
-                    <MenuItem value="fullName">Nome</MenuItem>
-                    <MenuItem value="email">E-mail</MenuItem>
-                    <MenuItem value="cpf">CPF</MenuItem>
-                    <MenuItem value="consorcio">Associação</MenuItem>
-                  </Select>
+                  <FormControl className="w-full" error={!!errors.selectedQuery}>
+                    <InputLabel id="agent-selected-query-label">Pesquisar por</InputLabel>
+                    <Select labelId="agent-selected-query-label" label="Pesquisar por" {...field}>
+                      <MenuItem value="fullName">Nome</MenuItem>
+                      <MenuItem value="email">E-mail</MenuItem>
+                      <MenuItem value="cpf">CPF</MenuItem>
+                      <MenuItem value="consorcio">Associação</MenuItem>
+                    </Select>
+                    {errors.selectedQuery && (
+                      <Typography variant="caption" color="error">
+                        {errors.selectedQuery.message}
+                      </Typography>
+                    )}
+                  </FormControl>
                 )}
               />
             </div>
@@ -431,7 +447,8 @@ function AgentesHome() {
                 render={({ field }) => (
                   <TextField
                     color="black"
-                    className="w-[100%]"
+                    className="w-full"
+                    label="Pesquisar"
                     placeholder="Pesquisar"
                     {...field}
                   />

@@ -21,7 +21,8 @@ import {
   InputAdornment,
   TableFooter,
   Menu,
-  IconButton
+  IconButton,
+  TablePagination
 } from '@mui/material';
 import { ptBR as pt } from '@mui/x-data-grid';
 import { format } from 'date-fns';
@@ -62,6 +63,8 @@ export default function BasicEditingGrid() {
   const [selectedStatusOptions, setSelectedStatusOptions] = useState([]);
   const [selectedErroStatus, setSelectedErroStatus] = useState([]);
   const [selectedEspecificos, setSelectedEspecificos] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
 
   const consorciosStatus = [
@@ -83,7 +86,8 @@ export default function BasicEditingGrid() {
 
   const específicos = [
     { label: 'Todos' },
-    { label: 'Eleição' }
+    { label: 'Eleição' },
+    { label: 'STUC - Gratuidade' }
   ];
 
 
@@ -109,6 +113,7 @@ export default function BasicEditingGrid() {
 
   const onSubmit = (data) => {
     setIsLoading(true);
+    setPage(0);
 
     const requestData = { ...data };
 
@@ -173,6 +178,7 @@ export default function BasicEditingGrid() {
 
   const handleClear = () => {
     // reset()
+    setPage(0);
     dispatch(setReportList([]))
     setValue('name', [])
     setValue('dateRange', [])
@@ -228,6 +234,8 @@ export default function BasicEditingGrid() {
 
   const handleAutocompleteChange = (field, newValue) => {
     if (field === 'status') {
+      const previousLabels = selectedStatusOptions.map((i) => i.label);
+
       // Pendencia Paga tem regra de data diferente (data de pagamento, dia único) dos demais
       // status (data de vencimento, intervalo). Por isso não pode ser combinada com eles.
       const hasPendenciaPaga = newValue.some((i) => i.label === 'Pendencia Paga');
@@ -237,6 +245,12 @@ export default function BasicEditingGrid() {
           message: "Pendência Paga não pode ser combinada com outros status; os demais foram removidos.",
         }));
       }
+
+      const isAddingStatus = newValue.some((i) => !previousLabels.includes(i.label));
+      if (isAddingStatus) {
+        setValue('dateRange', []);
+      }
+
       setSelectedStatusOptions(newValue);
 
       const status = newValue.map(i => i.label)
@@ -251,8 +265,30 @@ export default function BasicEditingGrid() {
     }
 
     if (field === "especificos") {
+      // STUC - Gratuidade usa uma fonte de dados diferente dos demais itens (Eleição,
+      // Desativados, Pendentes, Todos) - a seleção é exclusiva nos dois sentidos.
+      const hasStucGratuidade = newValue.some((i) => i.label === 'STUC - Gratuidade');
+      if (hasStucGratuidade && newValue.length > 1) {
+        const isStucGratuidadeTheNewOne = !selectedEspecificos.includes('STUC - Gratuidade');
+        newValue = isStucGratuidadeTheNewOne
+          ? newValue.filter((i) => i.label === 'STUC - Gratuidade')
+          : newValue.filter((i) => i.label !== 'STUC - Gratuidade');
+        dispatch(showMessage({
+          message: "STUC - Gratuidade não pode ser combinado com outros itens de Específico; os demais foram removidos.",
+        }));
+      }
+
       const especificosSelecionados = newValue.map((i) => i.label);
       setSelectedEspecificos(especificosSelecionados);
+
+      // "OPs atrasadas" deixa de ser uma opção de motivo quando STUC - Gratuidade está
+      // selecionado (ver options da Autocomplete erroStatus); se já estava escolhido, precisa
+      // ser removido da seleção também, senão continua sendo enviado como "Pendentes".
+      if (especificosSelecionados.includes('STUC - Gratuidade') && selectedErroStatus.some((i) => i.label === 'OPs atrasadas')) {
+        const filteredErroStatus = selectedErroStatus.filter((i) => i.label !== 'OPs atrasadas');
+        setSelectedErroStatus(filteredErroStatus);
+        setValue('erroStatus', filteredErroStatus.map((i) => i.label));
+      }
     }
 
     setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
@@ -457,6 +493,17 @@ export default function BasicEditingGrid() {
     )
     : [];
 
+  const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  const handleChangePage = (_event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
 
 
 
@@ -468,24 +515,6 @@ export default function BasicEditingGrid() {
 
           <Box className="flex items-center py-10 gap-10">
             <form noValidate onSubmit={handleSubmit(onSubmit)} className="grid w-full grid-cols-4 gap-x-10 gap-y-16 mb-20">
-                  <Controller
-                    name="dateRange"
-                    control={control}
-                    rules={periodRequiredRules}
-
-                    render={({ field, fieldState: { error } }) => (
-                      <PeriodDatePicker
-                        required
-                        value={field.value}
-                        onChange={field.onChange}
-                        minDate={minSelectableDate}
-                        error={Boolean(error)}
-                        helperText={error?.message}
-                        inGrid
-                      />
-                    )}
-                  />
-
               <Box className="contents">
 
                 {!selectedEspecificos.includes("Pendentes") && (
@@ -520,7 +549,11 @@ export default function BasicEditingGrid() {
                     id="erroStatus"
                     multiple
                     className="w-full p-1"
-                    options={erroStatus}
+                    options={
+                      selectedEspecificos.includes('STUC - Gratuidade')
+                        ? erroStatus.filter((o) => o.label !== 'OPs atrasadas')
+                        : erroStatus
+                    }
                     getOptionLabel={(option) => option.label}
                     filterSelectedOptions
                     value={selectedErroStatus}
@@ -543,6 +576,24 @@ export default function BasicEditingGrid() {
                 )}
 
               </Box>
+
+                  <Controller
+                    name="dateRange"
+                    control={control}
+                    rules={periodRequiredRules}
+
+                    render={({ field, fieldState: { error } }) => (
+                      <PeriodDatePicker
+                        required
+                        value={field.value}
+                        onChange={field.onChange}
+                        minDate={minSelectableDate}
+                        error={Boolean(error)}
+                        helperText={error?.message}
+                        inGrid
+                      />
+                    )}
+                  />
 
               <Box className="contents">
 
@@ -615,6 +666,7 @@ export default function BasicEditingGrid() {
                   options={específicos}
                   getOptionLabel={(option) => option.label}
                   filterSelectedOptions
+                  value={específicos.filter((o) => selectedEspecificos.includes(o.label))}
                   onChange={(_, newValue) =>
                     handleAutocompleteChange("especificos", newValue)
                   }
@@ -767,13 +819,6 @@ export default function BasicEditingGrid() {
               <Box>
 
               </Box>
-              {whichStatusShow.includes("A pagar") && (
-                <span className="text-sm text-red-600">
-
-                  Atenção: Para o status "a pagar", a data escolhida deve ser referente a Data Ordem de Pagamento (sexta a quinta-feira).
-
-                </span>
-              )}
               <Box className="col-span-4 flex gap-10">
                 <Button
                   variant="contained"
@@ -841,6 +886,18 @@ export default function BasicEditingGrid() {
             />
           </header>
 
+          <TablePagination
+            component="div"
+            count={sortedData.length}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            labelRowsPerPage="Linhas por página"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+            rowsPerPageOptions={[10, 50, 100, 500, 1000]}
+          />
+
           <div style={{ height: '50vh', width: '100%' }} className="overflow-scroll">
             <Table size='small'>
               <TableHead className="items-center mb-4">
@@ -853,7 +910,7 @@ export default function BasicEditingGrid() {
                 {!isLoading ? (
 
                   reportList.count > 0 ? (
-                    sortedData.map((report, index) => (
+                    paginatedData.map((report, index) => (
                       <TableRow key={index}>
                         <TableCell>{report.nomefavorecido}</TableCell>
                         <TableCell>{formatter.format(report.valor)}</TableCell>
