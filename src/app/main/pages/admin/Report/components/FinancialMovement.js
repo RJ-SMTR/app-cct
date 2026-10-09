@@ -82,6 +82,7 @@ export default function BasicEditingGrid() {
   const especificos = [
     { label: 'Eleição' },
     { label: 'Desativados' },
+    { label: 'STUC - Gratuidade' },
   ];
 
   const dispatch = useDispatch();
@@ -369,6 +370,19 @@ export default function BasicEditingGrid() {
     }
 
     if (field === "especificos") {
+      // STUC - Gratuidade usa uma fonte de dados diferente dos demais itens (Eleição,
+      // Desativados) - a seleção é exclusiva nos dois sentidos.
+      const hasStucGratuidade = newValue.some((i) => i.label === 'STUC - Gratuidade');
+      if (hasStucGratuidade && newValue.length > 1) {
+        const isStucGratuidadeTheNewOne = !selectedEspecificos.includes('STUC - Gratuidade');
+        newValue = isStucGratuidadeTheNewOne
+          ? newValue.filter((i) => i.label === 'STUC - Gratuidade')
+          : newValue.filter((i) => i.label !== 'STUC - Gratuidade');
+        dispatch(showMessage({
+          message: "STUC - Gratuidade não pode ser combinado com outros itens de Específico; os demais foram removidos.",
+        }));
+      }
+
       const especificosSelecionados = newValue.map((i) => i.label);
       setSelectedEspecificos(especificosSelecionados);
     }
@@ -597,7 +611,11 @@ export default function BasicEditingGrid() {
                     id="erroStatus"
                     multiple
                     className="w-full p-1"
-                    options={erroStatus}
+                    options={
+                      selectedEspecificos.includes('STUC - Gratuidade')
+                        ? erroStatus.filter((o) => o.label !== 'OPs atrasadas')
+                        : erroStatus
+                    }
                     getOptionLabel={(option) => option.label}
                     filterSelectedOptions
                     value={selectedErroStatus}
