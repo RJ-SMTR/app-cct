@@ -86,7 +86,8 @@ export default function BasicEditingGrid() {
 
   const específicos = [
     { label: 'Todos' },
-    { label: 'Eleição' }
+    { label: 'Eleição' },
+    { label: 'STUC - Gratuidade' }
   ];
 
 
@@ -264,8 +265,30 @@ export default function BasicEditingGrid() {
     }
 
     if (field === "especificos") {
+      // STUC - Gratuidade usa uma fonte de dados diferente dos demais itens (Eleição,
+      // Desativados, Pendentes, Todos) - a seleção é exclusiva nos dois sentidos.
+      const hasStucGratuidade = newValue.some((i) => i.label === 'STUC - Gratuidade');
+      if (hasStucGratuidade && newValue.length > 1) {
+        const isStucGratuidadeTheNewOne = !selectedEspecificos.includes('STUC - Gratuidade');
+        newValue = isStucGratuidadeTheNewOne
+          ? newValue.filter((i) => i.label === 'STUC - Gratuidade')
+          : newValue.filter((i) => i.label !== 'STUC - Gratuidade');
+        dispatch(showMessage({
+          message: "STUC - Gratuidade não pode ser combinado com outros itens de Específico; os demais foram removidos.",
+        }));
+      }
+
       const especificosSelecionados = newValue.map((i) => i.label);
       setSelectedEspecificos(especificosSelecionados);
+
+      // "OPs atrasadas" deixa de ser uma opção de motivo quando STUC - Gratuidade está
+      // selecionado (ver options da Autocomplete erroStatus); se já estava escolhido, precisa
+      // ser removido da seleção também, senão continua sendo enviado como "Pendentes".
+      if (especificosSelecionados.includes('STUC - Gratuidade') && selectedErroStatus.some((i) => i.label === 'OPs atrasadas')) {
+        const filteredErroStatus = selectedErroStatus.filter((i) => i.label !== 'OPs atrasadas');
+        setSelectedErroStatus(filteredErroStatus);
+        setValue('erroStatus', filteredErroStatus.map((i) => i.label));
+      }
     }
 
     setValue(field, newValue ? newValue.map(item => item.value ?? item.label) : []);
@@ -526,7 +549,11 @@ export default function BasicEditingGrid() {
                     id="erroStatus"
                     multiple
                     className="w-full p-1"
-                    options={erroStatus}
+                    options={
+                      selectedEspecificos.includes('STUC - Gratuidade')
+                        ? erroStatus.filter((o) => o.label !== 'OPs atrasadas')
+                        : erroStatus
+                    }
                     getOptionLabel={(option) => option.label}
                     filterSelectedOptions
                     value={selectedErroStatus}
@@ -639,6 +666,7 @@ export default function BasicEditingGrid() {
                   options={específicos}
                   getOptionLabel={(option) => option.label}
                   filterSelectedOptions
+                  value={específicos.filter((o) => selectedEspecificos.includes(o.label))}
                   onChange={(_, newValue) =>
                     handleAutocompleteChange("especificos", newValue)
                   }

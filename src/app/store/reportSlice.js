@@ -103,6 +103,10 @@ function handleData(data) {
     requestData.pendentes = true
   }
 
+  if (data.especificos.includes("STUC - Gratuidade")) {
+    requestData.stucGratuidade = true
+  }
+
 
   if (data.status && data.status.length > 0) {
     // O backend trata "nenhum status selecionado" como "nenhuma linha deve ser retornada".
