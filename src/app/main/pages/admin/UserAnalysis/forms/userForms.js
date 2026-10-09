@@ -10,7 +10,7 @@ import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { api } from "app/configs/api/api";
 import JwtService from "src/app/auth/services/jwtService";
-import { format, parseISO } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 import { getBankDataDateInfo } from "../../../profile/formCards/bankDataDateInfo";
 
 
@@ -206,6 +206,11 @@ export function PersonalInfo({ user }) {
 
 
 
+function formatBankDataDate(value) {
+    const date = value instanceof Date ? value : parseISO(String(value));
+    return isValid(date) ? format(date, 'dd/MM/yyyy HH:mm:ss') : '-';
+}
+
 export function BankInfo({user}) {
     const [bankCode, setBankCode] = useState();
     const [previousBank, setPreviousBank] = useState();
@@ -318,7 +323,7 @@ export function BankInfo({user}) {
                     <p>Banco anterior: {previousBank}</p>
                 )}
                 {bankDataDateInfo && (
-                    <p className="text-red">{bankDataDateInfo.label}: {format(parseISO(bankDataDateInfo.date), 'dd/MM/yyyy HH:mm:ss')}</p>
+                    <p className="text-red">{bankDataDateInfo.label}: {formatBankDataDate(bankDataDateInfo.date)}</p>
                 )}
             </Card>
         </>
