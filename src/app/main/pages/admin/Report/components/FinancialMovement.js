@@ -385,6 +385,15 @@ export default function BasicEditingGrid() {
 
       const especificosSelecionados = newValue.map((i) => i.label);
       setSelectedEspecificos(especificosSelecionados);
+
+      // "OPs atrasadas" deixa de ser uma opção de motivo quando STUC - Gratuidade está
+      // selecionado (ver options da Autocomplete erroStatus); se já estava escolhido, precisa
+      // ser removido da seleção também, senão continua sendo enviado como "Pendentes".
+      if (especificosSelecionados.includes('STUC - Gratuidade') && selectedErroStatus.some((i) => i.label === 'OPs atrasadas')) {
+        const filteredErroStatus = selectedErroStatus.filter((i) => i.label !== 'OPs atrasadas');
+        setSelectedErroStatus(filteredErroStatus);
+        setValue('erroStatus', filteredErroStatus.map((i) => i.label));
+      }
     }
 
     setValue(
