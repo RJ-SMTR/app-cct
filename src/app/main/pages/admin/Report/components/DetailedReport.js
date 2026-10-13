@@ -177,6 +177,12 @@ export default function BasicEditingGrid() {
 	const handleAutocompleteChange = (field, newValue) => {
 		if (field === "status") {
 			const status = newValue.map((i) => i.label);
+
+			const isAddingStatus = status.some((label) => !whichStatusShow.includes(label));
+			if (isAddingStatus) {
+				setValue("dateRange", []);
+			}
+
 			setWhichStatus(status);
 		}
 
@@ -660,12 +666,6 @@ export default function BasicEditingGrid() {
 							</Box>
 
 							<Box />
-							{whichStatusShow.includes("A pagar") && (
-								<span className="text-sm text-red-600">
-									Atenção: Para o status "a pagar", a data escolhida deve ser
-									referente a Data Ordem de Pagamento (sexta a quinta-feira).
-								</span>
-							)}
 							<Box className="col-span-4 flex gap-10">
 								<Button
 									variant="contained"

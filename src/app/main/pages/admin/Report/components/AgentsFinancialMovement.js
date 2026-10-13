@@ -21,7 +21,7 @@ import {
 import { format } from "date-fns";
 import { useDispatch, useSelector } from "react-redux";
 import PeriodDatePicker, { periodRequiredRules } from "app/shared-components/PeriodDatePicker";
-import { hasSingleDayStatus, toSingleDayRange } from "app/store/pendenciaPagaDateRange";
+import { hasSingleDayStatus } from "app/store/pendenciaPagaDateRange";
 import { useForm, Controller } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
 import { ClearIcon } from "@mui/x-date-pickers";
@@ -238,6 +238,11 @@ export default function AgentsFinancialMovement() {
       cursorNome: cursor?.nomes,
       cursorStatus: cursor?.status,
       cursorCpfCnpj: cursor?.cpfCnpj,
+      cursorNomeConsorcio: cursor?.nomeConsorcio,
+      cursorCodBanco: cursor?.codBanco,
+      cursorDataPagamento: cursor?.dataPagamento,
+      cursorCodigoErro: cursor?.codigoErro,
+      cursorEmail: cursor?.email,
     };
 
     await submitReport(pageData, newPage, rowsPerPage);
@@ -275,14 +280,17 @@ export default function AgentsFinancialMovement() {
     }
 
     if (field === "status") {
-      setSelectedStatusOptions(normalizedValue);
+      const previousLabels = selectedStatusOptions.map((v) => (typeof v === "object" ? v.label : v));
       const statusValues = newValue.map((v) => (typeof v === "object" ? v.label : v));
+
+      const isAddingStatus = statusValues.some((label) => !previousLabels.includes(label));
+      if (isAddingStatus) {
+        setValue("dateRange", []);
+      }
+
+      setSelectedStatusOptions(normalizedValue);
       setWhichStatus(statusValues);
 
-      // Pendencia Paga aceita um único dia: ao selecionar o status, o intervalo já preenchido vira um dia.
-      if (hasSingleDayStatus(statusValues) && getValues("dateRange")?.length === 2) {
-        setValue("dateRange", toSingleDayRange(getValues("dateRange")));
-      }
       const hasErroStatus = statusValues.includes("Pendência de Pagamento");
       setShowErroStatus(hasErroStatus);
 
@@ -401,25 +409,6 @@ export default function AgentsFinancialMovement() {
 
           <Box className="flex items-center py-10 gap-10">
             <form noValidate onSubmit={handleSubmit(onSubmit)} className="grid w-full grid-cols-4 gap-x-10 gap-y-16 mb-20">
-                <Controller
-                  name="dateRange"
-                  control={control}
-                  rules={periodRequiredRules}
-                  render={({ field, fieldState: { error } }) => (
-                    <PeriodDatePicker
-                      required
-                      value={field.value}
-                      onChange={field.onChange}
-                      singleDay={isPendenciaPagaSelected}
-                      minDate={minSelectableDate}
-                      labels={{ start: "De", end: "Até", single: "Data" }}
-                      error={Boolean(error)}
-                      helperText={error?.message}
-                      inGrid
-                    />
-                  )}
-                />
-
                 <Autocomplete
                   id="status"
                   multiple
@@ -461,6 +450,25 @@ export default function AgentsFinancialMovement() {
                     )}
                   />
                 ) : null}
+
+                <Controller
+                  name="dateRange"
+                  control={control}
+                  rules={periodRequiredRules}
+                  render={({ field, fieldState: { error } }) => (
+                    <PeriodDatePicker
+                      required
+                      value={field.value}
+                      onChange={field.onChange}
+                      singleDay={isPendenciaPagaSelected}
+                      minDate={minSelectableDate}
+                      labels={{ start: "De", end: "Até", single: "Data" }}
+                      error={Boolean(error)}
+                      helperText={error?.message}
+                      inGrid
+                    />
+                  )}
+                />
 
               <Box className="contents">
                 {shouldShowAgentNameFilter(selectedAssociationOptions) ? (
@@ -585,7 +593,6 @@ export default function AgentsFinancialMovement() {
                   )}
                 />
               </Box>
-
 
               <Box className="col-span-4 flex gap-10">
                 <Button variant="contained" color="secondary" type="submit" size="medium" className="z-10">
