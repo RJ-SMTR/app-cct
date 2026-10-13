@@ -39,6 +39,7 @@ import { showMessage } from "app/store/fuse/messageSlice";
 import JwtService from "src/app/auth/services/jwtService";
 import { isAdminUser } from "src/app/auth/utils/accessUtils";
 import { BankInfo, getUserCpf, PersonalInfo } from "../profile/formCards/formCards";
+import { getBankDataDateInfo } from "../profile/formCards/bankDataDateInfo";
 import {
   buildMonthlyPaymentRowKey,
   getAgentesDashboard,
@@ -434,6 +435,8 @@ function AgentBankInfo({ user }) {
     fetchBanks();
   }, [user]);
 
+  const bankDataDateInfo = getBankDataDateInfo(user);
+
   return (
     <Card className=" w-full md:mx-9 p-24 relative mt-24 md:mt-0">
       <header className="flex justify-between items-center">
@@ -490,20 +493,15 @@ function AgentBankInfo({ user }) {
           />
         </Box>
       </form>
-      {user?.previousBankCode != null ? (
-        <>
-          {previousBank ? <p>Banco anterior: {previousBank}</p> : null}
-          <p className="text-red">
-            Última atualização em:{" "}
-            {formatDateTimeLabel(user?.updatedAt, "dd/MM/yyyy HH:mm:ss")}
-          </p>
-        </>
-      ) : (
+      {user?.previousBankCode != null && previousBank ? (
+        <p>Banco anterior: {previousBank}</p>
+      ) : null}
+      {bankDataDateInfo ? (
         <p className="text-red">
-          Primeiro cadastro realizado em:{" "}
-          {formatDateTimeLabel(user?.createdAt, "dd/MM/yyyy HH:mm:ss")}
+          {bankDataDateInfo.label}:{" "}
+          {formatDateTimeLabel(bankDataDateInfo.date, "dd/MM/yyyy HH:mm:ss")}
         </p>
-      )}
+      ) : null}
     </Card>
   );
 }
