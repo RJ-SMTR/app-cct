@@ -39,6 +39,7 @@ import { showMessage } from "app/store/fuse/messageSlice";
 import JwtService from "src/app/auth/services/jwtService";
 import { isAdminUser } from "src/app/auth/utils/accessUtils";
 import { BankInfo, getUserCpf, PersonalInfo } from "../profile/formCards/formCards";
+import { getBankDataDateInfo } from "../profile/formCards/bankDataDateInfo";
 import {
   buildMonthlyPaymentRowKey,
   getAgentesDashboard,
@@ -434,6 +435,8 @@ function AgentBankInfo({ user }) {
     fetchBanks();
   }, [user]);
 
+  const bankDataDateInfo = getBankDataDateInfo(user);
+
   return (
     <Card className=" w-full md:mx-9 p-24 relative mt-24 md:mt-0">
       <header className="flex justify-between items-center">
@@ -500,20 +503,15 @@ function AgentBankInfo({ user }) {
           />
         )}
       </form>
-      {user?.previousBankCode != null ? (
-        <>
-          {previousBank ? <p>Banco anterior: {previousBank}</p> : null}
-          <p className="text-red">
-            Última atualização em:{" "}
-            {formatDateTimeLabel(user?.updatedAt, "dd/MM/yyyy HH:mm:ss")}
-          </p>
-        </>
-      ) : (
+      {user?.previousBankCode != null && previousBank ? (
+        <p>Banco anterior: {previousBank}</p>
+      ) : null}
+      {bankDataDateInfo ? (
         <p className="text-red">
-          Primeiro cadastro realizado em:{" "}
-          {formatDateTimeLabel(user?.createdAt, "dd/MM/yyyy HH:mm:ss")}
+          {bankDataDateInfo.label}:{" "}
+          {formatDateTimeLabel(bankDataDateInfo.date, "dd/MM/yyyy HH:mm:ss")}
         </p>
-      )}
+      ) : null}
     </Card>
   );
 }
@@ -702,10 +700,21 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
             align="center"
             sx={{ verticalAlign: "middle" }}
           >
-            <ValidPhotosStatusBadge
-              status={payment.statusRemessa}
-              paymentStatus={payment.paymentStatus}
-            />
+            {payment.dadosBancariosFaltando && payment.paymentStatus === "Pendência de Pagamento" ? (
+              <Tooltip title="Motivo não informado pelo banco: dados bancários do permissionário não cadastrados" arrow>
+                <span>
+                  <ValidPhotosStatusBadge
+                    status={payment.statusRemessa}
+                    paymentStatus={payment.paymentStatus}
+                  />
+                </span>
+              </Tooltip>
+            ) : (
+              <ValidPhotosStatusBadge
+                status={payment.statusRemessa}
+                paymentStatus={payment.paymentStatus}
+              />
+            )}
           </TableCell>
           <TableCell align="center" sx={{ verticalAlign: "middle" }}>
             <PendingReasonBadge

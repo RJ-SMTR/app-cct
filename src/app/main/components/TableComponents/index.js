@@ -92,7 +92,10 @@ export function CustomTable(data) {
 
   const ErrorBadge = (data) => {
     const i = data.data.data
-    const errorDescription = i.motivoStatusRemessa ? i.descricaoMotivoStatusRemessa : <></>;
+    // Erro sem motivo ficava com tooltip vazio (#1164): mostra um texto padrão.
+    const errorDescription = i.motivoStatusRemessa
+      ? i.descricaoMotivoStatusRemessa
+      : 'Motivo não informado pelo banco';
     const getStatus = (i) => {
       return (
         <span className='underline'> Erro  <InfoOutlinedIcon fontSize='small' /></span>

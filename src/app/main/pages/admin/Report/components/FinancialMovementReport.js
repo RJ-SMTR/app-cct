@@ -21,7 +21,7 @@ import {
 import SaveAltIcon from "@mui/icons-material/SaveAlt";
 import { format } from "date-fns";
 import { useDispatch, useSelector } from "react-redux";
-import { DateRangePicker } from "rsuite";
+import PeriodDatePicker, { periodRequiredRules } from "app/shared-components/PeriodDatePicker";
 import { useForm, Controller } from "react-hook-form";
 
 import {
@@ -32,12 +32,11 @@ import {
   handleAgentFinancialMovementSummary,
   setReportList,
 } from "app/store/reportSlice";
+import { hasSingleDayStatus, toSingleDayRange } from "app/store/pendenciaPagaDateRange";
 import { getUser } from "app/store/adminSlice";
 import { getAgentUsers } from "app/store/adminSlice";
 import { showMessage } from "app/store/fuse/messageSlice";
 import {
-  AGENT_FINANCIAL_MOVEMENT_DATE_FORMAT,
-  AGENT_FINANCIAL_MOVEMENT_DATE_SEPARATOR,
   buildAgentAutocompleteOptions,
   buildAssociationAutocompleteOptions,
   getAgentEffectivePaymentDateLabel,
@@ -115,6 +114,18 @@ export default function FinancialMovementReport({ perfil }) {
   const hasMissingErroStatusSelection =
     whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus.length === 0;
 
+  // Permissionário: pesquisar sem status não é permitido (o guardador continua opcional).
+  const hasMissingStatusSelection = !isGuardador && whichStatusShow.length === 0;
+
+  // Pendência Paga é consultada por um único dia (data de pagamento).
+  const isPendenciaPagaSelected = hasSingleDayStatus(whichStatusShow);
+
+  const validateStatusSelection = () => {
+    if (!hasMissingStatusSelection) return true;
+    dispatch(showMessage({ message: "Selecione um status para pesquisar." }));
+    return false;
+  };
+
   const validateErroStatusSelection = () => {
     if (!hasMissingErroStatusSelection) return true;
     dispatch(showMessage({ message: "Selecione um motivo para a Pendência de Pagamento." }));
@@ -164,7 +175,7 @@ export default function FinancialMovementReport({ perfil }) {
   };
 
   const getValidatedRequestData = (data, pageIndex, pageSize, options = {}) => {
-    if (!validateErroStatusSelection()) return null;
+    if (!validateStatusSelection() || !validateErroStatusSelection()) return null;
     return buildRequestData(data, pageIndex, pageSize, options);
   };
 
@@ -228,6 +239,10 @@ export default function FinancialMovementReport({ perfil }) {
         setSelectedStatusOptions(normalizedValue);
         const statusValues = normalizedValue.map((v) => (typeof v === "object" ? v.label : v));
         setWhichStatus(statusValues);
+        // Pendência Paga aceita um único dia: ao selecionar o status, o intervalo já preenchido vira um dia.
+        if (hasSingleDayStatus(statusValues) && getValues("dateRange")?.length === 2) {
+          setValue("dateRange", toSingleDayRange(getValues("dateRange")));
+        }
         const hasErro = statusValues.includes("Pendência de Pagamento");
         setShowErroStatus(hasErro);
         if (!hasErro) {
@@ -244,8 +259,25 @@ export default function FinancialMovementReport({ perfil }) {
     }
 
     if (field === "status") {
+      // Pendência Paga tem regra de data diferente (data de pagamento, dia único) dos demais
+      // status (data de vencimento, intervalo). Por isso não pode ser combinada com eles.
+      const hasPendenciaPaga = newValue.some((i) => i.label === "Pendencia Paga");
+      if (hasPendenciaPaga && newValue.length > 1) {
+        newValue = newValue.filter((i) => i.label === "Pendencia Paga");
+        dispatch(
+          showMessage({ message: "Pendência Paga não pode ser combinada com outros status; os demais foram removidos." }),
+        );
+      }
+      setSelectedStatusOptions(newValue);
+
       const status = newValue.map((i) => i.label);
       setWhichStatus(status);
+
+      // Pendência Paga aceita um único dia: ao selecionar o status, o intervalo já preenchido vira um dia.
+      if (hasSingleDayStatus(status) && getValues("dateRange")?.length === 2) {
+        setValue("dateRange", toSingleDayRange(getValues("dateRange")));
+      }
+
       const hasErro = status.includes("Pendência de Pagamento");
       setShowErroStatus(hasErro);
       if (!hasErro) {
@@ -264,7 +296,7 @@ export default function FinancialMovementReport({ perfil }) {
   };
 
   const submitReportPermissionario = async (data, pageIndex, pageSize) => {
-    if (!validateErroStatusSelection()) return;
+    if (!validateStatusSelection() || !validateErroStatusSelection()) return;
     const pageRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: true });
     setIsLoading(true);
     try {
@@ -395,6 +427,7 @@ export default function FinancialMovementReport({ perfil }) {
       setValue("status", []);
       setValue("erroStatus", []);
       setSelectedConsorcios([]);
+      setSelectedStatusOptions([]);
       for (const button of document.querySelectorAll(".MuiAutocomplete-clearIndicator")) {
         button.click();
       }
@@ -523,8 +556,81 @@ export default function FinancialMovementReport({ perfil }) {
             </h3>
           </header>
 
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form noValidate onSubmit={handleSubmit(onSubmit)}>
             <Grid container spacing={2}>
+              <Grid item xs={12} md={isPendenciaPagaSelected ? 3 : 6}>
+                <Controller
+                  name="dateRange"
+                  control={control}
+                  rules={periodRequiredRules}
+                  render={({ field, fieldState: { error } }) => (
+                    <PeriodDatePicker
+                      required
+                      value={field.value}
+                      onChange={field.onChange}
+                      singleDay={isPendenciaPagaSelected}
+                      minDate={MIN_SELECTABLE_DATE}
+                      error={Boolean(error)}
+                      helperText={error?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={4}>
+                <Autocomplete
+                  id="status"
+                  multiple
+                  fullWidth
+                  getOptionLabel={(option) => option.label || option}
+                  filterSelectedOptions
+                  options={statusBase}
+                  value={selectedStatusOptions}
+                  onChange={(_, newValue) => handleAutocompleteChange("status", newValue)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label={isGuardador ? "Selecionar Status" : "Selecionar Status *"}
+                      variant="outlined"
+                      error={hasSearched && hasMissingStatusSelection}
+                      helperText={hasSearched && hasMissingStatusSelection ? "Selecione um status para pesquisar." : ""}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {showErroStatus && (
+                <Grid item xs={12} sm={6} md={4}>
+                  <Autocomplete
+                    id="erroStatus"
+                    multiple
+                    fullWidth
+                    options={erroStatus}
+                    getOptionLabel={(option) => option.label || option}
+                    filterSelectedOptions
+                    value={selectedErroStatus}
+                    onChange={(_, newValue) => {
+                      const normalizedValue = normalizeErroStatusSelection(newValue);
+                      setSelectedErroStatus(normalizedValue);
+                      setValue("erroStatus", normalizedValue.map((option) => option.label));
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label={isGuardador ? "Motivo da Pendência" : "Motivos"}
+                        variant="outlined"
+                        error={isGuardador ? hasMissingErroStatusSelection : undefined}
+                        helperText={
+                          isGuardador && hasMissingErroStatusSelection
+                            ? "Selecione um motivo para a Pendência de Pagamento."
+                            : ""
+                        }
+                      />
+                    )}
+                  />
+                </Grid>
+              )}
+
               {isGuardador ? (
                 <>
                   {shouldShowAgentNameFilter(selectedAssociationOptions) && (
@@ -662,90 +768,6 @@ export default function FinancialMovementReport({ perfil }) {
                   </Grid>
                 </>
               )}
-
-              <Grid item xs={12} sm={6} md={4}>
-                <Autocomplete
-                  id="status"
-                  multiple
-                  fullWidth
-                  getOptionLabel={(option) => option.label || option}
-                  filterSelectedOptions
-                  options={statusBase}
-                  value={isGuardador ? selectedStatusOptions : undefined}
-                  onChange={(_, newValue) => handleAutocompleteChange("status", newValue)}
-                  renderInput={(params) => <TextField {...params} label="Selecionar Status" variant="outlined" />}
-                />
-              </Grid>
-
-              {showErroStatus && (
-                <Grid item xs={12} sm={6} md={4}>
-                  <Autocomplete
-                    id="erroStatus"
-                    multiple
-                    fullWidth
-                    options={erroStatus}
-                    getOptionLabel={(option) => option.label || option}
-                    filterSelectedOptions
-                    value={selectedErroStatus}
-                    onChange={(_, newValue) => {
-                      const normalizedValue = normalizeErroStatusSelection(newValue);
-                      setSelectedErroStatus(normalizedValue);
-                      setValue("erroStatus", normalizedValue.map((option) => option.label));
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label={isGuardador ? "Motivo da Pendência" : "Motivos"}
-                        variant="outlined"
-                        error={isGuardador ? hasMissingErroStatusSelection : undefined}
-                        helperText={
-                          isGuardador && hasMissingErroStatusSelection
-                            ? "Selecione um motivo para a Pendência de Pagamento."
-                            : ""
-                        }
-                      />
-                    )}
-                  />
-                </Grid>
-              )}
-
-              <Grid item xs={12} sm={6} md={4}>
-                <Controller
-                  name="dateRange"
-                  control={control}
-                  rules={isGuardador ? { required: true } : undefined}
-                  render={({ field }) =>
-                    isGuardador ? (
-                      <DateRangePicker
-                        {...field}
-                        size="lg"
-                        showOneCalendar
-                        showHeader={false}
-                        placement="auto"
-                        placeholder="Selecionar Data"
-                        format={AGENT_FINANCIAL_MOVEMENT_DATE_FORMAT}
-                        character={AGENT_FINANCIAL_MOVEMENT_DATE_SEPARATOR}
-                        cleanable
-                        className="w-full"
-                        disabledDate={(date) => date < MIN_SELECTABLE_DATE}
-                      />
-                    ) : (
-                      <DateRangePicker
-                        {...field}
-                        id="custom-date-input"
-                        showOneCalendar
-                        showHeader={false}
-                        placement="auto"
-                        placeholder="Selecionar Data"
-                        format="dd/MM/yy"
-                        character=" - "
-                        className="custom-date-range-picker w-full"
-                        shouldDisableDate={DateRangePicker.allowedRange(MIN_SELECTABLE_DATE)}
-                      />
-                    )
-                  }
-                />
-              </Grid>
 
               <ValorRangeFilter control={control} getValues={getValues} trigger={trigger} clearErrors={clearErrors} />
             </Grid>

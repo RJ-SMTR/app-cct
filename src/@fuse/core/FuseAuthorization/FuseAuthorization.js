@@ -43,30 +43,46 @@ class FuseAuthorization extends Component {
 
     const matchedRoutes = matchRoutes(state.routes, pathname);
     const matchedPath = matchPath({ path: '/conclude-registration/:hash' }, pathname);
+    const matchedResetPasswordPath = matchPath({ path: '/reset-password/:hash' }, pathname);
 
     const matched = matchedRoutes ? matchedRoutes[0] : false;
 
     const userHasPermission = FuseUtils.hasPermission(matched.route.auth, userRole);
 
-    const ignoredPaths = ['/', '/callback', '/sign-in', '/sign-out', '/logout', '/404', matchedPath?.pathname, '/forgot-password'];
+    const ignoredPaths = [
+      '/',
+      '/callback',
+      '/sign-in',
+      '/sign-out',
+      '/logout',
+      '/404',
+      matchedPath?.pathname,
+      matchedResetPasswordPath?.pathname,
+      '/forgot-password',
+    ];
 
-    if (pathname === "/financeiro/sign-in" || pathname === "/admin/sign-in" || pathname === "/sign-in " || pathname === "/agentes/sign-in") {
+    if (
+      pathname === '/financeiro/sign-in' ||
+      pathname === '/admin/sign-in' ||
+      pathname === '/sign-in ' ||
+      pathname === '/agentes/sign-in'
+    ) {
       localStorage.setItem('loginUrl', pathname);
     }
 
     if (matched && !userHasPermission && !ignoredPaths.includes(pathname)) {
       switch (pathname) {
-        case "/financeiro/sign-in":
-          setSessionRedirectUrl("/lancamentos");
+        case '/financeiro/sign-in':
+          setSessionRedirectUrl('/lancamentos');
           break;
-        case "/admin/sign-in":
-          setSessionRedirectUrl("/admin");
+        case '/admin/sign-in':
+          setSessionRedirectUrl('/admin');
           break;
-        case "/agentes/sign-in":
-          setSessionRedirectUrl("/agentes");
+        case '/agentes/sign-in':
+          setSessionRedirectUrl('/agentes');
           break;
         default:
-          setSessionRedirectUrl("/profile");
+          setSessionRedirectUrl('/profile');
       }
     }
 
@@ -78,7 +94,7 @@ class FuseAuthorization extends Component {
   redirectRoute() {
     const { userRole } = this.props;
     const redirectUrl = getSessionRedirectUrl() || this.props.loginRedirectUrl;
-    const lastUserRole = this.state.lastUserRole;
+    const { lastUserRole } = this.state;
 
     const savedLoginUrl = localStorage.getItem('loginUrl');
 
@@ -111,8 +127,6 @@ class FuseAuthorization extends Component {
     return this.state.accessGranted ? this.props.children : null;
   }
 }
-
-
 
 FuseAuthorization.contextType = AppContext;
 

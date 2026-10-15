@@ -29,7 +29,7 @@ function ForgotPassword() {
   const { isValid, dirtyFields, errors } = formState;
 
   function onSubmit({ email }) {
-    forgotPasswordFunction(email)
+    forgotPasswordFunction(email).catch(() => {});
   }
 
   return (

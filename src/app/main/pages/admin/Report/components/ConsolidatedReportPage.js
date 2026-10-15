@@ -14,7 +14,7 @@ import { DataGrid, ptBR as pt } from '@mui/x-data-grid';
 import SaveAltIcon from '@mui/icons-material/SaveAlt';
 import { format } from 'date-fns';
 import { useDispatch, useSelector } from 'react-redux';
-import { DateRangePicker } from 'rsuite';
+import PeriodDatePicker, { periodRequiredRules } from 'app/shared-components/PeriodDatePicker';
 import { useForm, Controller } from 'react-hook-form';
 import { CSVLink } from 'react-csv';
 import jsPDF from 'jspdf';
@@ -335,6 +335,15 @@ export default function ConsolidatedReportPage({ perfil }) {
     }
 
     if (field === 'status') {
+      // Pendência Paga tem regra de data diferente (data de pagamento, dia único) dos demais
+      // status (data de vencimento, intervalo). Por isso não pode ser combinada com eles.
+      const hasPendenciaPaga = newValue.some((i) => i.label === 'Pendencia Paga');
+      if (hasPendenciaPaga && newValue.length > 1) {
+        newValue = newValue.filter((i) => i.label === 'Pendencia Paga');
+        dispatch(showMessage({ message: 'Pendência Paga não pode ser combinada com outros status; os demais foram removidos.' }));
+      }
+      setSelectedStatusOptions(newValue);
+
       const status = newValue.map((i) => i.label);
       setWhichStatus(status);
       if (status.includes?.('Pendência de Pagamento')) {
@@ -368,6 +377,7 @@ export default function ConsolidatedReportPage({ perfil }) {
       setReportBlocks([]);
     } else {
       setValue('name', []);
+      setSelectedStatusOptions([]);
       setValue('dateRange', []);
       setValue('valorMax', '');
       setValue('valorMin', '');
@@ -499,8 +509,67 @@ export default function ConsolidatedReportPage({ perfil }) {
             <h3 className="font-semibold text-lg">Filtros de Pesquisa</h3>
           </header>
 
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form noValidate onSubmit={handleSubmit(onSubmit)}>
             <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="dateRange"
+                  control={control}
+                  rules={periodRequiredRules}
+                  render={({ field, fieldState: { error } }) => (
+                    <PeriodDatePicker
+                      required
+                      value={field.value}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        if (isGuardador && value?.[0] && value?.[1]) setDateError(false);
+                      }}
+                      minDate={MIN_SELECTABLE_DATE}
+                      error={Boolean(error) || (isGuardador && dateError)}
+                      helperText={error?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {(isGuardador || !selectedEspecificos.includes("Pendentes")) && (
+                <Grid item xs={12} sm={6} md={4}>
+                  <Autocomplete
+                    id="status"
+                    multiple
+                    fullWidth
+                    options={isGuardador ? GUARDADOR_STATUS_OPTIONS : STATUS_OPTIONS}
+                    value={selectedStatusOptions}
+                    getOptionLabel={(option) => option.label}
+                    isOptionEqualToValue={isGuardador ? (option, value) => option.value === value.value : undefined}
+                    filterSelectedOptions={!isGuardador}
+                    onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
+                    renderInput={(params) => <TextField {...params} label="Selecionar Status" variant="outlined" />}
+                  />
+                </Grid>
+              )}
+
+              {showErroStatus && (
+                <Grid item xs={12} sm={6} md={4}>
+                  <Autocomplete
+                    id="erroStatus"
+                    multiple
+                    fullWidth
+                    options={isGuardador ? GUARDADOR_ERRO_STATUS_OPTIONS : ERRO_STATUS_OPTIONS}
+                    getOptionLabel={(option) => option.label}
+                    isOptionEqualToValue={isGuardador ? (option, value) => option.value === value.value : undefined}
+                    filterSelectedOptions={!isGuardador}
+                    value={selectedErroStatus}
+                    onChange={(_, newValue) => {
+                      const normalizedValue = normalizeErroStatusSelection(newValue);
+                      setSelectedErroStatus(normalizedValue);
+                      setValue("erroStatus", normalizedValue.map((option) => (isGuardador ? option.value : option.label)));
+                    }}
+                    renderInput={(params) => <TextField {...params} label="Motivos" variant="outlined" />}
+                  />
+                </Grid>
+              )}
+
               {isGuardador ? (
                 <>
                   {shouldShowAgentNameFilter(selectedAssociationOptions) && (
@@ -625,78 +694,6 @@ export default function ConsolidatedReportPage({ perfil }) {
                   </Grid>
                 </>
               )}
-
-              {(isGuardador || !selectedEspecificos.includes("Pendentes")) && (
-                <Grid item xs={12} sm={6} md={4}>
-                  <Autocomplete
-                    id="status"
-                    multiple
-                    fullWidth
-                    options={isGuardador ? GUARDADOR_STATUS_OPTIONS : STATUS_OPTIONS}
-                    value={isGuardador ? selectedStatusOptions : undefined}
-                    getOptionLabel={(option) => option.label}
-                    isOptionEqualToValue={isGuardador ? (option, value) => option.value === value.value : undefined}
-                    filterSelectedOptions={!isGuardador}
-                    onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
-                    renderInput={(params) => <TextField {...params} label="Selecionar Status" variant="outlined" />}
-                  />
-                </Grid>
-              )}
-
-              {showErroStatus && (
-                <Grid item xs={12} sm={6} md={4}>
-                  <Autocomplete
-                    id="erroStatus"
-                    multiple
-                    fullWidth
-                    options={isGuardador ? GUARDADOR_ERRO_STATUS_OPTIONS : ERRO_STATUS_OPTIONS}
-                    getOptionLabel={(option) => option.label}
-                    isOptionEqualToValue={isGuardador ? (option, value) => option.value === value.value : undefined}
-                    filterSelectedOptions={!isGuardador}
-                    value={selectedErroStatus}
-                    onChange={(_, newValue) => {
-                      const normalizedValue = normalizeErroStatusSelection(newValue);
-                      setSelectedErroStatus(normalizedValue);
-                      setValue("erroStatus", normalizedValue.map((option) => (isGuardador ? option.value : option.label)));
-                    }}
-                    renderInput={(params) => <TextField {...params} label="Motivos" variant="outlined" />}
-                  />
-                </Grid>
-              )}
-
-              <Grid item xs={12} sm={6} md={4}>
-                <Controller
-                  name="dateRange"
-                  control={control}
-                  render={({ field }) => (
-                    <DateRangePicker
-                      {...field}
-                      id={isGuardador ? "agentes-date-range-input" : "custom-date-input"}
-                      showOneCalendar
-                      showHeader={false}
-                      placement="auto"
-                      placeholder="Selecionar Data"
-                      format="dd/MM/yy"
-                      character=" - "
-                      className="custom-date-range-picker w-full"
-                      shouldDisableDate={DateRangePicker.allowedRange(MIN_SELECTABLE_DATE)}
-                      onChange={
-                        isGuardador
-                          ? (value) => {
-                              field.onChange(value);
-                              if (value?.[0] && value?.[1]) setDateError(false);
-                            }
-                          : field.onChange
-                      }
-                    />
-                  )}
-                />
-                {isGuardador ? (
-                  dateError && <span className="text-xs text-red-600">Campo data obrigatório*</span>
-                ) : (
-                  <span className="text-xs text-red-600">Campo data obrigatório*</span>
-                )}
-              </Grid>
 
               <ValorRangeFilter control={control} getValues={getValues} trigger={trigger} clearErrors={clearErrors} />
             </Grid>

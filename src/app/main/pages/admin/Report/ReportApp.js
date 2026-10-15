@@ -47,14 +47,14 @@ function ReportApp() {
         <header className="flex justify-between items-center">
           <h3 className="font-semibold mb-24">Seleção de Relatórios</h3>
         </header>
-        <Box className="flex items-center gap-16 flex-wrap">
-          <FormControl style={{ minWidth: '20rem' }}>
-            <InputLabel id="report-select-label">Selecionar Relatório</InputLabel>
+        <Box className="grid grid-cols-4 gap-16">
+          <FormControl fullWidth>
+            <InputLabel id="report-select-label">Relatório</InputLabel>
             <Select
               labelId="report-select-label"
               id="report-select"
               value={selectedReport}
-              label="Selecionar Relatório"
+              label="Relatório"
               onChange={handleSelectChange}
             >
               <MenuItem value="consolidado">Relatório Consolidado</MenuItem>
@@ -65,7 +65,7 @@ function ReportApp() {
           </FormControl>
 
           {showAudienceSelector && (
-            <FormControl style={{ minWidth: '16rem' }}>
+            <FormControl fullWidth>
               <InputLabel id="audience-select-label">Selecionar Perfil</InputLabel>
               <Select
                 labelId="audience-select-label"

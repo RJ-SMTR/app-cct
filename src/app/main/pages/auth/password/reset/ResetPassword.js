@@ -76,11 +76,13 @@ function ResetPassword() {
   };
 
   function onSubmit(data) {
-    resetPasswordFunction(data.passwordConfirm, hash).then((response) => {
-      const redirectTo = getResetPasswordRedirectTo(response);
+    resetPasswordFunction(data.passwordConfirm, hash)
+      .then((response) => {
+        const redirectTo = getResetPasswordRedirectTo(response);
 
-      setTimeout(() => navigate(redirectTo), 3000);
-    });
+        setTimeout(() => navigate(redirectTo), 3000);
+      })
+      .catch(() => {});
   }
 
   return (

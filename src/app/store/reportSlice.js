@@ -105,45 +105,42 @@ function handleData(data) {
 
 
   if (data.status && data.status.length > 0) {
-    const statusSet = new Set(data.status);
-
-    const hasAllStatuses = statusSet.has('Pago') && statusSet.has('Erro') && statusSet.has('Aguardando Pagamento') && statusSet.has('Pendencia Paga') && statusSet.has('A pagar');
-
-    if (!hasAllStatuses) {
-      data.status.forEach(status => {
-        switch (status) {
-          case 'Pago':
-            requestData.pago = true;
-            break;
-          case 'Erro':
-            requestData.erro = true;
-            break;
-          case 'Aguardando Pagamento':
-            requestData.emProcessamento = true;
-            break;
-          case 'Estorno':
-            requestData.estorno = true;
-            break;
-          case 'Rejeitado':
-            requestData.rejeitado = true;
-            break;
-          case 'Pendencia Paga':
-            requestData.pendenciaPaga = true
-            break;
-          case 'Pendentes':
-            requestData.pendentes = true
-            break;
-          case 'A pagar':
-            requestData.aPagar = true
-            break;
-          case 'Todos':
-            break;
-          default:
-            requestData.aPagar = true;
-            break;
-        }
-      });
-    }
+    // O backend trata "nenhum status selecionado" como "nenhuma linha deve ser retornada".
+    // Por isso cada status escolhido (inclusive quando todos sao escolhidos) precisa virar uma
+    // flag explicita aqui - pular essa etapa faz a busca "selecionar todos" voltar vazia.
+    data.status.forEach(status => {
+      switch (status) {
+        case 'Pago':
+          requestData.pago = true;
+          break;
+        case 'Erro':
+          requestData.erro = true;
+          break;
+        case 'Aguardando Pagamento':
+          requestData.emProcessamento = true;
+          break;
+        case 'Estorno':
+          requestData.estorno = true;
+          break;
+        case 'Rejeitado':
+          requestData.rejeitado = true;
+          break;
+        case 'Pendencia Paga':
+          requestData.pendenciaPaga = true
+          break;
+        case 'Pendentes':
+          requestData.pendentes = true
+          break;
+        case 'A pagar':
+          requestData.aPagar = true
+          break;
+        case 'Todos':
+          break;
+        default:
+          requestData.aPagar = true;
+          break;
+      }
+    });
 
     if (data.eleicao) {
       requestData.eleicao = true
