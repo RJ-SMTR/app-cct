@@ -51,7 +51,23 @@ const navAdminConfig = [
             },
         ]
     },
-
+    {
+        id: 'Configuracoes',
+        title: 'Configurações',
+        subtitle: '',
+        type: 'collapse',
+        icon: 'heroicons-outline:cog',
+        children: [
+            {
+                id: 'change-password-component',
+                title: 'Alterar Senha',
+                translate: 'Alterar Senha',
+                type: 'item',
+                icon: 'heroicons-outline:key',
+                url: 'change-password',
+            },
+        ],
+    },
 
 ];
 

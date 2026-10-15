@@ -489,6 +489,16 @@ function AgentBankInfo({ user }) {
             fullWidth
           />
         </Box>
+        {Number(user.bankCode) === 104 && (
+          <TextField
+            value={user.bankAccountType === "poupanca" ? "Conta Poupança" : "Conta Corrente"}
+            disabled
+            className="mb-24"
+            label="Tipo de Conta"
+            variant="outlined"
+            fullWidth
+          />
+        )}
       </form>
       {user?.previousBankCode != null ? (
         <>

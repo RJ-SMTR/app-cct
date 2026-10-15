@@ -28,6 +28,9 @@ import ReportReleaseConfig from '../main/pages/admin/ReportRelease/ReportRelease
 import ReportVanzeiroConfig from '../main/pages/report/reportConfig';
 import agentesAppConfig from '../main/pages/agentes/agentesAppConfig';
 import AgentesSignInConfig from '../main/pages/agentes/sign-in/AgentesSignInConfig';
+import ChangePasswordConfig from '../main/pages/settings/changePassword/ChangePasswordConfig';
+import OrdemPagamentoConfig from '../main/pages/ordemPagamento/OrdemPagamentoConfig';
+import PagamentoConfig from '../main/pages/pagamentos/PagamentoConfig';
 
 function RootRedirect() {
   const user = useSelector(selectUser);
@@ -52,6 +55,7 @@ const routeConfigs = [
   ResetPasswordConfig,
   ConcludeConfig,
   profileAppConfig,
+  ChangePasswordConfig,
   agentesAppConfig,
   ExtractConfig,
   // ResumeConfig,
@@ -69,6 +73,8 @@ const routeConfigs = [
   ReportVanzeiroConfig,
   ReportConfig,
   ReportReleaseConfig,
+  OrdemPagamentoConfig,
+  PagamentoConfig,
 ];
 
 const routes = [

@@ -123,6 +123,51 @@ export function CustomTable(data) {
     )
   }
 
+  const getStatusRemessaLabel = (statusRemessa) => {
+    switch (statusRemessa) {
+      case 2:
+        return 'Aguardando Pagamento';
+      case 3:
+        return 'Pago';
+      case 4:
+        return 'Pendente';
+      case 5:
+        return 'Pendencia Paga';
+      default:
+        return 'A pagar';
+    }
+  };
+
+  const GratuidadeBadge = (data) => {
+    const i = data.data.data;
+    if (i.valorGratuidade == null && i.statusRemessaGratuidade == null) {
+      return null;
+    }
+    return (
+      <Badge
+        className={`${data.c?.root} whitespace-nowrap`}
+        color={i.statusRemessaGratuidade === 3 ? 'success' : i.statusRemessaGratuidade === 4 ? 'error' : 'op'}
+        badgeContent={getStatusRemessaLabel(i.statusRemessaGratuidade)}
+      />
+    );
+  };
+
+  const GratuidadeErrorBadge = (data) => {
+    const i = data.data.data;
+    if (i.statusRemessaGratuidade !== 4) {
+      return null;
+    }
+    return (
+      <Tooltip title={i.descricaoMotivoStatusRemessaGratuidade ?? ''} arrow enterTouchDelay={10} leaveTouchDelay={10000}>
+        <Badge
+          className={`${data.c?.root} whitespace-nowrap`}
+          color='error'
+          badgeContent={<span className='underline'> Erro  <InfoOutlinedIcon fontSize='small' /></span>}
+        />
+      </Tooltip>
+    );
+  };
+
 
 
   return (
@@ -178,6 +223,15 @@ export function CustomTable(data) {
         )
       }
       {
+        searchingWeek ? (
+          <TableCell component="th" scope="row" sx={{ borderLeft: '2px solid', borderLeftColor: 'divider' }}>
+            <Typography className="whitespace-nowrap font-bold">
+              {data.data.valorGratuidade != null ? formatter.format(data.data.valorGratuidade) : ''}
+            </Typography>
+          </TableCell>
+        ) : <></>
+      }
+      {
         searchingDay && (
           <TableCell component="th" scope="row">
             <Typography className="whitespace-nowrap">
@@ -194,6 +248,18 @@ export function CustomTable(data) {
           <MyTableCell data={data} />
         </>
           : <> </>
+      }
+
+      {
+        !searchingDay && !searchingWeek ? <>
+          <TableCell component="th" scope="row" sx={{ borderLeft: '2px solid', borderLeftColor: 'divider' }}>
+            <Typography className="whitespace-nowrap font-bold">
+              {data.data.valorGratuidade != null ? formatter.format(data.data.valorGratuidade) : ''}
+            </Typography>
+          </TableCell>
+          <TableCell className='status' component="th" scope='row'> <GratuidadeBadge data={data} /> </TableCell>
+          <TableCell className='status' component="th" scope='row'> <GratuidadeErrorBadge data={data} /> </TableCell>
+        </> : <></>
       }
 
     </TableRow > : <p>Loading</p>

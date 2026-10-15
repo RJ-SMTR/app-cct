@@ -2,7 +2,7 @@ import { Card, Modal, Box, Typography, Button } from "@mui/material"
 import _ from '@lodash';
 import { useState, useEffect } from "react";
 import { Controller, useForm } from 'react-hook-form';
-import { FormControl, Autocomplete } from "@mui/material";
+import { FormControl, Autocomplete, MenuItem } from "@mui/material";
 import TextField from '@mui/material/TextField';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { useContext } from "react";
@@ -339,7 +339,8 @@ export function BankInfo({
       bankCode: user.bankCode ?? '',
       bankAgency: user.bankAgency ?? '',
       bankAccount: user.bankAccount ?? '',
-      bankAccountDigit: user.bankAccountDigit ?? ''
+      bankAccountDigit: user.bankAccountDigit ?? '',
+      bankAccountType: user.bankAccountType ?? 'corrente'
     }
   });
   const { isValid, errors } = formState;
@@ -581,6 +582,22 @@ export function BankInfo({
               helperText={errors?.bankAccountDigit?.message}
             />
           </Box>
+
+          {normalizeBankCode(selectedBankCode) === 104 && (
+            <TextField
+              {...register("bankAccountType")}
+              select
+              className="mb-24"
+              label="Tipo de Conta"
+              variant="outlined"
+              fullWidth
+              defaultValue={user.bankAccountType ?? 'corrente'}
+              disabled={!isEditable}
+            >
+              <MenuItem value="corrente">Conta Corrente</MenuItem>
+              <MenuItem value="poupanca">Conta Poupança</MenuItem>
+            </TextField>
+          )}
         </form>
         {user?.previousBankCode != null ? (
           <>

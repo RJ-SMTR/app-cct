@@ -8,19 +8,13 @@ import {
   setSynthData,
   setTotalSynth,
 } from 'app/store/reportSlice';
-import AgentsConsolidatedReport from './components/AgentsConsolidatedReport';
-import AgentsFinancialMovement from './components/AgentsFinancialMovement';
-import DataGridInfos from './components/DataGrid';
-import ConsolidatedReport from './components/ConsolidatedReport';
-import FinancialMovement from './components/FinancialMovement';
-import SynthReport from './components/SynthReport';
-import {
-  REPORT_AUDIENCE_OPTIONS,
-  shouldShowAudienceSelector,
-} from './reportSelection';
+import ConsolidatedReportPage from './components/ConsolidatedReportPage';
+import FinancialMovementReport from './components/FinancialMovementReport';
+import { REPORT_AUDIENCE_OPTIONS, shouldShowAudienceSelector } from './reportSelection';
 
 function ReportApp() {
   const dispatch = useDispatch();
+
   const [selectedReport, setSelectedReport] = useState('');
   const [selectedAudience, setSelectedAudience] = useState('');
 
@@ -53,7 +47,7 @@ function ReportApp() {
         <header className="flex justify-between items-center">
           <h3 className="font-semibold mb-24">Seleção de Relatórios</h3>
         </header>
-        <Box className="flex gap-16 flex-wrap">
+        <Box className="flex items-center gap-16 flex-wrap">
           <FormControl style={{ minWidth: '20rem' }}>
             <InputLabel id="report-select-label">Selecionar Relatório</InputLabel>
             <Select
@@ -63,20 +57,14 @@ function ReportApp() {
               label="Selecionar Relatório"
               onChange={handleSelectChange}
             >
-              <MenuItem value="analitico" className="Mui-disabled">
-                Relatório Analítico
-              </MenuItem>
               <MenuItem value="consolidado">Relatório Consolidado</MenuItem>
-              <MenuItem value="sintetico" className="Mui-disabled">
-                Relatório Sintético
-              </MenuItem>
               <MenuItem value="Movimentação Financeira">
                 Relatório Movimentação Financeira
               </MenuItem>
             </Select>
           </FormControl>
 
-          {showAudienceSelector ? (
+          {showAudienceSelector && (
             <FormControl style={{ minWidth: '16rem' }}>
               <InputLabel id="audience-select-label">Selecionar Perfil</InputLabel>
               <Select
@@ -93,25 +81,18 @@ function ReportApp() {
                 ))}
               </Select>
             </FormControl>
-          ) : null}
+          )}
         </Box>
       </Card>
 
       <Box>
-        {selectedReport === 'analitico' && <DataGridInfos />}
-        {selectedReport === 'consolidado' && selectedAudience === 'permissionario' && (
-          <ConsolidatedReport />
+        {selectedReport === 'consolidado' && (selectedAudience === 'permissionario' || selectedAudience === 'guardador') && (
+          <ConsolidatedReportPage perfil={selectedAudience} />
         )}
-        {selectedReport === 'consolidado' && selectedAudience === 'guardador' && (
-          <AgentsConsolidatedReport />
-        )}
-        {selectedReport === 'sintetico' && <SynthReport />}
-        {selectedReport === 'Movimentação Financeira' && selectedAudience === 'permissionario' && (
-          <FinancialMovement />
-        )}
-        {selectedReport === 'Movimentação Financeira' && selectedAudience === 'guardador' && (
-          <AgentsFinancialMovement />
-        )}
+        {selectedReport === 'Movimentação Financeira' &&
+          (selectedAudience === 'permissionario' || selectedAudience === 'guardador') && (
+            <FinancialMovementReport perfil={selectedAudience} />
+          )}
       </Box>
     </div>
   );
