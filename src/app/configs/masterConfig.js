@@ -9,6 +9,14 @@ i18next.addResourceBundle('ar', 'navigation', ar);
 
 const masterConfig = [
     {
+        id: 'dashboard-pagamentos-component',
+        title: 'Dashboard de Pagamentos',
+        translate: 'Dashboard de Pagamentos',
+        type: 'item',
+        icon: 'heroicons-outline:chart-bar',
+        url: 'dashboard-pagamentos',
+    },
+    {
         id: 'Administrativo',
         title: 'Administrativo',
         subtitle: '',

@@ -31,6 +31,7 @@ import AgentesSignInConfig from '../main/pages/agentes/sign-in/AgentesSignInConf
 import ChangePasswordConfig from '../main/pages/settings/changePassword/ChangePasswordConfig';
 import OrdemPagamentoConfig from '../main/pages/ordemPagamento/OrdemPagamentoConfig';
 import PagamentoConfig from '../main/pages/pagamentos/PagamentoConfig';
+import DashboardPagamentosConfig from '../main/pages/dashboardPagamentos/DashboardPagamentosConfig';
 
 function RootRedirect() {
   const user = useSelector(selectUser);
@@ -39,9 +40,11 @@ function RootRedirect() {
     ? '/agentes'
     : user?.role?.name?.includes('Financeiro')
       ? '/lancamentos'
-      : user?.role?.name?.includes('Admin')
-        ? '/admin'
-        : '/agentes'
+      : user?.role?.name === 'Admin Master'
+        ? '/dashboard-pagamentos'
+        : user?.role?.name?.includes('Admin')
+          ? '/admin'
+          : '/agentes'
 
   return <Navigate to={targetPath} replace />;
 }
@@ -75,6 +78,7 @@ const routeConfigs = [
   ReportReleaseConfig,
   OrdemPagamentoConfig,
   PagamentoConfig,
+  DashboardPagamentosConfig,
 ];
 
 const routes = [

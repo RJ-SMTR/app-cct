@@ -52,9 +52,11 @@ function App() {
     ? '/agentes'
     : user.role?.name?.includes('Financeiro')
       ? '/lancamentos'
-      : user.role?.name?.includes('Admin')
-        ? '/admin'
-        : settingsConfig.loginRedirectUrl;
+      : user.role?.name === 'Admin Master'
+        ? '/dashboard-pagamentos'
+        : user.role?.name?.includes('Admin')
+          ? '/admin'
+          : settingsConfig.loginRedirectUrl;
 
   return (
     <CacheProvider value={createCache(emotionCacheOptions[langDirection])}>

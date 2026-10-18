@@ -93,7 +93,12 @@ class FuseAuthorization extends Component {
 
   redirectRoute() {
     const { userRole } = this.props;
-    const redirectUrl = getSessionRedirectUrl() || this.props.loginRedirectUrl;
+    let redirectUrl = getSessionRedirectUrl() || this.props.loginRedirectUrl;
+    // Admin Master abre o sistema no Dashboard de Pagamentos, inclusive ao entrar por /admin/sign-in
+    // (essa tela define /admin como destino). Links diretos para outras telas são mantidos.
+    if (userRole === 'Admin Master' && redirectUrl === '/admin') {
+      redirectUrl = '/dashboard-pagamentos';
+    }
     const { lastUserRole } = this.state;
 
     const savedLoginUrl = localStorage.getItem('loginUrl');
