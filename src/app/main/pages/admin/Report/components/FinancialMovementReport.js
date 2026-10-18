@@ -557,14 +557,16 @@ export default function FinancialMovementReport({ perfil }) {
           </header>
 
           <form noValidate onSubmit={handleSubmit(onSubmit)}>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={isPendenciaPagaSelected ? 3 : 6}>
+            {/* Linha 1: período */}
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={12}>
                 <Controller
                   name="dateRange"
                   control={control}
                   rules={periodRequiredRules}
                   render={({ field, fieldState: { error } }) => (
                     <PeriodDatePicker
+                      compact
                       required
                       value={field.value}
                       onChange={field.onChange}
@@ -576,61 +578,10 @@ export default function FinancialMovementReport({ perfil }) {
                   )}
                 />
               </Grid>
+            </Grid>
 
-              <Grid item xs={12} sm={6} md={4}>
-                <Autocomplete
-                  id="status"
-                  multiple
-                  fullWidth
-                  getOptionLabel={(option) => option.label || option}
-                  filterSelectedOptions
-                  options={statusBase}
-                  value={selectedStatusOptions}
-                  onChange={(_, newValue) => handleAutocompleteChange("status", newValue)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label={isGuardador ? "Selecionar Status" : "Selecionar Status *"}
-                      variant="outlined"
-                      error={hasSearched && hasMissingStatusSelection}
-                      helperText={hasSearched && hasMissingStatusSelection ? "Selecione um status para pesquisar." : ""}
-                    />
-                  )}
-                />
-              </Grid>
-
-              {showErroStatus && (
-                <Grid item xs={12} sm={6} md={4}>
-                  <Autocomplete
-                    id="erroStatus"
-                    multiple
-                    fullWidth
-                    options={erroStatus}
-                    getOptionLabel={(option) => option.label || option}
-                    filterSelectedOptions
-                    value={selectedErroStatus}
-                    onChange={(_, newValue) => {
-                      const normalizedValue = normalizeErroStatusSelection(newValue);
-                      setSelectedErroStatus(normalizedValue);
-                      setValue("erroStatus", normalizedValue.map((option) => option.label));
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label={isGuardador ? "Motivo da Pendência" : "Motivos"}
-                        variant="outlined"
-                        error={isGuardador ? hasMissingErroStatusSelection : undefined}
-                        helperText={
-                          isGuardador && hasMissingErroStatusSelection
-                            ? "Selecione um motivo para a Pendência de Pagamento."
-                            : ""
-                        }
-                      />
-                    )}
-                  />
-                </Grid>
-              )}
-
+            {/* Linha 2: favorecido / consórcios / específicos (guardador: guardador / associações) */}
+            <Grid container spacing={2} sx={{ mb: 3 }}>
               {isGuardador ? (
                 <>
                   {shouldShowAgentNameFilter(selectedAssociationOptions) && (
@@ -768,7 +719,67 @@ export default function FinancialMovementReport({ perfil }) {
                   </Grid>
                 </>
               )}
+            </Grid>
 
+            {/* Linha 3: status (e motivos, quando houver) */}
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={12} sm={6} md={4}>
+                <Autocomplete
+                  id="status"
+                  multiple
+                  fullWidth
+                  getOptionLabel={(option) => option.label || option}
+                  filterSelectedOptions
+                  options={statusBase}
+                  value={selectedStatusOptions}
+                  onChange={(_, newValue) => handleAutocompleteChange("status", newValue)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label={isGuardador ? "Selecionar Status" : "Selecionar Status *"}
+                      variant="outlined"
+                      error={hasSearched && hasMissingStatusSelection}
+                      helperText={hasSearched && hasMissingStatusSelection ? "Selecione um status para pesquisar." : ""}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {showErroStatus && (
+                <Grid item xs={12} sm={6} md={4}>
+                  <Autocomplete
+                    id="erroStatus"
+                    multiple
+                    fullWidth
+                    options={erroStatus}
+                    getOptionLabel={(option) => option.label || option}
+                    filterSelectedOptions
+                    value={selectedErroStatus}
+                    onChange={(_, newValue) => {
+                      const normalizedValue = normalizeErroStatusSelection(newValue);
+                      setSelectedErroStatus(normalizedValue);
+                      setValue("erroStatus", normalizedValue.map((option) => option.label));
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label={isGuardador ? "Motivo da Pendência" : "Motivos"}
+                        variant="outlined"
+                        error={isGuardador ? hasMissingErroStatusSelection : undefined}
+                        helperText={
+                          isGuardador && hasMissingErroStatusSelection
+                            ? "Selecione um motivo para a Pendência de Pagamento."
+                            : ""
+                        }
+                      />
+                    )}
+                  />
+                </Grid>
+              )}
+            </Grid>
+
+            {/* Linha 4: valores */}
+            <Grid container spacing={2}>
               <ValorRangeFilter control={control} getValues={getValues} trigger={trigger} clearErrors={clearErrors} />
             </Grid>
 

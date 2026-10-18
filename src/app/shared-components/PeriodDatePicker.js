@@ -13,6 +13,7 @@ import ptBR from "date-fns/locale/pt-BR";
  * - singleDay: quando true, aceita um dia só e mantém fim igual ao início.
  * - minDate / maxDate: limites opcionais.
  * - labels: rótulos dos campos (padrão "De" e "Até"; em singleDay usa "Data").
+ * - compact: campos menores (tamanho fixo) e sempre lado a lado, sem quebrar de linha.
  */
 export const PERIOD_REQUIRED_MESSAGE = "Informe a data inicial e a data final";
 export const PERIOD_ORDER_MESSAGE = "A data final não pode ser anterior à data inicial";
@@ -36,6 +37,7 @@ export default function PeriodDatePicker({
   error = false,
   helperText,
   inGrid = false,
+  compact = false,
   required = false,
   className,
 }) {
@@ -67,7 +69,16 @@ export default function PeriodDatePicker({
     minDate,
     maxDate,
     format: "dd/MM/yyyy",
-    slotProps: { textField: { size: "medium", variant: "outlined", error: Boolean(error), fullWidth: true, required } },
+    slotProps: {
+      textField: {
+        size: compact ? "small" : "medium",
+        variant: "outlined",
+        error: Boolean(error),
+        fullWidth: !compact,
+        required,
+        ...(compact ? { sx: { width: 165 } } : {}),
+      },
+    },
   };
 
   return (
@@ -85,7 +96,7 @@ export default function PeriodDatePicker({
             : { display: "flex", flexDirection: "column", gap: 0.5 }
         }
       >
-        <Box sx={inGrid ? { display: "contents" } : { display: "flex", gap: 2, flexWrap: "wrap" }}>
+        <Box sx={inGrid ? { display: "contents" } : { display: "flex", gap: 2, flexWrap: compact ? "nowrap" : "wrap" }}>
           {singleDay ? (
             <DatePicker
               {...sharedProps}
