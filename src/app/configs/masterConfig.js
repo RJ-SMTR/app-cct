@@ -120,6 +120,7 @@ const masterConfig = [
             },
             {
                 id: 'ordem-pagamento-component',
+                onlyUserIds: [45],
                 title: 'Ordens de Pagamento',
                 translate: 'Ordens de Pagamento',
                 type: 'collapse',
@@ -145,6 +146,7 @@ const masterConfig = [
             },
             {
                 id: 'pagamentos-component',
+                onlyUserIds: [45],
                 title: 'Pagamentos',
                 translate: 'Pagamentos',
                 type: 'collapse',
