@@ -14,19 +14,15 @@ import { DataGrid, ptBR as pt } from '@mui/x-data-grid';
 import SaveAltIcon from '@mui/icons-material/SaveAlt';
 import { format } from 'date-fns';
 import { useDispatch, useSelector } from 'react-redux';
-import PeriodDatePicker, { periodRequiredRules } from 'app/shared-components/PeriodDatePicker';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { CSVLink } from 'react-csv';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { utils, writeFile as writeFileXLSX } from 'xlsx';
 
 import { handleConsolidadoPage, fetchAgentConsolidatedReport, setReportList } from 'app/store/reportSlice';
-import { getUser, getAgentUsers } from 'app/store/adminSlice';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import {
-  buildAgentAutocompleteOptions,
-  buildAssociationAutocompleteOptions,
   flattenAgentConsolidatedReportBlocks,
   getAgentConsolidatedReportTotal,
   normalizeAgentStatusSelection,
@@ -37,7 +33,16 @@ import {
 import { normalizeErroStatusSelection } from './reportUtils';
 import { buildReportConsorcioOptions } from './consorcioOptions';
 import ValorRangeFilter from './shared/ValorRangeFilter';
-import { STATUS_OPTIONS, ERRO_STATUS_OPTIONS, ESPECIFICOS_OPTIONS, MIN_SELECTABLE_DATE } from './shared/reportFilterOptions';
+import ReportPeriodFilter from './shared/ReportPeriodFilter';
+import useFavorecidoGuardadorOptions from './shared/useFavorecidoGuardadorOptions';
+import { applyPendenciaDePagamentoErro, applyEspecificosFlags } from './shared/reportRequestUtils';
+import {
+  STATUS_OPTIONS,
+  ERRO_STATUS_OPTIONS,
+  ESPECIFICOS_OPTIONS,
+  MIN_SELECTABLE_DATE_GUARDADOR,
+  MIN_SELECTABLE_DATE_PERMISSIONARIO,
+} from './shared/reportFilterOptions';
 
 const DEFAULT_PAGE_SIZE = 25;
 
@@ -82,13 +87,11 @@ export default function ConsolidatedReportPage({ perfil }) {
   const dispatch = useDispatch();
 
   const reportList = useSelector((state) => state.report.reportList);
-  const userList = useSelector((state) => state.admin.userList) || [];
 
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingUsers, setLoadingUsers] = useState(false);
-  const [userOptions, setUserOptions] = useState([]);
-  const [agentOptions, setAgentOptions] = useState([]);
-  const [associationOptions, setAssociationOptions] = useState([]);
+  const { loadingUsers, userOptions, agentOptions, associationOptions } = useFavorecidoGuardadorOptions(isGuardador, {
+    loadErrorMessage: "Não foi possível carregar os filtros de guardador.",
+  });
   const [selectedAgentOptions, setSelectedAgentOptions] = useState([]);
   const [selectedAssociationOptions, setSelectedAssociationOptions] = useState([]);
   const [selectedStatusOptions, setSelectedStatusOptions] = useState([]);
@@ -97,6 +100,7 @@ export default function ConsolidatedReportPage({ perfil }) {
   const [selected, setSelected] = useState(null);
   const [showErroStatus, setShowErroStatus] = useState(false);
   const [selectedConsorcios, setSelectedConsorcios] = useState([]);
+  const [selectedFavorecidos, setSelectedFavorecidos] = useState([]);
   const [selectedErroStatus, setSelectedErroStatus] = useState([]);
   const [selectedEspecificos, setSelectedEspecificos] = useState([]);
   const [page, setPage] = useState(0);
@@ -113,45 +117,14 @@ export default function ConsolidatedReportPage({ perfil }) {
 
   const { handleSubmit, setValue, control, getValues, trigger, clearErrors, reset } = useForm({ defaultValues });
 
+  // Guardador e Permissionário têm datas mínimas diferentes: ao trocar o perfil, a data
+  // selecionada no filtro de período (de/até) é limpa para evitar um intervalo inválido.
+  useEffect(() => {
+    setValue('dateRange', []);
+    setDateError(false);
+  }, [perfil, setValue]);
+
   const formatter = useMemo(() => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }), []);
-
-  // Carrega opções de filtro: favorecidos (permissionário) ou guardadores/associações (guardador).
-  useEffect(() => {
-    if (isGuardador) {
-      setLoadingUsers(true);
-      dispatch(getAgentUsers())
-        .then((agentUsers) => {
-          const normalized = Array.isArray(agentUsers) ? agentUsers : [];
-          setAgentOptions(buildAgentAutocompleteOptions(normalized));
-          setAssociationOptions(buildAssociationAutocompleteOptions(normalized));
-        })
-        .catch(() => {
-          setAgentOptions([]);
-          setAssociationOptions([]);
-          dispatch(showMessage({ message: "Não foi possível carregar os filtros de guardador." }));
-        })
-        .finally(() => setLoadingUsers(false));
-    } else {
-      setLoadingUsers(true);
-      dispatch(getUser());
-      setLoadingUsers(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isGuardador]);
-
-  useEffect(() => {
-    if (isGuardador) return;
-    if (userList && userList.length > 0) {
-      const options = userList.map((user) => ({
-        label: user.label,
-        value: { cpfCnpj: user.cpfCnpj, permitCode: user.permitCode, fullName: user.fullName, userId: user.id },
-      }));
-      const sortedOptions = options.sort((a, b) => a.value.fullName.localeCompare(b.value.fullName));
-      setUserOptions([{ label: "Todos", value: { fullName: 'Todos' } }, ...sortedOptions]);
-    } else {
-      setUserOptions([]);
-    }
-  }, [userList, isGuardador]);
 
   // ---- Dados agregados (guardador) ----
   const flattenedRows = useMemo(
@@ -363,7 +336,23 @@ export default function ConsolidatedReportPage({ perfil }) {
 
   const handleSelection = (field, newValue) => {
     setSelected(newValue.length > 0 ? field : null);
-    if (field === 'consorcioName') setSelectedConsorcios(newValue);
+
+    // Favorecido e Consórcio são mutuamente exclusivos: escolher um limpa o outro.
+    if (field === 'name') {
+      setSelectedFavorecidos(newValue);
+      if (newValue.length > 0 && selectedConsorcios.length > 0) {
+        setSelectedConsorcios([]);
+        setValue('consorcioName', []);
+      }
+    }
+    if (field === 'consorcioName') {
+      setSelectedConsorcios(newValue);
+      if (newValue.length > 0 && selectedFavorecidos.length > 0) {
+        setSelectedFavorecidos([]);
+        setValue('name', []);
+      }
+    }
+
     handleAutocompleteChange(field, newValue);
   };
 
@@ -384,6 +373,7 @@ export default function ConsolidatedReportPage({ perfil }) {
       setValue('consorcioName', []);
       setValue('status', []);
       setSelectedConsorcios([]);
+      setSelectedFavorecidos([]);
       setSelectedEspecificos([]);
       document.querySelectorAll('.MuiAutocomplete-clearIndicator').forEach((button) => button.click());
     }
@@ -398,35 +388,14 @@ export default function ConsolidatedReportPage({ perfil }) {
 
   // ---- Busca ----
   const buildRequestDataPermissionario = (data, pageIndex, currentPageSize) => {
-    const requestData = { ...data };
+    let requestData = { ...data };
 
-    if (whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus.length > 0) {
-      requestData.status = requestData.status.filter((status) => status !== "Pendência de Pagamento");
-      const selectedErroLabels = selectedErroStatus.map((status) => status.label);
-      const statusSet = new Set(requestData.status);
-
-      if (selectedErroLabels.includes("Todos")) {
-        statusSet.add("Erro");
-        statusSet.add("Pendentes");
-        requestData.erro = true;
-      } else {
-        if (selectedErroLabels.includes("Estorno")) {
-          statusSet.add("Estorno");
-          requestData.estorno = true;
-        }
-        if (selectedErroLabels.includes("Rejeitado")) {
-          statusSet.add("Rejeitado");
-          requestData.rejeitado = true;
-        }
-        if (selectedErroLabels.includes("OPs atrasadas")) {
-          statusSet.add("Pendentes");
-        }
-      }
-      requestData.status = Array.from(statusSet);
-    }
-
-    if (data.especificos?.includes("Eleição")) requestData.eleicao = true;
-    if (data.especificos?.includes("Desativados")) requestData.desativados = true;
+    requestData = applyPendenciaDePagamentoErro(requestData, {
+      whichStatusShow,
+      selectedErroStatus,
+      addPendentesOnTodos: true,
+    });
+    requestData = applyEspecificosFlags(requestData, data);
 
     requestData.page = pageIndex + 1;
     requestData.pageSize = currentPageSize;
@@ -510,33 +479,34 @@ export default function ConsolidatedReportPage({ perfil }) {
           </header>
 
           <form noValidate onSubmit={handleSubmit(onSubmit)}>
-            {/* Linha 1: período */}
+            {/* Linha 1: período + status + favorecido / consórcios / específicos (guardador: guardador / associações) */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid item xs={12}>
-                <Controller
-                  name="dateRange"
-                  control={control}
-                  rules={periodRequiredRules}
-                  render={({ field, fieldState: { error } }) => (
-                    <PeriodDatePicker
-                      compact
-                      required
-                      value={field.value}
-                      onChange={(value) => {
-                        field.onChange(value);
-                        if (isGuardador && value?.[0] && value?.[1]) setDateError(false);
-                      }}
-                      minDate={MIN_SELECTABLE_DATE}
-                      error={Boolean(error) || (isGuardador && dateError)}
-                      helperText={error?.message}
-                    />
-                  )}
-                />
-              </Grid>
-            </Grid>
+              <ReportPeriodFilter
+                control={control}
+                minDate={isGuardador ? MIN_SELECTABLE_DATE_GUARDADOR : MIN_SELECTABLE_DATE_PERMISSIONARIO}
+                extraError={isGuardador && dateError}
+                onChange={(value) => {
+                  if (isGuardador && value?.[0] && value?.[1]) setDateError(false);
+                }}
+              />
 
-            {/* Linha 2: favorecido / consórcios / específicos (guardador: guardador / associações) */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
+              {(isGuardador || !selectedEspecificos.includes("Pendentes")) && (
+                <Grid item xs={12} sm={6} md={4}>
+                  <Autocomplete
+                    id="status"
+                    multiple
+                    fullWidth
+                    options={isGuardador ? GUARDADOR_STATUS_OPTIONS : STATUS_OPTIONS}
+                    value={selectedStatusOptions}
+                    getOptionLabel={(option) => option.label}
+                    isOptionEqualToValue={isGuardador ? (option, value) => option.value === value.value : undefined}
+                    filterSelectedOptions={!isGuardador}
+                    onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
+                    renderInput={(params) => <TextField {...params} label="Selecionar Status" variant="outlined" />}
+                  />
+                </Grid>
+              )}
+
               {isGuardador ? (
                 <>
                   {shouldShowAgentNameFilter(selectedAssociationOptions) && (
@@ -600,6 +570,8 @@ export default function ConsolidatedReportPage({ perfil }) {
                       getOptionLabel={(option) => option.value.fullName}
                       filterSelectedOptions
                       options={userOptions}
+                      value={selectedFavorecidos}
+                      getOptionDisabled={() => selectedConsorcios.length > 0}
                       filterOptions={(options, state) =>
                         options.filter(
                           (option) =>
@@ -639,7 +611,7 @@ export default function ConsolidatedReportPage({ perfil }) {
                         filterSelectedOptions
                         options={consorcios}
                         value={selectedConsorcios}
-                        getOptionDisabled={(option) => option.disabled}
+                        getOptionDisabled={(option) => option.disabled || selectedFavorecidos.length > 0}
                         isOptionEqualToValue={(option, value) => option.value === value.value}
                         onChange={(_, newValue) => handleSelection('consorcioName', newValue)}
                         renderInput={(params) => <TextField {...params} label="Selecionar Consórcios" variant="outlined" />}
@@ -663,25 +635,8 @@ export default function ConsolidatedReportPage({ perfil }) {
               )}
             </Grid>
 
-            {/* Linha 3: status (e motivos, quando houver) */}
+            {/* Linha 3: motivos (quando houver) */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
-              {(isGuardador || !selectedEspecificos.includes("Pendentes")) && (
-                <Grid item xs={12} sm={6} md={4}>
-                  <Autocomplete
-                    id="status"
-                    multiple
-                    fullWidth
-                    options={isGuardador ? GUARDADOR_STATUS_OPTIONS : STATUS_OPTIONS}
-                    value={selectedStatusOptions}
-                    getOptionLabel={(option) => option.label}
-                    isOptionEqualToValue={isGuardador ? (option, value) => option.value === value.value : undefined}
-                    filterSelectedOptions={!isGuardador}
-                    onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
-                    renderInput={(params) => <TextField {...params} label="Selecionar Status" variant="outlined" />}
-                  />
-                </Grid>
-              )}
-
               {showErroStatus && (
                 <Grid item xs={12} sm={6} md={4}>
                   <Autocomplete
