@@ -4,6 +4,7 @@ import { Component } from 'react';
 import { matchPath, matchRoutes } from 'react-router-dom';
 import withRouter from '@fuse/core/withRouter';
 import history from '@history';
+import { podeVerDashboardPagamentos } from 'app/configs/dashboardAccess';
 import {
   getSessionRedirectUrl,
   setSessionRedirectUrl,
@@ -92,11 +93,11 @@ class FuseAuthorization extends Component {
   }
 
   redirectRoute() {
-    const { userRole } = this.props;
+    const { userRole, userId } = this.props;
     let redirectUrl = getSessionRedirectUrl() || this.props.loginRedirectUrl;
     // Admin Master abre o sistema no Dashboard de Pagamentos, inclusive ao entrar por /admin/sign-in
     // (essa tela define /admin como destino). Links diretos para outras telas são mantidos.
-    if (userRole === 'Admin Master' && redirectUrl === '/admin') {
+    if (userRole === 'Admin Master' && redirectUrl === '/admin' && podeVerDashboardPagamentos(userId)) {
       redirectUrl = '/dashboard-pagamentos';
     }
     const { lastUserRole } = this.state;

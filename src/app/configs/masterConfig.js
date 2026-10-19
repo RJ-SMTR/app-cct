@@ -1,6 +1,7 @@
 import i18next from 'i18next';
 import ar from './navigation-i18n/ar';
 import en from './navigation-i18n/en';
+import { DASHBOARD_PAGAMENTOS_USER_IDS } from './dashboardAccess';
 import tr from './navigation-i18n/tr';
 
 i18next.addResourceBundle('en', 'navigation', en);
@@ -10,6 +11,7 @@ i18next.addResourceBundle('ar', 'navigation', ar);
 const masterConfig = [
     {
         id: 'dashboard-pagamentos-component',
+        onlyUserIds: DASHBOARD_PAGAMENTOS_USER_IDS,
         title: 'Dashboard de Pagamentos',
         translate: 'Dashboard de Pagamentos',
         type: 'item',

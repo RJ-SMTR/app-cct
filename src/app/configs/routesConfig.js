@@ -31,6 +31,7 @@ import AgentesSignInConfig from '../main/pages/agentes/sign-in/AgentesSignInConf
 import ChangePasswordConfig from '../main/pages/settings/changePassword/ChangePasswordConfig';
 import OrdemPagamentoConfig from '../main/pages/ordemPagamento/OrdemPagamentoConfig';
 import PagamentoConfig from '../main/pages/pagamentos/PagamentoConfig';
+import { podeVerDashboardPagamentos } from './dashboardAccess';
 import DashboardPagamentosConfig from '../main/pages/dashboardPagamentos/DashboardPagamentosConfig';
 
 function RootRedirect() {
@@ -40,7 +41,7 @@ function RootRedirect() {
     ? '/agentes'
     : user?.role?.name?.includes('Financeiro')
       ? '/lancamentos'
-      : user?.role?.name === 'Admin Master'
+      : user?.role?.name === 'Admin Master' && podeVerDashboardPagamentos(user?.id)
         ? '/dashboard-pagamentos'
         : user?.role?.name?.includes('Admin')
           ? '/admin'
