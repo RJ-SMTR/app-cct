@@ -21,8 +21,7 @@ import {
 import SaveAltIcon from "@mui/icons-material/SaveAlt";
 import { format } from "date-fns";
 import { useDispatch, useSelector } from "react-redux";
-import PeriodDatePicker, { periodRequiredRules } from "app/shared-components/PeriodDatePicker";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
 import {
   handleFinancialMovementExport,
@@ -33,12 +32,8 @@ import {
   setReportList,
 } from "app/store/reportSlice";
 import { hasSingleDayStatus, toSingleDayRange } from "app/store/pendenciaPagaDateRange";
-import { getUser } from "app/store/adminSlice";
-import { getAgentUsers } from "app/store/adminSlice";
 import { showMessage } from "app/store/fuse/messageSlice";
 import {
-  buildAgentAutocompleteOptions,
-  buildAssociationAutocompleteOptions,
   getAgentEffectivePaymentDateLabel,
   getAssociationDisplayName,
   isKnownAssociationName,
@@ -50,7 +45,15 @@ import {
 import { normalizeErroStatusSelection } from "./reportUtils";
 import { buildReportConsorcioOptions } from "./consorcioOptions";
 import ValorRangeFilter from "./shared/ValorRangeFilter";
-import { STATUS_OPTIONS, ERRO_STATUS_OPTIONS, MIN_SELECTABLE_DATE } from "./shared/reportFilterOptions";
+import ReportPeriodFilter from "./shared/ReportPeriodFilter";
+import useFavorecidoGuardadorOptions from "./shared/useFavorecidoGuardadorOptions";
+import { applyPendenciaDePagamentoErro, applyEspecificosFlags } from "./shared/reportRequestUtils";
+import {
+  STATUS_OPTIONS,
+  ERRO_STATUS_OPTIONS,
+  MIN_SELECTABLE_DATE_GUARDADOR,
+  MIN_SELECTABLE_DATE_PERMISSIONARIO,
+} from "./shared/reportFilterOptions";
 
 const CNPJS_CONSORCIO = [
   '12464539000180',
@@ -74,13 +77,11 @@ export default function FinancialMovementReport({ perfil }) {
   const isGuardador = perfil === 'guardador';
 
   const reportList = useSelector((state) => state.report.reportList);
-  const userList = useSelector((state) => state.admin.userList) || [];
 
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingUsers, setLoadingUsers] = useState(false);
-  const [userOptions, setUserOptions] = useState([]);
-  const [agentOptions, setAgentOptions] = useState([]);
-  const [associationOptions, setAssociationOptions] = useState([]);
+  const { loadingUsers, userOptions, agentOptions, associationOptions } = useFavorecidoGuardadorOptions(isGuardador, {
+    loadErrorMessage: "Não foi possível carregar os guardadores e associações.",
+  });
   const [selectedAgentOptions, setSelectedAgentOptions] = useState([]);
   const [selectedAssociationOptions, setSelectedAssociationOptions] = useState([]);
   const [selectedStatusOptions, setSelectedStatusOptions] = useState([]);
@@ -90,6 +91,7 @@ export default function FinancialMovementReport({ perfil }) {
   const [showErroStatus, setShowErroStatus] = useState(false);
   const [selectedErroStatus, setSelectedErroStatus] = useState([]);
   const [selectedConsorcios, setSelectedConsorcios] = useState([]);
+  const [selectedFavorecidos, setSelectedFavorecidos] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
@@ -110,6 +112,12 @@ export default function FinancialMovementReport({ perfil }) {
     : { name: [], dateRange: [], valorMax: "", valorMin: "", consorcioName: [], especificos: [], status: [], erroStatus: [] };
 
   const { handleSubmit, setValue, control, getValues, trigger, clearErrors, reset } = useForm({ defaultValues });
+
+  // Guardador e Permissionário têm datas mínimas diferentes: ao trocar o perfil, a data
+  // selecionada no filtro de período (de/até) é limpa para evitar um intervalo inválido.
+  useEffect(() => {
+    setValue("dateRange", []);
+  }, [perfil, setValue]);
 
   const hasMissingErroStatusSelection =
     whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus.length === 0;
@@ -133,37 +141,16 @@ export default function FinancialMovementReport({ perfil }) {
   };
 
   const buildRequestData = (data, pageIndex, pageSize, options = {}) => {
-    const requestData = { ...data };
+    let requestData = { ...data };
 
-    if (whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus.length > 0) {
-      requestData.status = requestData.status.filter((status) => status !== "Pendência de Pagamento");
-      const selectedErroLabels = selectedErroStatus.map((status) => status.label);
-      const statusSet = new Set(requestData.status);
-
-      if (selectedErroLabels.includes("Todos")) {
-        statusSet.add("Erro");
-        if (isGuardador) statusSet.add("Pendentes");
-        requestData.erro = true;
-      } else {
-        if (selectedErroLabels.includes("Estorno")) {
-          statusSet.add("Estorno");
-          requestData.estorno = true;
-        }
-        if (selectedErroLabels.includes("Rejeitado")) {
-          statusSet.add("Rejeitado");
-          requestData.rejeitado = true;
-        }
-        if (selectedErroLabels.includes("OPs atrasadas")) {
-          statusSet.add("Pendentes");
-        }
-      }
-
-      requestData.status = Array.from(statusSet);
-    }
+    requestData = applyPendenciaDePagamentoErro(requestData, {
+      whichStatusShow,
+      selectedErroStatus,
+      addPendentesOnTodos: isGuardador,
+    });
 
     if (!isGuardador) {
-      if (data.especificos?.includes("Eleição")) requestData.eleicao = true;
-      if (data.especificos?.includes("Desativados")) requestData.desativados = true;
+      requestData = applyEspecificosFlags(requestData, data);
     }
 
     if (options.includePagination !== false) {
@@ -178,44 +165,6 @@ export default function FinancialMovementReport({ perfil }) {
     if (!validateStatusSelection() || !validateErroStatusSelection()) return null;
     return buildRequestData(data, pageIndex, pageSize, options);
   };
-
-  // Carrega as opções de filtro: favorecidos (permissionário) ou guardadores/associações (guardador).
-  useEffect(() => {
-    if (isGuardador) {
-      setLoadingUsers(true);
-      dispatch(getAgentUsers())
-        .then((agentUsers) => {
-          const normalized = Array.isArray(agentUsers) ? agentUsers : [];
-          setAgentOptions(buildAgentAutocompleteOptions(normalized));
-          setAssociationOptions(buildAssociationAutocompleteOptions(normalized));
-        })
-        .catch(() => {
-          setAgentOptions([]);
-          setAssociationOptions([]);
-          dispatch(showMessage({ message: "Não foi possível carregar os guardadores e associações." }));
-        })
-        .finally(() => setLoadingUsers(false));
-    } else {
-      setLoadingUsers(true);
-      dispatch(getUser());
-      setLoadingUsers(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isGuardador]);
-
-  useEffect(() => {
-    if (isGuardador) return;
-    if (userList && userList.length > 0) {
-      const options = userList.map((user) => ({
-        label: user.label,
-        value: { cpfCnpj: user.cpfCnpj, permitCode: user.permitCode, fullName: user.fullName, userId: user.id },
-      }));
-      const sortedOptions = options.sort((a, b) => a.value.fullName.localeCompare(b.value.fullName));
-      setUserOptions([{ label: "Todos", value: { fullName: "Todos" } }, ...sortedOptions]);
-    } else {
-      setUserOptions([]);
-    }
-  }, [userList, isGuardador]);
 
   const handleAutocompleteChange = (field, newValue) => {
     if (isGuardador) {
@@ -291,7 +240,23 @@ export default function FinancialMovementReport({ perfil }) {
 
   const handleSelection = (field, newValue) => {
     setSelected(newValue.length > 0 ? field : null);
-    if (field === 'consorcioName') setSelectedConsorcios(newValue);
+
+    // Favorecido e Consórcio são mutuamente exclusivos: escolher um limpa o outro.
+    if (field === 'name') {
+      setSelectedFavorecidos(newValue);
+      if (newValue.length > 0 && selectedConsorcios.length > 0) {
+        setSelectedConsorcios([]);
+        setValue('consorcioName', []);
+      }
+    }
+    if (field === 'consorcioName') {
+      setSelectedConsorcios(newValue);
+      if (newValue.length > 0 && selectedFavorecidos.length > 0) {
+        setSelectedFavorecidos([]);
+        setValue('name', []);
+      }
+    }
+
     handleAutocompleteChange(field, newValue);
   };
 
@@ -427,6 +392,7 @@ export default function FinancialMovementReport({ perfil }) {
       setValue("status", []);
       setValue("erroStatus", []);
       setSelectedConsorcios([]);
+      setSelectedFavorecidos([]);
       setSelectedStatusOptions([]);
       for (const button of document.querySelectorAll(".MuiAutocomplete-clearIndicator")) {
         button.click();
@@ -558,27 +524,11 @@ export default function FinancialMovementReport({ perfil }) {
 
           <form noValidate onSubmit={handleSubmit(onSubmit)}>
             {/* Linha 1: período */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid item xs={12}>
-                <Controller
-                  name="dateRange"
-                  control={control}
-                  rules={periodRequiredRules}
-                  render={({ field, fieldState: { error } }) => (
-                    <PeriodDatePicker
-                      compact
-                      required
-                      value={field.value}
-                      onChange={field.onChange}
-                      singleDay={isPendenciaPagaSelected}
-                      minDate={MIN_SELECTABLE_DATE}
-                      error={Boolean(error)}
-                      helperText={error?.message}
-                    />
-                  )}
-                />
-              </Grid>
-            </Grid>
+            <ReportPeriodFilter
+              control={control}
+              singleDay={isPendenciaPagaSelected}
+              minDate={isGuardador ? MIN_SELECTABLE_DATE_GUARDADOR : MIN_SELECTABLE_DATE_PERMISSIONARIO}
+            />
 
             {/* Linha 2: favorecido / consórcios / específicos (guardador: guardador / associações) */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -658,6 +608,8 @@ export default function FinancialMovementReport({ perfil }) {
                       getOptionLabel={(option) => option.value.fullName}
                       filterSelectedOptions
                       options={userOptions}
+                      value={selectedFavorecidos}
+                      getOptionDisabled={() => selectedConsorcios.length > 0}
                       filterOptions={(options, state) =>
                         options.filter(
                           (option) =>
@@ -696,7 +648,7 @@ export default function FinancialMovementReport({ perfil }) {
                       filterSelectedOptions
                       options={consorcios}
                       value={selectedConsorcios}
-                      getOptionDisabled={(option) => option.disabled}
+                      getOptionDisabled={(option) => option.disabled || selectedFavorecidos.length > 0}
                       isOptionEqualToValue={(option, value) => option.value === value.value}
                       onChange={(_, newValue) => handleSelection("consorcioName", newValue)}
                       renderInput={(params) => (
