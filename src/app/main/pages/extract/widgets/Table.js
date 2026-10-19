@@ -473,8 +473,8 @@ function TableTransactions({ id, userRoleId }) {
                   </TableCell> : <></>}
 
                   {searchingWeek ? (
-                    <TableCell sx={{ borderLeft: '2px solid', borderLeftColor: 'divider' }}>
-                      <Typography variant="body2" className="font-bold whitespace-nowrap">
+                    <TableCell>
+                      <Typography variant="body2" className="font-semibold whitespace-nowrap">
                         Valor Gratuidade
                       </Typography>
                     </TableCell>
@@ -501,18 +501,18 @@ function TableTransactions({ id, userRoleId }) {
 
                   {!searchingDay && !searchingWeek ? (
                     <>
-                      <TableCell sx={{ borderLeft: '2px solid', borderLeftColor: 'divider' }}>
-                        <Typography variant="body2" className="font-bold whitespace-nowrap">
+                      <TableCell>
+                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
                           Valor Gratuidade
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" className="font-bold whitespace-nowrap">
+                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
                           Status (Gratuidade)
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" className="font-bold whitespace-nowrap">
+                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
                           Erro (Gratuidade)
                         </Typography>
                       </TableCell>

@@ -227,8 +227,8 @@ export function CustomTable(data) {
       }
       {
         searchingWeek ? (
-          <TableCell component="th" scope="row" sx={{ borderLeft: '2px solid', borderLeftColor: 'divider' }}>
-            <Typography className="whitespace-nowrap font-bold">
+          <TableCell component="th" scope="row">
+            <Typography className="whitespace-nowrap">
               {data.data.valorGratuidade != null ? formatter.format(data.data.valorGratuidade) : ''}
             </Typography>
           </TableCell>
@@ -255,8 +255,8 @@ export function CustomTable(data) {
 
       {
         !searchingDay && !searchingWeek ? <>
-          <TableCell component="th" scope="row" sx={{ borderLeft: '2px solid', borderLeftColor: 'divider' }}>
-            <Typography className="whitespace-nowrap font-bold">
+          <TableCell component="th" scope="row">
+            <Typography className="whitespace-nowrap">
               {data.data.valorGratuidade != null ? formatter.format(data.data.valorGratuidade) : ''}
             </Typography>
           </TableCell>

@@ -171,6 +171,7 @@ function UserApp() {
             <>
               <div className='md:flex mt-10 '>
                 <Entries type={paidValue} isDay="false" />
+                {!searchingWeek && !searchingDay && <Entries type="Valor Gratuidade - Acumulado Mensal" isDay="false" gratuidade />}
               </div>
               <div className={`flex flex-col `}>
                 <div>
