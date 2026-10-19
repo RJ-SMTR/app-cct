@@ -248,13 +248,13 @@ export function CustomTable(data) {
       {
         !searchingWeek ? <>
           <TableCell className='status' component="th" scope='row'> <CustomBadge data={data} /> </TableCell>
-          <MyTableCell data={data} />
+          {!(data.hideGratuidade && !searchingDay) && <MyTableCell data={data} />}
         </>
           : <> </>
       }
 
       {
-        !searchingDay && !searchingWeek ? <>
+        !searchingDay && !searchingWeek && !data.hideGratuidade ? <>
           <TableCell component="th" scope="row">
             <Typography className="whitespace-nowrap">
               {data.data.valorGratuidade != null ? formatter.format(data.data.valorGratuidade) : ''}
