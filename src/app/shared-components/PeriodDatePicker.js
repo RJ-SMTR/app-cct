@@ -69,10 +69,13 @@ export default function PeriodDatePicker({
 
   // Não altera o outro campo: durante a digitação o ano parcial pode gerar datas antigas,
   // e ajustar o início por isso corrompe a data. A validação de mínimo/máximo sinaliza o erro.
+  // Bug corrigido: o fallback antigo (nextEnd ?? nextStart / nextStart ?? nextEnd) colapsava o
+  // período para um único dia sempre que o outro campo ainda estava vazio - ex.: preencher só
+  // "De" já empurrava "Até" para a mesma data, impedindo selecionar um período real.
   const emit = (nextStart, nextEnd) => {
     if (!nextStart && !nextEnd) return onChange([]);
     if (singleDay) return onChange([nextStart ?? nextEnd, nextStart ?? nextEnd]);
-    onChange([nextStart ?? nextEnd, nextEnd ?? nextStart]);
+    return onChange([nextStart, nextEnd]);
   };
 
   const handleStart = (date) => emit(asValidDate(date), end);
