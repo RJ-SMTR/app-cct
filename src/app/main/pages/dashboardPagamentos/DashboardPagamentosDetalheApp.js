@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { Alert, Box, Button, Card, Chip, InputAdornment, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, Chip, InputAdornment, TablePagination, TextField, Typography } from '@mui/material';
 import { DataGrid, ptBR as pt } from '@mui/x-data-grid';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SearchIcon from '@mui/icons-material/Search';
@@ -194,19 +194,34 @@ export default function DashboardPagamentosDetalheApp() {
         <Alert severity="warning">Abra esta tela a partir de um gráfico do dashboard (faltam conta e período).</Alert>
       ) : (
         <Card sx={{ p: 2 }}>
-          <DataGrid
-            autoHeight
-            rows={resultado.itens}
-            columns={COLUNAS}
-            getRowId={(row) => row.detalheAId}
-            loading={carregando}
-            rowCount={resultado.total}
-            paginationMode="server"
-            paginationModel={paginacao}
-            onPaginationModelChange={setPaginacao}
-            pageSizeOptions={[25, 50, 100, 200]}
-            disableRowSelectionOnClick
-            localeText={pt.components.MuiDataGrid.defaultProps.localeText}
+          {/* Altura fixa: as linhas rolam dentro da tabela e a paginação fica sempre visível logo abaixo. */}
+          <Box sx={{ height: 'calc(100vh - 570px)', minHeight: 360 }}>
+            <DataGrid
+              rows={resultado.itens}
+              columns={COLUNAS}
+              getRowId={(row) => row.detalheAId}
+              loading={carregando}
+              rowCount={resultado.total}
+              paginationMode="server"
+              paginationModel={paginacao}
+              hideFooter
+              disableRowSelectionOnClick
+              localeText={pt.components.MuiDataGrid.defaultProps.localeText}
+            />
+          </Box>
+          {/* O CSS global (app-base.css) esconde a paginação interna do DataGrid; por isso ela fica fora dele. */}
+          <TablePagination
+            component="div"
+            count={resultado.total}
+            page={paginacao.page}
+            rowsPerPage={paginacao.pageSize}
+            rowsPerPageOptions={[25, 50, 100]}
+            onPageChange={(_event, page) => setPaginacao((atual) => ({ ...atual, page }))}
+            onRowsPerPageChange={(event) => setPaginacao({ page: 0, pageSize: Number(event.target.value) })}
+            labelRowsPerPage="Linhas por página:"
+            labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`}
+            showFirstButton
+            showLastButton
           />
         </Card>
       )}
