@@ -339,6 +339,25 @@ export const handleFinancialMovementSummary = (data, options = {}) => async (dis
   }
 };
 
+export const handleConsolidadoPage = (data) => async (dispatch) => {
+  const token = window.localStorage.getItem('jwt_access_token');
+
+  if (JwtService.isAuthTokenValid(token)) {
+    return new Promise(async (resolve, reject) => {
+      const requestData = handleData(data);
+      const reportTypeUrl = `${jwtServiceConfig.report}/consolidado`;
+
+      try {
+        const responseData = await requestReport(reportTypeUrl, requestData, token);
+        dispatch(setReportList(responseData));
+        resolve(responseData);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+};
+
 export const handleFinancialMovementPage = (data) => async (dispatch) => {
   const token = window.localStorage.getItem('jwt_access_token');
 

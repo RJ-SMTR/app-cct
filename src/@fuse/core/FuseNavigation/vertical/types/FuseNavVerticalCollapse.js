@@ -88,6 +88,7 @@ function FuseNavVerticalCollapse(props) {
           end={item.end}
           role="button"
           disabled={item.disabled}
+          onClick={isCollapsible ? () => setOpen(!open) : undefined}
         >
           {item.icon && (
             <FuseSvgIcon

@@ -49,6 +49,23 @@ const navigationConfig = [
     target: '_blank',
     url: 'https://transportes.prefeitura.rio/atendimentodigital/',
   },
+  {
+    id: 'Configuracoes',
+    title: 'Configurações',
+    subtitle: '',
+    type: 'collapse',
+    icon: 'heroicons-outline:cog',
+    children: [
+      {
+        id: 'change-password-component',
+        title: 'Alterar Senha',
+        translate: 'Alterar Senha',
+        type: 'item',
+        icon: 'heroicons-outline:key',
+        url: 'change-password',
+      },
+    ],
+  },
 ];
 
 export default navigationConfig;

@@ -15,6 +15,7 @@ import FuseAuthorization from '@fuse/core/FuseAuthorization';
 import settingsConfig from 'app/configs/settingsConfig';
 import withAppProviders from './withAppProviders';
 import { AuthProvider } from './auth/AuthContext';
+import { podeVerDashboardPagamentos } from './configs/dashboardAccess';
 import 'leaflet/dist/leaflet.css';
 import 'rsuite/dist/rsuite-no-reset.min.css';
 
@@ -52,9 +53,11 @@ function App() {
     ? '/agentes'
     : user.role?.name?.includes('Financeiro')
       ? '/lancamentos'
-      : user.role?.name?.includes('Admin')
-        ? '/admin'
-        : settingsConfig.loginRedirectUrl;
+      : user.role?.name === 'Admin Master' && podeVerDashboardPagamentos(user.id)
+        ? '/dashboard-pagamentos'
+        : user.role?.name?.includes('Admin')
+          ? '/admin'
+          : settingsConfig.loginRedirectUrl;
 
   return (
     <CacheProvider value={createCache(emotionCacheOptions[langDirection])}>
@@ -63,6 +66,7 @@ function App() {
           <BrowserRouter>
             <FuseAuthorization
               userRole={user.role?.name}
+              userId={user.id}
               loginRedirectUrl={loginRedirectUrl}
             >
               <SnackbarProvider

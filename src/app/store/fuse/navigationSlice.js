@@ -54,11 +54,12 @@ const navigationSlice = createSlice({
 export const { setNavigation, resetNavigation } = navigationSlice.actions;
 
 const getUserRole = (state) => state.user.role?.name;
+const getUserId = (state) => state.user.id;
 
 
 export const selectNavigation = createSelector(
-  [selectNavigationAll, ({ i18n }) => i18n.language, getUserRole],
-  (navigation, language, userRole) => {
+  [selectNavigationAll, ({ i18n }) => i18n.language, getUserRole, getUserId],
+  (navigation, language, userRole, userId) => {
     function setTranslationValues(data) {
       // loop through every object in the array
       return data.map((item) => {
@@ -103,7 +104,13 @@ export const selectNavigation = createSelector(
     return setTranslationValues(
       _.merge(
         [],
-        filterRecursively(configToUse, (item) => FuseUtils.hasPermission(item.auth, userRole))
+        filterRecursively(
+          configToUse,
+          (item) =>
+            FuseUtils.hasPermission(item.auth, userRole) &&
+            // itens com onlyUserIds só aparecem para os usuários listados
+            (!item.onlyUserIds || item.onlyUserIds.includes(Number(userId)))
+        )
       )
     );
   }

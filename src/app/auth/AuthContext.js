@@ -134,6 +134,28 @@ export function AuthProvider({ children }) {
         });
     });
   }
+  function changePasswordFunction(currentPassword, newPassword) {
+    const token = window.localStorage.getItem('jwt_access_token');
+    return new Promise((resolve, reject) => {
+      api
+        .patch(
+          jwtServiceConfig.changePassword,
+          { currentPassword, newPassword },
+          { headers: { Authorization: `Bearer ${token}` } },
+        )
+        .then((response) => {
+          dispatch(showMessage({ message: 'Senha alterada com sucesso!' }));
+          resolve(response);
+        })
+        .catch((error) => {
+          const message =
+            error?.response?.data?.error ||
+            'Não foi possível alterar a senha. Verifique a senha atual e tente novamente.';
+          dispatch(showMessage({ message }));
+          reject(error);
+        });
+    });
+  }
   function handlePreRegister(licensee, cpfCnpj){
     return new Promise((resolve, reject) => {
       api.post(jwtServiceConfig.preRegister, {
@@ -211,7 +233,7 @@ export function AuthProvider({ children }) {
     <FuseSplashScreen />
   ) : (
     <AuthContext.Provider
-      value={{ isAuthenticated, forgotPasswordFunction, resetPasswordFunction, getResetPasswordRole, handlePreRegister, validPermitCode, handleRegister, handleInvite, patchInfo, success }}
+      value={{ isAuthenticated, forgotPasswordFunction, resetPasswordFunction, getResetPasswordRole, changePasswordFunction, handlePreRegister, validPermitCode, handleRegister, handleInvite, patchInfo, success }}
     >
       {children}
     </AuthContext.Provider>
