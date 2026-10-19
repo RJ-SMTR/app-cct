@@ -31,7 +31,6 @@ import {
   handleAgentFinancialMovementSummary,
   setReportList,
 } from "app/store/reportSlice";
-import { hasSingleDayStatus, toSingleDayRange } from "app/store/pendenciaPagaDateRange";
 import { showMessage } from "app/store/fuse/messageSlice";
 import {
   getAgentEffectivePaymentDateLabel,
@@ -125,9 +124,6 @@ export default function FinancialMovementReport({ perfil }) {
   // Permissionário: pesquisar sem status não é permitido (o guardador continua opcional).
   const hasMissingStatusSelection = !isGuardador && whichStatusShow.length === 0;
 
-  // Pendência Paga é consultada por um único dia (data de pagamento).
-  const isPendenciaPagaSelected = hasSingleDayStatus(whichStatusShow);
-
   const validateStatusSelection = () => {
     if (!hasMissingStatusSelection) return true;
     dispatch(showMessage({ message: "Selecione um status para pesquisar." }));
@@ -188,10 +184,6 @@ export default function FinancialMovementReport({ perfil }) {
         setSelectedStatusOptions(normalizedValue);
         const statusValues = normalizedValue.map((v) => (typeof v === "object" ? v.label : v));
         setWhichStatus(statusValues);
-        // Pendência Paga aceita um único dia: ao selecionar o status, o intervalo já preenchido vira um dia.
-        if (hasSingleDayStatus(statusValues) && getValues("dateRange")?.length === 2) {
-          setValue("dateRange", toSingleDayRange(getValues("dateRange")));
-        }
         const hasErro = statusValues.includes("Pendência de Pagamento");
         setShowErroStatus(hasErro);
         if (!hasErro) {
@@ -221,11 +213,6 @@ export default function FinancialMovementReport({ perfil }) {
 
       const status = newValue.map((i) => i.label);
       setWhichStatus(status);
-
-      // Pendência Paga aceita um único dia: ao selecionar o status, o intervalo já preenchido vira um dia.
-      if (hasSingleDayStatus(status) && getValues("dateRange")?.length === 2) {
-        setValue("dateRange", toSingleDayRange(getValues("dateRange")));
-      }
 
       const hasErro = status.includes("Pendência de Pagamento");
       setShowErroStatus(hasErro);
@@ -523,15 +510,35 @@ export default function FinancialMovementReport({ perfil }) {
           </header>
 
           <form noValidate onSubmit={handleSubmit(onSubmit)}>
-            {/* Linha 1: período */}
-            <ReportPeriodFilter
-              control={control}
-              singleDay={isPendenciaPagaSelected}
-              minDate={isGuardador ? MIN_SELECTABLE_DATE_GUARDADOR : MIN_SELECTABLE_DATE_PERMISSIONARIO}
-            />
-
-            {/* Linha 2: favorecido / consórcios / específicos (guardador: guardador / associações) */}
+            {/* Linha 1: período + favorecido / consórcios / específicos (guardador: guardador / associações) */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
+              <ReportPeriodFilter
+                control={control}
+                minDate={isGuardador ? MIN_SELECTABLE_DATE_GUARDADOR : MIN_SELECTABLE_DATE_PERMISSIONARIO}
+              />
+
+              <Grid item xs={12} sm={6} md={4}>
+                <Autocomplete
+                  id="status"
+                  multiple
+                  fullWidth
+                  getOptionLabel={(option) => option.label || option}
+                  filterSelectedOptions
+                  options={statusBase}
+                  value={selectedStatusOptions}
+                  onChange={(_, newValue) => handleAutocompleteChange("status", newValue)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label={isGuardador ? "Selecionar Status" : "Selecionar Status *"}
+                      variant="outlined"
+                      error={hasSearched && hasMissingStatusSelection}
+                      helperText={hasSearched && hasMissingStatusSelection ? "Selecione um status para pesquisar." : ""}
+                    />
+                  )}
+                />
+              </Grid>
+
               {isGuardador ? (
                 <>
                   {shouldShowAgentNameFilter(selectedAssociationOptions) && (
@@ -673,30 +680,8 @@ export default function FinancialMovementReport({ perfil }) {
               )}
             </Grid>
 
-            {/* Linha 3: status (e motivos, quando houver) */}
+            {/* Linha 3: motivos (quando houver) */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid item xs={12} sm={6} md={4}>
-                <Autocomplete
-                  id="status"
-                  multiple
-                  fullWidth
-                  getOptionLabel={(option) => option.label || option}
-                  filterSelectedOptions
-                  options={statusBase}
-                  value={selectedStatusOptions}
-                  onChange={(_, newValue) => handleAutocompleteChange("status", newValue)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label={isGuardador ? "Selecionar Status" : "Selecionar Status *"}
-                      variant="outlined"
-                      error={hasSearched && hasMissingStatusSelection}
-                      helperText={hasSearched && hasMissingStatusSelection ? "Selecione um status para pesquisar." : ""}
-                    />
-                  )}
-                />
-              </Grid>
-
               {showErroStatus && (
                 <Grid item xs={12} sm={6} md={4}>
                   <Autocomplete

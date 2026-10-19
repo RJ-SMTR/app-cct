@@ -479,18 +479,34 @@ export default function ConsolidatedReportPage({ perfil }) {
           </header>
 
           <form noValidate onSubmit={handleSubmit(onSubmit)}>
-            {/* Linha 1: período */}
-            <ReportPeriodFilter
-              control={control}
-              minDate={isGuardador ? MIN_SELECTABLE_DATE_GUARDADOR : MIN_SELECTABLE_DATE_PERMISSIONARIO}
-              extraError={isGuardador && dateError}
-              onChange={(value) => {
-                if (isGuardador && value?.[0] && value?.[1]) setDateError(false);
-              }}
-            />
-
-            {/* Linha 2: favorecido / consórcios / específicos (guardador: guardador / associações) */}
+            {/* Linha 1: período + status + favorecido / consórcios / específicos (guardador: guardador / associações) */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
+              <ReportPeriodFilter
+                control={control}
+                minDate={isGuardador ? MIN_SELECTABLE_DATE_GUARDADOR : MIN_SELECTABLE_DATE_PERMISSIONARIO}
+                extraError={isGuardador && dateError}
+                onChange={(value) => {
+                  if (isGuardador && value?.[0] && value?.[1]) setDateError(false);
+                }}
+              />
+
+              {(isGuardador || !selectedEspecificos.includes("Pendentes")) && (
+                <Grid item xs={12} sm={6} md={4}>
+                  <Autocomplete
+                    id="status"
+                    multiple
+                    fullWidth
+                    options={isGuardador ? GUARDADOR_STATUS_OPTIONS : STATUS_OPTIONS}
+                    value={selectedStatusOptions}
+                    getOptionLabel={(option) => option.label}
+                    isOptionEqualToValue={isGuardador ? (option, value) => option.value === value.value : undefined}
+                    filterSelectedOptions={!isGuardador}
+                    onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
+                    renderInput={(params) => <TextField {...params} label="Selecionar Status" variant="outlined" />}
+                  />
+                </Grid>
+              )}
+
               {isGuardador ? (
                 <>
                   {shouldShowAgentNameFilter(selectedAssociationOptions) && (
@@ -619,25 +635,8 @@ export default function ConsolidatedReportPage({ perfil }) {
               )}
             </Grid>
 
-            {/* Linha 3: status (e motivos, quando houver) */}
+            {/* Linha 3: motivos (quando houver) */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
-              {(isGuardador || !selectedEspecificos.includes("Pendentes")) && (
-                <Grid item xs={12} sm={6} md={4}>
-                  <Autocomplete
-                    id="status"
-                    multiple
-                    fullWidth
-                    options={isGuardador ? GUARDADOR_STATUS_OPTIONS : STATUS_OPTIONS}
-                    value={selectedStatusOptions}
-                    getOptionLabel={(option) => option.label}
-                    isOptionEqualToValue={isGuardador ? (option, value) => option.value === value.value : undefined}
-                    filterSelectedOptions={!isGuardador}
-                    onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
-                    renderInput={(params) => <TextField {...params} label="Selecionar Status" variant="outlined" />}
-                  />
-                </Grid>
-              )}
-
               {showErroStatus && (
                 <Grid item xs={12} sm={6} md={4}>
                   <Autocomplete
