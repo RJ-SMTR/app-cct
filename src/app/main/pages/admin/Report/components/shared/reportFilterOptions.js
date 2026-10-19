@@ -27,4 +27,4 @@ export const ESPECIFICOS_OPTIONS = [
 export const MIN_SELECTABLE_DATE_GUARDADOR = new Date(2026, 6, 23);
 
 // Data mínima permitida no DateRangePicker dos relatórios do Permissionário.
-export const MIN_SELECTABLE_DATE_PERMISSIONARIO = new Date(2026, 3, 30);
+export const MIN_SELECTABLE_DATE_PERMISSIONARIO = new Date(2024, 3, 30);

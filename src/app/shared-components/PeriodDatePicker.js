@@ -88,12 +88,17 @@ export default function PeriodDatePicker({
     format: "dd/MM/yyyy",
     slotProps: {
       textField: {
-        size: compact ? "small" : "medium",
+        size: "medium",
         variant: "outlined",
         error: Boolean(error),
         fullWidth: !compact,
         required,
-        ...(compact ? { sx: { width: 165 } } : {}),
+        // 50% do item de período (que ocupa no máximo md={4}, 33,3333% da linha de filtros) =
+        // no máximo 16,6666% da linha toda por campo. A margem até o próximo campo do filtro
+        // vem do spacing do Grid container do chamador (ReportPeriodFilter), não daqui.
+        ...(compact
+          ? { sx: { width: "calc(50% - 8px)", maxWidth: "calc(50% - 8px)", flex: "0 0 auto" } }
+          : {}),
       },
     },
   };
