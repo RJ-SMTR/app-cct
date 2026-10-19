@@ -56,7 +56,7 @@ import {
   clampVanzeirosMonthDate,
 } from './vanzeirosMonthSelection';
 
-function TableTransactions({ id, userRoleId }) {
+function TableTransactions({ id, userRoleId, hideGratuidade = false }) {
   const dispatch = useDispatch()
   const user = useSelector(selectUser)
   const {
@@ -492,14 +492,16 @@ function TableTransactions({ id, userRoleId }) {
                           Status
                         </Typography>
                       </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                          Erro
-                        </Typography>
-                      </TableCell>
+                      {!(hideGratuidade && !searchingDay) && (
+                        <TableCell>
+                          <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                            Erro
+                          </Typography>
+                        </TableCell>
+                      )}
                     </>}
 
-                  {!searchingDay && !searchingWeek ? (
+                  {!searchingDay && !searchingWeek && !hideGratuidade ? (
                     <>
                       <TableCell>
                         <Typography variant="body2" className="font-semibold whitespace-nowrap">
@@ -568,6 +570,7 @@ function TableTransactions({ id, userRoleId }) {
                         handleClickRow={(event) => handleClickRow(idOrdem, event, valorDia)}
                         lastDate={dataOrderDay}
                         dataPagamento={dataPagamento}
+                        hideGratuidade={hideGratuidade}
                       />
                     );
                   })
