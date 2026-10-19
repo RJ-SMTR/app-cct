@@ -27,6 +27,9 @@ function Entries(type) {
  
 
 
+    // Total de gratuidade do mês: soma de valorGratuidade das ordens listadas (visão mensal).
+    const totalGratuidade = (statements || []).reduce((soma, item) => soma + (Number(item?.valorGratuidade) || 0), 0);
+
     useEffect(() => {
             const date = new Date()
             const today = format(date, 'dd/MM/yyyy')
@@ -68,6 +71,7 @@ function Entries(type) {
           <div className="flex flex-row flex-wrap mt-8 ">
               <Typography className="mt-8 font-medium text-3xl leading-none">
                   {
+                      type.gratuidade ? formatter.format(totalGratuidade) :
                       searchingDay ? 
                           formatter.format(sumInfoDay)
                           : formatter.format(sumInfo?.valorTotalPago ?? sumInfo)
