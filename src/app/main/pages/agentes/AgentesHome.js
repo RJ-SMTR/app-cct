@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Typography,
   Box,
   Button,
-  Modal,
   Badge,
   Chip,
-  Select,
+  Grid,
+  InputAdornment,
   Paper,
   Table,
   TableBody,
@@ -21,27 +21,17 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import { Controller, useForm } from 'react-hook-form';
+import SearchIcon from '@mui/icons-material/Search';
+import SaveAltIcon from '@mui/icons-material/SaveAlt';
+import { format } from 'date-fns';
+import { utils, writeFile as writeFileXLSX } from 'xlsx';
 import { Link, Navigate } from 'react-router-dom';
 import { selectUser } from 'app/store/userSlice';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import { getAgentUsers } from 'app/store/adminSlice';
 import { isAdminUser } from 'src/app/auth/utils/accessUtils';
 
-const style = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 600,
-  maxWidth: '90%',
-  maxHeight: '85vh',
-  overflowY: 'auto',
-  borderRadius: '.5rem',
-  bgcolor: 'background.paper',
-  boxShadow: 24,
-  p: 4,
-};
+const ROWS_PER_PAGE_OPTIONS = [10, 50, 100, 250, 500, 1000];
 
 function getAgentCpf(agentUser) {
   return agentUser?.cpf || agentUser?.cpfCnpj || '-';
@@ -125,31 +115,49 @@ function getInviteStatusLabel(agentUser) {
   }
 }
 
+// Lista, sem duplicatas, das associações presentes na base já carregada — usada
+// para popular o filtro "Associação".
+function buildAssociationOptions(agentUsers) {
+  const uniqueAssociations = new Set();
+
+  agentUsers.forEach((agentUser) => {
+    if (Array.isArray(agentUser?.associacoes) && agentUser.associacoes.length > 0) {
+      agentUser.associacoes.forEach((association) => {
+        const label = getAssociationLabel(association);
+        if (label) uniqueAssociations.add(label);
+      });
+    } else {
+      const label = getAgentAssociation(agentUser);
+      if (label && label !== '-') uniqueAssociations.add(label);
+    }
+  });
+
+  return Array.from(uniqueAssociations).sort((first, second) => first.localeCompare(second));
+}
+
+function agentMatchesAssociation(agentUser, association) {
+  if (!association) return true;
+
+  if (Array.isArray(agentUser?.associacoes) && agentUser.associacoes.length > 0) {
+    return agentUser.associacoes.some(
+      (item) => getAssociationLabel(item) === association
+    );
+  }
+
+  return getAgentAssociation(agentUser) === association;
+}
+
 function AgentesHome() {
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
   const fetchedAgents = useSelector((state) => state.admin?.agentsList);
   const [allAgents, setAllAgents] = useState([]);
-  const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [open, setOpen] = useState(false);
-  const [filtered, setFiltered] = useState(false);
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm({
-    defaultValues: {
-      selectedQuery: '',
-      query: '',
-    },
-  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedAssociation, setSelectedAssociation] = useState('');
 
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -168,14 +176,10 @@ function AgentesHome() {
 
     dispatch(getAgentUsers())
       .then((agentUsers) => {
-        const normalizedAgents = normalizeAgentList(agentUsers);
-
-        setAllAgents(normalizedAgents);
-        setAgents(normalizedAgents);
+        setAllAgents(normalizeAgentList(agentUsers));
       })
       .catch(() => {
         setAllAgents([]);
-        setAgents([]);
         dispatch(
           showMessage({
             message: 'Não foi possível carregar o guardador.',
@@ -188,48 +192,67 @@ function AgentesHome() {
   }, [dispatch, user]);
 
   useEffect(() => {
-    const normalizedAgents = normalizeAgentList(fetchedAgents);
+    setAllAgents(normalizeAgentList(fetchedAgents));
+  }, [fetchedAgents]);
 
-    setAllAgents(normalizedAgents);
-    if (!filtered) {
-      setAgents(normalizedAgents);
-    }
-  }, [fetchedAgents, filtered]);
+  const associationOptions = useMemo(() => buildAssociationOptions(allAgents), [allAgents]);
 
-  const onSubmit = ({ selectedQuery, query }) => {
-    const normalizedQuery = query.trim().toLowerCase();
+  // Busca combinada por nome, e-mail ou CPF — filtra instantaneamente a lista já
+  // carregada (não há paginação real no backend para guardadores).
+  const agents = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
 
-    if (!selectedQuery || !normalizedQuery) {
-      return;
-    }
-
-    const filteredAgents = allAgents.filter((agentUser) => {
-      let selectedValue = agentUser?.[selectedQuery];
-
-      if (selectedQuery === 'cpf') {
-        selectedValue = getAgentCpf(agentUser);
+    return allAgents.filter((agentUser) => {
+      if (!agentMatchesAssociation(agentUser, selectedAssociation)) {
+        return false;
       }
 
-      if (selectedQuery === 'consorcio') {
-        selectedValue = getAgentAssociation(agentUser);
+      if (!normalizedQuery) {
+        return true;
       }
 
-      return String(selectedValue || '')
-        .toLowerCase()
-        .includes(normalizedQuery);
+      const haystack = [agentUser?.fullName, agentUser?.email, getAgentCpf(agentUser)]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return haystack.includes(normalizedQuery);
     });
+  }, [allAgents, searchQuery, selectedAssociation]);
 
-    setAgents(filteredAgents);
-    setFiltered(true);
+  const filtered = Boolean(searchQuery.trim()) || Boolean(selectedAssociation);
+
+  useEffect(() => {
     setPage(0);
-    handleClose();
-    reset();
+  }, [searchQuery, selectedAssociation]);
+
+  const handleSearchQueryChange = (event) => {
+    setSearchQuery(event.target.value);
   };
 
-  const removeFilters = () => {
-    setAgents(allAgents);
-    setFiltered(false);
-    setPage(0);
+  const handleAssociationChange = (event) => {
+    setSelectedAssociation(event.target.value);
+  };
+
+  const handleClear = () => {
+    setSearchQuery('');
+    setSelectedAssociation('');
+  };
+
+  // Exporta CPF, Nome, E-mail e Associação dos guardadores atualmente
+  // filtrados (respeita a busca e o filtro de associação da tela).
+  const handleExportXlsx = () => {
+    const sheetData = agents.map((agentUser) => ({
+      CPF: getAgentCpf(agentUser),
+      Nome: agentUser.fullName ?? 'Guardador',
+      'E-mail': agentUser.email ?? '',
+      Associação: getAgentAssociation(agentUser),
+    }));
+
+    const workbook = utils.book_new();
+    const worksheet = utils.json_to_sheet(sheetData);
+    utils.book_append_sheet(workbook, worksheet, 'Guardadores');
+    writeFileXLSX(workbook, `guardadores_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
   };
 
   let agentRows = (
@@ -305,24 +328,66 @@ function AgentesHome() {
   return (
     <div className="p-24 pt-10">
       <Typography className="font-medium text-3xl">Guardador</Typography>
-      <Box className="flex flex-col justify-around">
-        <Paper className="flex flex-col flex-auto p-12 mt-24 shadow rounded-2xl overflow-hidden">
-          <div className="flex flex-row justify-between">
-            <Typography className="mr-16 text-lg font-medium tracking-tight leading-6 truncate">
-              Usuários
-            </Typography>
-
-            <div className="flex">
-              {filtered ? (
-                <Button className="mx-4" onClick={removeFilters}>
+      <Box className="flex flex-col gap-16 mt-24">
+        <Paper className="p-24 rounded-2xl">
+          <Typography className="font-semibold text-lg mb-16">Filtros de Pesquisa</Typography>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} sm={7} md={5}>
+              <TextField
+                fullWidth
+                label="Nome, e-mail ou CPF"
+                placeholder="Digite para pesquisar..."
+                value={searchQuery}
+                onChange={handleSearchQueryChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={5} md={3}>
+              <TextField
+                select
+                fullWidth
+                label="Associação"
+                value={selectedAssociation}
+                onChange={handleAssociationChange}
+              >
+                <MenuItem value="">Todas</MenuItem>
+                {associationOptions.map((association) => (
+                  <MenuItem key={association} value={association}>
+                    {association}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            {filtered && (
+              <Grid item xs={12} sm="auto">
+                <Button variant="outlined" type="button" onClick={handleClear}>
                   Remover filtros
                 </Button>
-              ) : null}
+              </Grid>
+            )}
+          </Grid>
+        </Paper>
 
-              <Button variant="contained" color="secondary" onClick={handleOpen}>
-                Pesquisar usuários
-              </Button>
-            </div>
+        <Paper className="flex flex-col flex-auto p-12 shadow rounded-2xl overflow-hidden">
+          <div className="flex flex-row justify-between items-center px-4">
+            <Typography className="mr-16 text-lg font-medium tracking-tight leading-6 truncate">
+              Usuários{filtered ? ' (filtrados)' : ''}
+            </Typography>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<SaveAltIcon />}
+              disabled={agents.length === 0}
+              onClick={handleExportXlsx}
+            >
+              Exportar
+            </Button>
           </div>
 
           <TablePagination
@@ -334,7 +399,7 @@ function AgentesHome() {
             onRowsPerPageChange={handleChangeRowsPerPage}
             labelRowsPerPage="Linhas por página"
             labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-            rowsPerPageOptions={[10, 50, 100, 250, 500, 1000]}
+            rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
           />
 
           <TableContainer className="mt-24" sx={{ overflowX: 'auto' }}>
@@ -398,77 +463,10 @@ function AgentesHome() {
             onRowsPerPageChange={handleChangeRowsPerPage}
             labelRowsPerPage="Linhas por página"
             labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-            rowsPerPageOptions={[10, 50, 100, 250, 500, 1000]}
+            rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
           />
         </Paper>
       </Box>
-      <br />
-
-      <Modal
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-          <Typography id="modal-modal-title" variant="h6" component="h2">
-            Pesquisar por usuário:
-          </Typography>
-
-          <form onSubmit={handleSubmit(onSubmit)} className="mt-24">
-            <div className="mb-16">
-              <Controller
-                name="selectedQuery"
-                control={control}
-                rules={{ required: 'Campo obrigatório' }}
-                render={({ field }) => (
-                  <FormControl className="w-full" error={!!errors.selectedQuery}>
-                    <InputLabel id="agent-selected-query-label">Pesquisar por</InputLabel>
-                    <Select labelId="agent-selected-query-label" label="Pesquisar por" {...field}>
-                      <MenuItem value="fullName">Nome</MenuItem>
-                      <MenuItem value="email">E-mail</MenuItem>
-                      <MenuItem value="cpf">CPF</MenuItem>
-                      <MenuItem value="consorcio">Associação</MenuItem>
-                    </Select>
-                    {errors.selectedQuery && (
-                      <Typography variant="caption" color="error">
-                        {errors.selectedQuery.message}
-                      </Typography>
-                    )}
-                  </FormControl>
-                )}
-              />
-            </div>
-
-            <div>
-              <Controller
-                name="query"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    color="black"
-                    className="w-full"
-                    label="Pesquisar"
-                    placeholder="Pesquisar"
-                    {...field}
-                  />
-                )}
-              />
-            </div>
-
-            <Button
-              variant="contained"
-              color="secondary"
-              className="w-full mt-16 z-10"
-              aria-label="Pesquisar"
-              type="submit"
-              size="large"
-            >
-              Pesquisar
-            </Button>
-          </form>
-        </Box>
-      </Modal>
     </div>
   );
 }

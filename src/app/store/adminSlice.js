@@ -143,13 +143,14 @@ export const getInfo = () => (dispatch) => {
       });
   });
 };
-export const getUserByInfo = (selectedQuery, query, inviteStatus) => (dispatch) => {
+// Busca combinada: o backend faz OR entre nome, e-mail e código de permissão
+// via o parâmetro `anyField` (ver UsersController.get, api-cct/src/users/users.controller.ts).
+export const searchUsers = (query, inviteStatus) => (dispatch) => {
   const token = window.localStorage.getItem('jwt_access_token');
   if (JwtService.isAuthTokenValid(token)) {
-    const queryKey = selectedQuery === 'fullName' ? 'name' : selectedQuery;
     return new Promise((resolve, reject) => {
       const requestData = {
-        [queryKey]: query,
+        anyField: query,
         inviteStatus,
       };
 

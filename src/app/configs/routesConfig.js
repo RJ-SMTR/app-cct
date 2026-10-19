@@ -28,6 +28,11 @@ import ReportReleaseConfig from '../main/pages/admin/ReportRelease/ReportRelease
 import ReportVanzeiroConfig from '../main/pages/report/reportConfig';
 import agentesAppConfig from '../main/pages/agentes/agentesAppConfig';
 import AgentesSignInConfig from '../main/pages/agentes/sign-in/AgentesSignInConfig';
+import ChangePasswordConfig from '../main/pages/settings/changePassword/ChangePasswordConfig';
+import OrdemPagamentoConfig from '../main/pages/ordemPagamento/OrdemPagamentoConfig';
+import PagamentoConfig from '../main/pages/pagamentos/PagamentoConfig';
+import { podeVerDashboardPagamentos } from './dashboardAccess';
+import DashboardPagamentosConfig from '../main/pages/dashboardPagamentos/DashboardPagamentosConfig';
 
 function RootRedirect() {
   const user = useSelector(selectUser);
@@ -36,9 +41,11 @@ function RootRedirect() {
     ? '/agentes'
     : user?.role?.name?.includes('Financeiro')
       ? '/lancamentos'
-      : user?.role?.name?.includes('Admin')
-        ? '/admin'
-        : '/agentes'
+      : user?.role?.name === 'Admin Master' && podeVerDashboardPagamentos(user?.id)
+        ? '/dashboard-pagamentos'
+        : user?.role?.name?.includes('Admin')
+          ? '/admin'
+          : '/agentes'
 
   return <Navigate to={targetPath} replace />;
 }
@@ -52,6 +59,7 @@ const routeConfigs = [
   ResetPasswordConfig,
   ConcludeConfig,
   profileAppConfig,
+  ChangePasswordConfig,
   agentesAppConfig,
   ExtractConfig,
   // ResumeConfig,
@@ -69,6 +77,9 @@ const routeConfigs = [
   ReportVanzeiroConfig,
   ReportConfig,
   ReportReleaseConfig,
+  OrdemPagamentoConfig,
+  PagamentoConfig,
+  DashboardPagamentosConfig,
 ];
 
 const routes = [

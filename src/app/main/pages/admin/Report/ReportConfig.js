@@ -19,6 +19,10 @@ const ReportConfig = {
             path: 'relatorio',
             element: <ReportLazy />,
         },
+        {
+            path: 'relatorio/:perfil',
+            element: <ReportLazy />,
+        },
     ],
 };
 

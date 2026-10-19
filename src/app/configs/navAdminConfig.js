@@ -41,12 +41,29 @@ const navAdminConfig = [
                 url: 'disparo',
             },
             {
-                id: 'trigger-component',
+                id: 'report-component',
                 title: 'report',
-                translate: 'Relatório ',
-                type: 'item',
+                translate: 'Relatórios',
+                type: 'collapse',
                 icon: 'heroicons-outline:document-report',
-                url: 'relatorio',
+                children: [
+                    {
+                        id: 'report-permissionario-component',
+                        title: 'Permissionário',
+                        translate: 'Permissionário',
+                        type: 'item',
+                        icon: 'material-symbols-outlined:airport_shuttle',
+                        url: 'relatorio/permissionario',
+                    },
+                    {
+                        id: 'report-guardador-component',
+                        title: 'Guardador',
+                        translate: 'Guardador',
+                        type: 'item',
+                        icon: 'material-symbols-outlined:parking_sign',
+                        url: 'relatorio/guardador',
+                    },
+                ],
             },
             {
                 id: 'agentes-component',
@@ -68,8 +85,23 @@ const navAdminConfig = [
         ]
 
     },
-  
-   
+    {
+        id: 'Configuracoes',
+        title: 'Configurações',
+        subtitle: '',
+        type: 'collapse',
+        icon: 'heroicons-outline:cog',
+        children: [
+            {
+                id: 'change-password-component',
+                title: 'Alterar Senha',
+                translate: 'Alterar Senha',
+                type: 'item',
+                icon: 'heroicons-outline:key',
+                url: 'change-password',
+            },
+        ],
+    },
 ];
 
 export default navAdminConfig;
