@@ -472,7 +472,7 @@ function TableTransactions({ id, userRoleId, hideGratuidade = false }) {
                     </Typography>
                   </TableCell> : <></>}
 
-                  {searchingWeek ? (
+                  {searchingWeek && !hideGratuidade ? (
                     <TableCell>
                       <Typography variant="body2" className="font-semibold whitespace-nowrap">
                         Valor Gratuidade

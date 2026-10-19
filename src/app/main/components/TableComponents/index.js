@@ -226,7 +226,7 @@ export function CustomTable(data) {
         )
       }
       {
-        searchingWeek ? (
+        searchingWeek && !data.hideGratuidade ? (
           <TableCell component="th" scope="row">
             <Typography className="whitespace-nowrap">
               {data.data.valorGratuidade != null ? formatter.format(data.data.valorGratuidade) : ''}
