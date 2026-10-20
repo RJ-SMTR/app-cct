@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { Alert, Box, Button, Card, Chip, InputAdornment, TablePagination, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, Chip, CircularProgress, InputAdornment, TablePagination, TextField, Typography } from '@mui/material';
 import { DataGrid, ptBR as pt } from '@mui/x-data-grid';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SearchIcon from '@mui/icons-material/Search';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import { utils, writeFile as writeFileXLSX } from 'xlsx';
 import dayjs from 'dayjs';
 import { api } from 'app/configs/api/api';
 import { showMessage } from 'app/store/fuse/messageSlice';
@@ -15,8 +17,12 @@ import {
   ROTULO_CONTA,
   ROTULO_SITUACAO,
   formatBRL,
+  TAMANHO_PAGINA_EXPORTACAO,
   formatQtd,
   lerFiltrosDetalhe,
+  linhasExportacaoDetalhe,
+  linhasFiltrosExportacao,
+  nomeArquivoExportacao,
   toIsoDate,
 } from './dashboardPagamentosUtils';
 
@@ -125,6 +131,50 @@ export default function DashboardPagamentosDetalheApp() {
     };
   }, [dispatch, filtros, filtrosValidos, paginacao.page, paginacao.pageSize]);
 
+  const [exportando, setExportando] = useState(false);
+
+  /** Busca TODAS as páginas do filtro aplicado (não só a página da tela) e baixa uma planilha Excel. */
+  const exportarExcel = async () => {
+    setExportando(true);
+    try {
+      const itens = [];
+      let total = 0;
+      let valorTotal = 0;
+      for (let pagina = 1; pagina === 1 || itens.length < total; pagina += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        const { data } = await api.get('dashboard/pagamentos/detalhe', {
+          headers: authHeaders(),
+          params: { ...filtros, page: pagina, pageSize: TAMANHO_PAGINA_EXPORTACAO },
+        });
+        total = data.total;
+        valorTotal = data.valorTotal;
+        itens.push(...data.itens);
+        if (!data.itens.length) break;
+      }
+
+      const linhas = linhasExportacaoDetalhe(itens);
+      const planilhaPagamentos = utils.json_to_sheet(linhas);
+      planilhaPagamentos['!cols'] = [14, 40, 18, 18, 12, 28, 14, 8, 10, 18, 10, 14].map((wch) => ({ wch }));
+      // Valor como número, com formato monetário, para somar e filtrar no Excel.
+      linhas.forEach((_linha, indice) => {
+        const celula = planilhaPagamentos[`G${indice + 2}`];
+        if (celula) celula.z = '#,##0.00';
+      });
+      const planilhaFiltros = utils.aoa_to_sheet(linhasFiltrosExportacao(filtros, total, valorTotal));
+      planilhaFiltros['!cols'] = [{ wch: 28 }, { wch: 36 }];
+
+      const livro = utils.book_new();
+      utils.book_append_sheet(livro, planilhaPagamentos, 'Pagamentos');
+      utils.book_append_sheet(livro, planilhaFiltros, 'Filtros');
+      writeFileXLSX(livro, nomeArquivoExportacao(filtros));
+      dispatch(showMessage({ message: `${formatQtd(itens.length)} pagamento(s) exportado(s).` }));
+    } catch (error) {
+      dispatch(showMessage({ message: error?.response?.data?.error || 'Não foi possível exportar o detalhe para o Excel.' }));
+    } finally {
+      setExportando(false);
+    }
+  };
+
   const voltar = () => navigate(`${ROTA_DASHBOARD}?dataInicio=${filtros.dataInicio ?? ''}&dataFim=${filtros.dataFim ?? ''}`);
 
   const chips = [
@@ -181,6 +231,15 @@ export default function DashboardPagamentosDetalheApp() {
                 Limpar favorecido
               </Button>
             )}
+            <Button
+              variant="outlined"
+              sx={{ height: 56 }}
+              startIcon={exportando ? <CircularProgress size={18} /> : <FileDownloadIcon />}
+              disabled={exportando || carregando || !filtrosValidos || !resultado.total}
+              onClick={exportarExcel}
+            >
+              {exportando ? 'Exportando...' : 'Exportar Excel'}
+            </Button>
           </Box>
         )}
         {filtrosValidos && (

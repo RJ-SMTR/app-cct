@@ -1,5 +1,8 @@
 import {
   formatBRL,
+  linhasExportacaoDetalhe,
+  linhasFiltrosExportacao,
+  nomeArquivoExportacao,
   lerFiltrosDetalhe,
   montarGraficoGrupos,
   montarGraficoMotivos,
@@ -74,5 +77,29 @@ describe('dashboardPagamentosUtils', () => {
     const [pi, pf] = periodoDaUrl(new URLSearchParams('dataInicio=2026-09-30&dataFim=2026-09-01'), hoje);
     expect([toIsoDate(pi), toIsoDate(pf)]).toEqual(['2026-10-01', '2026-10-17']);
     expect(toIsoDate(periodoDaUrl(new URLSearchParams(''), hoje)[0])).toBe('2026-10-01');
+  });
+
+  it('monta as linhas da exportação com os mesmos dados da tabela', () => {
+    const linhas = linhasExportacaoDetalhe([
+      { detalheAId: 7, data: '2026-10-20', favorecido: 'ANTONIO ROBERTO CATALDO', cpfCnpj: '29735025787', grupo: 'TEC', situacao: 'pago', motivo: 'EFETIVADO', motivoDescricao: 'Efetivado', valor: '815.00', banco: 260, agencia: '0001', conta: '119369977-5', remessaId: 1131 },
+      { detalheAId: 8, data: '2026-10-20', favorecido: null, situacao: 'naoPago', motivo: 'AR', valor: 0 },
+    ]);
+    expect(linhas[0]).toEqual({
+      'Data de pagamento': '20/10/2026', Favorecido: 'ANTONIO ROBERTO CATALDO', 'CPF/CNPJ': '29735025787', 'Consórcio / Grupo': 'TEC', Situação: 'Pago', Motivo: 'Efetivado',
+      Valor: 815, Banco: 260, Agência: '0001', Conta: '119369977-5', Remessa: 1131, 'Id do pagamento': 7,
+    });
+    expect(linhas[1]).toMatchObject({ Favorecido: '(não identificado)', Situação: 'Não pago', Motivo: 'AR', Valor: 0, Banco: '' });
+  });
+
+  it('descreve os filtros e os totais da exportação', () => {
+    const linhas = linhasFiltrosExportacao({ conta: 'cett', situacao: 'pago', dataInicio: '2026-10-20', dataFim: '2026-10-20' }, 1810, 483565);
+    expect(linhas).toEqual(expect.arrayContaining([
+      ['Conta', 'Conta CETT'], ['Situação', 'Pago'], ['Grupo', 'Todos'], ['Período', '20/10/2026 a 20/10/2026'], ['Quantidade de pagamentos', 1810], ['Valor total', 483565],
+    ]));
+  });
+
+  it('gera um nome de arquivo seguro a partir dos filtros', () => {
+    expect(nomeArquivoExportacao({ conta: 'cett', situacao: 'pago', dataInicio: '2026-10-20', dataFim: '2026-10-20' })).toBe('detalhe-pagamentos_cett_pago_2026-10-20_2026-10-20.xlsx');
+    expect(nomeArquivoExportacao({ conta: 'bilhetagem', grupo: 'Santa Cruz', dataInicio: '2026-10-01', dataFim: '2026-10-31' })).toBe('detalhe-pagamentos_bilhetagem_Santa-Cruz_2026-10-01_2026-10-31.xlsx');
   });
 });
