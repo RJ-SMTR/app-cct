@@ -56,7 +56,7 @@ import {
   clampVanzeirosMonthDate,
 } from './vanzeirosMonthSelection';
 
-function TableTransactions({ id, userRoleId, hideGratuidade = false }) {
+function TableTransactions({ id, userRoleId, hideGratuidadeMensal = false }) {
   const dispatch = useDispatch()
   const user = useSelector(selectUser)
   const {
@@ -445,9 +445,23 @@ function TableTransactions({ id, userRoleId, hideGratuidade = false }) {
             sx={{
               maxHeight: 500,
               overflowY: "auto",
+              overflowX: "auto",
             }}
           >
-            <Table className="min-w-full">
+            {/* A tabela cresce conforme o conteúdo (largura mínima = 100%) e a barra de rolagem horizontal
+                aparece quando as colunas não cabem; o !important vence o padding global do app-base.css. */}
+            <Table
+              className="min-w-full"
+              sx={{
+                width: 'max-content',
+                minWidth: '100%',
+                '& .MuiTableCell-root': {
+                  paddingLeft: '20px !important',
+                  paddingRight: '28px !important',
+                  whiteSpace: 'nowrap',
+                },
+              }}
+            >
               <TableHead>
                 <TableRow>
                   <TableCell>
@@ -472,7 +486,7 @@ function TableTransactions({ id, userRoleId, hideGratuidade = false }) {
                     </Typography>
                   </TableCell> : <></>}
 
-                  {searchingWeek && !hideGratuidade ? (
+                  {searchingWeek ? (
                     <TableCell>
                       <Typography variant="body2" className="font-semibold whitespace-nowrap">
                         Valor Gratuidade
@@ -492,16 +506,14 @@ function TableTransactions({ id, userRoleId, hideGratuidade = false }) {
                           Status
                         </Typography>
                       </TableCell>
-                      {!(hideGratuidade && !searchingDay) && (
-                        <TableCell>
-                          <Typography variant="body2" className="font-semibold whitespace-nowrap">
-                            Erro
-                          </Typography>
-                        </TableCell>
-                      )}
+                      <TableCell>
+                        <Typography variant="body2" className="font-semibold whitespace-nowrap">
+                          Erro
+                        </Typography>
+                      </TableCell>
                     </>}
 
-                  {!searchingDay && !searchingWeek && !hideGratuidade ? (
+                  {!searchingDay && !searchingWeek && !hideGratuidadeMensal ? (
                     <>
                       <TableCell>
                         <Typography variant="body2" className="font-semibold whitespace-nowrap">
@@ -570,7 +582,7 @@ function TableTransactions({ id, userRoleId, hideGratuidade = false }) {
                         handleClickRow={(event) => handleClickRow(idOrdem, event, valorDia)}
                         lastDate={dataOrderDay}
                         dataPagamento={dataPagamento}
-                        hideGratuidade={hideGratuidade}
+                        hideGratuidadeMensal={hideGratuidadeMensal}
                       />
                     );
                   })
