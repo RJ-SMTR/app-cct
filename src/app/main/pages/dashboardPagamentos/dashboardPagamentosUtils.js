@@ -81,3 +81,48 @@ export function lerFiltrosDetalhe(searchParams) {
 export const ROTULO_CONTA = { bilhetagem: 'Conta Bilhetagem', rotativo: 'Conta Rotativo', cett: 'Conta CETT' };
 export const ROTULO_SITUACAO = Object.fromEntries(SITUACOES.map((s) => [s.key, s.label]));
 export const COR_SITUACAO = Object.fromEntries(SITUACOES.map((s) => [s.key, s.color]));
+
+/** Tamanho de página usado para buscar todo o detalhe na exportação (máximo aceito pela API). */
+export const TAMANHO_PAGINA_EXPORTACAO = 200;
+
+const formatarDataBR = (iso) => (iso ? dayjs(iso).format('DD/MM/YYYY') : '');
+
+/** Linhas da planilha "Pagamentos": uma por pagamento, com os mesmos dados da tabela (banco/agência/conta separados). */
+export function linhasExportacaoDetalhe(itens = []) {
+  return itens.map((item) => ({
+    'Data de pagamento': formatarDataBR(item.data),
+    Favorecido: item.favorecido || '(não identificado)',
+    'CPF/CNPJ': item.cpfCnpj ?? '',
+    'Consórcio / Grupo': item.grupo ?? '',
+    Situação: ROTULO_SITUACAO[item.situacao] ?? item.situacao ?? '',
+    Motivo: item.motivoDescricao ?? item.motivo ?? '',
+    Valor: Number(item.valor) || 0,
+    Banco: item.banco ?? '',
+    Agência: item.agencia ?? '',
+    Conta: item.conta ?? '',
+    Remessa: item.remessaId ?? '',
+    'Id do pagamento': item.detalheAId ?? '',
+  }));
+}
+
+/** Linhas da planilha "Filtros": quais filtros geraram a exportação e os totais. */
+export function linhasFiltrosExportacao(filtros, total, valorTotal) {
+  return [
+    ['Conta', ROTULO_CONTA[filtros.conta] ?? filtros.conta ?? ''],
+    ['Grupo', filtros.grupo ?? 'Todos'],
+    ['Situação', ROTULO_SITUACAO[filtros.situacao] ?? 'Todas'],
+    ['Motivo', filtros.motivo ?? 'Todos'],
+    ['Favorecido', filtros.busca ?? ''],
+    ['Período', `${formatarDataBR(filtros.dataInicio)} a ${formatarDataBR(filtros.dataFim)}`],
+    ['Quantidade de pagamentos', Number(total) || 0],
+    ['Valor total', Number(valorTotal) || 0],
+  ];
+}
+
+/** Ex.: detalhe-pagamentos_cett_2026-10-20_2026-10-20.xlsx */
+export function nomeArquivoExportacao(filtros) {
+  const partes = ['detalhe-pagamentos', filtros.conta, filtros.grupo, filtros.situacao, filtros.dataInicio, filtros.dataFim]
+    .filter(Boolean)
+    .map((parte) => String(parte).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9-]+/g, '-'));
+  return `${partes.join('_')}.xlsx`;
+}
