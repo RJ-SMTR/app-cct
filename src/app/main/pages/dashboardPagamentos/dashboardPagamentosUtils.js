@@ -82,41 +82,37 @@ export const ROTULO_CONTA = { bilhetagem: 'Conta Bilhetagem', rotativo: 'Conta R
 export const ROTULO_SITUACAO = Object.fromEntries(SITUACOES.map((s) => [s.key, s.label]));
 export const COR_SITUACAO = Object.fromEntries(SITUACOES.map((s) => [s.key, s.color]));
 
-/** Tamanho de página usado para buscar todo o detalhe na exportação (máximo aceito pela API). */
-export const TAMANHO_PAGINA_EXPORTACAO = 200;
+/** Colunas da exportação, exatamente como na planilha de referência ("Valor  Ordem" tem dois espaços). */
+export const CABECALHO_DETALHADO = ['Nome', 'CPF', 'Data Ordem', 'Valor  Ordem', 'Valor Lançamento'];
 
-const formatarDataBR = (iso) => (iso ? dayjs(iso).format('DD/MM/YYYY') : '');
-
-/** Linhas da planilha "Pagamentos": uma por pagamento, com os mesmos dados da tabela (banco/agência/conta separados). */
-export function linhasExportacaoDetalhe(itens = []) {
-  return itens.map((item) => ({
-    'Data de pagamento': formatarDataBR(item.data),
-    Favorecido: item.favorecido || '(não identificado)',
-    'CPF/CNPJ': item.cpfCnpj ?? '',
-    'Consórcio / Grupo': item.grupo ?? '',
-    Situação: ROTULO_SITUACAO[item.situacao] ?? item.situacao ?? '',
-    Motivo: item.motivoDescricao ?? item.motivo ?? '',
-    Valor: Number(item.valor) || 0,
-    Banco: item.banco ?? '',
-    Agência: item.agencia ?? '',
-    Conta: item.conta ?? '',
-    Remessa: item.remessaId ?? '',
-    'Id do pagamento': item.detalheAId ?? '',
-  }));
-}
-
-/** Linhas da planilha "Filtros": quais filtros geraram a exportação e os totais. */
-export function linhasFiltrosExportacao(filtros, total, valorTotal) {
-  return [
-    ['Conta', ROTULO_CONTA[filtros.conta] ?? filtros.conta ?? ''],
-    ['Grupo', filtros.grupo ?? 'Todos'],
-    ['Situação', ROTULO_SITUACAO[filtros.situacao] ?? 'Todas'],
-    ['Motivo', filtros.motivo ?? 'Todos'],
-    ['Favorecido', filtros.busca ?? ''],
-    ['Período', `${formatarDataBR(filtros.dataInicio)} a ${formatarDataBR(filtros.dataFim)}`],
-    ['Quantidade de pagamentos', Number(total) || 0],
-    ['Valor total', Number(valorTotal) || 0],
-  ];
+/**
+ * Linhas da planilha "Detalhado": uma por ordem, com nome e CPF só na primeira linha de cada pessoa e o
+ * valor de lançamento só na primeira linha de cada pagamento (nada repetido). As linhas já chegam da API
+ * ordenadas por nome e data da ordem. Pagamento sem ordens ligadas usa o próprio lançamento como valor da ordem.
+ */
+export function montarLinhasDetalhado(linhas = []) {
+  const resultado = [];
+  let pessoaAnterior = null;
+  let pagamentoAnterior = null;
+  let totalGeral = 0;
+  linhas.forEach((linha) => {
+    const pessoa = `${linha.cpf ?? ''}|${linha.nome ?? ''}`;
+    const primeiraDaPessoa = pessoa !== pessoaAnterior;
+    const primeiroDoPagamento = linha.detalheAId !== pagamentoAnterior;
+    const semOrdem = linha.dataOrdem == null && linha.valorOrdem == null;
+    const valorOrdem = semOrdem ? Number(linha.valorLancamento) || 0 : Number(linha.valorOrdem) || 0;
+    totalGeral += valorOrdem;
+    resultado.push({
+      nome: primeiraDaPessoa ? linha.nome || '(não identificado)' : '',
+      cpf: primeiraDaPessoa ? linha.cpf ?? '' : '',
+      dataOrdem: linha.dataOrdem ?? null,
+      valorOrdem,
+      valorLancamento: primeiroDoPagamento ? Number(linha.valorLancamento) || 0 : null,
+    });
+    pessoaAnterior = pessoa;
+    pagamentoAnterior = linha.detalheAId;
+  });
+  return { linhas: resultado, totalGeral: Math.round(totalGeral * 100) / 100 };
 }
 
 /** Ex.: detalhe-pagamentos_cett_2026-10-20_2026-10-20.xlsx */
