@@ -1,7 +1,7 @@
 import {
   formatBRL,
-  linhasExportacaoDetalhe,
-  linhasFiltrosExportacao,
+  CABECALHO_DETALHADO,
+  montarLinhasDetalhado,
   nomeArquivoExportacao,
   lerFiltrosDetalhe,
   montarGraficoGrupos,
@@ -79,23 +79,42 @@ describe('dashboardPagamentosUtils', () => {
     expect(toIsoDate(periodoDaUrl(new URLSearchParams(''), hoje)[0])).toBe('2026-10-01');
   });
 
-  it('monta as linhas da exportação com os mesmos dados da tabela', () => {
-    const linhas = linhasExportacaoDetalhe([
-      { detalheAId: 7, data: '2026-10-20', favorecido: 'ANTONIO ROBERTO CATALDO', cpfCnpj: '29735025787', grupo: 'TEC', situacao: 'pago', motivo: 'EFETIVADO', motivoDescricao: 'Efetivado', valor: '815.00', banco: 260, agencia: '0001', conta: '119369977-5', remessaId: 1131 },
-      { detalheAId: 8, data: '2026-10-20', favorecido: null, situacao: 'naoPago', motivo: 'AR', valor: 0 },
+  it('monta as linhas do Detalhado sem repetir nome, CPF nem valor de lançamento', () => {
+    const { linhas, totalGeral } = montarLinhasDetalhado([
+      { detalheAId: 1, nome: 'ABDON ALVIM DE QUEIROZ', cpf: '38624400791', dataOrdem: '2026-10-16', valorOrdem: 80, valorLancamento: 340 },
+      { detalheAId: 1, nome: 'ABDON ALVIM DE QUEIROZ', cpf: '38624400791', dataOrdem: '2026-10-17', valorOrdem: 150, valorLancamento: 340 },
+      { detalheAId: 1, nome: 'ABDON ALVIM DE QUEIROZ', cpf: '38624400791', dataOrdem: '2026-10-18', valorOrdem: 110, valorLancamento: 340 },
+      { detalheAId: 2, nome: 'ABILIO RODRIGUES DE SOUZA', cpf: '49130463734', dataOrdem: '2026-10-16', valorOrdem: 130, valorLancamento: 285 },
+      { detalheAId: 2, nome: 'ABILIO RODRIGUES DE SOUZA', cpf: '49130463734', dataOrdem: '2026-10-17', valorOrdem: 155, valorLancamento: 285 },
     ]);
-    expect(linhas[0]).toEqual({
-      'Data de pagamento': '20/10/2026', Favorecido: 'ANTONIO ROBERTO CATALDO', 'CPF/CNPJ': '29735025787', 'Consórcio / Grupo': 'TEC', Situação: 'Pago', Motivo: 'Efetivado',
-      Valor: 815, Banco: 260, Agência: '0001', Conta: '119369977-5', Remessa: 1131, 'Id do pagamento': 7,
-    });
-    expect(linhas[1]).toMatchObject({ Favorecido: '(não identificado)', Situação: 'Não pago', Motivo: 'AR', Valor: 0, Banco: '' });
+    expect(linhas).toEqual([
+      { nome: 'ABDON ALVIM DE QUEIROZ', cpf: '38624400791', dataOrdem: '2026-10-16', valorOrdem: 80, valorLancamento: 340 },
+      { nome: '', cpf: '', dataOrdem: '2026-10-17', valorOrdem: 150, valorLancamento: null },
+      { nome: '', cpf: '', dataOrdem: '2026-10-18', valorOrdem: 110, valorLancamento: null },
+      { nome: 'ABILIO RODRIGUES DE SOUZA', cpf: '49130463734', dataOrdem: '2026-10-16', valorOrdem: 130, valorLancamento: 285 },
+      { nome: '', cpf: '', dataOrdem: '2026-10-17', valorOrdem: 155, valorLancamento: null },
+    ]);
+    expect(totalGeral).toBe(625);
   });
 
-  it('descreve os filtros e os totais da exportação', () => {
-    const linhas = linhasFiltrosExportacao({ conta: 'cett', situacao: 'pago', dataInicio: '2026-10-20', dataFim: '2026-10-20' }, 1810, 483565);
-    expect(linhas).toEqual(expect.arrayContaining([
-      ['Conta', 'Conta CETT'], ['Situação', 'Pago'], ['Grupo', 'Todos'], ['Período', '20/10/2026 a 20/10/2026'], ['Quantidade de pagamentos', 1810], ['Valor total', 483565],
-    ]));
+  it('pessoa com dois pagamentos: nome e CPF uma vez só, lançamento no começo de cada pagamento', () => {
+    const { linhas } = montarLinhasDetalhado([
+      { detalheAId: 1, nome: 'A', cpf: '1', dataOrdem: '2026-10-01', valorOrdem: 10, valorLancamento: 10 },
+      { detalheAId: 2, nome: 'A', cpf: '1', dataOrdem: '2026-10-08', valorOrdem: 20, valorLancamento: 20 },
+    ]);
+    expect(linhas.map((l) => [l.nome, l.valorLancamento])).toEqual([['A', 10], ['', 20]]);
+  });
+
+  it('pagamento sem ordens ligadas usa o lançamento como valor da ordem e entra no total', () => {
+    const { linhas, totalGeral } = montarLinhasDetalhado([
+      { detalheAId: 9, nome: null, cpf: null, dataOrdem: null, valorOrdem: null, valorLancamento: 50.5 },
+    ]);
+    expect(linhas[0]).toEqual({ nome: '(não identificado)', cpf: '', dataOrdem: null, valorOrdem: 50.5, valorLancamento: 50.5 });
+    expect(totalGeral).toBe(50.5);
+  });
+
+  it('o cabeçalho da exportação tem exatamente as colunas da planilha de referência', () => {
+    expect(CABECALHO_DETALHADO).toEqual(['Nome', 'CPF', 'Data Ordem', 'Valor  Ordem', 'Valor Lançamento']);
   });
 
   it('gera um nome de arquivo seguro a partir dos filtros', () => {
