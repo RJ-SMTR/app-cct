@@ -21,6 +21,7 @@ export const ERRO_STATUS_OPTIONS = [
 export const ESPECIFICOS_OPTIONS = [
   { label: 'Todos' },
   { label: 'Eleição' },
+  { label: 'STUC - Gratuidade' },
 ];
 
 // Data mínima permitida no DateRangePicker dos relatórios do Guardador.

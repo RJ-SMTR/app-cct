@@ -102,7 +102,7 @@ export default function FinancialMovementReport({ perfil }) {
   const statusBase = STATUS_OPTIONS.filter((option) => option.label !== "Todos");
   const erroStatus = ERRO_STATUS_OPTIONS;
   const consorcios = buildReportConsorcioOptions({ selectedField: selected });
-  const especificos = [{ label: 'Eleição' }, { label: 'Desativados' }];
+  const especificos = [{ label: 'Eleição' }, { label: 'Desativados' }, { label: 'STUC - Gratuidade' }];
 
   const dispatch = useDispatch();
 
@@ -678,6 +678,8 @@ export default function FinancialMovementReport({ perfil }) {
                   </Grid>
                 </>
               )}
+
+              <ValorRangeFilter control={control} getValues={getValues} trigger={trigger} clearErrors={clearErrors} />
             </Grid>
 
             {/* Linha 3: motivos (quando houver) */}
@@ -713,11 +715,6 @@ export default function FinancialMovementReport({ perfil }) {
                   />
                 </Grid>
               )}
-            </Grid>
-
-            {/* Linha 4: valores */}
-            <Grid container spacing={2}>
-              <ValorRangeFilter control={control} getValues={getValues} trigger={trigger} clearErrors={clearErrors} />
             </Grid>
 
             {!isGuardador && whichStatusShow.includes("A pagar") && (
