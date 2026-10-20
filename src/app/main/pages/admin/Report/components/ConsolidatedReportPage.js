@@ -328,7 +328,15 @@ export default function ConsolidatedReportPage({ perfil }) {
       }
     }
     if (field === "especificos") {
-      setSelectedEspecificos(newValue.map((i) => i.label));
+      const especificos = newValue.map((i) => i.label);
+      setSelectedEspecificos(especificos);
+      // STUC - Gratuidade não tem conceito de "OPs atrasadas" (TD/ADR 0004); limpa a seleção
+      // de motivo caso o usuário já tivesse marcado essa opção antes de escolher STUC.
+      if (especificos.includes("STUC - Gratuidade") && selectedErroStatus.some((o) => o.label === "OPs atrasadas")) {
+        const filtered = selectedErroStatus.filter((o) => o.label !== "OPs atrasadas");
+        setSelectedErroStatus(filtered);
+        setValue("erroStatus", filtered.map((option) => (isGuardador ? option.value : option.label)));
+      }
     }
 
     setValue(field, newValue ? newValue.map((item) => item.value ?? item.label) : []);
@@ -507,6 +515,33 @@ export default function ConsolidatedReportPage({ perfil }) {
                 </Grid>
               )}
 
+              {showErroStatus && (
+                <Grid item xs={12} sm={6} md={4}>
+                  <Autocomplete
+                    id="erroStatus"
+                    multiple
+                    fullWidth
+                    options={
+                      isGuardador
+                        ? GUARDADOR_ERRO_STATUS_OPTIONS
+                        : selectedEspecificos.includes("STUC - Gratuidade")
+                          ? ERRO_STATUS_OPTIONS.filter((o) => o.label !== "OPs atrasadas")
+                          : ERRO_STATUS_OPTIONS
+                    }
+                    getOptionLabel={(option) => option.label}
+                    isOptionEqualToValue={isGuardador ? (option, value) => option.value === value.value : undefined}
+                    filterSelectedOptions={!isGuardador}
+                    value={selectedErroStatus}
+                    onChange={(_, newValue) => {
+                      const normalizedValue = normalizeErroStatusSelection(newValue);
+                      setSelectedErroStatus(normalizedValue);
+                      setValue("erroStatus", normalizedValue.map((option) => (isGuardador ? option.value : option.label)));
+                    }}
+                    renderInput={(params) => <TextField {...params} label="Motivos" variant="outlined" />}
+                  />
+                </Grid>
+              )}
+
               {isGuardador ? (
                 <>
                   {shouldShowAgentNameFilter(selectedAssociationOptions) && (
@@ -633,34 +668,7 @@ export default function ConsolidatedReportPage({ perfil }) {
                   </Grid>
                 </>
               )}
-            </Grid>
 
-            {/* Linha 3: motivos (quando houver) */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-              {showErroStatus && (
-                <Grid item xs={12} sm={6} md={4}>
-                  <Autocomplete
-                    id="erroStatus"
-                    multiple
-                    fullWidth
-                    options={isGuardador ? GUARDADOR_ERRO_STATUS_OPTIONS : ERRO_STATUS_OPTIONS}
-                    getOptionLabel={(option) => option.label}
-                    isOptionEqualToValue={isGuardador ? (option, value) => option.value === value.value : undefined}
-                    filterSelectedOptions={!isGuardador}
-                    value={selectedErroStatus}
-                    onChange={(_, newValue) => {
-                      const normalizedValue = normalizeErroStatusSelection(newValue);
-                      setSelectedErroStatus(normalizedValue);
-                      setValue("erroStatus", normalizedValue.map((option) => (isGuardador ? option.value : option.label)));
-                    }}
-                    renderInput={(params) => <TextField {...params} label="Motivos" variant="outlined" />}
-                  />
-                </Grid>
-              )}
-            </Grid>
-
-            {/* Linha 4: valores */}
-            <Grid container spacing={2}>
               <ValorRangeFilter control={control} getValues={getValues} trigger={trigger} clearErrors={clearErrors} />
             </Grid>
 
