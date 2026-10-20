@@ -171,10 +171,11 @@ function UserApp() {
             <>
               <div className='md:flex mt-10 '>
                 <Entries type={paidValue} isDay="false" />
+                {searchingWeek && !searchingDay && <Entries type="Valor Gratuidade - Acumulado Semanal" isDay="false" gratuidade />}
               </div>
               <div className={`flex flex-col `}>
                 <div>
-                  <Table id={id} userRoleId={user?.role?.id} hideGratuidade />
+                  <Table id={id} userRoleId={user?.role?.id} hideGratuidadeMensal />
                 </div>
                 {
                   searchingDay ? <Box className='flex flex-col md:flex-row   justify-around'>

@@ -141,6 +141,25 @@ export function CustomTable(data) {
     }
   };
 
+  // Mesmas cores do status normal. A cor 'op' não tem estilo (o selo fica invisível), então só vale para status desconhecido.
+  const getGratuidadeColor = (status) => {
+    switch (status) {
+      case 3:
+        return 'success';
+      case 4:
+        return 'error';
+      case 5:
+        return 'info';
+      case 2:
+        return 'wait';
+      case 0:
+      case 1:
+        return 'warning';
+      default:
+        return 'op';
+    }
+  };
+
   const GratuidadeBadge = (data) => {
     const i = data.data.data;
     if (i.valorGratuidade == null && i.statusRemessaGratuidade == null) {
@@ -149,7 +168,7 @@ export function CustomTable(data) {
     return (
       <Badge
         className={`${data.c?.root} whitespace-nowrap`}
-        color={i.statusRemessaGratuidade === 3 ? 'success' : i.statusRemessaGratuidade === 4 ? 'error' : 'op'}
+        color={getGratuidadeColor(i.statusRemessaGratuidade)}
         badgeContent={getStatusRemessaLabel(i.statusRemessaGratuidade)}
       />
     );
@@ -226,7 +245,7 @@ export function CustomTable(data) {
         )
       }
       {
-        searchingWeek && !data.hideGratuidade ? (
+        searchingWeek ? (
           <TableCell component="th" scope="row">
             <Typography className="whitespace-nowrap">
               {data.data.valorGratuidade != null ? formatter.format(data.data.valorGratuidade) : ''}
@@ -248,13 +267,13 @@ export function CustomTable(data) {
       {
         !searchingWeek ? <>
           <TableCell className='status' component="th" scope='row'> <CustomBadge data={data} /> </TableCell>
-          {!(data.hideGratuidade && !searchingDay) && <MyTableCell data={data} />}
+          <MyTableCell data={data} />
         </>
           : <> </>
       }
 
       {
-        !searchingDay && !searchingWeek && !data.hideGratuidade ? <>
+        !searchingDay && !searchingWeek && !data.hideGratuidadeMensal ? <>
           <TableCell component="th" scope="row">
             <Typography className="whitespace-nowrap">
               {data.data.valorGratuidade != null ? formatter.format(data.data.valorGratuidade) : ''}
