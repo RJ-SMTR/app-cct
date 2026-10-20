@@ -8,7 +8,7 @@ export default function PagamentoGuardadoresApp() {
       apiBasePath="/pagamentos/guardador"
       nomeColuna="Tipo"
       comBuscaPorNome
-      permitirEdicaoValorBi
+      permitirEdicaoValorBi={false}
       mostrarBotoesRapidosData={false}
     />
   );
