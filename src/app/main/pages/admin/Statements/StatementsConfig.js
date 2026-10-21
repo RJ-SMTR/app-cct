@@ -2,6 +2,7 @@ import { lazy } from 'react';
 import { authRoles } from 'src/app/auth';
 
 const StatementsAppLazy = lazy(() => import('./StatementsApp'));
+const StatementsDetalheAppLazy = lazy(() => import('./StatementsDetalheApp'));
 
 const StatementsConfig = {
     settings: {
@@ -18,6 +19,10 @@ const StatementsConfig = {
         {
             path: 'extrato-contas',
             element: <StatementsAppLazy />,
+        },
+        {
+            path: 'extrato-contas/detalhe',
+            element: <StatementsDetalheAppLazy />,
         },
     ],
 };
