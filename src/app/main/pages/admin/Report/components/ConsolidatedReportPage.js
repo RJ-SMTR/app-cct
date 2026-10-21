@@ -256,8 +256,11 @@ export default function ConsolidatedReportPage({ perfil }) {
       [totalLabel, "", formatter.format(totalValue ?? 0)],
     ];
 
+    // sheetData é sempre array de arrays (não de objetos) nos dois perfis - json_to_sheet
+    // tratava o Permissionário como array de "objetos" com chaves numéricas (0,1,2), gerando
+    // uma linha de cabeçalho bugada ("0"/"1"/"2") e empurrando os dados uma linha para baixo.
     const workbook = utils.book_new();
-    const worksheet = isGuardador ? utils.aoa_to_sheet(sheetData) : utils.json_to_sheet(sheetData);
+    const worksheet = utils.aoa_to_sheet(sheetData);
     utils.book_append_sheet(workbook, worksheet, isGuardador ? "Agentes" : undefined);
     writeFileXLSX(workbook, getFormattedReportFilename(selectedDateRange, 'xlsx', csvFilenamePrefix));
   };
