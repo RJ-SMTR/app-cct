@@ -510,12 +510,44 @@ export default function FinancialMovementReport({ perfil }) {
           </header>
 
           <form noValidate onSubmit={handleSubmit(onSubmit)}>
-            {/* Linha 1: período + favorecido / consórcios / específicos (guardador: guardador / associações) */}
+            {/* Linha 1: período + motivos + status + favorecido / consórcios / específicos (guardador: guardador / associações) */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <ReportPeriodFilter
                 control={control}
                 minDate={isGuardador ? MIN_SELECTABLE_DATE_GUARDADOR : MIN_SELECTABLE_DATE_PERMISSIONARIO}
               />
+
+              {showErroStatus && (
+                <Grid item xs={12} sm={6} md={4}>
+                  <Autocomplete
+                    id="erroStatus"
+                    multiple
+                    fullWidth
+                    options={erroStatus}
+                    getOptionLabel={(option) => option.label || option}
+                    filterSelectedOptions
+                    value={selectedErroStatus}
+                    onChange={(_, newValue) => {
+                      const normalizedValue = normalizeErroStatusSelection(newValue);
+                      setSelectedErroStatus(normalizedValue);
+                      setValue("erroStatus", normalizedValue.map((option) => option.label));
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label={isGuardador ? "Motivo da Pendência" : "Motivos"}
+                        variant="outlined"
+                        error={isGuardador ? hasMissingErroStatusSelection : undefined}
+                        helperText={
+                          isGuardador && hasMissingErroStatusSelection
+                            ? "Selecione um motivo para a Pendência de Pagamento."
+                            : ""
+                        }
+                      />
+                    )}
+                  />
+                </Grid>
+              )}
 
               <Grid item xs={12} sm={6} md={4}>
                 <Autocomplete
@@ -680,41 +712,6 @@ export default function FinancialMovementReport({ perfil }) {
               )}
 
               <ValorRangeFilter control={control} getValues={getValues} trigger={trigger} clearErrors={clearErrors} />
-            </Grid>
-
-            {/* Linha 3: motivos (quando houver) */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-              {showErroStatus && (
-                <Grid item xs={12} sm={6} md={4}>
-                  <Autocomplete
-                    id="erroStatus"
-                    multiple
-                    fullWidth
-                    options={erroStatus}
-                    getOptionLabel={(option) => option.label || option}
-                    filterSelectedOptions
-                    value={selectedErroStatus}
-                    onChange={(_, newValue) => {
-                      const normalizedValue = normalizeErroStatusSelection(newValue);
-                      setSelectedErroStatus(normalizedValue);
-                      setValue("erroStatus", normalizedValue.map((option) => option.label));
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label={isGuardador ? "Motivo da Pendência" : "Motivos"}
-                        variant="outlined"
-                        error={isGuardador ? hasMissingErroStatusSelection : undefined}
-                        helperText={
-                          isGuardador && hasMissingErroStatusSelection
-                            ? "Selecione um motivo para a Pendência de Pagamento."
-                            : ""
-                        }
-                      />
-                    )}
-                  />
-                </Grid>
-              )}
             </Grid>
 
             {!isGuardador && whichStatusShow.includes("A pagar") && (
