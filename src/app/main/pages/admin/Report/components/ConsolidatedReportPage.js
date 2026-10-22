@@ -501,6 +501,23 @@ export default function ConsolidatedReportPage({ perfil }) {
                 }}
               />
 
+              {(isGuardador || !selectedEspecificos.includes("Pendentes")) && (
+                <Grid item xs={12} sm={6} md={4}>
+                  <Autocomplete
+                    id="status"
+                    multiple
+                    fullWidth
+                    options={isGuardador ? GUARDADOR_STATUS_OPTIONS : STATUS_OPTIONS}
+                    value={selectedStatusOptions}
+                    getOptionLabel={(option) => option.label}
+                    isOptionEqualToValue={isGuardador ? (option, value) => option.value === value.value : undefined}
+                    filterSelectedOptions={!isGuardador}
+                    onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
+                    renderInput={(params) => <TextField {...params} label="Selecionar Status" variant="outlined" />}
+                  />
+                </Grid>
+              )}
+
               {showErroStatus && (
                 <Grid item xs={12} sm={6} md={4}>
                   <Autocomplete
@@ -524,23 +541,6 @@ export default function ConsolidatedReportPage({ perfil }) {
                       setValue("erroStatus", normalizedValue.map((option) => (isGuardador ? option.value : option.label)));
                     }}
                     renderInput={(params) => <TextField {...params} label="Motivos" variant="outlined" />}
-                  />
-                </Grid>
-              )}
-
-              {(isGuardador || !selectedEspecificos.includes("Pendentes")) && (
-                <Grid item xs={12} sm={6} md={4}>
-                  <Autocomplete
-                    id="status"
-                    multiple
-                    fullWidth
-                    options={isGuardador ? GUARDADOR_STATUS_OPTIONS : STATUS_OPTIONS}
-                    value={selectedStatusOptions}
-                    getOptionLabel={(option) => option.label}
-                    isOptionEqualToValue={isGuardador ? (option, value) => option.value === value.value : undefined}
-                    filterSelectedOptions={!isGuardador}
-                    onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
-                    renderInput={(params) => <TextField {...params} label="Selecionar Status" variant="outlined" />}
                   />
                 </Grid>
               )}

@@ -510,12 +510,34 @@ export default function FinancialMovementReport({ perfil }) {
           </header>
 
           <form noValidate onSubmit={handleSubmit(onSubmit)}>
-            {/* Linha 1: período + motivos + status + favorecido / consórcios / específicos (guardador: guardador / associações) */}
+            {/* Linha 1: período + status + motivos + favorecido / consórcios / específicos (guardador: guardador / associações) */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <ReportPeriodFilter
                 control={control}
                 minDate={isGuardador ? MIN_SELECTABLE_DATE_GUARDADOR : MIN_SELECTABLE_DATE_PERMISSIONARIO}
               />
+
+              <Grid item xs={12} sm={6} md={4}>
+                <Autocomplete
+                  id="status"
+                  multiple
+                  fullWidth
+                  getOptionLabel={(option) => option.label || option}
+                  filterSelectedOptions
+                  options={statusBase}
+                  value={selectedStatusOptions}
+                  onChange={(_, newValue) => handleAutocompleteChange("status", newValue)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label={isGuardador ? "Selecionar Status" : "Selecionar Status *"}
+                      variant="outlined"
+                      error={hasSearched && hasMissingStatusSelection}
+                      helperText={hasSearched && hasMissingStatusSelection ? "Selecione um status para pesquisar." : ""}
+                    />
+                  )}
+                />
+              </Grid>
 
               {showErroStatus && (
                 <Grid item xs={12} sm={6} md={4}>
@@ -548,28 +570,6 @@ export default function FinancialMovementReport({ perfil }) {
                   />
                 </Grid>
               )}
-
-              <Grid item xs={12} sm={6} md={4}>
-                <Autocomplete
-                  id="status"
-                  multiple
-                  fullWidth
-                  getOptionLabel={(option) => option.label || option}
-                  filterSelectedOptions
-                  options={statusBase}
-                  value={selectedStatusOptions}
-                  onChange={(_, newValue) => handleAutocompleteChange("status", newValue)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label={isGuardador ? "Selecionar Status" : "Selecionar Status *"}
-                      variant="outlined"
-                      error={hasSearched && hasMissingStatusSelection}
-                      helperText={hasSearched && hasMissingStatusSelection ? "Selecione um status para pesquisar." : ""}
-                    />
-                  )}
-                />
-              </Grid>
 
               {isGuardador ? (
                 <>
