@@ -235,6 +235,97 @@ function buildDailyPhotos(dailyResponse) {
   }));
 }
 
+function getPagamentoIndevidoStatus(statusRemessa) {
+  const status = Number(statusRemessa);
+
+  if (status === 3 || status === 5) {
+    return "Pago";
+  }
+
+  if (status === 4) {
+    return "Rejeitado";
+  }
+
+  if (status === 1 || status === 2) {
+    return "Aguardando Pagamento";
+  }
+
+  return "A pagar";
+}
+
+function formatDayMonth(dateOnly) {
+  const [, month, day] = String(dateOnly || "").split("-");
+  return day && month ? `${day}/${month}` : "";
+}
+
+/** "estorno pagamento em duplicidade em 03/09, 09/09 e 23/09": as datas dos pagamentos em duplicidade, quando se sabe. */
+export function buildDuplicateRefundNote(duplicateDates) {
+  const days = (Array.isArray(duplicateDates) ? duplicateDates : [])
+    .map(formatDayMonth)
+    .filter(Boolean);
+
+  if (days.length === 0) {
+    return "estorno pagamento em duplicidade";
+  }
+
+  const list =
+    days.length === 1
+      ? days[0]
+      : `${days.slice(0, -1).join(", ")} e ${days[days.length - 1]}`;
+
+  return `estorno pagamento em duplicidade em ${list}`;
+}
+
+/**
+ * Valor indevido a pagar do guardador (tabela pagamento_indevido). Cada linha é um pagamento em que o guardador recebeu menos
+ * que o devido (abatimento do indevido): data, valor devido, valor pago, diferença e status. `hasBalance` só é verdadeiro
+ * quando ainda há saldo devedor, que é quando o quadro aparece.
+ */
+export function buildPagamentoIndevido(response) {
+  const totals = response?.totais || {};
+  const entries = Array.isArray(response?.lancamentos) ? response.lancamentos : [];
+  const duplicateDates = (Array.isArray(response?.datasDuplicidade) ? response.datasDuplicidade : [])
+    .map(toDateOnly)
+    .filter(Boolean);
+  const note = buildDuplicateRefundNote(duplicateDates);
+
+  return {
+    totalIndevido: normalizeNumber(totals.valorIndevido),
+    totalAbatido: normalizeNumber(totals.valorDebitado),
+    totalSaldoDevedor: normalizeNumber(totals.saldoDevedor),
+    hasBalance: normalizeNumber(totals.saldoDevedor) > 0,
+    items: entries.map((entry, index) => {
+      const difference = normalizeNumber(entry.diferenca);
+
+      return {
+        id: `${toDateOnly(entry.data)}-${index}`,
+        date: toDateOnly(entry.data),
+        amountDue: normalizeNumber(entry.valorDevido),
+        amountPaid: normalizeNumber(entry.valorPago),
+        difference,
+        differenceNote: difference < 0 ? note : "",
+        status: getPagamentoIndevidoStatus(entry.statusRemessa),
+      };
+    }),
+  };
+}
+
+export async function getAgentePagamentoIndevido(userId) {
+  const token = window.localStorage.getItem("jwt_access_token");
+
+  if (!JwtService.isAuthTokenValid(token)) {
+    throw new Error("Sessão inválida. Faça login novamente.");
+  }
+
+  const response = await api.request(
+    buildRequestConfig(jwtServiceConfig.agentesPagamentoIndevido, token, {
+      userId: Number(userId),
+    })
+  );
+
+  return buildPagamentoIndevido(response.data);
+}
+
 function buildRequestConfig(url, token, params) {
   return {
     method: "get",

@@ -29,6 +29,7 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { format, isValid, parseISO } from "date-fns";
 import ptBR from "date-fns/locale/pt-BR";
 import useAgentesDashboard from "./useAgentesDashboard";
+import PagamentoIndevidoCard from "./PagamentoIndevidoCard";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, Navigate, useParams } from "react-router-dom";
@@ -1303,6 +1304,8 @@ function AgentesApp() {
               monthlyLoading={loading}
               onMonthChange={handleSelectedMonth}
             />
+
+            <PagamentoIndevidoCard agentId={id} enabled={canAccessSelectedAgent} />
 
             {/* <Paper className="flex flex-col flex-auto p-16 rounded-2xl shadow overflow-hidden">
               <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
