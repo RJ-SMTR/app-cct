@@ -106,6 +106,7 @@ export default function PagamentoRemessaPage({
   mostrarTotalPorGrupo = false,
   mostrarBotoesRapidosData = true,
   permitirGratuidade = false,
+  permitirRenovarNsa = false,
 }) {
   const dispatch = useDispatch();
   const [dateRange, setDateRange] = useState([]);
@@ -140,6 +141,8 @@ export default function PagamentoRemessaPage({
 
   const [enviarBancoDialog, setEnviarBancoDialog] = useState(null); // { senha }
   const [isEnviando, setIsEnviando] = useState(false);
+  const [renovarNsaDialog, setRenovarNsaDialog] = useState(null); // { nsa }
+  const [isRenovandoNsa, setIsRenovandoNsa] = useState(false);
 
   const pollingTimeoutRef = useRef(null);
   const isMountedRef = useRef(true);
@@ -471,6 +474,33 @@ export default function PagamentoRemessaPage({
       .finally(() => setIsGerandoRemessa(false));
   };
 
+  // Remessa rejeitada pelo banco: reabre o header com um NSA novo; depois é só gerar e enviar de novo.
+  const handleConfirmRenovarNsa = () => {
+    const nsa = Number(renovarNsaDialog?.nsa);
+    if (!Number.isInteger(nsa) || nsa < 1) {
+      dispatch(showMessage({ message: 'Informe o NSA do arquivo rejeitado.' }));
+      return;
+    }
+
+    setIsRenovandoNsa(true);
+    api
+      .post(`${apiBasePath}/renovar-nsa`, { nsa }, { headers: authHeaders() })
+      .then((response) => {
+        const { nsaAnterior, nsaNovo } = response.data ?? {};
+        setRenovarNsaDialog(null);
+        setCnabPreview([]);
+        dispatch(
+          showMessage({
+            message: `NSA ${nsaAnterior} substituído pelo NSA ${nsaNovo}. Clique em "Gerar Remessa" para gerar o arquivo novamente.`,
+          }),
+        );
+      })
+      .catch((error) => {
+        dispatch(showMessage({ message: error?.response?.data?.error || 'Erro ao renovar o NSA da remessa.' }));
+      })
+      .finally(() => setIsRenovandoNsa(false));
+  };
+
   const handleConfirmEnviarBanco = () => {
     if (!enviarBancoDialog?.senha) {
       dispatch(showMessage({ message: 'Informe sua senha para confirmar o envio.' }));
@@ -624,6 +654,16 @@ export default function PagamentoRemessaPage({
           >
             {isGerandoRemessa ? 'Gerando...' : 'Gerar Remessa'}
           </Button>
+          {permitirRenovarNsa && (
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              disabled={isRenovandoNsa || isGerandoRemessa || isPreparing}
+              onClick={() => setRenovarNsaDialog({ nsa: '' })}
+            >
+              Renovar NSA
+            </Button>
+          )}
           <a
             href="https://www.accesstage.com.br/infotrack/login.do"
             target="_blank"
@@ -950,6 +990,32 @@ export default function PagamentoRemessaPage({
           </Button>
         </Box>
       </Dialog>
+
+      {permitirRenovarNsa && (
+        <Dialog open={Boolean(renovarNsaDialog)} onClose={() => setRenovarNsaDialog(null)} fullWidth maxWidth="xs">
+          <DialogTitle>Renovar NSA da Remessa</DialogTitle>
+          <DialogContent>
+            <Typography className="mb-16">
+              Use quando o banco rejeitou o arquivo enviado. Informe o NSA do arquivo rejeitado: a remessa volta a ficar
+              pronta para gerar com um NSA novo, usando os mesmos pagamentos já preparados.
+            </Typography>
+            <TextField
+              fullWidth
+              type="number"
+              label="NSA do arquivo rejeitado"
+              margin="dense"
+              value={renovarNsaDialog?.nsa ?? ''}
+              onChange={(event) => setRenovarNsaDialog((prev) => ({ ...prev, nsa: event.target.value }))}
+            />
+          </DialogContent>
+          <Box className="flex justify-end gap-8 p-16">
+            <Button onClick={() => setRenovarNsaDialog(null)}>Cancelar</Button>
+            <Button variant="contained" disabled={isRenovandoNsa} onClick={handleConfirmRenovarNsa}>
+              {isRenovandoNsa ? 'Renovando...' : 'Renovar NSA'}
+            </Button>
+          </Box>
+        </Dialog>
+      )}
 
       <Backdrop
         open={isPreparing && !preparoAssincrono}
