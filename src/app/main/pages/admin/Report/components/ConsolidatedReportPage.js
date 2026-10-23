@@ -147,10 +147,19 @@ export default function ConsolidatedReportPage({ perfil }) {
   );
   const hasRows = isGuardador ? guardadorDisplayRows.length > 0 : (reportList.count ?? 0) > 0;
 
+  // STUC - Gratuidade (ADR 0012, api-cct): cada linha passa a representar uma janela de
+  // pagamento (até 4 dias), com 8 colunas extras (Dt Ord. Pg1..4 + Valor). Só Permissionário.
+  const showStucColumns = !isGuardador && selectedEspecificos.includes('STUC - Gratuidade');
+
   // ---- Grid rows/columns ----
   const gridRows = isGuardador
     ? guardadorDisplayRows.map((row) => ({ id: row.nome, ...row }))
     : (Array.isArray(reportList.data) ? reportList.data.map((report) => ({ id: report.nomefavorecido, ...report })) : []);
+
+  const stucColumns = [1, 2, 3, 4].flatMap((n) => [
+    { field: `dataOrdemPagamento${n}`, headerName: `Dt Ord. Pg${n}`, width: 110, valueFormatter: (params) => params.value ?? '' },
+    { field: `valorOrdemPagamento${n}`, headerName: 'Valor', width: 130, valueFormatter: (params) => (params.value != null ? formatter.format(params.value) : '') },
+  ]);
 
   const gridColumns = isGuardador
     ? [
@@ -160,6 +169,7 @@ export default function ConsolidatedReportPage({ perfil }) {
     : [
         { field: 'nomefavorecido', headerName: 'Nome', flex: 1, minWidth: 260 },
         { field: 'valor', headerName: 'Valor', width: 180, valueFormatter: (params) => formatter.format(params.value ?? 0) },
+        ...(showStucColumns ? stucColumns : []),
       ];
 
   const totalValue = isGuardador ? guardadorTotal : (reportList.valor ?? 0);
@@ -178,6 +188,13 @@ export default function ConsolidatedReportPage({ perfil }) {
     ? selectedStatusForExport.map(getGuardadorStatusLabel).join(',')
     : selectedStatusForExport.join(',');
 
+  const stucCsvFields = (report) =>
+    [1, 2, 3, 4].reduce((acc, n) => {
+      acc[`Dt Ord. Pg${n}`] = report[`dataOrdemPagamento${n}`] ?? '';
+      acc[`Valor Pg${n}`] = report[`valorOrdemPagamento${n}`] != null ? formatter.format(report[`valorOrdemPagamento${n}`]) : '';
+      return acc;
+    }, {});
+
   const csvData = useMemo(() => {
     if (!hasRows) return [];
     if (isGuardador) {
@@ -187,6 +204,7 @@ export default function ConsolidatedReportPage({ perfil }) {
       Nome: report.nomefavorecido,
       Valor: formatter.format(report.valor),
       Status: "",
+      ...(showStucColumns ? stucCsvFields(report) : {}),
     })) ?? [];
     return [
       { Nome: "Status selecionado", Valor: "", Status: selectedStatusLabelForExport || "Todos" },
@@ -194,7 +212,7 @@ export default function ConsolidatedReportPage({ perfil }) {
       { Nome: "Valor Total", Valor: "", Status: formatter.format(reportList?.valor) },
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasRows, isGuardador, guardadorDisplayRows, reportList, formatter]);
+  }, [hasRows, isGuardador, guardadorDisplayRows, reportList, formatter, showStucColumns]);
 
   const exportPDF = () => {
     if (!hasRows) return;
@@ -202,12 +220,22 @@ export default function ConsolidatedReportPage({ perfil }) {
     const selectedDateRange = getValues('dateRange');
     const dateInicio = selectedDateRange?.[0];
     const dateFim = selectedDateRange?.[1];
+    const stucPdfCells = (report) =>
+      [1, 2, 3, 4].flatMap((n) => [
+        report[`dataOrdemPagamento${n}`] ?? '',
+        report[`valorOrdemPagamento${n}`] != null ? formatter.format(report[`valorOrdemPagamento${n}`]) : '',
+      ]);
     const rows = isGuardador
       ? guardadorDisplayRows.map((row) => [row.nome, formatter.format(row.valor)])
-      : reportList.data.map((report) => [report.nomefavorecido, formatter.format(report.valor)]);
+      : reportList.data.map((report) => [
+          report.nomefavorecido,
+          formatter.format(report.valor),
+          ...(showStucColumns ? stucPdfCells(report) : []),
+        ]);
+    const stucHead = [1, 2, 3, 4].flatMap((n) => [`Dt Ord. Pg${n}`, 'Valor']);
 
     doc.autoTable({
-      head: [["Nome", "Valor"]],
+      head: [["Nome", "Valor", ...(showStucColumns ? stucHead : [])]],
       body: rows,
       margin: { left: 14, right: 14, top: 60 },
       startY: 60,
@@ -244,14 +272,24 @@ export default function ConsolidatedReportPage({ perfil }) {
   const exportXLSX = () => {
     if (!hasRows) return;
     const selectedDateRange = getValues('dateRange');
+    const stucXlsxCells = (report) =>
+      [1, 2, 3, 4].flatMap((n) => [
+        report[`dataOrdemPagamento${n}`] ?? '',
+        report[`valorOrdemPagamento${n}`] != null ? formatter.format(report[`valorOrdemPagamento${n}`]) : '',
+      ]);
     const rows = isGuardador
       ? guardadorDisplayRows.map((row) => [row.nome, formatter.format(row.valor)])
-      : reportList.data.map((report) => [report.nomefavorecido, formatter.format(report.valor)]);
+      : reportList.data.map((report) => [
+          report.nomefavorecido,
+          formatter.format(report.valor),
+          ...(showStucColumns ? stucXlsxCells(report) : []),
+        ]);
     const totalLabel = isGuardador ? "Total geral" : "Valor Total";
+    const stucHeader = [1, 2, 3, 4].flatMap((n) => [`Dt Ord. Pg${n}`, 'Valor']);
 
     const sheetData = [
       ["Status selecionado", "", selectedStatusLabelForExport || "Todos"],
-      ["Nome", "Valor"],
+      ["Nome", "Valor", ...(showStucColumns ? stucHeader : [])],
       ...rows,
       [totalLabel, "", formatter.format(totalValue ?? 0)],
     ];

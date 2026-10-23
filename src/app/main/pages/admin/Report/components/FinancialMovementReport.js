@@ -96,8 +96,12 @@ export default function FinancialMovementReport({ perfil }) {
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [hasSearched, setHasSearched] = useState(false);
   const [pageCursors, setPageCursors] = useState([null]);
+  const [selectedEspecificos, setSelectedEspecificos] = useState([]);
   const hasNextPage = Boolean(pageCursors[page + 1]);
   const showEffectivePaymentDate = shouldShowAgentEffectivePaymentDateColumn(whichStatusShow);
+  // STUC - Gratuidade (ADR 0012, api-cct): cada linha passa a representar uma janela de
+  // pagamento (até 4 dias), com 8 colunas extras (Dt Ord. Pg1..4 + Valor). Só Permissionário.
+  const showStucColumns = !isGuardador && selectedEspecificos.includes('STUC - Gratuidade');
 
   const statusBase = STATUS_OPTIONS.filter((option) => option.label !== "Todos");
   const erroStatus = ERRO_STATUS_OPTIONS;
@@ -497,7 +501,7 @@ export default function FinancialMovementReport({ perfil }) {
       : value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
   };
 
-  const colSpan = isGuardador ? 11 : 6;
+  const colSpan = (isGuardador ? 11 : 6) + (showStucColumns ? 8 : 0);
 
   return (
     <>
@@ -704,7 +708,10 @@ export default function FinancialMovementReport({ perfil }) {
                       options={especificos}
                       getOptionLabel={(option) => option.label}
                       filterSelectedOptions
-                      onChange={(_, newValue) => handleAutocompleteChange("especificos", newValue)}
+                      onChange={(_, newValue) => {
+                        setSelectedEspecificos(newValue.map((item) => item.label));
+                        handleAutocompleteChange("especificos", newValue);
+                      }}
                       renderInput={(params) => <TextField {...params} label="Selecionar Específicos" variant="outlined" />}
                     />
                   </Grid>
@@ -797,6 +804,13 @@ export default function FinancialMovementReport({ perfil }) {
                   <TableCell className="font-semibold p-1 text-sm">Valor</TableCell>
                   <TableCell className="font-semibold p-1 text-sm">Status</TableCell>
                   <TableCell className="font-semibold p-1 text-sm">Descrição do Erro</TableCell>
+                  {showStucColumns &&
+                    [1, 2, 3, 4].map((n) => (
+                      <React.Fragment key={`stuc-head-${n}`}>
+                        <TableCell className="font-semibold p-1 text-sm">{`Dt Ord. Pg${n}`}</TableCell>
+                        <TableCell className="font-semibold p-1 text-sm">Valor</TableCell>
+                      </React.Fragment>
+                    ))}
                 </TableRow>
               </TableHead>
 
@@ -849,6 +863,15 @@ export default function FinancialMovementReport({ perfil }) {
                         <TableCell className="text-xs py-6 px-1" style={{ maxWidth: 280, overflowWrap: 'break-word' }}>
                           {report.descricaoErro || '-'}
                         </TableCell>
+                        {showStucColumns &&
+                          [1, 2, 3, 4].map((n) => (
+                            <React.Fragment key={`stuc-body-${index}-${n}`}>
+                              <TableCell className="text-xs py-1">{report[`dataOrdemPagamento${n}`] || '-'}</TableCell>
+                              <TableCell className="text-xs py-6 px-1">
+                                {report[`valorOrdemPagamento${n}`] != null ? formatCurrency(report[`valorOrdemPagamento${n}`]) : '-'}
+                              </TableCell>
+                            </React.Fragment>
+                          ))}
                       </TableRow>
                     ))
                   ) : (
