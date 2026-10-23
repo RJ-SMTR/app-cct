@@ -18,18 +18,17 @@ describe('planilha Detalhado', () => {
     { detalheAId: 2, nome: 'ABILIO RODRIGUES DE SOUZA', cpf: '49130463734', dataOrdem: '2026-10-16', valorOrdem: 130, valorLancamento: 285 },
   ];
 
-  it('tem o cabeçalho e as colunas da planilha de referência, com nome/CPF/lançamento só na primeira linha', () => {
+  it('tem o cabeçalho e as colunas da planilha de referência, com nome/CPF/lançamento em todas as linhas', () => {
     const folha = lerDeVolta(api);
     const linhas = utils.sheet_to_json(folha, { header: 1, defval: null, raw: true });
     expect(linhas[0]).toEqual(['Nome', 'CPF', 'Data Ordem', 'Valor  Ordem', 'Valor Lançamento']);
     expect(linhas[1].slice(0, 2)).toEqual(['ABDON ALVIM DE QUEIROZ', '38624400791']);
     expect(linhas[1][3]).toBe(80);
     expect(linhas[1][4]).toBe(340);
-    // linhas seguintes da mesma pessoa: sem nome, sem CPF e sem lançamento
-    expect(linhas[2][0] || '').toBe('');
-    expect(linhas[2][1] || '').toBe('');
+    // linhas seguintes da mesma pessoa: nome, CPF e lançamento repetidos
+    expect(linhas[2].slice(0, 2)).toEqual(['ABDON ALVIM DE QUEIROZ', '38624400791']);
     expect(linhas[2][3]).toBe(150);
-    expect(linhas[2][4] || '').toBe('');
+    expect(linhas[2][4]).toBe(340);
     expect(linhas[4][0]).toBe('ABILIO RODRIGUES DE SOUZA');
   });
 
