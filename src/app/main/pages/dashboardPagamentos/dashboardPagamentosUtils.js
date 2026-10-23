@@ -86,31 +86,24 @@ export const COR_SITUACAO = Object.fromEntries(SITUACOES.map((s) => [s.key, s.co
 export const CABECALHO_DETALHADO = ['Nome', 'CPF', 'Data Ordem', 'Valor  Ordem', 'Valor Lançamento'];
 
 /**
- * Linhas da planilha "Detalhado": uma por ordem, com nome e CPF só na primeira linha de cada pessoa e o
- * valor de lançamento só na primeira linha de cada pagamento (nada repetido). As linhas já chegam da API
+ * Linhas da planilha "Detalhado": uma por ordem, com nome, CPF e valor de lançamento completos em todas as
+ * linhas (repetidos, para dar para filtrar e somar por qualquer coluna). As linhas já chegam da API
  * ordenadas por nome e data da ordem. Pagamento sem ordens ligadas usa o próprio lançamento como valor da ordem.
  */
 export function montarLinhasDetalhado(linhas = []) {
   const resultado = [];
-  let pessoaAnterior = null;
-  let pagamentoAnterior = null;
   let totalGeral = 0;
   linhas.forEach((linha) => {
-    const pessoa = `${linha.cpf ?? ''}|${linha.nome ?? ''}`;
-    const primeiraDaPessoa = pessoa !== pessoaAnterior;
-    const primeiroDoPagamento = linha.detalheAId !== pagamentoAnterior;
     const semOrdem = linha.dataOrdem == null && linha.valorOrdem == null;
     const valorOrdem = semOrdem ? Number(linha.valorLancamento) || 0 : Number(linha.valorOrdem) || 0;
     totalGeral += valorOrdem;
     resultado.push({
-      nome: primeiraDaPessoa ? linha.nome || '(não identificado)' : '',
-      cpf: primeiraDaPessoa ? linha.cpf ?? '' : '',
+      nome: linha.nome || '(não identificado)',
+      cpf: linha.cpf ?? '',
       dataOrdem: linha.dataOrdem ?? null,
       valorOrdem,
-      valorLancamento: primeiroDoPagamento ? Number(linha.valorLancamento) || 0 : null,
+      valorLancamento: Number(linha.valorLancamento) || 0,
     });
-    pessoaAnterior = pessoa;
-    pagamentoAnterior = linha.detalheAId;
   });
   return { linhas: resultado, totalGeral: Math.round(totalGeral * 100) / 100 };
 }

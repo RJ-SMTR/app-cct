@@ -79,7 +79,7 @@ describe('dashboardPagamentosUtils', () => {
     expect(toIsoDate(periodoDaUrl(new URLSearchParams(''), hoje)[0])).toBe('2026-10-01');
   });
 
-  it('monta as linhas do Detalhado sem repetir nome, CPF nem valor de lançamento', () => {
+  it('monta as linhas do Detalhado com nome, CPF e valor de lançamento completos em todas as linhas', () => {
     const { linhas, totalGeral } = montarLinhasDetalhado([
       { detalheAId: 1, nome: 'ABDON ALVIM DE QUEIROZ', cpf: '38624400791', dataOrdem: '2026-10-16', valorOrdem: 80, valorLancamento: 340 },
       { detalheAId: 1, nome: 'ABDON ALVIM DE QUEIROZ', cpf: '38624400791', dataOrdem: '2026-10-17', valorOrdem: 150, valorLancamento: 340 },
@@ -89,20 +89,20 @@ describe('dashboardPagamentosUtils', () => {
     ]);
     expect(linhas).toEqual([
       { nome: 'ABDON ALVIM DE QUEIROZ', cpf: '38624400791', dataOrdem: '2026-10-16', valorOrdem: 80, valorLancamento: 340 },
-      { nome: '', cpf: '', dataOrdem: '2026-10-17', valorOrdem: 150, valorLancamento: null },
-      { nome: '', cpf: '', dataOrdem: '2026-10-18', valorOrdem: 110, valorLancamento: null },
+      { nome: 'ABDON ALVIM DE QUEIROZ', cpf: '38624400791', dataOrdem: '2026-10-17', valorOrdem: 150, valorLancamento: 340 },
+      { nome: 'ABDON ALVIM DE QUEIROZ', cpf: '38624400791', dataOrdem: '2026-10-18', valorOrdem: 110, valorLancamento: 340 },
       { nome: 'ABILIO RODRIGUES DE SOUZA', cpf: '49130463734', dataOrdem: '2026-10-16', valorOrdem: 130, valorLancamento: 285 },
-      { nome: '', cpf: '', dataOrdem: '2026-10-17', valorOrdem: 155, valorLancamento: null },
+      { nome: 'ABILIO RODRIGUES DE SOUZA', cpf: '49130463734', dataOrdem: '2026-10-17', valorOrdem: 155, valorLancamento: 285 },
     ]);
     expect(totalGeral).toBe(625);
   });
 
-  it('pessoa com dois pagamentos: nome e CPF uma vez só, lançamento no começo de cada pagamento', () => {
+  it('pessoa com dois pagamentos: nome, CPF e o lançamento de cada pagamento em todas as linhas', () => {
     const { linhas } = montarLinhasDetalhado([
       { detalheAId: 1, nome: 'A', cpf: '1', dataOrdem: '2026-10-01', valorOrdem: 10, valorLancamento: 10 },
       { detalheAId: 2, nome: 'A', cpf: '1', dataOrdem: '2026-10-08', valorOrdem: 20, valorLancamento: 20 },
     ]);
-    expect(linhas.map((l) => [l.nome, l.valorLancamento])).toEqual([['A', 10], ['', 20]]);
+    expect(linhas.map((l) => [l.nome, l.valorLancamento])).toEqual([['A', 10], ['A', 20]]);
   });
 
   it('pagamento sem ordens ligadas usa o lançamento como valor da ordem e entra no total', () => {
