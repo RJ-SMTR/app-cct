@@ -17,6 +17,7 @@ import {
   TableContainer,
   TablePagination,
   Grid,
+  Tooltip,
 } from "@mui/material";
 import SaveAltIcon from "@mui/icons-material/SaveAlt";
 import { format } from "date-fns";
@@ -47,6 +48,12 @@ import ValorRangeFilter from "./shared/ValorRangeFilter";
 import ReportPeriodFilter from "./shared/ReportPeriodFilter";
 import useFavorecidoGuardadorOptions from "./shared/useFavorecidoGuardadorOptions";
 import { applyPendenciaDePagamentoErro, applyEspecificosFlags } from "./shared/reportRequestUtils";
+import {
+  explodeStucGratuidadeRows,
+  STUC_GRATUIDADE_COLUMN_COUNT,
+  StucGratuidadeHeaderCells,
+  StucGratuidadeBodyRows,
+} from "./shared/StucGratuidadeTable";
 import {
   STATUS_OPTIONS,
   ERRO_STATUS_OPTIONS,
@@ -96,8 +103,13 @@ export default function FinancialMovementReport({ perfil }) {
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [hasSearched, setHasSearched] = useState(false);
   const [pageCursors, setPageCursors] = useState([null]);
+  const [selectedEspecificos, setSelectedEspecificos] = useState([]);
   const hasNextPage = Boolean(pageCursors[page + 1]);
   const showEffectivePaymentDate = shouldShowAgentEffectivePaymentDateColumn(whichStatusShow);
+  // STUC - Gratuidade (ADR 0012, api-cct): mesmo modelo de linha do Relatório Consolidado - um
+  // dia da janela de pagamento por linha, repetindo Nome/CPF/Valor Lançamento, substituindo
+  // (não somando) as colunas normais da Movimentação Financeira. Só Permissionário.
+  const showStucColumns = !isGuardador && selectedEspecificos.includes('STUC - Gratuidade');
 
   const statusBase = STATUS_OPTIONS.filter((option) => option.label !== "Todos");
   const erroStatus = ERRO_STATUS_OPTIONS;
@@ -491,13 +503,24 @@ export default function FinancialMovementReport({ perfil }) {
   };
 
   const formatCpfCnpj = (value) => {
-    if (!value) return '-';
-    return isGuardador
-      ? value.replace(/(\d{2,3})(\d{3})(\d{3})(\d{4})?(\d{2})/, "$1.$2.$3-$5")
-      : value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+    const digits = String(value ?? '').replace(/\D/g, '');
+    if (digits.length === 11) return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    if (digits.length === 14) return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    return value || '-';
   };
 
-  const colSpan = isGuardador ? 11 : 6;
+  const colSpan = showStucColumns ? STUC_GRATUIDADE_COLUMN_COUNT.withDataPagamento : (isGuardador ? 11 : 6);
+
+  // STUC - Gratuidade: mesmo componente/função do Consolidado (ConsolidatedReportPage.js) -
+  // ver shared/StucGratuidadeTable.js.
+  const stucExplodedRows = showStucColumns
+    ? explodeStucGratuidadeRows(reportList.data, {
+        nome: (report) => report.nomes,
+        cpfCnpj: (report) => report.cpfCnpj,
+        valor: (report) => report.valor,
+        dataPagamento: (report) => report.dataPagamento,
+      })
+    : [];
 
   return (
     <>
@@ -704,7 +727,10 @@ export default function FinancialMovementReport({ perfil }) {
                       options={especificos}
                       getOptionLabel={(option) => option.label}
                       filterSelectedOptions
-                      onChange={(_, newValue) => handleAutocompleteChange("especificos", newValue)}
+                      onChange={(_, newValue) => {
+                        setSelectedEspecificos(newValue.map((item) => item.label));
+                        handleAutocompleteChange("especificos", newValue);
+                      }}
                       renderInput={(params) => <TextField {...params} label="Selecionar Específicos" variant="outlined" />}
                     />
                   </Grid>
@@ -780,29 +806,71 @@ export default function FinancialMovementReport({ perfil }) {
             <Table size="small" sx={isGuardador ? { minWidth: 1280 } : undefined}>
               <TableHead>
                 <TableRow className="sticky top-0 bg-white z-10">
-                  <TableCell className="font-semibold py-1 text-sm leading-none">Data Tentativa Pagamento</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm" style={{ whiteSpace: 'nowrap' }}>
-                    {isGuardador ? 'Nome Guardador' : 'Nome'}
-                  </TableCell>
-                  <TableCell className="font-semibold p-1 text-sm" style={{ maxWidth: 220 }}>Email</TableCell>
-                  <TableCell className="font-semibold py-1 text-sm leading-none">Cód. Banco</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm">Banco</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm">CPF/CNPJ</TableCell>
-                  <TableCell className="font-semibold py-1 text-sm leading-none">
-                    {isGuardador ? 'Associação' : 'Consórcios | Modais'}
-                  </TableCell>
-                  {(isGuardador ? showEffectivePaymentDate : !showErroStatus) && (
-                    <TableCell className="font-semibold py-1 text-sm leading-none">Data Efetiva Pagamento</TableCell>
+                  {showStucColumns ? (
+                    <StucGratuidadeHeaderCells showDataPagamento />
+                  ) : (
+                    <>
+                      <TableCell className="font-semibold py-1 text-sm leading-none">
+                        <Tooltip title="Data Tentativa Pagamento"><span>Dt. Tent. Pagto.</span></Tooltip>
+                      </TableCell>
+                      <TableCell className="font-semibold p-1 text-sm" style={{ whiteSpace: 'nowrap' }}>
+                        <Tooltip title={isGuardador ? 'Nome Guardador' : 'Nome'}>
+                          <span>{isGuardador ? 'Nome Guardador' : 'Nome'}</span>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell className="font-semibold p-1 text-sm" style={{ maxWidth: 220 }}>
+                        <Tooltip title="Email"><span>Email</span></Tooltip>
+                      </TableCell>
+                      <TableCell className="font-semibold py-1 text-sm leading-none">
+                        <Tooltip title="Cód. Banco"><span>Cód. Banco</span></Tooltip>
+                      </TableCell>
+                      <TableCell className="font-semibold p-1 text-sm">
+                        <Tooltip title="Banco"><span>Banco</span></Tooltip>
+                      </TableCell>
+                      <TableCell className="font-semibold p-1 text-sm">
+                        <Tooltip title="CPF/CNPJ"><span>CPF/CNPJ</span></Tooltip>
+                      </TableCell>
+                      <TableCell className="font-semibold py-1 text-sm leading-none">
+                        <Tooltip title={isGuardador ? 'Associação' : 'Consórcios | Modais'}>
+                          <span>{isGuardador ? 'Associação' : 'Consórcios | Modais'}</span>
+                        </Tooltip>
+                      </TableCell>
+                      {(isGuardador ? showEffectivePaymentDate : !showErroStatus) && (
+                        <TableCell className="font-semibold py-1 text-sm leading-none">
+                          <Tooltip title="Data Efetiva Pagamento"><span>Dt. Efet. Pagto.</span></Tooltip>
+                        </TableCell>
+                      )}
+                      <TableCell className="font-semibold p-1 text-sm">
+                        <Tooltip title="Valor"><span>Valor</span></Tooltip>
+                      </TableCell>
+                      <TableCell className="font-semibold p-1 text-sm">
+                        <Tooltip title="Status"><span>Status</span></Tooltip>
+                      </TableCell>
+                      <TableCell className="font-semibold p-1 text-sm">
+                        <Tooltip title="Descrição do Erro"><span>Descrição do Erro</span></Tooltip>
+                      </TableCell>
+                    </>
                   )}
-                  <TableCell className="font-semibold p-1 text-sm">Valor</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm">Status</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm">Descrição do Erro</TableCell>
                 </TableRow>
               </TableHead>
 
               <TableBody className="overflow-scroll">
                 {!isLoading ? (
-                  reportList?.count > 0 ? (
+                  showStucColumns ? (
+                    stucExplodedRows.length > 0 ? (
+                      <StucGratuidadeBodyRows
+                        rows={stucExplodedRows}
+                        formatCurrency={formatCurrency}
+                        showDataPagamento
+                      />
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={colSpan} className="text-center py-4">
+                          Não há dados para serem exibidos
+                        </TableCell>
+                      </TableRow>
+                    )
+                  ) : reportList?.count > 0 ? (
                     reportList.data?.map((report, index) => (
                       <TableRow key={index} className="hover:bg-gray-50">
                         <TableCell className="text-xs py-1">{report.dataReferencia}</TableCell>
@@ -907,8 +975,11 @@ export default function FinancialMovementReport({ perfil }) {
                       reportList.valorPendente > 0 ||
                       showErroStatus) && (
                       <TableRow>
-                        <TableCell />
-                        <TableCell colSpan={7} className="text-right font-bold text-black text-base pt-16">
+                        {!showStucColumns && <TableCell />}
+                        <TableCell
+                          colSpan={showStucColumns ? colSpan : 7}
+                          className="text-right font-bold text-black text-base pt-16"
+                        >
                           {(() => {
                             const isErrorReport = showErroStatus;
                             const valorPago = toNumber(reportList.valorPago);
@@ -937,8 +1008,12 @@ export default function FinancialMovementReport({ perfil }) {
                             return totals.filter(Boolean).join("    |    ");
                           })()}
                         </TableCell>
-                        <TableCell />
-                        <TableCell />
+                        {!showStucColumns && (
+                          <>
+                            <TableCell />
+                            <TableCell />
+                          </>
+                        )}
                       </TableRow>
                     )}
                   </>
