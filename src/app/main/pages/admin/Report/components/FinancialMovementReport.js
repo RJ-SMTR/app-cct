@@ -503,10 +503,10 @@ export default function FinancialMovementReport({ perfil }) {
   };
 
   const formatCpfCnpj = (value) => {
-    if (!value) return '-';
-    return isGuardador
-      ? value.replace(/(\d{2,3})(\d{3})(\d{3})(\d{4})?(\d{2})/, "$1.$2.$3-$5")
-      : value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+    const digits = String(value ?? '').replace(/\D/g, '');
+    if (digits.length === 11) return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    if (digits.length === 14) return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    return value || '-';
   };
 
   const colSpan = showStucColumns ? STUC_GRATUIDADE_COLUMN_COUNT.withDataPagamento : (isGuardador ? 11 : 6);
