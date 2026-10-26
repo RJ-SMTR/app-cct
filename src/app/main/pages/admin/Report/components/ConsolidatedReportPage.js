@@ -171,6 +171,7 @@ export default function ConsolidatedReportPage({ perfil }) {
         nome: (report) => report.nomefavorecido,
         cpfCnpj: (report) => report.cpfCnpj,
         valor: (report) => report.valor,
+        dataPagamento: (report) => report.dataPagamento,
       })
     : [];
 
@@ -187,11 +188,6 @@ export default function ConsolidatedReportPage({ perfil }) {
         { field: 'nomefavorecido', headerName: 'Nome', flex: 1, minWidth: 260 },
         { field: 'valor', headerName: 'Valor Total', width: 180, valueFormatter: (params) => formatter.format(params.value ?? 0) },
       ];
-
-  const formatCpfCnpj = (value) => {
-    if (!value) return '-';
-    return value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
-  };
 
   const totalValue = isGuardador ? guardadorTotal : (reportList.valor ?? 0);
 
@@ -805,7 +801,7 @@ export default function ConsolidatedReportPage({ perfil }) {
               <Table size="small">
                 <TableHead>
                   <TableRow className="sticky top-0 bg-white z-10">
-                    <StucGratuidadeHeaderCells showDataPagamento={false} />
+                    <StucGratuidadeHeaderCells showDataPagamento />
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -814,8 +810,7 @@ export default function ConsolidatedReportPage({ perfil }) {
                       <StucGratuidadeBodyRows
                         rows={stucExplodedRows}
                         formatCurrency={formatter.format}
-                        formatCpfCnpj={formatCpfCnpj}
-                        showDataPagamento={false}
+                        showDataPagamento
                       />
                     ) : (
                       <TableRow>

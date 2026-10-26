@@ -27,6 +27,15 @@ export function explodeStucGratuidadeRows(data, { nome, cpfCnpj, valor, dataPaga
 
 export const STUC_GRATUIDADE_COLUMN_COUNT = { withDataPagamento: 6, withoutDataPagamento: 5 };
 
+// STUC - Gratuidade é só Permissionário/pessoa física, então CPF (11 dígitos) - máscara fixa
+// XXX.XXX.XXX-XX, não reaproveita o formatCpfCnpj de cada página (que trata CPF/CNPJ
+// variável e não reconhecia CPF puro de 11 dígitos).
+function formatCpf(value) {
+  const digits = String(value ?? '').replace(/\D/g, '');
+  if (digits.length !== 11) return value || '-';
+  return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+}
+
 export function StucGratuidadeHeaderCells({ showDataPagamento }) {
   return (
     <>
@@ -47,18 +56,18 @@ export function StucGratuidadeHeaderCells({ showDataPagamento }) {
       </TableCell>
       {showDataPagamento && (
         <TableCell className="font-semibold p-1 text-sm">
-          <Tooltip title="Data Ordem de Pagamento"><span>Data Ordem de Pagamento</span></Tooltip>
+          <Tooltip title="Data de Pagamento"><span>Data de Pagamento</span></Tooltip>
         </TableCell>
       )}
     </>
   );
 }
 
-export function StucGratuidadeBodyRows({ rows, formatCurrency, formatCpfCnpj, showDataPagamento }) {
+export function StucGratuidadeBodyRows({ rows, formatCurrency, showDataPagamento }) {
   return rows.map((row) => (
     <TableRow key={row.id} className="hover:bg-gray-50">
       <TableCell className="text-xs py-6 px-1" style={{ whiteSpace: 'nowrap' }}>{row.nome}</TableCell>
-      <TableCell className="text-xs py-6 px-1">{formatCpfCnpj(row.cpfCnpj)}</TableCell>
+      <TableCell className="text-xs py-6 px-1">{formatCpf(row.cpfCnpj)}</TableCell>
       <TableCell className="text-xs py-1">{row.dataOrdem ?? '-'}</TableCell>
       <TableCell className="text-xs py-6 px-1">{row.valorOrdem != null ? formatCurrency(row.valorOrdem) : '-'}</TableCell>
       <TableCell className="text-xs py-6 px-1">{formatCurrency(row.valorLancamento)}</TableCell>

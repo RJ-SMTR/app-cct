@@ -861,7 +861,6 @@ export default function FinancialMovementReport({ perfil }) {
                       <StucGratuidadeBodyRows
                         rows={stucExplodedRows}
                         formatCurrency={formatCurrency}
-                        formatCpfCnpj={formatCpfCnpj}
                         showDataPagamento
                       />
                     ) : (
