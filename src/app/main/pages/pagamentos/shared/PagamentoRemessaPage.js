@@ -107,10 +107,14 @@ export default function PagamentoRemessaPage({
   mostrarBotoesRapidosData = true,
   permitirGratuidade = false,
   permitirRenovarNsa = false,
+  permitirDescontoIndevido = false,
 }) {
   const dispatch = useDispatch();
   const [dateRange, setDateRange] = useState([]);
   const [gratuidade, setGratuidade] = useState(false);
+  // Desconto de pagamentos indevidos (só Guardadores): liga/desliga e quanto do saldo devedor pode ser descontado por indevido.
+  const [descontarIndevido, setDescontarIndevido] = useState(false);
+  const [percentualIndevido, setPercentualIndevido] = useState('100');
   const [confirmGratuidadeOpen, setConfirmGratuidadeOpen] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
   const [rows, setRows] = useState([]);
@@ -328,6 +332,17 @@ export default function PagamentoRemessaPage({
     };
     if (permitirGratuidade && gratuidade) {
       payload.gratuidade = true;
+    }
+    if (permitirDescontoIndevido) {
+      payload.descontarIndevido = descontarIndevido;
+      if (descontarIndevido) {
+        const percentual = Number(String(percentualIndevido).replace(',', '.'));
+        if (!Number.isFinite(percentual) || percentual <= 0 || percentual > 100) {
+          dispatch(showMessage({ message: 'Informe o percentual do saldo devedor a descontar (maior que 0 e até 100).' }));
+          return;
+        }
+        payload.percentualDescontoIndevido = percentual;
+      }
     }
 
     setIsPreparing(true);
@@ -627,6 +642,30 @@ export default function PagamentoRemessaPage({
               }
               label={<Typography className="font-bold">Gratuidade</Typography>}
             />
+          )}
+          {permitirDescontoIndevido && (
+            <>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={descontarIndevido}
+                    disabled={isPreparing}
+                    onChange={(event) => setDescontarIndevido(event.target.checked)}
+                  />
+                }
+                label={<Typography className="font-bold">Descontar pagamentos indevidos</Typography>}
+              />
+              <TextField
+                size="small"
+                label="% do saldo devedor"
+                value={percentualIndevido}
+                disabled={!descontarIndevido || isPreparing}
+                onChange={(event) => setPercentualIndevido(event.target.value.replace(/[^0-9.,]/g, ''))}
+                helperText="Máximo descontado de cada indevido"
+                sx={{ width: 170 }}
+                inputProps={{ inputMode: 'decimal' }}
+              />
+            </>
           )}
           <Button
             variant="contained"
