@@ -244,13 +244,9 @@ describe('Abatimento por duplicidade', () => {
   const pagamento = (data, statusRemessa) => ({ paymentDate: data, dataTentativaPagamento: data, statusRemessa, totalPaymentValue: 238 });
 
   it('monta o motivo com o mês (MM/AAAA) da duplicidade, sem repetir o mês', () => {
-    expect(buildDuplicateOffsetReason(['2026-09-03', '2026-09-09', '2026-09-23'])).toBe(
-      'Abatimento referente a pagamento realizado em duplicidade no mês de 09/2026'
-    );
-    expect(buildDuplicateOffsetReason(['2026-08-12', '2026-09-03'])).toBe(
-      'Abatimento referente a pagamento realizado em duplicidade nos meses de 08/2026 e 09/2026'
-    );
-    expect(buildDuplicateOffsetReason([])).toBe('Abatimento referente a pagamento realizado em duplicidade');
+    expect(buildDuplicateOffsetReason(['2026-09-03', '2026-09-09', '2026-09-23'])).toBe('Valor pago em duplicidade em 09/2026');
+    expect(buildDuplicateOffsetReason(['2026-08-12', '2026-09-03'])).toBe('Valor pago em duplicidade em 08/2026 e 09/2026');
+    expect(buildDuplicateOffsetReason([])).toBe('Valor pago em duplicidade');
   });
 
   it('marca o pagamento pago do dia em que houve abatimento', () => {
@@ -258,7 +254,7 @@ describe('Abatimento por duplicidade', () => {
 
     expect(marked[0].duplicateOffset).toEqual({
       status: 'Abatimento por duplicidade',
-      reason: 'Abatimento referente a pagamento realizado em duplicidade no mês de 09/2026',
+      reason: 'Valor pago em duplicidade em 09/2026',
     });
   });
 

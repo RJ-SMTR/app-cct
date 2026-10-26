@@ -319,8 +319,8 @@ function formatMonthYear(dateOnly) {
 }
 
 /**
- * Motivo do status "Abatimento por duplicidade": "Abatimento referente a pagamento realizado em duplicidade no mês de 09/2026".
- * Os meses vêm das datas dos pagamentos em duplicidade (sem repetir, em ordem); sem datas, fica só a frase sem o mês.
+ * Motivo do status "Abatimento por duplicidade": "Valor pago em duplicidade em 09/2026".
+ * Os meses vêm das datas dos pagamentos em duplicidade (sem repetir, em ordem, "08/2026 e 09/2026"); sem datas, fica só a frase sem o mês.
  */
 export function buildDuplicateOffsetReason(duplicateDates) {
   const months = [
@@ -330,17 +330,17 @@ export function buildDuplicateOffsetReason(duplicateDates) {
         .filter(Boolean)
     ),
   ];
-  const base = "Abatimento referente a pagamento realizado em duplicidade";
+  const base = "Valor pago em duplicidade";
 
   if (months.length === 0) {
     return base;
   }
 
   if (months.length === 1) {
-    return `${base} no mês de ${months[0]}`;
+    return `${base} em ${months[0]}`;
   }
 
-  return `${base} nos meses de ${months.slice(0, -1).join(", ")} e ${months[months.length - 1]}`;
+  return `${base} em ${months.slice(0, -1).join(", ")} e ${months[months.length - 1]}`;
 }
 
 function isPaidRemittanceStatus(statusRemessa) {

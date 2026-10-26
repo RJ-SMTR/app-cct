@@ -353,14 +353,22 @@ function getTotalPhotosCount(validPhotosCount, rejectedPhotosCount) {
 }
 */
 
+const DUPLICATE_OFFSET_BADGE_COLOR = "#7b1fa2";
+
 function ValidPhotosStatusBadge({ status, paymentStatus, duplicateOffset }) {
   if (duplicateOffset) {
     return (
       <Badge
         className="whitespace-nowrap"
-        color="info"
         badgeContent={duplicateOffset.status}
-        sx={statusBadgeSx}
+        sx={{
+          ...statusBadgeSx,
+          "& .MuiBadge-badge": {
+            ...statusBadgeSx["& .MuiBadge-badge"],
+            backgroundColor: DUPLICATE_OFFSET_BADGE_COLOR,
+            color: "#fff",
+          },
+        }}
       />
     );
   }
