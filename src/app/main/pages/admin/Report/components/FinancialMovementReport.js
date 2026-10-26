@@ -17,6 +17,7 @@ import {
   TableContainer,
   TablePagination,
   Grid,
+  Tooltip,
 } from "@mui/material";
 import SaveAltIcon from "@mui/icons-material/SaveAlt";
 import { format } from "date-fns";
@@ -96,12 +97,9 @@ export default function FinancialMovementReport({ perfil }) {
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [hasSearched, setHasSearched] = useState(false);
   const [pageCursors, setPageCursors] = useState([null]);
-  const [selectedEspecificos, setSelectedEspecificos] = useState([]);
+  const [, setSelectedEspecificos] = useState([]);
   const hasNextPage = Boolean(pageCursors[page + 1]);
   const showEffectivePaymentDate = shouldShowAgentEffectivePaymentDateColumn(whichStatusShow);
-  // STUC - Gratuidade (ADR 0012, api-cct): cada linha passa a representar uma janela de
-  // pagamento (até 4 dias), com 8 colunas extras (Dt Ord. Pg1..4 + Valor). Só Permissionário.
-  const showStucColumns = !isGuardador && selectedEspecificos.includes('STUC - Gratuidade');
 
   const statusBase = STATUS_OPTIONS.filter((option) => option.label !== "Todos");
   const erroStatus = ERRO_STATUS_OPTIONS;
@@ -501,7 +499,7 @@ export default function FinancialMovementReport({ perfil }) {
       : value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
   };
 
-  const colSpan = (isGuardador ? 11 : 6) + (showStucColumns ? 8 : 0);
+  const colSpan = isGuardador ? 11 : 6;
 
   return (
     <>
@@ -787,30 +785,45 @@ export default function FinancialMovementReport({ perfil }) {
             <Table size="small" sx={isGuardador ? { minWidth: 1280 } : undefined}>
               <TableHead>
                 <TableRow className="sticky top-0 bg-white z-10">
-                  <TableCell className="font-semibold py-1 text-sm leading-none">Data Tentativa Pagamento</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm" style={{ whiteSpace: 'nowrap' }}>
-                    {isGuardador ? 'Nome Guardador' : 'Nome'}
-                  </TableCell>
-                  <TableCell className="font-semibold p-1 text-sm" style={{ maxWidth: 220 }}>Email</TableCell>
-                  <TableCell className="font-semibold py-1 text-sm leading-none">Cód. Banco</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm">Banco</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm">CPF/CNPJ</TableCell>
                   <TableCell className="font-semibold py-1 text-sm leading-none">
-                    {isGuardador ? 'Associação' : 'Consórcios | Modais'}
+                    <Tooltip title="Data Tentativa Pagamento"><span>Dt. Tent. Pagto.</span></Tooltip>
+                  </TableCell>
+                  <TableCell className="font-semibold p-1 text-sm" style={{ whiteSpace: 'nowrap' }}>
+                    <Tooltip title={isGuardador ? 'Nome Guardador' : 'Nome'}>
+                      <span>{isGuardador ? 'Nome Guardador' : 'Nome'}</span>
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell className="font-semibold p-1 text-sm" style={{ maxWidth: 220 }}>
+                    <Tooltip title="Email"><span>Email</span></Tooltip>
+                  </TableCell>
+                  <TableCell className="font-semibold py-1 text-sm leading-none">
+                    <Tooltip title="Cód. Banco"><span>Cód. Banco</span></Tooltip>
+                  </TableCell>
+                  <TableCell className="font-semibold p-1 text-sm">
+                    <Tooltip title="Banco"><span>Banco</span></Tooltip>
+                  </TableCell>
+                  <TableCell className="font-semibold p-1 text-sm">
+                    <Tooltip title="CPF/CNPJ"><span>CPF/CNPJ</span></Tooltip>
+                  </TableCell>
+                  <TableCell className="font-semibold py-1 text-sm leading-none">
+                    <Tooltip title={isGuardador ? 'Associação' : 'Consórcios | Modais'}>
+                      <span>{isGuardador ? 'Associação' : 'Consórcios | Modais'}</span>
+                    </Tooltip>
                   </TableCell>
                   {(isGuardador ? showEffectivePaymentDate : !showErroStatus) && (
-                    <TableCell className="font-semibold py-1 text-sm leading-none">Data Efetiva Pagamento</TableCell>
+                    <TableCell className="font-semibold py-1 text-sm leading-none">
+                      <Tooltip title="Data Efetiva Pagamento"><span>Dt. Efet. Pagto.</span></Tooltip>
+                    </TableCell>
                   )}
-                  <TableCell className="font-semibold p-1 text-sm">Valor</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm">Status</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm">Descrição do Erro</TableCell>
-                  {showStucColumns &&
-                    [1, 2, 3, 4].map((n) => (
-                      <React.Fragment key={`stuc-head-${n}`}>
-                        <TableCell className="font-semibold p-1 text-sm">{`Dt Ord. Pg${n}`}</TableCell>
-                        <TableCell className="font-semibold p-1 text-sm">Valor</TableCell>
-                      </React.Fragment>
-                    ))}
+                  <TableCell className="font-semibold p-1 text-sm">
+                    <Tooltip title="Valor"><span>Valor</span></Tooltip>
+                  </TableCell>
+                  <TableCell className="font-semibold p-1 text-sm">
+                    <Tooltip title="Status"><span>Status</span></Tooltip>
+                  </TableCell>
+                  <TableCell className="font-semibold p-1 text-sm">
+                    <Tooltip title="Descrição do Erro"><span>Descrição do Erro</span></Tooltip>
+                  </TableCell>
                 </TableRow>
               </TableHead>
 
@@ -863,15 +876,6 @@ export default function FinancialMovementReport({ perfil }) {
                         <TableCell className="text-xs py-6 px-1" style={{ maxWidth: 280, overflowWrap: 'break-word' }}>
                           {report.descricaoErro || '-'}
                         </TableCell>
-                        {showStucColumns &&
-                          [1, 2, 3, 4].map((n) => (
-                            <React.Fragment key={`stuc-body-${index}-${n}`}>
-                              <TableCell className="text-xs py-1">{report[`dataOrdemPagamento${n}`] || '-'}</TableCell>
-                              <TableCell className="text-xs py-6 px-1">
-                                {report[`valorOrdemPagamento${n}`] != null ? formatCurrency(report[`valorOrdemPagamento${n}`]) : '-'}
-                              </TableCell>
-                            </React.Fragment>
-                          ))}
                       </TableRow>
                     ))
                   ) : (
