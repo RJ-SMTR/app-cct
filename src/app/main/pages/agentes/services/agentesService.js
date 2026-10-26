@@ -290,6 +290,7 @@ export function buildPagamentoIndevido(response) {
   const note = buildDuplicateRefundNote(duplicateDates);
 
   return {
+    duplicateDates,
     totalIndevido: normalizeNumber(totals.valorIndevido),
     totalAbatido: normalizeNumber(totals.valorDebitado),
     totalSaldoDevedor: normalizeNumber(totals.saldoDevedor),
@@ -308,6 +309,71 @@ export function buildPagamentoIndevido(response) {
       };
     }),
   };
+}
+
+export const DUPLICATE_OFFSET_STATUS = "Abatimento por duplicidade";
+
+function formatMonthYear(dateOnly) {
+  const [year, month] = String(dateOnly || "").split("-");
+  return year && month ? `${month}/${year}` : "";
+}
+
+/**
+ * Motivo do status "Abatimento por duplicidade": "Abatimento referente a pagamento realizado em duplicidade no mês de 09/2026".
+ * Os meses vêm das datas dos pagamentos em duplicidade (sem repetir, em ordem); sem datas, fica só a frase sem o mês.
+ */
+export function buildDuplicateOffsetReason(duplicateDates) {
+  const months = [
+    ...new Set(
+      (Array.isArray(duplicateDates) ? duplicateDates : [])
+        .map(formatMonthYear)
+        .filter(Boolean)
+    ),
+  ];
+  const base = "Abatimento referente a pagamento realizado em duplicidade";
+
+  if (months.length === 0) {
+    return base;
+  }
+
+  if (months.length === 1) {
+    return `${base} no mês de ${months[0]}`;
+  }
+
+  return `${base} nos meses de ${months.slice(0, -1).join(", ")} e ${months[months.length - 1]}`;
+}
+
+function isPaidRemittanceStatus(statusRemessa) {
+  return Number(statusRemessa) === 3 || Number(statusRemessa) === 5;
+}
+
+/**
+ * Marca (`duplicateOffset`) os pagamentos da visão mensal que estão pagos e tiveram abatimento do pagamento indevido: o pagamento
+ * do mesmo dia com valor pago menor que o devido no quadro do indevido. Os demais seguem como vieram.
+ */
+export function markDuplicateOffsetPayments(monthlyPayments, pagamentoIndevido) {
+  const payments = Array.isArray(monthlyPayments) ? monthlyPayments : [];
+  const offsetDates = new Set(
+    (pagamentoIndevido?.items || [])
+      .filter((item) => item.difference < 0 && item.date)
+      .map((item) => item.date)
+  );
+
+  if (offsetDates.size === 0) {
+    return payments;
+  }
+
+  const reason = buildDuplicateOffsetReason(pagamentoIndevido?.duplicateDates);
+
+  return payments.map((payment) => {
+    const paymentDate = payment.dataTentativaPagamento || payment.paymentDate;
+
+    if (!isPaidRemittanceStatus(payment.statusRemessa) || !offsetDates.has(paymentDate)) {
+      return payment;
+    }
+
+    return { ...payment, duplicateOffset: { status: DUPLICATE_OFFSET_STATUS, reason } };
+  });
 }
 
 export async function getAgentePagamentoIndevido(userId) {

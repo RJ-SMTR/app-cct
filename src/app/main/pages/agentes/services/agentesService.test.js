@@ -17,11 +17,13 @@ jest.mock("../../../../auth/services/jwtService/jwtServiceConfig", () => ({
 }));
 
 import {
+  buildDuplicateOffsetReason,
   buildDuplicateRefundNote,
   buildMonthlyPaymentRowKey,
   buildMonthlyPaymentRows,
   buildPagamentoIndevido,
   getPaymentStatus,
+  markDuplicateOffsetPayments,
 } from "./agentesService";
 
 describe("buildPagamentoIndevido", () => {
@@ -230,5 +232,46 @@ describe("agentesService payment normalization", () => {
     expect(buildMonthlyPaymentRowKey(monthlyRows[0], 0)).not.toBe(
       buildMonthlyPaymentRowKey(monthlyRows[1], 1)
     );
+  });
+});
+
+describe('Abatimento por duplicidade', () => {
+  const indevido = buildPagamentoIndevido({
+    totais: { quantidade: 1, devendo: 1, valorIndevido: '877.80', valorDebitado: '238.00', saldoDevedor: '639.80' },
+    lancamentos: [{ data: '2026-10-16', valorDevido: '238.00', valorPago: '0.00', diferenca: '-238.00', statusRemessa: 3 }],
+    datasDuplicidade: ['2026-09-03', '2026-09-09', '2026-09-23'],
+  });
+  const pagamento = (data, statusRemessa) => ({ paymentDate: data, dataTentativaPagamento: data, statusRemessa, totalPaymentValue: 238 });
+
+  it('monta o motivo com o mês (MM/AAAA) da duplicidade, sem repetir o mês', () => {
+    expect(buildDuplicateOffsetReason(['2026-09-03', '2026-09-09', '2026-09-23'])).toBe(
+      'Abatimento referente a pagamento realizado em duplicidade no mês de 09/2026'
+    );
+    expect(buildDuplicateOffsetReason(['2026-08-12', '2026-09-03'])).toBe(
+      'Abatimento referente a pagamento realizado em duplicidade nos meses de 08/2026 e 09/2026'
+    );
+    expect(buildDuplicateOffsetReason([])).toBe('Abatimento referente a pagamento realizado em duplicidade');
+  });
+
+  it('marca o pagamento pago do dia em que houve abatimento', () => {
+    const marked = markDuplicateOffsetPayments([pagamento('2026-10-16', 3)], indevido);
+
+    expect(marked[0].duplicateOffset).toEqual({
+      status: 'Abatimento por duplicidade',
+      reason: 'Abatimento referente a pagamento realizado em duplicidade no mês de 09/2026',
+    });
+  });
+
+  it('não marca pagamento de outro dia nem o que não está pago', () => {
+    const payments = [pagamento('2026-10-20', 3), pagamento('2026-10-16', 2), pagamento('2026-10-16', null), pagamento('2026-10-16', 4)];
+
+    markDuplicateOffsetPayments(payments, indevido).forEach((p) => expect(p.duplicateOffset).toBeUndefined());
+  });
+
+  it('sem abatimento (ou sem indevido) devolve os pagamentos como vieram', () => {
+    const payments = [pagamento('2026-10-16', 3)];
+
+    expect(markDuplicateOffsetPayments(payments, null)).toBe(payments);
+    expect(markDuplicateOffsetPayments(payments, { items: [{ date: '2026-10-16', difference: 0 }] })).toBe(payments);
   });
 });

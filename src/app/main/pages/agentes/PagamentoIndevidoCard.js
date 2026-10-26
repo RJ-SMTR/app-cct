@@ -10,8 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import { format, isValid, parseISO } from "date-fns";
-import { memo, useEffect, useState } from "react";
-import { getAgentePagamentoIndevido } from "./services/agentesService";
+import { memo } from "react";
 
 function formatAmount(value) {
   return new Intl.NumberFormat("pt-BR", {
@@ -46,36 +45,10 @@ function getStatusColor(status) {
 
 /**
  * Quadro do valor indevido do guardador (tabela pagamento_indevido). Só aparece quando ainda há saldo devedor: sem saldo, sem
- * pagamento indevido ou se a consulta falhar, nada é exibido e o resto da tela não é afetado.
+ * pagamento indevido ou se a consulta falhar, nada é exibido e o resto da tela não é afetado. Recebe o indevido já buscado
+ * (`useAgentePagamentoIndevido`), o mesmo que marca o "Abatimento por duplicidade" na visão mensal.
  */
-const PagamentoIndevidoCard = memo(function PagamentoIndevidoCard({ agentId, enabled = true }) {
-  const [indevido, setIndevido] = useState(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    setIndevido(null);
-
-    if (!enabled || !agentId) {
-      return undefined;
-    }
-
-    getAgentePagamentoIndevido(agentId)
-      .then((result) => {
-        if (!cancelled) {
-          setIndevido(result);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setIndevido(null);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [agentId, enabled]);
-
+const PagamentoIndevidoCard = memo(function PagamentoIndevidoCard({ indevido }) {
   if (!indevido?.hasBalance) {
     return null;
   }
