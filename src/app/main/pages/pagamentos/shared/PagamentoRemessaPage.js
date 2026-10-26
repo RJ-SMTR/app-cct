@@ -112,9 +112,9 @@ export default function PagamentoRemessaPage({
   const dispatch = useDispatch();
   const [dateRange, setDateRange] = useState([]);
   const [gratuidade, setGratuidade] = useState(false);
-  // Desconto de pagamentos indevidos (só Guardadores): liga/desliga e quanto do saldo devedor pode ser descontado por indevido.
+  // Desconto de pagamentos indevidos (só Guardadores): liga/desliga e o máximo (R$) que pode ser descontado de cada indevido.
   const [descontarIndevido, setDescontarIndevido] = useState(false);
-  const [percentualIndevido, setPercentualIndevido] = useState('100');
+  const [valorIndevido, setValorIndevido] = useState(100);
   const [confirmGratuidadeOpen, setConfirmGratuidadeOpen] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
   const [rows, setRows] = useState([]);
@@ -336,12 +336,12 @@ export default function PagamentoRemessaPage({
     if (permitirDescontoIndevido) {
       payload.descontarIndevido = descontarIndevido;
       if (descontarIndevido) {
-        const percentual = Number(String(percentualIndevido).replace(',', '.'));
-        if (!Number.isFinite(percentual) || percentual <= 0 || percentual > 100) {
-          dispatch(showMessage({ message: 'Informe o percentual do saldo devedor a descontar (maior que 0 e até 100).' }));
+        const valor = Number(valorIndevido);
+        if (!Number.isFinite(valor) || valor <= 0) {
+          dispatch(showMessage({ message: 'Informe o valor máximo a descontar de cada indevido (maior que zero).' }));
           return;
         }
-        payload.percentualDescontoIndevido = percentual;
+        payload.valorDescontoIndevido = Math.round(valor * 100) / 100;
       }
     }
 
@@ -655,15 +655,21 @@ export default function PagamentoRemessaPage({
                 }
                 label={<Typography className="font-bold">Descontar pagamentos indevidos</Typography>}
               />
-              <TextField
+              <NumericFormat
+                customInput={TextField}
                 size="small"
-                label="% do saldo devedor"
-                value={percentualIndevido}
+                label="Valor a descontar (R$)"
+                value={valorIndevido ?? ''}
                 disabled={!descontarIndevido || isPreparing}
-                onChange={(event) => setPercentualIndevido(event.target.value.replace(/[^0-9.,]/g, ''))}
+                onValueChange={(values) => setValorIndevido(values.floatValue ?? null)}
+                thousandSeparator="."
+                decimalSeparator=","
+                decimalScale={2}
+                fixedDecimalScale
+                allowNegative={false}
+                prefix="R$ "
                 helperText="Máximo descontado de cada indevido"
-                sx={{ width: 170 }}
-                inputProps={{ inputMode: 'decimal' }}
+                sx={{ width: 200 }}
               />
             </>
           )}
