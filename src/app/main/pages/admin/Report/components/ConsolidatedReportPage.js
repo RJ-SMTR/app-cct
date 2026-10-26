@@ -9,6 +9,12 @@ import {
   CircularProgress,
   Menu,
   Grid,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material';
 import { DataGrid, ptBR as pt } from '@mui/x-data-grid';
 import SaveAltIcon from '@mui/icons-material/SaveAlt';
@@ -36,6 +42,11 @@ import ValorRangeFilter from './shared/ValorRangeFilter';
 import ReportPeriodFilter from './shared/ReportPeriodFilter';
 import useFavorecidoGuardadorOptions from './shared/useFavorecidoGuardadorOptions';
 import { applyPendenciaDePagamentoErro, applyEspecificosFlags } from './shared/reportRequestUtils';
+import {
+  explodeStucGratuidadeRows,
+  StucGratuidadeHeaderCells,
+  StucGratuidadeBodyRows,
+} from './shared/StucGratuidadeTable';
 import {
   STATUS_OPTIONS,
   ERRO_STATUS_OPTIONS,
@@ -153,54 +164,34 @@ export default function ConsolidatedReportPage({ perfil }) {
   const showStucColumns = !isGuardador && selectedEspecificos.includes('STUC - Gratuidade');
 
   // ---- Grid rows/columns ----
+  // STUC - Gratuidade: mesmo componente/função da Movimentação Financeira (FinancialMovementReport.js) -
+  // ver shared/StucGratuidadeTable.js. Essa tela não usa DataGrid pra esse caso (tabela simples abaixo).
   const stucExplodedRows = showStucColumns
-    ? (reportList.data ?? []).flatMap((report) =>
-        [1, 2, 3, 4]
-          .filter((n) => report[`dataOrdemPagamento${n}`] || report[`valorOrdemPagamento${n}`] != null)
-          .map((n) => ({
-            id: `${report.nomefavorecido}::${report.cpfCnpj}::${n}`,
-            nomefavorecido: report.nomefavorecido,
-            cpfCnpj: report.cpfCnpj,
-            dataOrdem: report[`dataOrdemPagamento${n}`],
-            valorOrdem: report[`valorOrdemPagamento${n}`],
-            valorLancamento: report.valor,
-          })),
-      )
+    ? explodeStucGratuidadeRows(reportList.data, {
+        nome: (report) => report.nomefavorecido,
+        cpfCnpj: (report) => report.cpfCnpj,
+        valor: (report) => report.valor,
+      })
     : [];
 
   const gridRows = isGuardador
     ? guardadorDisplayRows.map((row) => ({ id: row.nome, ...row }))
-    : showStucColumns
-      ? stucExplodedRows
-      : (Array.isArray(reportList.data) ? reportList.data.map((report) => ({ id: report.nomefavorecido, ...report })) : []);
+    : (Array.isArray(reportList.data) ? reportList.data.map((report) => ({ id: report.nomefavorecido, ...report })) : []);
 
   const gridColumns = isGuardador
     ? [
         { field: 'nome', headerName: 'Nome', flex: 1, minWidth: 260 },
         { field: 'valor', headerName: 'Valor Total', width: 180, valueFormatter: (params) => formatter.format(params.value ?? 0) },
       ]
-    : showStucColumns
-      ? [
-          { field: 'nomefavorecido', headerName: 'Nome', flex: 1, minWidth: 220 },
-          { field: 'cpfCnpj', headerName: 'CPF', width: 150 },
-          { field: 'dataOrdem', headerName: 'Data Ordem', width: 130 },
-          {
-            field: 'valorOrdem',
-            headerName: 'Valor Ordem',
-            width: 140,
-            valueFormatter: (params) => (params.value != null ? formatter.format(params.value) : ''),
-          },
-          {
-            field: 'valorLancamento',
-            headerName: 'Valor Lançamento',
-            width: 170,
-            valueFormatter: (params) => formatter.format(params.value ?? 0),
-          },
-        ]
-      : [
-          { field: 'nomefavorecido', headerName: 'Nome', flex: 1, minWidth: 260 },
-          { field: 'valor', headerName: 'Valor Total', width: 180, valueFormatter: (params) => formatter.format(params.value ?? 0) },
-        ];
+    : [
+        { field: 'nomefavorecido', headerName: 'Nome', flex: 1, minWidth: 260 },
+        { field: 'valor', headerName: 'Valor Total', width: 180, valueFormatter: (params) => formatter.format(params.value ?? 0) },
+      ];
+
+  const formatCpfCnpj = (value) => {
+    if (!value) return '-';
+    return value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+  };
 
   const totalValue = isGuardador ? guardadorTotal : (reportList.valor ?? 0);
 
@@ -809,29 +800,67 @@ export default function ConsolidatedReportPage({ perfil }) {
             />
           </header>
 
-          <div style={{ height: isGuardador ? '60vh' : '60vh', width: '100%' }}>
-            <DataGrid
-              localeText={{
-                ...pt.components.MuiDataGrid.defaultProps.localeText,
-                noRowsLabel: !isGuardador && !hasSearched
-                  ? 'Faça uma busca para visualizar os resultados'
-                  : 'Não há dados para serem exibidos',
-              }}
-              rows={gridRows}
-              columns={gridColumns}
-              loading={isLoading}
-              disableRowSelectionOnClick
-              {...(isGuardador
-                ? { pageSizeOptions: [10, 25, 50, 100], initialState: { pagination: { paginationModel: { pageSize: 25 } } } }
-                : {
-                    paginationMode: 'server',
-                    rowCount: reportList.count ?? 0,
-                    paginationModel: { page, pageSize },
-                    onPaginationModelChange: handlePaginationModelChange,
-                    pageSizeOptions: [10, 25, 50, 100],
-                  })}
-            />
-          </div>
+          {showStucColumns ? (
+            <TableContainer sx={{ height: '60vh', width: '100%', overflowX: 'auto', overflowY: 'auto' }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow className="sticky top-0 bg-white z-10">
+                    <StucGratuidadeHeaderCells showDataPagamento={false} />
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {!isLoading ? (
+                    stucExplodedRows.length > 0 ? (
+                      <StucGratuidadeBodyRows
+                        rows={stucExplodedRows}
+                        formatCurrency={formatter.format}
+                        formatCpfCnpj={formatCpfCnpj}
+                        showDataPagamento={false}
+                      />
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-4">
+                          {!hasSearched ? 'Faça uma busca para visualizar os resultados' : 'Não há dados para serem exibidos'}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5}>
+                        <Box className="flex justify-center items-center m-10">
+                          <CircularProgress />
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <div style={{ height: isGuardador ? '60vh' : '60vh', width: '100%' }}>
+              <DataGrid
+                localeText={{
+                  ...pt.components.MuiDataGrid.defaultProps.localeText,
+                  noRowsLabel: !isGuardador && !hasSearched
+                    ? 'Faça uma busca para visualizar os resultados'
+                    : 'Não há dados para serem exibidos',
+                }}
+                rows={gridRows}
+                columns={gridColumns}
+                loading={isLoading}
+                disableRowSelectionOnClick
+                {...(isGuardador
+                  ? { pageSizeOptions: [10, 25, 50, 100], initialState: { pagination: { paginationModel: { pageSize: 25 } } } }
+                  : {
+                      paginationMode: 'server',
+                      rowCount: reportList.count ?? 0,
+                      paginationModel: { page, pageSize },
+                      onPaginationModelChange: handlePaginationModelChange,
+                      pageSizeOptions: [10, 25, 50, 100],
+                    })}
+              />
+            </div>
+          )}
           <Box className="flex justify-end mt-16">
             <span className="font-bold mr-8">Valor Total:</span>
             <span className="font-bold">{formatter.format(totalValue ?? 0)}</span>
