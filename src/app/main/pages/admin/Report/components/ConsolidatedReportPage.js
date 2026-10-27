@@ -42,11 +42,7 @@ import ValorRangeFilter from './shared/ValorRangeFilter';
 import ReportPeriodFilter from './shared/ReportPeriodFilter';
 import useFavorecidoGuardadorOptions from './shared/useFavorecidoGuardadorOptions';
 import { applyPendenciaDePagamentoErro, applyEspecificosFlags } from './shared/reportRequestUtils';
-import {
-  explodeStucGratuidadeRows,
-  StucGratuidadeHeaderCells,
-  StucGratuidadeBodyRows,
-} from './shared/StucGratuidadeTable';
+import { explodeStucGratuidadeRows } from './shared/StucGratuidadeTable';
 import {
   STATUS_OPTIONS,
   ERRO_STATUS_OPTIONS,
@@ -797,31 +793,38 @@ export default function ConsolidatedReportPage({ perfil }) {
           </header>
 
           {showStucColumns ? (
+            // STUC - Gratuidade no Consolidado: só Nome + Valor Lançamento, 1 linha por janela de
+            // pagamento (reportList.data já vem pivotado por janela do backend - ver
+            // pivotStucGratuidadeRows/findConsolidadoStucGratuidade - sem precisar explodir por dia
+            // como stucExplodedRows faz para CPF/Data Ordem/Valor Ordem/Data Pagamento, que a
+            // Movimentação Financeira ainda exibe).
             <TableContainer sx={{ height: '60vh', width: '100%', overflowX: 'auto', overflowY: 'auto' }}>
               <Table size="small">
                 <TableHead>
                   <TableRow className="sticky top-0 bg-white z-10">
-                    <StucGratuidadeHeaderCells showDataPagamento />
+                    <TableCell className="font-semibold p-1 text-sm" style={{ whiteSpace: 'nowrap' }}>Nome</TableCell>
+                    <TableCell className="font-semibold p-1 text-sm">Valor Lançamento</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {!isLoading ? (
-                    stucExplodedRows.length > 0 ? (
-                      <StucGratuidadeBodyRows
-                        rows={stucExplodedRows}
-                        formatCurrency={formatter.format}
-                        showDataPagamento
-                      />
+                    (reportList.data?.length ?? 0) > 0 ? (
+                      reportList.data.map((report, index) => (
+                        <TableRow key={`${report.nomefavorecido}::${index}`} className="hover:bg-gray-50">
+                          <TableCell className="text-xs py-6 px-1" style={{ whiteSpace: 'nowrap' }}>{report.nomefavorecido}</TableCell>
+                          <TableCell className="text-xs py-6 px-1">{formatter.format(report.valor)}</TableCell>
+                        </TableRow>
+                      ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-4">
+                        <TableCell colSpan={2} className="text-center py-4">
                           {!hasSearched ? 'Faça uma busca para visualizar os resultados' : 'Não há dados para serem exibidos'}
                         </TableCell>
                       </TableRow>
                     )
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5}>
+                      <TableCell colSpan={2}>
                         <Box className="flex justify-center items-center m-10">
                           <CircularProgress />
                         </Box>
