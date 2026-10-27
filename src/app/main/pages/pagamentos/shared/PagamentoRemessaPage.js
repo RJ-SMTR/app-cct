@@ -106,10 +106,15 @@ export default function PagamentoRemessaPage({
   mostrarTotalPorGrupo = false,
   mostrarBotoesRapidosData = true,
   permitirGratuidade = false,
+  permitirRenovarNsa = false,
+  permitirDescontoIndevido = false,
 }) {
   const dispatch = useDispatch();
   const [dateRange, setDateRange] = useState([]);
   const [gratuidade, setGratuidade] = useState(false);
+  // Desconto de pagamentos indevidos (só Guardadores): liga/desliga e o máximo (R$) que pode ser descontado de cada indevido.
+  const [descontarIndevido, setDescontarIndevido] = useState(false);
+  const [valorIndevido, setValorIndevido] = useState(100);
   const [confirmGratuidadeOpen, setConfirmGratuidadeOpen] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
   const [rows, setRows] = useState([]);
@@ -140,6 +145,8 @@ export default function PagamentoRemessaPage({
 
   const [enviarBancoDialog, setEnviarBancoDialog] = useState(null); // { senha }
   const [isEnviando, setIsEnviando] = useState(false);
+  const [renovarNsaDialog, setRenovarNsaDialog] = useState(null); // { nsa }
+  const [isRenovandoNsa, setIsRenovandoNsa] = useState(false);
 
   const pollingTimeoutRef = useRef(null);
   const isMountedRef = useRef(true);
@@ -326,6 +333,17 @@ export default function PagamentoRemessaPage({
     if (permitirGratuidade && gratuidade) {
       payload.gratuidade = true;
     }
+    if (permitirDescontoIndevido) {
+      payload.descontarIndevido = descontarIndevido;
+      if (descontarIndevido) {
+        const valor = Number(valorIndevido);
+        if (!Number.isFinite(valor) || valor <= 0) {
+          dispatch(showMessage({ message: 'Informe o valor máximo a descontar de cada indevido (maior que zero).' }));
+          return;
+        }
+        payload.valorDescontoIndevido = Math.round(valor * 100) / 100;
+      }
+    }
 
     setIsPreparing(true);
 
@@ -471,6 +489,33 @@ export default function PagamentoRemessaPage({
       .finally(() => setIsGerandoRemessa(false));
   };
 
+  // Remessa rejeitada pelo banco: reabre o header com um NSA novo; depois é só gerar e enviar de novo.
+  const handleConfirmRenovarNsa = () => {
+    const nsa = Number(renovarNsaDialog?.nsa);
+    if (!Number.isInteger(nsa) || nsa < 1) {
+      dispatch(showMessage({ message: 'Informe o NSA do arquivo rejeitado.' }));
+      return;
+    }
+
+    setIsRenovandoNsa(true);
+    api
+      .post(`${apiBasePath}/renovar-nsa`, { nsa }, { headers: authHeaders() })
+      .then((response) => {
+        const { nsaAnterior, nsaNovo } = response.data ?? {};
+        setRenovarNsaDialog(null);
+        setCnabPreview([]);
+        dispatch(
+          showMessage({
+            message: `NSA ${nsaAnterior} substituído pelo NSA ${nsaNovo}. Clique em "Gerar Remessa" para gerar o arquivo novamente.`,
+          }),
+        );
+      })
+      .catch((error) => {
+        dispatch(showMessage({ message: error?.response?.data?.error || 'Erro ao renovar o NSA da remessa.' }));
+      })
+      .finally(() => setIsRenovandoNsa(false));
+  };
+
   const handleConfirmEnviarBanco = () => {
     if (!enviarBancoDialog?.senha) {
       dispatch(showMessage({ message: 'Informe sua senha para confirmar o envio.' }));
@@ -598,6 +643,36 @@ export default function PagamentoRemessaPage({
               label={<Typography className="font-bold">Gratuidade</Typography>}
             />
           )}
+          {permitirDescontoIndevido && (
+            <>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={descontarIndevido}
+                    disabled={isPreparing}
+                    onChange={(event) => setDescontarIndevido(event.target.checked)}
+                  />
+                }
+                label={<Typography className="font-bold">Descontar pagamentos indevidos</Typography>}
+              />
+              <NumericFormat
+                customInput={TextField}
+                size="small"
+                label="Valor a descontar (R$)"
+                value={valorIndevido ?? ''}
+                disabled={!descontarIndevido || isPreparing}
+                onValueChange={(values) => setValorIndevido(values.floatValue ?? null)}
+                thousandSeparator="."
+                decimalSeparator=","
+                decimalScale={2}
+                fixedDecimalScale
+                allowNegative={false}
+                prefix="R$ "
+                helperText="Máximo descontado de cada indevido"
+                sx={{ width: 200 }}
+              />
+            </>
+          )}
           <Button
             variant="contained"
             color="secondary"
@@ -624,6 +699,16 @@ export default function PagamentoRemessaPage({
           >
             {isGerandoRemessa ? 'Gerando...' : 'Gerar Remessa'}
           </Button>
+          {permitirRenovarNsa && (
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              disabled={isRenovandoNsa || isGerandoRemessa || isPreparing}
+              onClick={() => setRenovarNsaDialog({ nsa: '' })}
+            >
+              Renovar NSA
+            </Button>
+          )}
           <a
             href="https://www.accesstage.com.br/infotrack/login.do"
             target="_blank"
@@ -950,6 +1035,32 @@ export default function PagamentoRemessaPage({
           </Button>
         </Box>
       </Dialog>
+
+      {permitirRenovarNsa && (
+        <Dialog open={Boolean(renovarNsaDialog)} onClose={() => setRenovarNsaDialog(null)} fullWidth maxWidth="xs">
+          <DialogTitle>Renovar NSA da Remessa</DialogTitle>
+          <DialogContent>
+            <Typography className="mb-16">
+              Use quando o banco rejeitou o arquivo enviado. Informe o NSA do arquivo rejeitado: a remessa volta a ficar
+              pronta para gerar com um NSA novo, usando os mesmos pagamentos já preparados.
+            </Typography>
+            <TextField
+              fullWidth
+              type="number"
+              label="NSA do arquivo rejeitado"
+              margin="dense"
+              value={renovarNsaDialog?.nsa ?? ''}
+              onChange={(event) => setRenovarNsaDialog((prev) => ({ ...prev, nsa: event.target.value }))}
+            />
+          </DialogContent>
+          <Box className="flex justify-end gap-8 p-16">
+            <Button onClick={() => setRenovarNsaDialog(null)}>Cancelar</Button>
+            <Button variant="contained" disabled={isRenovandoNsa} onClick={handleConfirmRenovarNsa}>
+              {isRenovandoNsa ? 'Renovando...' : 'Renovar NSA'}
+            </Button>
+          </Box>
+        </Dialog>
+      )}
 
       <Backdrop
         open={isPreparing && !preparoAssincrono}

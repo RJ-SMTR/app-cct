@@ -13,6 +13,7 @@ export default function PagamentoModaisApp() {
       preparoAssincrono
       mostrarTotalPorGrupo
       permitirGratuidade
+      permitirRenovarNsa
     />
   );
 }
