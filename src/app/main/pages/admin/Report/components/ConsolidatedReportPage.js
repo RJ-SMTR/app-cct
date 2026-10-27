@@ -43,7 +43,6 @@ import ValorRangeFilter from './shared/ValorRangeFilter';
 import ReportPeriodFilter from './shared/ReportPeriodFilter';
 import useFavorecidoGuardadorOptions from './shared/useFavorecidoGuardadorOptions';
 import { applyPendenciaDePagamentoErro, applyEspecificosFlags } from './shared/reportRequestUtils';
-import { explodeStucGratuidadeRows } from './shared/StucGratuidadeTable';
 import {
   STATUS_OPTIONS,
   ERRO_STATUS_OPTIONS,
@@ -160,23 +159,15 @@ export default function ConsolidatedReportPage({ perfil }) {
   );
   const hasRows = isGuardador ? guardadorDisplayRows.length > 0 : (reportList.count ?? 0) > 0;
 
-  // STUC - Gratuidade (ADR 0012, api-cct): cada dia da janela de pagamento (até 4 dias) vira a
-  // sua própria linha na grade, repetindo Nome/CPF - "Data Ordem"/"Valor Ordem" são daquele dia
-  // específico, "Valor Lançamento" é o total da janela (igual nas linhas repetidas). Só Permissionário.
+  // STUC - Gratuidade (ADR 0012, api-cct): tela, CSV, PDF e XLSX mostram só Nome + Valor
+  // Lançamento, 1 linha por janela de pagamento (reportList.data já vem pivotado por janela do
+  // backend - ver pivotStucGratuidadeRows/findConsolidadoStucGratuidade). A Movimentação
+  // Financeira (FinancialMovementReport.js/StucGratuidadeTable.js) mantém CPF/Data Ordem/Valor
+  // Ordem/Data Pagamento - telas e exports diferentes, não precisam ficar em sincronia. Só
+  // Permissionário.
   const showStucColumns = !isGuardador && selectedEspecificos.includes('STUC - Gratuidade');
 
   // ---- Grid rows/columns ----
-  // STUC - Gratuidade: mesmo componente/função da Movimentação Financeira (FinancialMovementReport.js) -
-  // ver shared/StucGratuidadeTable.js. Essa tela não usa DataGrid pra esse caso (tabela simples abaixo).
-  const stucExplodedRows = showStucColumns
-    ? explodeStucGratuidadeRows(reportList.data, {
-        nome: (report) => report.nomefavorecido,
-        cpfCnpj: (report) => report.cpfCnpj,
-        valor: (report) => report.valor,
-        dataPagamento: (report) => report.dataPagamento,
-      })
-    : [];
-
   const gridRows = isGuardador
     ? guardadorDisplayRows.map((row) => ({ id: row.nome, ...row }))
     : (Array.isArray(reportList.data) ? reportList.data.map((report) => ({ id: report.nomefavorecido, ...report })) : []);
@@ -213,17 +204,14 @@ export default function ConsolidatedReportPage({ perfil }) {
       return guardadorDisplayRows.map((row) => ({ Nome: row.nome, Valor: formatter.format(row.valor) }));
     }
     if (showStucColumns) {
-      const rows = stucExplodedRows.map((row) => ({
-        Nome: row.nomefavorecido,
-        CPF: row.cpfCnpj ?? '',
-        "Data Ordem": row.dataOrdem ?? '',
-        "Valor Ordem": row.valorOrdem != null ? formatter.format(row.valorOrdem) : '',
-        "Valor Lançamento": formatter.format(row.valorLancamento ?? 0),
-      }));
+      const rows = reportList.data?.map((report) => ({
+        Nome: report.nomefavorecido,
+        "Valor Lançamento": formatter.format(report.valor ?? 0),
+      })) ?? [];
       return [
-        { Nome: "Status selecionado", CPF: "", "Data Ordem": "", "Valor Ordem": "", "Valor Lançamento": selectedStatusLabelForExport || "Todos" },
+        { Nome: "Status selecionado", "Valor Lançamento": selectedStatusLabelForExport || "Todos" },
         ...rows,
-        { Nome: "Valor Total", CPF: "", "Data Ordem": "", "Valor Ordem": "", "Valor Lançamento": formatter.format(reportList?.valor) },
+        { Nome: "Valor Total", "Valor Lançamento": formatter.format(reportList?.valor) },
       ];
     }
     const rows = reportList.data?.map((report) => ({
@@ -237,7 +225,7 @@ export default function ConsolidatedReportPage({ perfil }) {
       { Nome: "Valor Total", Valor: "", Status: formatter.format(reportList?.valor) },
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasRows, isGuardador, guardadorDisplayRows, reportList, formatter, showStucColumns, stucExplodedRows]);
+  }, [hasRows, isGuardador, guardadorDisplayRows, reportList, formatter, showStucColumns]);
 
   const exportPDF = () => {
     if (!hasRows) return;
@@ -247,19 +235,11 @@ export default function ConsolidatedReportPage({ perfil }) {
     const dateFim = selectedDateRange?.[1];
     const rows = isGuardador
       ? guardadorDisplayRows.map((row) => [row.nome, formatter.format(row.valor)])
-      : showStucColumns
-        ? stucExplodedRows.map((row) => [
-            row.nomefavorecido,
-            row.cpfCnpj ?? '',
-            row.dataOrdem ?? '',
-            row.valorOrdem != null ? formatter.format(row.valorOrdem) : '',
-            formatter.format(row.valorLancamento ?? 0),
-          ])
-        : reportList.data.map((report) => [report.nomefavorecido, formatter.format(report.valor)]);
+      : reportList.data.map((report) => [report.nomefavorecido, formatter.format(report.valor ?? 0)]);
     const head = isGuardador
       ? ["Nome", "Valor Total"]
       : showStucColumns
-        ? ["Nome", "CPF", "Data Ordem", "Valor Ordem", "Valor Lançamento"]
+        ? ["Nome", "Valor Lançamento"]
         : ["Nome", "Valor Total"];
 
     doc.autoTable({
@@ -302,20 +282,12 @@ export default function ConsolidatedReportPage({ perfil }) {
     const selectedDateRange = getValues('dateRange');
     const rows = isGuardador
       ? guardadorDisplayRows.map((row) => [row.nome, formatter.format(row.valor)])
-      : showStucColumns
-        ? stucExplodedRows.map((row) => [
-            row.nomefavorecido,
-            row.cpfCnpj ?? '',
-            row.dataOrdem ?? '',
-            row.valorOrdem != null ? formatter.format(row.valorOrdem) : '',
-            formatter.format(row.valorLancamento ?? 0),
-          ])
-        : reportList.data.map((report) => [report.nomefavorecido, formatter.format(report.valor)]);
+      : reportList.data.map((report) => [report.nomefavorecido, formatter.format(report.valor ?? 0)]);
     const totalLabel = isGuardador ? "Total geral" : "Valor Total";
     const header = isGuardador
       ? ["Nome", "Valor"]
       : showStucColumns
-        ? ["Nome", "CPF", "Data Ordem", "Valor Ordem", "Valor Lançamento"]
+        ? ["Nome", "Valor Lançamento"]
         : ["Nome", "Valor"];
 
     const sheetData = [
@@ -818,11 +790,9 @@ export default function ConsolidatedReportPage({ perfil }) {
           </header>
 
           {showStucColumns ? (
-            // STUC - Gratuidade no Consolidado: só Nome + Valor Lançamento, 1 linha por janela de
-            // pagamento (reportList.data já vem pivotado por janela do backend - ver
-            // pivotStucGratuidadeRows/findConsolidadoStucGratuidade - sem precisar explodir por dia
-            // como stucExplodedRows faz para CPF/Data Ordem/Valor Ordem/Data Pagamento, que a
-            // Movimentação Financeira ainda exibe).
+            // STUC - Gratuidade no Consolidado: só Nome + Valor Lançamento (tela e exports), 1
+            // linha por janela de pagamento - reportList.data já vem pivotado por janela do
+            // backend (ver pivotStucGratuidadeRows/findConsolidadoStucGratuidade).
             <>
             <TablePagination
               component="div"
