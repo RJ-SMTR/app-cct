@@ -15,6 +15,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
 } from '@mui/material';
 import { DataGrid, ptBR as pt } from '@mui/x-data-grid';
 import SaveAltIcon from '@mui/icons-material/SaveAlt';
@@ -112,6 +113,11 @@ export default function ConsolidatedReportPage({ perfil }) {
   const [selectedEspecificos, setSelectedEspecificos] = useState([]);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  // Guardador pagina em memória (agregação já vem inteira); esse par replica o mesmo page/pageSize
+  // do Permissionário só pro TablePagination controlar o DataGrid do Guardador, que não bate no
+  // servidor a cada página.
+  const [guardadorPage, setGuardadorPage] = useState(0);
+  const [guardadorPageSize, setGuardadorPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [hasSearched, setHasSearched] = useState(false);
   const [dateError, setDateError] = useState(false);
   const [reportBlocks, setReportBlocks] = useState([]); // só guardador (agregação em memória)
@@ -438,6 +444,7 @@ export default function ConsolidatedReportPage({ perfil }) {
       setSelectedStatusOptions([]);
       setDateError(false);
       setReportBlocks([]);
+      setGuardadorPage(0);
     } else {
       setValue('name', []);
       setSelectedStatusOptions([]);
@@ -516,6 +523,7 @@ export default function ConsolidatedReportPage({ perfil }) {
 
     setDateError(false);
     setIsLoading(true);
+    setGuardadorPage(0);
     try {
       const responseBlocks = await dispatch(fetchAgentConsolidatedReport(data));
       setReportBlocks(responseBlocks);
@@ -537,11 +545,28 @@ export default function ConsolidatedReportPage({ perfil }) {
     }
   };
 
-  const handlePaginationModelChange = ({ page: newPage, pageSize: newPageSize }) => {
-    if (isGuardador) return; // guardador não pagina no servidor (agregação já vem inteira)
+  // Permissionário (STUC e demais filtros) usa o mesmo TablePagination do Relatório
+  // Movimentação Financeira (FinancialMovementReport.js) em vez da paginação embutida do
+  // DataGrid, pra não divergir visualmente entre os dois relatórios nem entre os filtros deste
+  // (a DataGrid continua sendo usada como grade, mas com o footer de paginação escondido -
+  // ver `hideFooter` abaixo - e o paginationModel controlado por este mesmo page/pageSize).
+  const handlePermissionarioChangePage = (_, newPage) => {
     if (!hasSearched) return;
+    submitPagePermissionario(getValues(), newPage, pageSize);
+  };
+  const handlePermissionarioChangeRowsPerPage = (event) => {
+    const newPageSize = parseInt(event.target.value, 10);
     setPageSize(newPageSize);
-    submitPagePermissionario(getValues(), newPage, newPageSize);
+    if (!hasSearched) return;
+    submitPagePermissionario(getValues(), 0, newPageSize);
+  };
+
+  // Guardador pagina em memória (fetchAgentConsolidatedReport já traz tudo) - aqui só fatia o
+  // array já carregado, sem nova busca ao servidor.
+  const handleGuardadorChangePage = (_, newPage) => setGuardadorPage(newPage);
+  const handleGuardadorChangeRowsPerPage = (event) => {
+    setGuardadorPageSize(parseInt(event.target.value, 10));
+    setGuardadorPage(0);
   };
 
   return (
@@ -798,6 +823,18 @@ export default function ConsolidatedReportPage({ perfil }) {
             // pivotStucGratuidadeRows/findConsolidadoStucGratuidade - sem precisar explodir por dia
             // como stucExplodedRows faz para CPF/Data Ordem/Valor Ordem/Data Pagamento, que a
             // Movimentação Financeira ainda exibe).
+            <>
+            <TablePagination
+              component="div"
+              count={reportList?.count ?? 0}
+              page={page}
+              rowsPerPage={pageSize}
+              onPageChange={handlePermissionarioChangePage}
+              onRowsPerPageChange={handlePermissionarioChangeRowsPerPage}
+              labelRowsPerPage="Linhas por página"
+              labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+              rowsPerPageOptions={[10, 25, 50, 100]}
+            />
             <TableContainer sx={{ height: '60vh', width: '100%', overflowX: 'auto', overflowY: 'auto' }}>
               <Table size="small">
                 <TableHead>
@@ -834,8 +871,21 @@ export default function ConsolidatedReportPage({ perfil }) {
                 </TableBody>
               </Table>
             </TableContainer>
+            </>
           ) : (
-            <div style={{ height: isGuardador ? '60vh' : '60vh', width: '100%' }}>
+            <>
+            <TablePagination
+              component="div"
+              count={isGuardador ? guardadorDisplayRows.length : (reportList?.count ?? 0)}
+              page={isGuardador ? guardadorPage : page}
+              rowsPerPage={isGuardador ? guardadorPageSize : pageSize}
+              onPageChange={isGuardador ? handleGuardadorChangePage : handlePermissionarioChangePage}
+              onRowsPerPageChange={isGuardador ? handleGuardadorChangeRowsPerPage : handlePermissionarioChangeRowsPerPage}
+              labelRowsPerPage="Linhas por página"
+              labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+              rowsPerPageOptions={[10, 25, 50, 100]}
+            />
+            <div style={{ height: '60vh', width: '100%' }}>
               <DataGrid
                 localeText={{
                   ...pt.components.MuiDataGrid.defaultProps.localeText,
@@ -847,17 +897,22 @@ export default function ConsolidatedReportPage({ perfil }) {
                 columns={gridColumns}
                 loading={isLoading}
                 disableRowSelectionOnClick
+                hideFooter
                 {...(isGuardador
-                  ? { pageSizeOptions: [10, 25, 50, 100], initialState: { pagination: { paginationModel: { pageSize: 25 } } } }
+                  ? { paginationModel: { page: guardadorPage, pageSize: guardadorPageSize }, onPaginationModelChange: ({ page: newPage, pageSize: newPageSize }) => { setGuardadorPage(newPage); setGuardadorPageSize(newPageSize); } }
                   : {
                       paginationMode: 'server',
                       rowCount: reportList.count ?? 0,
                       paginationModel: { page, pageSize },
-                      onPaginationModelChange: handlePaginationModelChange,
-                      pageSizeOptions: [10, 25, 50, 100],
+                      onPaginationModelChange: ({ page: newPage, pageSize: newPageSize }) => {
+                        if (!hasSearched) return;
+                        setPageSize(newPageSize);
+                        submitPagePermissionario(getValues(), newPage, newPageSize);
+                      },
                     })}
               />
             </div>
+            </>
           )}
           <Box className="flex justify-end mt-16">
             <span className="font-bold mr-8">Valor Total:</span>
