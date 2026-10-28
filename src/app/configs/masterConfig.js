@@ -1,7 +1,7 @@
 import i18next from 'i18next';
 import ar from './navigation-i18n/ar';
 import en from './navigation-i18n/en';
-import { AUDITORIA_USER_IDS, DASHBOARD_PAGAMENTOS_USER_IDS } from './dashboardAccess';
+import { authRoles } from 'src/app/auth';
 import tr from './navigation-i18n/tr';
 
 i18next.addResourceBundle('en', 'navigation', en);
@@ -11,7 +11,7 @@ i18next.addResourceBundle('ar', 'navigation', ar);
 const masterConfig = [
     {
         id: 'dashboard-pagamentos-component',
-        onlyUserIds: DASHBOARD_PAGAMENTOS_USER_IDS,
+        auth: authRoles.masterTi,
         title: 'Dashboard de Pagamentos',
         translate: 'Dashboard de Pagamentos',
         type: 'item',
@@ -122,7 +122,7 @@ const masterConfig = [
             },
             {
                 id: 'ordem-pagamento-component',
-                onlyUserIds: [45],
+                auth: authRoles.masterTi,
                 title: 'Ordens de Pagamento',
                 translate: 'Ordens de Pagamento',
                 type: 'collapse',
@@ -148,7 +148,7 @@ const masterConfig = [
             },
             {
                 id: 'pagamentos-component',
-                onlyUserIds: [45],
+                auth: authRoles.masterTi,
                 title: 'Pagamentos',
                 translate: 'Pagamentos',
                 type: 'collapse',
@@ -285,7 +285,7 @@ const masterConfig = [
             },
             {
                 id: 'auditoria-component',
-                onlyUserIds: AUDITORIA_USER_IDS,
+                auth: authRoles.masterTi,
                 title: 'Auditoria',
                 translate: 'Auditoria',
                 type: 'item',

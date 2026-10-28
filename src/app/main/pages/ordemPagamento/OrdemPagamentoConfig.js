@@ -14,7 +14,7 @@ const OrdemPagamentoConfig = {
       },
     },
   },
-  auth: authRoles.master,
+  auth: authRoles.masterTi,
   routes: [
     {
       path: 'ordem-pagamento/permissionario',

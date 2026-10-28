@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Navigate } from 'react-router-dom';
 import { Box, Chip, Tab, Tabs, Typography } from '@mui/material';
-import { podeVerAuditoria } from 'app/configs/dashboardAccess';
 import TabExecucoes from './tabs/TabExecucoes';
 import TabOrdens from './tabs/TabOrdens';
 import TabQuarentena from './tabs/TabQuarentena';
@@ -22,12 +21,12 @@ const ABAS = [
 ];
 
 export default function AuditoriaApp() {
-  const userId = useSelector(({ user }) => user?.id);
+  const roleName = useSelector(({ user }) => user?.role?.name);
   const [aba, setAba] = useState('execucoes');
   // Permite que uma aba abra outra já filtrada (ex.: "ver ordens" de uma execução).
   const [filtroInicial, setFiltroInicial] = useState({});
 
-  if (userId !== undefined && userId !== null && !podeVerAuditoria(userId)) {
+  if (roleName && roleName !== 'Admin Master TI') {
     return <Navigate to="/" replace />;
   }
 
