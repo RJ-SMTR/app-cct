@@ -31,16 +31,15 @@ function formatDate(value) {
   return parsedDate && isValid(parsedDate) ? format(parsedDate, "dd/MM/yyyy") : "-";
 }
 
-function getStatusColor(status) {
-  if (status === "Pago") {
-    return "success";
-  }
+// Mesmas cores dos status da tela de relatório (ReportApp.getStatusStyles: green-300, gray-400 e red-300, texto preto).
+function getStatusSx(status) {
+  const backgrounds = {
+    Pago: "#86efac",
+    "Aguardando Pagamento": "#9ca3af",
+    "A pagar": "#9ca3af",
+  };
 
-  if (status === "Rejeitado") {
-    return "error";
-  }
-
-  return "warning";
+  return { backgroundColor: backgrounds[status] || "#fca5a5", color: "#000" };
 }
 
 /**
@@ -97,7 +96,7 @@ const PagamentoIndevidoCard = memo(function PagamentoIndevidoCard({ indevido }) 
                     ) : null}
                   </TableCell>
                   <TableCell>
-                    <Chip size="small" label={item.status} color={getStatusColor(item.status)} />
+                    <Chip size="small" label={item.status} sx={getStatusSx(item.status)} />
                   </TableCell>
                 </TableRow>
               ))
