@@ -1,5 +1,5 @@
 import Paper from '@mui/material/Paper';
-import { Modal } from '@mui/material';
+import { Modal, Alert } from '@mui/material';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableContainer from '@mui/material/TableContainer';
@@ -75,7 +75,8 @@ function TableTransactions({ id, userRoleId, hideGratuidadeMensal = false }) {
     mocked,
     sumInfo,
     weekFetchMode,
-    dataTentativaPagamentoSemAgrupamento
+    dataTentativaPagamentoSemAgrupamento,
+    weekPendingBankRegistration
   } = useSelector((state) => state.extract);
   const MemoizedCustomTable = memo(CustomTable);
 
@@ -461,6 +462,12 @@ function TableTransactions({ id, userRoleId, hideGratuidadeMensal = false }) {
               </Button>
             )}
           </div>
+
+          {searchingWeek && !searchingDay && weekPendingBankRegistration && (
+            <Alert severity="error" className="mb-16">
+              Pendência de pagamento: os dados bancários não estavam cadastrados no momento do processamento desta semana.
+            </Alert>
+          )}
 
           <TableContainer
             sx={{
