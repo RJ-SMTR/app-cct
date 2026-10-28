@@ -29,6 +29,7 @@ const jwtServiceConfig = {
   odpGuardadorLista: '/ordem-pagamento-guardador',
   odpMensal: '/ordem-pagamento/mensal',
   odpSemanal: '/ordem-pagamento/semanal',
+  odpSemanalSemAgrupamento: '/ordem-pagamento/semanal-sem-agrupamento',
   odpDiario: '/ordem-pagamento/diario',
   odpAnteriores: '/ordem-pagamento/transacoes-dias-anteriores',
   agentesOdpMensal: '/agentes/ordem-pagamento/mensal',
