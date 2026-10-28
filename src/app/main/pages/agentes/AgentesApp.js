@@ -29,6 +29,8 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { format, isValid, parseISO } from "date-fns";
 import ptBR from "date-fns/locale/pt-BR";
 import useAgentesDashboard from "./useAgentesDashboard";
+import PagamentoIndevidoCard from "./PagamentoIndevidoCard";
+import useAgentePagamentoIndevido from "./useAgentePagamentoIndevido";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, Navigate, useParams } from "react-router-dom";
@@ -43,6 +45,7 @@ import { getBankDataDateInfo } from "../profile/formCards/bankDataDateInfo";
 import {
   buildMonthlyPaymentRowKey,
   getAgentesDashboard,
+  markDuplicateOffsetPayments,
 } from "./services/agentesService";
 import {
   MIN_AGENTES_SELECTABLE_MONTH_DATE,
@@ -350,7 +353,26 @@ function getTotalPhotosCount(validPhotosCount, rejectedPhotosCount) {
 }
 */
 
-function ValidPhotosStatusBadge({ status, paymentStatus }) {
+const DUPLICATE_OFFSET_BADGE_COLOR = "#7b1fa2";
+
+function ValidPhotosStatusBadge({ status, paymentStatus, duplicateOffset }) {
+  if (duplicateOffset) {
+    return (
+      <Badge
+        className="whitespace-nowrap"
+        badgeContent={duplicateOffset.status}
+        sx={{
+          ...statusBadgeSx,
+          "& .MuiBadge-badge": {
+            ...statusBadgeSx["& .MuiBadge-badge"],
+            backgroundColor: DUPLICATE_OFFSET_BADGE_COLOR,
+            color: "#fff",
+          },
+        }}
+      />
+    );
+  }
+
   return (
     <Badge
       className="whitespace-nowrap"
@@ -361,7 +383,15 @@ function ValidPhotosStatusBadge({ status, paymentStatus }) {
   );
 }
 
-function PendingReasonBadge({ status, pendingReason }) {
+function PendingReasonBadge({ status, pendingReason, duplicateOffset }) {
+  if (duplicateOffset) {
+    return (
+      <Typography variant="caption" color="text.secondary">
+        {duplicateOffset.reason}
+      </Typography>
+    );
+  }
+
   if (Number(status) !== 4) {
     return null;
   }
@@ -523,11 +553,16 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   associacoes,
   selectedAssociacao,
   onAssociacaoChange,
-  monthlyPayments,
+  monthlyPayments: rawMonthlyPayments,
+  pagamentoIndevido,
   monthlyLoading,
   onMonthChange,
 }) {
   const dispatch = useDispatch();
+  const monthlyPayments = useMemo(
+    () => markDuplicateOffsetPayments(rawMonthlyPayments, pagamentoIndevido),
+    [rawMonthlyPayments, pagamentoIndevido]
+  );
   const [selectedPaymentDate, setSelectedPaymentDate] = useState("");
   const [selectedWorkDate, setSelectedWorkDate] = useState("");
   const [selectedPaymentWeek, setSelectedPaymentWeek] = useState(null);
@@ -713,12 +748,14 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
               <ValidPhotosStatusBadge
                 status={payment.statusRemessa}
                 paymentStatus={payment.paymentStatus}
+                duplicateOffset={payment.duplicateOffset}
               />
             )}
           </TableCell>
           <TableCell align="center" sx={{ verticalAlign: "middle" }}>
             <PendingReasonBadge
               status={payment.statusRemessa}
+              duplicateOffset={payment.duplicateOffset}
               pendingReason={payment.descricaoMotivoStatusRemessa || payment.pendingReason}
             />
           </TableCell>
@@ -967,6 +1004,10 @@ function AgentesApp() {
     month: selectedMonth,
     enabled: canAccessSelectedAgent,
     onError: handleDashboardError,
+  });
+  const pagamentoIndevido = useAgentePagamentoIndevido({
+    agentId: id,
+    enabled: canAccessSelectedAgent,
   });
   const canEditAgentByEmailException = canEditAgentByException(user);
   const canEditSelectedAgentFields =
@@ -1300,9 +1341,12 @@ function AgentesApp() {
               selectedAssociacao={selectedAssociacao}
               onAssociacaoChange={setSelectedAssociacao}
               monthlyPayments={dashboard?.monthlyPayments || []}
+              pagamentoIndevido={pagamentoIndevido}
               monthlyLoading={loading}
               onMonthChange={handleSelectedMonth}
             />
+
+            <PagamentoIndevidoCard indevido={pagamentoIndevido} />
 
             {/* <Paper className="flex flex-col flex-auto p-16 rounded-2xl shadow overflow-hidden">
               <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
