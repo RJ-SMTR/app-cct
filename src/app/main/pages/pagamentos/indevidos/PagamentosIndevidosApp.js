@@ -123,7 +123,7 @@ export default function PagamentosIndevidosApp() {
             <Quadro titulo="Pago indevidamente" valor={formatBRL(totais.valorIndevido)} detalhe={`${totais.quantidade} registro(s)`} cor="#ed6c02" />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Quadro titulo="Já debitado" valor={formatBRL(totais.valorDebitado)} cor="#2e7d32" />
+            <Quadro titulo="Já debitado" valor={formatBRL(totais.valorDebitado)} detalhe={`${totais.quantidade - totais.devendo} guardador(es) quitado(s)`} cor="#2e7d32" />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <Quadro titulo="Deve (saldo devedor)" valor={formatBRL(totais.saldoDevedor)} detalhe={`${totais.devendo} guardador(es) devendo`} cor="#d32f2f" />
@@ -181,7 +181,6 @@ export default function PagamentosIndevidosApp() {
                   <TableCell>CPF/CNPJ</TableCell>
                   <TableCell>Referência</TableCell>
                   <TableCell align="right">Valor pago</TableCell>
-                  <TableCell align="right">Valor a pagar</TableCell>
                   <TableCell align="right">Indevido</TableCell>
                   <TableCell align="right">Já debitado</TableCell>
                   <TableCell align="right">Deve</TableCell>
@@ -195,7 +194,6 @@ export default function PagamentosIndevidosApp() {
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatCpfCnpj(i.cpfCnpj)}</TableCell>
                     <TableCell>{formatData(i.dataReferencia)}</TableCell>
                     <TableCell align="right">{formatBRL(i.valorPago)}</TableCell>
-                    <TableCell align="right">{formatBRL(i.valorPagar)}</TableCell>
                     <TableCell align="right">{formatBRL(i.valorIndevido)}</TableCell>
                     <TableCell align="right" sx={{ color: '#2e7d32', fontWeight: 500 }}>
                       {formatBRL(i.valorDebitado)}
