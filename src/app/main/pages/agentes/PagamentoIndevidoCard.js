@@ -31,15 +31,15 @@ function formatDate(value) {
   return parsedDate && isValid(parsedDate) ? format(parsedDate, "dd/MM/yyyy") : "-";
 }
 
-// Mesmas cores dos status da tela de relatório (ReportApp.getStatusStyles: green-300, gray-400 e red-300, texto preto).
-function getStatusSx(status) {
-  const backgrounds = {
-    Pago: "#86efac",
-    "Aguardando Pagamento": "#9ca3af",
-    "A pagar": "#9ca3af",
-  };
+// "Pago" usa o success do tema (igual à badge da visão mensal); os demais usam as cores da tela de relatório
+// (ReportApp.getStatusStyles: gray-400 e red-300, texto preto).
+function getStatusChipProps(status) {
+  if (status === "Pago") {
+    return { color: "success" };
+  }
 
-  return { backgroundColor: backgrounds[status] || "#fca5a5", color: "#000" };
+  const backgroundColor = status === "Aguardando Pagamento" || status === "A pagar" ? "#9ca3af" : "#fca5a5";
+  return { sx: { backgroundColor, color: "#000" } };
 }
 
 /**
@@ -96,7 +96,7 @@ const PagamentoIndevidoCard = memo(function PagamentoIndevidoCard({ indevido }) 
                     ) : null}
                   </TableCell>
                   <TableCell>
-                    <Chip size="small" label={item.status} sx={getStatusSx(item.status)} />
+                    <Chip size="small" label={item.status} {...getStatusChipProps(item.status)} />
                   </TableCell>
                 </TableRow>
               ))
