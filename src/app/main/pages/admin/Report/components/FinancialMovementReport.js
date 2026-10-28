@@ -39,8 +39,6 @@ import {
   isKnownAssociationName,
   normalizeSelectAllAutocompleteValue,
   shouldShowAgentEffectivePaymentDateColumn,
-  shouldShowAgentNameFilter,
-  shouldShowAssociationFilter,
 } from "app/store/agentConsolidatedReportUtils";
 import { normalizeErroStatusSelection } from "./reportUtils";
 import { buildReportConsorcioOptions } from "./consorcioOptions";
@@ -178,19 +176,13 @@ export default function FinancialMovementReport({ perfil }) {
     if (isGuardador) {
       const normalizedValue = normalizeSelectAllAutocompleteValue(newValue);
 
+      // agentNames e associations podem ser combinados: backend filtra pelo "E" das duas
+      // condições (guardador específico que também pertence à associação selecionada).
       if (field === "agentNames") {
         setSelectedAgentOptions(normalizedValue);
-        if (normalizedValue.length > 0) {
-          setSelectedAssociationOptions([]);
-          setValue("associations", []);
-        }
       }
       if (field === "associations") {
         setSelectedAssociationOptions(normalizedValue);
-        if (normalizedValue.length > 0) {
-          setSelectedAgentOptions([]);
-          setValue("agentNames", []);
-        }
       }
       if (field === "status") {
         setSelectedStatusOptions(normalizedValue);
@@ -596,69 +588,65 @@ export default function FinancialMovementReport({ perfil }) {
 
               {isGuardador ? (
                 <>
-                  {shouldShowAgentNameFilter(selectedAssociationOptions) && (
-                    <Grid item xs={12} sm={6} md={4}>
-                      <Autocomplete
-                        id="agentNames"
-                        multiple
-                        fullWidth
-                        options={agentOptions}
-                        value={selectedAgentOptions}
-                        loading={loadingUsers}
-                        getOptionLabel={(option) => option.label || option}
-                        isOptionEqualToValue={(option, value) => option.value === value.value}
-                        onChange={(_, newValue) => handleAutocompleteChange("agentNames", newValue)}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label="Selecionar Guardador"
-                            variant="outlined"
-                            InputProps={{
-                              ...params.InputProps,
-                              endAdornment: (
-                                <>
-                                  {loadingUsers ? <CircularProgress color="inherit" size={20} /> : null}
-                                  {params.InputProps.endAdornment}
-                                </>
-                              ),
-                            }}
-                          />
-                        )}
-                      />
-                    </Grid>
-                  )}
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Autocomplete
+                      id="agentNames"
+                      multiple
+                      fullWidth
+                      options={agentOptions}
+                      value={selectedAgentOptions}
+                      loading={loadingUsers}
+                      getOptionLabel={(option) => option.label || option}
+                      isOptionEqualToValue={(option, value) => option.value === value.value}
+                      onChange={(_, newValue) => handleAutocompleteChange("agentNames", newValue)}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Selecionar Guardador"
+                          variant="outlined"
+                          InputProps={{
+                            ...params.InputProps,
+                            endAdornment: (
+                              <>
+                                {loadingUsers ? <CircularProgress color="inherit" size={20} /> : null}
+                                {params.InputProps.endAdornment}
+                              </>
+                            ),
+                          }}
+                        />
+                      )}
+                    />
+                  </Grid>
 
-                  {shouldShowAssociationFilter(selectedAgentOptions) && (
-                    <Grid item xs={12} sm={6} md={4}>
-                      <Autocomplete
-                        id="associations"
-                        multiple
-                        fullWidth
-                        options={associationOptions}
-                        value={selectedAssociationOptions}
-                        loading={loadingUsers}
-                        getOptionLabel={(option) => option.label || option}
-                        isOptionEqualToValue={(option, value) => option.value === value.value}
-                        onChange={(_, newValue) => handleAutocompleteChange("associations", newValue)}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label="Selecionar Associações"
-                            variant="outlined"
-                            InputProps={{
-                              ...params.InputProps,
-                              endAdornment: (
-                                <>
-                                  {loadingUsers ? <CircularProgress color="inherit" size={20} /> : null}
-                                  {params.InputProps.endAdornment}
-                                </>
-                              ),
-                            }}
-                          />
-                        )}
-                      />
-                    </Grid>
-                  )}
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Autocomplete
+                      id="associations"
+                      multiple
+                      fullWidth
+                      options={associationOptions}
+                      value={selectedAssociationOptions}
+                      loading={loadingUsers}
+                      getOptionLabel={(option) => option.label || option}
+                      isOptionEqualToValue={(option, value) => option.value === value.value}
+                      onChange={(_, newValue) => handleAutocompleteChange("associations", newValue)}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Selecionar Associações"
+                          variant="outlined"
+                          InputProps={{
+                            ...params.InputProps,
+                            endAdornment: (
+                              <>
+                                {loadingUsers ? <CircularProgress color="inherit" size={20} /> : null}
+                                {params.InputProps.endAdornment}
+                              </>
+                            ),
+                          }}
+                        />
+                      )}
+                    />
+                  </Grid>
                 </>
               ) : (
                 <>
