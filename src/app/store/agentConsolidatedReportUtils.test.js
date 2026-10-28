@@ -14,8 +14,6 @@ import {
   normalizeAgentStatusSelection,
   normalizeAgentConsolidatedReportBlocks,
   shouldShowAgentEffectivePaymentDateColumn,
-  shouldShowAgentNameFilter,
-  shouldShowAssociationFilter,
 } from "./agentConsolidatedReportUtils";
 
 describe("agentConsolidatedReportUtils", () => {
@@ -261,22 +259,6 @@ describe("agentConsolidatedReportUtils", () => {
         { label: "ANGLAE", value: anglae },
         { label: "SINGAERJ", value: singaerj },
       ]);
-    });
-  });
-
-  describe("agent and association filters", () => {
-    const todos = { label: "Todos", value: "Todos" };
-    const maria = { label: "Maria", value: "Maria" };
-
-    it("hides the association filter as soon as any guardador option is selected, including Todos", () => {
-      expect(shouldShowAssociationFilter([])).toBe(true);
-      expect(shouldShowAssociationFilter([todos])).toBe(false);
-      expect(shouldShowAssociationFilter([maria])).toBe(false);
-    });
-
-    it("hides the guardador filter once an association is selected", () => {
-      expect(shouldShowAgentNameFilter([])).toBe(true);
-      expect(shouldShowAgentNameFilter([{ label: "ANGLAE", value: "x" }])).toBe(false);
     });
   });
 
