@@ -1,5 +1,5 @@
 import Paper from '@mui/material/Paper';
-import { Modal } from '@mui/material';
+import { Modal, Alert } from '@mui/material';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableContainer from '@mui/material/TableContainer';
@@ -39,8 +39,11 @@ import {
   setMocked,
   setSumInfo,
   setStatements,
-  setSumInfoDay
+  setSumInfoDay,
+  setWeekFetchMode,
+  setDataTentativaPagamentoSemAgrupamento
 } from 'app/store/extractSlice';
+import { resolveWeeklyFetch } from 'app/store/extractUtils';
 
 import { showMessage } from 'app/store/fuse/messageSlice';
 
@@ -70,7 +73,10 @@ function TableTransactions({ id, userRoleId, hideGratuidadeMensal = false }) {
     isLoading,
     ordemPgtoId,
     mocked,
-    sumInfo
+    sumInfo,
+    weekFetchMode,
+    dataTentativaPagamentoSemAgrupamento,
+    weekPendingBankRegistration
   } = useSelector((state) => state.extract);
   const MemoizedCustomTable = memo(CustomTable);
 
@@ -188,7 +194,7 @@ function TableTransactions({ id, userRoleId, hideGratuidadeMensal = false }) {
   useEffect(() => {
     setPreviousDays("");
     if (user.role.name.includes("Admin")) {
-      dispatch(getStatements(dateRange, searchingDay, searchingWeek, id, ordemPgtoId, mocked, userRoleId))
+      dispatch(getStatements(dateRange, searchingDay, searchingWeek, id, ordemPgtoId, mocked, weekFetchMode, dataTentativaPagamentoSemAgrupamento))
         .catch((error) => {
           if (error) {
 
@@ -197,7 +203,7 @@ function TableTransactions({ id, userRoleId, hideGratuidadeMensal = false }) {
         });
 
     } else {
-      dispatch(getStatements(dateRange, searchingDay, searchingWeek, id, ordemPgtoId, undefined, userRoleId))
+      dispatch(getStatements(dateRange, searchingDay, searchingWeek, id, ordemPgtoId, undefined, weekFetchMode, dataTentativaPagamentoSemAgrupamento))
         .catch((error) => {
           if (error) {
 
@@ -230,6 +236,8 @@ function TableTransactions({ id, userRoleId, hideGratuidadeMensal = false }) {
     dispatch(setDateRange([]))
     dispatch(setSearchingWeek(false))
     dispatch(setSearchingDay(false))
+    dispatch(setWeekFetchMode('agrupado'))
+    dispatch(setDataTentativaPagamentoSemAgrupamento(null))
     dispatch(setLoading(true))
     dispatch(setLoadingWeek(true))
     dispatch(setLoadingPrevious(true))
@@ -256,15 +264,24 @@ function TableTransactions({ id, userRoleId, hideGratuidadeMensal = false }) {
   }
 
 
-  const handleClickRow = (idOrder, event, valor) => {
-    if (idOrder === null || idOrder === undefined) {
+  const handleClickRow = (idOrder, event, valor, paymentStatus) => {
+    const start = event.target.innerText;
+    const [day, month, year] = start.split('/');
+    const transformedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+
+    // Linha mensal sem ordemPagamentoAgrupadoIds (ordem nunca agrupada, tipicamente por falta de
+    // cadastro bancário no momento do agrupamento — CONTEXT.md/ADR 0013 do api-cct): ainda assim
+    // deixa abrir a semana, buscando pela data em vez do id (ver resolveWeeklyFetch).
+    const weeklyDecision = !searchingWeek
+      ? resolveWeeklyFetch({ idOrdem: idOrder, paymentStatus, clickedDate: transformedDate })
+      : null;
+    const hasValuesToShow = !(idOrder === null || idOrder === undefined) || (weeklyDecision?.mode === 'semAgrupamento');
+
+    if (!hasValuesToShow) {
       dispatch(showMessage({ message: 'Não há valores para serem apresentados.' }))
     } else {
       dispatch(setLoading(true))
       dispatch(setLoadingWeek(true))
-      const start = event.target.innerText;
-      const [day, month, year] = start.split('/');
-      const transformedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
       const tz = 'America/Sao_Paulo';
 
       setDataOrderDay(start)
@@ -279,18 +296,21 @@ function TableTransactions({ id, userRoleId, hideGratuidadeMensal = false }) {
           setPage(0)
 
         } else {
-          if (!searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
-          if (!searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Semanal'));
-          if (searchingWeek) dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Mensal'));
-          if (searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Mensal'));
+          dispatch(setValorAcumuladoLabel('Valor Operação - Acumulado Semanal'));
+          dispatch(setValorPagoLabel('Valor - Acumulado Semanal'));
           const clickedDate = parseISO(transformedDate);
           const clickedDateToday = utcToZonedTime(clickedDate, tz);
-          dispatch(setLoading(true))
           setCurrentWeekStart(clickedDateToday);
           dispatch(setSearchingWeek(true));
           dispatch(setSumInfo(valor))
           setPage(0);
-          dispatch(setOrdemPgto(idOrder))
+          dispatch(setWeekFetchMode(weeklyDecision.mode));
+          if (weeklyDecision.mode === 'semAgrupamento') {
+            dispatch(setDataTentativaPagamentoSemAgrupamento(weeklyDecision.params.dataTentativaPagamento));
+            dispatch(setOrdemPgto(''));
+          } else {
+            dispatch(setOrdemPgto(idOrder));
+          }
 
         }
       } else {
@@ -329,6 +349,8 @@ function TableTransactions({ id, userRoleId, hideGratuidadeMensal = false }) {
       if (searchingWeek) dispatch(setValorPagoLabel('Valor - Acumulado Mensal'));
       setPage(0)
       dispatch(setSearchingWeek(false))
+      dispatch(setWeekFetchMode('agrupado'))
+      dispatch(setDataTentativaPagamentoSemAgrupamento(null))
 
       if (selectedDate !== null) {
         const newDate = formatISO(selectedDate).substring(0, 7)
@@ -440,6 +462,12 @@ function TableTransactions({ id, userRoleId, hideGratuidadeMensal = false }) {
               </Button>
             )}
           </div>
+
+          {searchingWeek && !searchingDay && weekPendingBankRegistration && (
+            <Alert severity="error" className="mb-16">
+              Pendência de pagamento: os dados bancários não estavam cadastrados no momento do processamento desta semana.
+            </Alert>
+          )}
 
           <TableContainer
             sx={{
@@ -579,7 +607,7 @@ function TableTransactions({ id, userRoleId, hideGratuidadeMensal = false }) {
                         data={i}
                         c={c}
                         date={formattedDate}
-                        handleClickRow={(event) => handleClickRow(idOrdem, event, valorDia)}
+                        handleClickRow={(event) => handleClickRow(idOrdem, event, valorDia, i.paymentStatus)}
                         lastDate={dataOrderDay}
                         dataPagamento={dataPagamento}
                         hideGratuidadeMensal={hideGratuidadeMensal}

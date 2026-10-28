@@ -29,7 +29,13 @@ const initialState = {
     isLoadingWeek: false,
     isLoadingPrevious: false,
     ordemPgtoId: '',
-    mocked: false
+    mocked: false,
+    // Semana sem ordem agrupada (favorecido sem cadastro bancário no momento do agrupamento,
+    // ver CONTEXT.md/ADR 0013 do api-cct): 'agrupado' é o caminho normal (via ordemPgtoId),
+    // 'semAgrupamento' busca pela data da tentativa de pagamento em vez do id de agrupamento.
+    weekFetchMode: 'agrupado',
+    weekPendingBankRegistration: false,
+    dataTentativaPagamentoSemAgrupamento: null
 };
 
 const extractSlice = createSlice({
@@ -103,7 +109,16 @@ const extractSlice = createSlice({
         setMocked: (state, action) => {
             state.mocked = action.payload;
         },
-       
+        setWeekFetchMode: (state, action) => {
+            state.weekFetchMode = action.payload;
+        },
+        setWeekPendingBankRegistration: (state, action) => {
+            state.weekPendingBankRegistration = action.payload;
+        },
+        setDataTentativaPagamentoSemAgrupamento: (state, action) => {
+            state.dataTentativaPagamentoSemAgrupamento = action.payload;
+        },
+
     },
 });
 
@@ -146,7 +161,10 @@ export const {
     setOrdemPgto,
     ordemPgtoId,
     mocked,
-    setMocked
+    setMocked,
+    setWeekFetchMode,
+    setWeekPendingBankRegistration,
+    setDataTentativaPagamentoSemAgrupamento
 } = extractSlice.actions;
 
 export default extractSlice.reducer;
@@ -234,31 +252,46 @@ export const  getPreviousDays = (idOrdem, userId) => async (dispatch) => {
 //     }
 // };
 
-export const getStatements = (dateRange, searchingDay, searchingWeek, userId, idOrdem, mocked) => async (dispatch) => {
+export const getStatements = (dateRange, searchingDay, searchingWeek, userId, idOrdem, mocked, weekFetchMode = 'agrupado', dataTentativaPagamento) => async (dispatch) => {
     const normalizedIdOrdem = normalizeOrderIds(idOrdem);
+    // Semana sem ordem agrupada (CONTEXT.md/ADR 0013, api-cct): busca pela data da tentativa de
+    // pagamento em vez do id de agrupamento (que não existe nesse caso).
+    const isSemAgrupamento = searchingWeek && !searchingDay && weekFetchMode === 'semAgrupamento';
 
-    if (!normalizedIdOrdem && (searchingDay || searchingWeek)) {
+    if (!normalizedIdOrdem && (searchingDay || (searchingWeek && !isSemAgrupamento))) {
         console.warn("idOrdem está indefinido. Requisição não será feita.");
+        dispatch(setLoadingWeek(false));
+        return;
+    }
+
+    if (isSemAgrupamento && !dataTentativaPagamento) {
+        console.warn("dataTentativaPagamento está indefinida. Requisição não será feita.");
         dispatch(setLoadingWeek(false));
         return;
     }
 
     const requestData = searchingDay
         ? { ordemPagamentoIds: normalizedIdOrdem }
-        : searchingWeek
-            ? {
-                ordemPagamentoAgrupadoIds: normalizedIdOrdem,
-                userId: userId,
-                endDate: format(dateRange[1], 'yyyy-MM-dd')
-                }
-            : handleRequestData(null, dateRange, searchingDay, searchingWeek);
+        : isSemAgrupamento
+            ? { dataTentativaPagamento, userId: userId }
+            : searchingWeek
+                ? {
+                    ordemPagamentoAgrupadoIds: normalizedIdOrdem,
+                    userId: userId,
+                    endDate: format(dateRange[1], 'yyyy-MM-dd')
+                    }
+                : handleRequestData(null, dateRange, searchingDay, searchingWeek);
 
     let apiRoute = '';
     apiRoute = searchingWeek && searchingDay
         ? jwtServiceConfig.odpDiario + `/?userId=${userId}`
-        : searchingWeek
-            ? jwtServiceConfig.odpSemanal 
-            : jwtServiceConfig.odpMensal + `?userId=${userId}`;
+        : isSemAgrupamento
+            ? jwtServiceConfig.odpSemanalSemAgrupamento
+            : searchingWeek
+                ? jwtServiceConfig.odpSemanal
+                : jwtServiceConfig.odpMensal + `?userId=${userId}`;
+
+    dispatch(setWeekPendingBankRegistration(isSemAgrupamento));
 
     const method = 'get';
     const token = window.localStorage.getItem('jwt_access_token');
@@ -294,7 +327,9 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
 
             } else if (searchingWeek) {
                 dispatch(setListByType({}));
-                dispatch(getPreviousDays(normalizedIdOrdem, userId));
+                if (!isSemAgrupamento) {
+                    dispatch(getPreviousDays(normalizedIdOrdem, userId));
+                }
 
                 const statementsSort = response.data.sort((a, b) =>
                     compareDesc(parseISO(a.dataCaptura), parseISO(b.dataCaptura))
