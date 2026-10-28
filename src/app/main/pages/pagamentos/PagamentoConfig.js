@@ -21,7 +21,7 @@ const PagamentoConfig = {
       },
     },
   },
-  auth: authRoles.master,
+  auth: authRoles.masterTi,
   routes: [
     {
       path: 'pagamentos/consorcios',

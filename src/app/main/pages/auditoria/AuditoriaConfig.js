@@ -14,7 +14,7 @@ const AuditoriaConfig = {
     },
   },
   // O acesso por usuário (id 45) é validado na tela e na API; aqui só o perfil.
-  auth: authRoles.master,
+  auth: authRoles.masterTi,
   routes: [
     {
       path: 'auditoria',
