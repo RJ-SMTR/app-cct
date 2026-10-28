@@ -11,6 +11,7 @@ export default function PagamentoGuardadoresApp() {
       permitirEdicaoValorBi={false}
       mostrarBotoesRapidosData={false}
       permitirRenovarNsa
+      permitirDescontoIndevido
     />
   );
 }

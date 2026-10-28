@@ -1,7 +1,7 @@
 import i18next from 'i18next';
 import ar from './navigation-i18n/ar';
 import en from './navigation-i18n/en';
-import { DASHBOARD_PAGAMENTOS_USER_IDS } from './dashboardAccess';
+import { AUDITORIA_USER_IDS, DASHBOARD_PAGAMENTOS_USER_IDS } from './dashboardAccess';
 import tr from './navigation-i18n/tr';
 
 i18next.addResourceBundle('en', 'navigation', en);
@@ -178,40 +178,39 @@ const masterConfig = [
                         icon: 'material-symbols-outlined:parking_sign',
                         url: 'pagamentos/guardadores',
                     },
-                    // Menu "Pendente" e submenus ocultados a pedido (backend ainda não implementado).
-                    // {
-                    //     id: 'pagamentos-pendente-component',
-                    //     title: 'Pendente',
-                    //     translate: 'Pendente',
-                    //     type: 'collapse',
-                    //     icon: 'heroicons-outline:clock',
-                    //     children: [
-                    //         {
-                    //             id: 'pagamentos-pendente-consorcios-component',
-                    //             title: 'Consórcios',
-                    //             translate: 'Consórcios',
-                    //             type: 'item',
-                    //             icon: 'heroicons-outline:office-building',
-                    //             url: 'pagamentos/pendente/consorcios',
-                    //         },
-                    //         {
-                    //             id: 'pagamentos-pendente-modais-component',
-                    //             title: 'Modais',
-                    //             translate: 'Modais',
-                    //             type: 'item',
-                    //             icon: 'heroicons-outline:truck',
-                    //             url: 'pagamentos/pendente/modais',
-                    //         },
-                    //         {
-                    //             id: 'pagamentos-pendente-guardadores-component',
-                    //             title: 'Guardadores',
-                    //             translate: 'Guardadores',
-                    //             type: 'item',
-                    //             icon: 'material-symbols-outlined:parking_sign',
-                    //             url: 'pagamentos/pendente/guardadores',
-                    //         },
-                    //     ],
-                    // },
+                    {
+                        id: 'pagamentos-indevidos-component',
+                        title: 'Indevidos Guardadores',
+                        translate: 'Indevidos Guardadores',
+                        type: 'item',
+                        icon: 'heroicons-outline:exclamation-circle',
+                        url: 'pagamentos/indevidos',
+                    },
+                    {
+                        id: 'pagamentos-pendentes-component',
+                        title: 'Pendentes',
+                        translate: 'Pendentes',
+                        type: 'collapse',
+                        icon: 'heroicons-outline:clock',
+                        children: [
+                            {
+                                id: 'pagamentos-pendentes-permissionarios-component',
+                                title: 'Permissionários',
+                                translate: 'Permissionários',
+                                type: 'item',
+                                icon: 'material-symbols-outlined:airport_shuttle',
+                                url: 'pagamentos/pendentes/permissionarios',
+                            },
+                            {
+                                id: 'pagamentos-pendentes-guardadores-component',
+                                title: 'Guardadores',
+                                translate: 'Guardadores',
+                                type: 'item',
+                                icon: 'material-symbols-outlined:parking_sign',
+                                url: 'pagamentos/pendentes/guardadores',
+                            },
+                        ],
+                    },
                 ],
             },
             {
@@ -283,6 +282,15 @@ const masterConfig = [
                 type: 'item',
                 icon: 'heroicons-outline:key',
                 url: 'change-password',
+            },
+            {
+                id: 'auditoria-component',
+                onlyUserIds: AUDITORIA_USER_IDS,
+                title: 'Auditoria',
+                translate: 'Auditoria',
+                type: 'item',
+                icon: 'heroicons-outline:shield-check',
+                url: 'auditoria',
             },
         ],
     },

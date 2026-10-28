@@ -107,10 +107,14 @@ export default function PagamentoRemessaPage({
   mostrarBotoesRapidosData = true,
   permitirGratuidade = false,
   permitirRenovarNsa = false,
+  permitirDescontoIndevido = false,
 }) {
   const dispatch = useDispatch();
   const [dateRange, setDateRange] = useState([]);
   const [gratuidade, setGratuidade] = useState(false);
+  // Desconto de pagamentos indevidos (só Guardadores): liga/desliga e o máximo (R$) que pode ser descontado de cada indevido.
+  const [descontarIndevido, setDescontarIndevido] = useState(false);
+  const [valorIndevido, setValorIndevido] = useState(100);
   const [confirmGratuidadeOpen, setConfirmGratuidadeOpen] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
   const [rows, setRows] = useState([]);
@@ -328,6 +332,17 @@ export default function PagamentoRemessaPage({
     };
     if (permitirGratuidade && gratuidade) {
       payload.gratuidade = true;
+    }
+    if (permitirDescontoIndevido) {
+      payload.descontarIndevido = descontarIndevido;
+      if (descontarIndevido) {
+        const valor = Number(valorIndevido);
+        if (!Number.isFinite(valor) || valor <= 0) {
+          dispatch(showMessage({ message: 'Informe o valor máximo a descontar de cada indevido (maior que zero).' }));
+          return;
+        }
+        payload.valorDescontoIndevido = Math.round(valor * 100) / 100;
+      }
     }
 
     setIsPreparing(true);
@@ -627,6 +642,36 @@ export default function PagamentoRemessaPage({
               }
               label={<Typography className="font-bold">Gratuidade</Typography>}
             />
+          )}
+          {permitirDescontoIndevido && (
+            <>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={descontarIndevido}
+                    disabled={isPreparing}
+                    onChange={(event) => setDescontarIndevido(event.target.checked)}
+                  />
+                }
+                label={<Typography className="font-bold">Descontar pagamentos indevidos</Typography>}
+              />
+              <NumericFormat
+                customInput={TextField}
+                size="small"
+                label="Valor a descontar (R$)"
+                value={valorIndevido ?? ''}
+                disabled={!descontarIndevido || isPreparing}
+                onValueChange={(values) => setValorIndevido(values.floatValue ?? null)}
+                thousandSeparator="."
+                decimalSeparator=","
+                decimalScale={2}
+                fixedDecimalScale
+                allowNegative={false}
+                prefix="R$ "
+                helperText="Máximo descontado de cada indevido"
+                sx={{ width: 200 }}
+              />
+            </>
           )}
           <Button
             variant="contained"

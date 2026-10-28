@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { Alert, Box, Button, Card, Chip, CircularProgress, InputAdornment, TablePagination, TextField, Typography } from '@mui/material';
+import { Alert, Autocomplete, Box, Button, Card, Checkbox, Chip, CircularProgress, InputAdornment, TablePagination, TextField, Typography } from '@mui/material';
 import { DataGrid, ptBR as pt } from '@mui/x-data-grid';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SearchIcon from '@mui/icons-material/Search';
@@ -12,11 +12,13 @@ import { showMessage } from 'app/store/fuse/messageSlice';
 import PeriodDatePicker, { periodRequiredRules } from 'app/shared-components/PeriodDatePicker';
 import {
   COR_SITUACAO,
+  GRUPOS_POR_CONTA,
   ROTA_DASHBOARD,
   ROTULO_CONTA,
   ROTULO_SITUACAO,
   formatBRL,
   formatQtd,
+  gruposDoFiltro,
   lerFiltrosDetalhe,
   montarLinhasDetalhado,
   nomeArquivoExportacao,
@@ -67,6 +69,7 @@ export default function DashboardPagamentosDetalheApp() {
   // Campos do filtro (favorecido e período). Só valem depois de "Buscar", que grava tudo na URL.
   const paraData = (iso) => (iso ? dayjs(iso).toDate() : null);
   const [busca, setBusca] = useState(filtros.busca ?? '');
+  const [grupos, setGrupos] = useState(gruposDoFiltro(filtros.grupo));
   const [periodo, setPeriodo] = useState([paraData(filtros.dataInicio), paraData(filtros.dataFim)]);
   const [erroPeriodo, setErroPeriodo] = useState(null);
   const [erroBusca, setErroBusca] = useState(null);
@@ -74,6 +77,7 @@ export default function DashboardPagamentosDetalheApp() {
   // Mantém os campos iguais à URL (voltar/avançar do navegador ou clique em outro ponto do gráfico).
   useEffect(() => {
     setBusca(filtros.busca ?? '');
+    setGrupos(gruposDoFiltro(filtros.grupo));
     setPeriodo([paraData(filtros.dataInicio), paraData(filtros.dataFim)]);
     setErroPeriodo(null);
     setErroBusca(null);
@@ -93,7 +97,7 @@ export default function DashboardPagamentosDetalheApp() {
     }
     setErroPeriodo(null);
     setErroBusca(null);
-    const proximo = { ...filtros, busca: termo || undefined, dataInicio: toIsoDate(periodo[0]), dataFim: toIsoDate(periodo[1]) };
+    const proximo = { ...filtros, grupo: grupos.length ? grupos.join(',') : undefined, busca: termo || undefined, dataInicio: toIsoDate(periodo[0]), dataFim: toIsoDate(periodo[1]) };
     setSearchParams(Object.fromEntries(Object.entries(proximo).filter(([, valor]) => valor)));
   };
 
@@ -153,7 +157,7 @@ export default function DashboardPagamentosDetalheApp() {
 
   const chips = [
     ['Conta', ROTULO_CONTA[filtros.conta] ?? filtros.conta],
-    ['Grupo', filtros.grupo],
+    ['Grupo', gruposDoFiltro(filtros.grupo).join(', ')],
     ['Situação', ROTULO_SITUACAO[filtros.situacao] ?? filtros.situacao],
     ['Motivo', resultado.itens[0]?.motivo === filtros.motivo ? resultado.itens[0]?.motivoDescricao : filtros.motivo],
     ['Favorecido', filtros.busca],
@@ -179,6 +183,24 @@ export default function DashboardPagamentosDetalheApp() {
         {filtros.conta && (
           <Box component="form" noValidate onSubmit={aplicarFiltros} className="flex flex-wrap items-start gap-16" sx={{ mt: 2 }}>
             <PeriodDatePicker required value={periodo} onChange={setPeriodo} error={Boolean(erroPeriodo)} helperText={erroPeriodo} />
+            <Autocomplete
+              multiple
+              disableCloseOnSelect
+              size="medium"
+              options={GRUPOS_POR_CONTA[filtros.conta] ?? []}
+              value={grupos}
+              onChange={(_event, novos) => setGrupos(novos)}
+              noOptionsText="Nenhum consórcio/grupo"
+              renderTags={(valores) => (valores.length > 2 ? `${valores.slice(0, 2).join(', ')} +${valores.length - 2}` : valores.join(', '))}
+              renderOption={(props, opcao, { selected }) => (
+                <li {...props}>
+                  <Checkbox size="small" checked={selected} sx={{ mr: 1 }} />
+                  {opcao}
+                </li>
+              )}
+              renderInput={(params) => <TextField {...params} label="Consórcio / Grupo" placeholder={grupos.length ? '' : 'Todos'} />}
+              sx={{ minWidth: 280, maxWidth: 360 }}
+            />
             <TextField
               label="Favorecido (nome ou CPF/CNPJ)"
               value={busca}
