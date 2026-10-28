@@ -1,4 +1,4 @@
-import { groupTransactionsByType, markMonthlyPendingPayments } from "./extractUtils";
+import { groupTransactionsByType, markMonthlyPendingPayments, resolveWeeklyFetch } from "./extractUtils";
 
 describe("groupTransactionsByType", () => {
   it("returns empty object if input is empty or not an array", () => {
@@ -66,5 +66,39 @@ describe("markMonthlyPendingPayments (#1164)", () => {
     ]);
 
     expect(row.paymentStatus).toBeUndefined();
+  });
+});
+
+describe("resolveWeeklyFetch", () => {
+  it("uses the grouped order id when it is present, regardless of payment status", () => {
+    expect(
+      resolveWeeklyFetch({ idOrdem: "123", paymentStatus: "Pendência de Pagamento", clickedDate: "2026-10-23" })
+    ).toEqual({ mode: "agrupado", params: { idOrdem: "123" } });
+
+    expect(
+      resolveWeeklyFetch({ idOrdem: "123", paymentStatus: undefined, clickedDate: "2026-10-23" })
+    ).toEqual({ mode: "agrupado", params: { idOrdem: "123" } });
+  });
+
+  it("falls back to the orphan week fetch when there is no idOrdem but the row is pending payment", () => {
+    expect(
+      resolveWeeklyFetch({ idOrdem: null, paymentStatus: "Pendência de Pagamento", clickedDate: "2026-10-23" })
+    ).toEqual({ mode: "semAgrupamento", params: { dataTentativaPagamento: "2026-10-23" } });
+
+    expect(
+      resolveWeeklyFetch({ idOrdem: undefined, paymentStatus: "Pendência de Pagamento", clickedDate: "2026-10-23" })
+    ).toEqual({ mode: "semAgrupamento", params: { dataTentativaPagamento: "2026-10-23" } });
+  });
+
+  it("gives up (no fetch) when there is no idOrdem and the row is not pending payment", () => {
+    expect(
+      resolveWeeklyFetch({ idOrdem: null, paymentStatus: undefined, clickedDate: "2026-10-23" })
+    ).toEqual({ mode: "none", params: {} });
+  });
+
+  it("gives up when pending but there is no clicked date to anchor the window", () => {
+    expect(
+      resolveWeeklyFetch({ idOrdem: null, paymentStatus: "Pendência de Pagamento", clickedDate: null })
+    ).toEqual({ mode: "none", params: {} });
   });
 });

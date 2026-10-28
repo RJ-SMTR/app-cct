@@ -100,3 +100,20 @@ export function markMonthlyPendingPayments(statements) {
   });
 }
 
+// Linha mensal sem ordemPagamentoAgrupadoIds (ordem nunca agrupada, tipicamente por falta de
+// cadastro bancário no momento do agrupamento — CONTEXT.md/ADR 0013 do api-cct): busca a semana
+// pela data em vez do id de agrupamento, em vez de abortar a requisição (#1164 continuação).
+export function resolveWeeklyFetch({ idOrdem, paymentStatus, clickedDate }) {
+  const hasIdOrdem = idOrdem !== null && idOrdem !== undefined && idOrdem !== '';
+
+  if (hasIdOrdem) {
+    return { mode: 'agrupado', params: { idOrdem } };
+  }
+
+  if (paymentStatus === 'Pendência de Pagamento' && clickedDate) {
+    return { mode: 'semAgrupamento', params: { dataTentativaPagamento: clickedDate } };
+  }
+
+  return { mode: 'none', params: {} };
+}
+
