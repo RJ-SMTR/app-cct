@@ -11,6 +11,8 @@ import ptBR from "date-fns/locale/pt-BR";
  * - value: [inicio, fim] (Date ou null). Vazio é [].
  * - onChange(range): recebe sempre [inicio, fim] (ou [] quando limpo).
  * - singleDay: quando true, aceita um dia só e mantém fim igual ao início.
+ * - shouldDisableStart: quando informado, restringe quais dias podem ser escolhidos como início.
+ * - deriveRange(range): quando informado, recalcula o fim a partir do início e trava o campo de fim.
  * - minDate / maxDate: limites opcionais.
  * - labels: rótulos dos campos (padrão "De" e "Até"; em singleDay usa "Data").
  * - compact: campos menores (tamanho fixo) e sempre lado a lado, sem quebrar de linha.
@@ -31,6 +33,8 @@ export default function PeriodDatePicker({
   value = [],
   onChange,
   singleDay = false,
+  shouldDisableStart,
+  deriveRange,
   minDate,
   maxDate,
   labels = { start: "De", end: "Até", single: "Data" },
@@ -45,6 +49,7 @@ export default function PeriodDatePicker({
   const asValidDate = (d) => (d instanceof Date && !Number.isNaN(d.getTime()) ? d : null);
   const start = asValidDate(value?.[0]);
   const end = asValidDate(value?.[1]);
+  const lockEnd = typeof deriveRange === "function";
 
   // Com singleDay ligado, um intervalo já preenchido vira um único dia.
   useEffect(() => {
@@ -53,12 +58,24 @@ export default function PeriodDatePicker({
     }
   }, [singleDay, start, end]);
 
+  // Com deriveRange informado, o fim é sempre recalculado a partir do início (ex.: janela da OPA).
+  useEffect(() => {
+    if (!lockEnd || !start) return;
+    const [derivedStart, derivedEnd] = deriveRange([start, end]);
+    if (derivedEnd?.getTime() !== end?.getTime()) {
+      onChange([derivedStart ?? start, derivedEnd ?? null]);
+    }
+  }, [lockEnd, start]);
+
   // Não altera o outro campo: durante a digitação o ano parcial pode gerar datas antigas,
   // e ajustar o início por isso corrompe a data. A validação de mínimo/máximo sinaliza o erro.
+  // Bug corrigido: o fallback antigo (nextEnd ?? nextStart / nextStart ?? nextEnd) colapsava o
+  // período para um único dia sempre que o outro campo ainda estava vazio - ex.: preencher só
+  // "De" já empurrava "Até" para a mesma data, impedindo selecionar um período real.
   const emit = (nextStart, nextEnd) => {
     if (!nextStart && !nextEnd) return onChange([]);
     if (singleDay) return onChange([nextStart ?? nextEnd, nextStart ?? nextEnd]);
-    onChange([nextStart ?? nextEnd, nextEnd ?? nextStart]);
+    return onChange([nextStart, nextEnd]);
   };
 
   const handleStart = (date) => emit(asValidDate(date), end);
@@ -71,12 +88,17 @@ export default function PeriodDatePicker({
     format: "dd/MM/yyyy",
     slotProps: {
       textField: {
-        size: compact ? "small" : "medium",
+        size: "medium",
         variant: "outlined",
         error: Boolean(error),
         fullWidth: !compact,
         required,
-        ...(compact ? { sx: { width: 165 } } : {}),
+        // 50% do item de período (que ocupa no máximo md={4}, 33,3333% da linha de filtros) =
+        // no máximo 16,6666% da linha toda por campo. A margem até o próximo campo do filtro
+        // vem do spacing do Grid container do chamador (ReportPeriodFilter), não daqui.
+        ...(compact
+          ? { sx: { width: "calc(50% - 8px)", maxWidth: "calc(50% - 8px)", flex: "0 0 auto" } }
+          : {}),
       },
     },
   };
@@ -110,7 +132,8 @@ export default function PeriodDatePicker({
                 {...sharedProps}
                 label={labels.start}
                 value={start}
-                maxDate={end ?? maxDate}
+                maxDate={lockEnd ? maxDate : end ?? maxDate}
+                shouldDisableDate={shouldDisableStart}
                 onChange={handleStart}
               />
               <DatePicker
@@ -118,6 +141,7 @@ export default function PeriodDatePicker({
                 label={labels.end}
                 value={end}
                 minDate={start ?? minDate}
+                disabled={lockEnd}
                 onChange={handleEnd}
               />
             </>

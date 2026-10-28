@@ -21,7 +21,11 @@ export const ERRO_STATUS_OPTIONS = [
 export const ESPECIFICOS_OPTIONS = [
   { label: 'Todos' },
   { label: 'Eleição' },
+  { label: 'STUC - Gratuidade' },
 ];
 
-// Data mínima permitida nos DateRangePicker dos relatórios.
-export const MIN_SELECTABLE_DATE = new Date(2024, 3, 30);
+// Data mínima permitida no DateRangePicker dos relatórios do Guardador.
+export const MIN_SELECTABLE_DATE_GUARDADOR = new Date(2026, 6, 23);
+
+// Data mínima permitida no DateRangePicker dos relatórios do Permissionário.
+export const MIN_SELECTABLE_DATE_PERMISSIONARIO = new Date(2024, 3, 30);

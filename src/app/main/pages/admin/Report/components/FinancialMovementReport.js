@@ -17,12 +17,12 @@ import {
   TableContainer,
   TablePagination,
   Grid,
+  Tooltip,
 } from "@mui/material";
 import SaveAltIcon from "@mui/icons-material/SaveAlt";
 import { format } from "date-fns";
 import { useDispatch, useSelector } from "react-redux";
-import PeriodDatePicker, { periodRequiredRules } from "app/shared-components/PeriodDatePicker";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
 import {
   handleFinancialMovementExport,
@@ -32,13 +32,8 @@ import {
   handleAgentFinancialMovementSummary,
   setReportList,
 } from "app/store/reportSlice";
-import { hasSingleDayStatus, toSingleDayRange } from "app/store/pendenciaPagaDateRange";
-import { getUser } from "app/store/adminSlice";
-import { getAgentUsers } from "app/store/adminSlice";
 import { showMessage } from "app/store/fuse/messageSlice";
 import {
-  buildAgentAutocompleteOptions,
-  buildAssociationAutocompleteOptions,
   getAgentEffectivePaymentDateLabel,
   getAssociationDisplayName,
   isKnownAssociationName,
@@ -50,7 +45,21 @@ import {
 import { normalizeErroStatusSelection } from "./reportUtils";
 import { buildReportConsorcioOptions } from "./consorcioOptions";
 import ValorRangeFilter from "./shared/ValorRangeFilter";
-import { STATUS_OPTIONS, ERRO_STATUS_OPTIONS, MIN_SELECTABLE_DATE } from "./shared/reportFilterOptions";
+import ReportPeriodFilter from "./shared/ReportPeriodFilter";
+import useFavorecidoGuardadorOptions from "./shared/useFavorecidoGuardadorOptions";
+import { applyPendenciaDePagamentoErro, applyEspecificosFlags } from "./shared/reportRequestUtils";
+import {
+  explodeStucGratuidadeRows,
+  STUC_GRATUIDADE_COLUMN_COUNT,
+  StucGratuidadeHeaderCells,
+  StucGratuidadeBodyRows,
+} from "./shared/StucGratuidadeTable";
+import {
+  STATUS_OPTIONS,
+  ERRO_STATUS_OPTIONS,
+  MIN_SELECTABLE_DATE_GUARDADOR,
+  MIN_SELECTABLE_DATE_PERMISSIONARIO,
+} from "./shared/reportFilterOptions";
 
 const CNPJS_CONSORCIO = [
   '12464539000180',
@@ -74,13 +83,11 @@ export default function FinancialMovementReport({ perfil }) {
   const isGuardador = perfil === 'guardador';
 
   const reportList = useSelector((state) => state.report.reportList);
-  const userList = useSelector((state) => state.admin.userList) || [];
 
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingUsers, setLoadingUsers] = useState(false);
-  const [userOptions, setUserOptions] = useState([]);
-  const [agentOptions, setAgentOptions] = useState([]);
-  const [associationOptions, setAssociationOptions] = useState([]);
+  const { loadingUsers, userOptions, agentOptions, associationOptions } = useFavorecidoGuardadorOptions(isGuardador, {
+    loadErrorMessage: "Não foi possível carregar os guardadores e associações.",
+  });
   const [selectedAgentOptions, setSelectedAgentOptions] = useState([]);
   const [selectedAssociationOptions, setSelectedAssociationOptions] = useState([]);
   const [selectedStatusOptions, setSelectedStatusOptions] = useState([]);
@@ -90,18 +97,24 @@ export default function FinancialMovementReport({ perfil }) {
   const [showErroStatus, setShowErroStatus] = useState(false);
   const [selectedErroStatus, setSelectedErroStatus] = useState([]);
   const [selectedConsorcios, setSelectedConsorcios] = useState([]);
+  const [selectedFavorecidos, setSelectedFavorecidos] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [hasSearched, setHasSearched] = useState(false);
   const [pageCursors, setPageCursors] = useState([null]);
+  const [selectedEspecificos, setSelectedEspecificos] = useState([]);
   const hasNextPage = Boolean(pageCursors[page + 1]);
   const showEffectivePaymentDate = shouldShowAgentEffectivePaymentDateColumn(whichStatusShow);
+  // STUC - Gratuidade (ADR 0012, api-cct): mesmo modelo de linha do Relatório Consolidado - um
+  // dia da janela de pagamento por linha, repetindo Nome/CPF/Valor Lançamento, substituindo
+  // (não somando) as colunas normais da Movimentação Financeira. Só Permissionário.
+  const showStucColumns = !isGuardador && selectedEspecificos.includes('STUC - Gratuidade');
 
   const statusBase = STATUS_OPTIONS.filter((option) => option.label !== "Todos");
   const erroStatus = ERRO_STATUS_OPTIONS;
   const consorcios = buildReportConsorcioOptions({ selectedField: selected });
-  const especificos = [{ label: 'Eleição' }, { label: 'Desativados' }];
+  const especificos = [{ label: 'Eleição' }, { label: 'Desativados' }, { label: 'STUC - Gratuidade' }];
 
   const dispatch = useDispatch();
 
@@ -111,14 +124,17 @@ export default function FinancialMovementReport({ perfil }) {
 
   const { handleSubmit, setValue, control, getValues, trigger, clearErrors, reset } = useForm({ defaultValues });
 
+  // Guardador e Permissionário têm datas mínimas diferentes: ao trocar o perfil, a data
+  // selecionada no filtro de período (de/até) é limpa para evitar um intervalo inválido.
+  useEffect(() => {
+    setValue("dateRange", []);
+  }, [perfil, setValue]);
+
   const hasMissingErroStatusSelection =
     whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus.length === 0;
 
   // Permissionário: pesquisar sem status não é permitido (o guardador continua opcional).
   const hasMissingStatusSelection = !isGuardador && whichStatusShow.length === 0;
-
-  // Pendência Paga é consultada por um único dia (data de pagamento).
-  const isPendenciaPagaSelected = hasSingleDayStatus(whichStatusShow);
 
   const validateStatusSelection = () => {
     if (!hasMissingStatusSelection) return true;
@@ -133,37 +149,16 @@ export default function FinancialMovementReport({ perfil }) {
   };
 
   const buildRequestData = (data, pageIndex, pageSize, options = {}) => {
-    const requestData = { ...data };
+    let requestData = { ...data };
 
-    if (whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus.length > 0) {
-      requestData.status = requestData.status.filter((status) => status !== "Pendência de Pagamento");
-      const selectedErroLabels = selectedErroStatus.map((status) => status.label);
-      const statusSet = new Set(requestData.status);
-
-      if (selectedErroLabels.includes("Todos")) {
-        statusSet.add("Erro");
-        if (isGuardador) statusSet.add("Pendentes");
-        requestData.erro = true;
-      } else {
-        if (selectedErroLabels.includes("Estorno")) {
-          statusSet.add("Estorno");
-          requestData.estorno = true;
-        }
-        if (selectedErroLabels.includes("Rejeitado")) {
-          statusSet.add("Rejeitado");
-          requestData.rejeitado = true;
-        }
-        if (selectedErroLabels.includes("OPs atrasadas")) {
-          statusSet.add("Pendentes");
-        }
-      }
-
-      requestData.status = Array.from(statusSet);
-    }
+    requestData = applyPendenciaDePagamentoErro(requestData, {
+      whichStatusShow,
+      selectedErroStatus,
+      addPendentesOnTodos: isGuardador,
+    });
 
     if (!isGuardador) {
-      if (data.especificos?.includes("Eleição")) requestData.eleicao = true;
-      if (data.especificos?.includes("Desativados")) requestData.desativados = true;
+      requestData = applyEspecificosFlags(requestData, data);
     }
 
     if (options.includePagination !== false) {
@@ -178,44 +173,6 @@ export default function FinancialMovementReport({ perfil }) {
     if (!validateStatusSelection() || !validateErroStatusSelection()) return null;
     return buildRequestData(data, pageIndex, pageSize, options);
   };
-
-  // Carrega as opções de filtro: favorecidos (permissionário) ou guardadores/associações (guardador).
-  useEffect(() => {
-    if (isGuardador) {
-      setLoadingUsers(true);
-      dispatch(getAgentUsers())
-        .then((agentUsers) => {
-          const normalized = Array.isArray(agentUsers) ? agentUsers : [];
-          setAgentOptions(buildAgentAutocompleteOptions(normalized));
-          setAssociationOptions(buildAssociationAutocompleteOptions(normalized));
-        })
-        .catch(() => {
-          setAgentOptions([]);
-          setAssociationOptions([]);
-          dispatch(showMessage({ message: "Não foi possível carregar os guardadores e associações." }));
-        })
-        .finally(() => setLoadingUsers(false));
-    } else {
-      setLoadingUsers(true);
-      dispatch(getUser());
-      setLoadingUsers(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isGuardador]);
-
-  useEffect(() => {
-    if (isGuardador) return;
-    if (userList && userList.length > 0) {
-      const options = userList.map((user) => ({
-        label: user.label,
-        value: { cpfCnpj: user.cpfCnpj, permitCode: user.permitCode, fullName: user.fullName, userId: user.id },
-      }));
-      const sortedOptions = options.sort((a, b) => a.value.fullName.localeCompare(b.value.fullName));
-      setUserOptions([{ label: "Todos", value: { fullName: "Todos" } }, ...sortedOptions]);
-    } else {
-      setUserOptions([]);
-    }
-  }, [userList, isGuardador]);
 
   const handleAutocompleteChange = (field, newValue) => {
     if (isGuardador) {
@@ -239,10 +196,6 @@ export default function FinancialMovementReport({ perfil }) {
         setSelectedStatusOptions(normalizedValue);
         const statusValues = normalizedValue.map((v) => (typeof v === "object" ? v.label : v));
         setWhichStatus(statusValues);
-        // Pendência Paga aceita um único dia: ao selecionar o status, o intervalo já preenchido vira um dia.
-        if (hasSingleDayStatus(statusValues) && getValues("dateRange")?.length === 2) {
-          setValue("dateRange", toSingleDayRange(getValues("dateRange")));
-        }
         const hasErro = statusValues.includes("Pendência de Pagamento");
         setShowErroStatus(hasErro);
         if (!hasErro) {
@@ -273,11 +226,6 @@ export default function FinancialMovementReport({ perfil }) {
       const status = newValue.map((i) => i.label);
       setWhichStatus(status);
 
-      // Pendência Paga aceita um único dia: ao selecionar o status, o intervalo já preenchido vira um dia.
-      if (hasSingleDayStatus(status) && getValues("dateRange")?.length === 2) {
-        setValue("dateRange", toSingleDayRange(getValues("dateRange")));
-      }
-
       const hasErro = status.includes("Pendência de Pagamento");
       setShowErroStatus(hasErro);
       if (!hasErro) {
@@ -291,7 +239,23 @@ export default function FinancialMovementReport({ perfil }) {
 
   const handleSelection = (field, newValue) => {
     setSelected(newValue.length > 0 ? field : null);
-    if (field === 'consorcioName') setSelectedConsorcios(newValue);
+
+    // Favorecido e Consórcio são mutuamente exclusivos: escolher um limpa o outro.
+    if (field === 'name') {
+      setSelectedFavorecidos(newValue);
+      if (newValue.length > 0 && selectedConsorcios.length > 0) {
+        setSelectedConsorcios([]);
+        setValue('consorcioName', []);
+      }
+    }
+    if (field === 'consorcioName') {
+      setSelectedConsorcios(newValue);
+      if (newValue.length > 0 && selectedFavorecidos.length > 0) {
+        setSelectedFavorecidos([]);
+        setValue('name', []);
+      }
+    }
+
     handleAutocompleteChange(field, newValue);
   };
 
@@ -427,6 +391,7 @@ export default function FinancialMovementReport({ perfil }) {
       setValue("status", []);
       setValue("erroStatus", []);
       setSelectedConsorcios([]);
+      setSelectedFavorecidos([]);
       setSelectedStatusOptions([]);
       for (const button of document.querySelectorAll(".MuiAutocomplete-clearIndicator")) {
         button.click();
@@ -538,13 +503,24 @@ export default function FinancialMovementReport({ perfil }) {
   };
 
   const formatCpfCnpj = (value) => {
-    if (!value) return '-';
-    return isGuardador
-      ? value.replace(/(\d{2,3})(\d{3})(\d{3})(\d{4})?(\d{2})/, "$1.$2.$3-$5")
-      : value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+    const digits = String(value ?? '').replace(/\D/g, '');
+    if (digits.length === 11) return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    if (digits.length === 14) return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    return value || '-';
   };
 
-  const colSpan = isGuardador ? 11 : 6;
+  const colSpan = showStucColumns ? STUC_GRATUIDADE_COLUMN_COUNT.withDataPagamento : (isGuardador ? 11 : 6);
+
+  // STUC - Gratuidade: mesmo componente/função do Consolidado (ConsolidatedReportPage.js) -
+  // ver shared/StucGratuidadeTable.js.
+  const stucExplodedRows = showStucColumns
+    ? explodeStucGratuidadeRows(reportList.data, {
+        nome: (report) => report.nomes,
+        cpfCnpj: (report) => report.cpfCnpj,
+        valor: (report) => report.valor,
+        dataPagamento: (report) => report.dataPagamento,
+      })
+    : [];
 
   return (
     <>
@@ -557,31 +533,67 @@ export default function FinancialMovementReport({ perfil }) {
           </header>
 
           <form noValidate onSubmit={handleSubmit(onSubmit)}>
-            {/* Linha 1: período */}
+            {/* Linha 1: período + status + motivos + favorecido / consórcios / específicos (guardador: guardador / associações) */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid item xs={12}>
-                <Controller
-                  name="dateRange"
-                  control={control}
-                  rules={periodRequiredRules}
-                  render={({ field, fieldState: { error } }) => (
-                    <PeriodDatePicker
-                      compact
-                      required
-                      value={field.value}
-                      onChange={field.onChange}
-                      singleDay={isPendenciaPagaSelected}
-                      minDate={MIN_SELECTABLE_DATE}
-                      error={Boolean(error)}
-                      helperText={error?.message}
+              <ReportPeriodFilter
+                control={control}
+                minDate={isGuardador ? MIN_SELECTABLE_DATE_GUARDADOR : MIN_SELECTABLE_DATE_PERMISSIONARIO}
+              />
+
+              <Grid item xs={12} sm={6} md={4}>
+                <Autocomplete
+                  id="status"
+                  multiple
+                  fullWidth
+                  getOptionLabel={(option) => option.label || option}
+                  filterSelectedOptions
+                  options={statusBase}
+                  value={selectedStatusOptions}
+                  onChange={(_, newValue) => handleAutocompleteChange("status", newValue)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label={isGuardador ? "Selecionar Status" : "Selecionar Status *"}
+                      variant="outlined"
+                      error={hasSearched && hasMissingStatusSelection}
+                      helperText={hasSearched && hasMissingStatusSelection ? "Selecione um status para pesquisar." : ""}
                     />
                   )}
                 />
               </Grid>
-            </Grid>
 
-            {/* Linha 2: favorecido / consórcios / específicos (guardador: guardador / associações) */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
+              {showErroStatus && (
+                <Grid item xs={12} sm={6} md={4}>
+                  <Autocomplete
+                    id="erroStatus"
+                    multiple
+                    fullWidth
+                    options={erroStatus}
+                    getOptionLabel={(option) => option.label || option}
+                    filterSelectedOptions
+                    value={selectedErroStatus}
+                    onChange={(_, newValue) => {
+                      const normalizedValue = normalizeErroStatusSelection(newValue);
+                      setSelectedErroStatus(normalizedValue);
+                      setValue("erroStatus", normalizedValue.map((option) => option.label));
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label={isGuardador ? "Motivo da Pendência" : "Motivos"}
+                        variant="outlined"
+                        error={isGuardador ? hasMissingErroStatusSelection : undefined}
+                        helperText={
+                          isGuardador && hasMissingErroStatusSelection
+                            ? "Selecione um motivo para a Pendência de Pagamento."
+                            : ""
+                        }
+                      />
+                    )}
+                  />
+                </Grid>
+              )}
+
               {isGuardador ? (
                 <>
                   {shouldShowAgentNameFilter(selectedAssociationOptions) && (
@@ -658,6 +670,8 @@ export default function FinancialMovementReport({ perfil }) {
                       getOptionLabel={(option) => option.value.fullName}
                       filterSelectedOptions
                       options={userOptions}
+                      value={selectedFavorecidos}
+                      getOptionDisabled={() => selectedConsorcios.length > 0}
                       filterOptions={(options, state) =>
                         options.filter(
                           (option) =>
@@ -696,7 +710,7 @@ export default function FinancialMovementReport({ perfil }) {
                       filterSelectedOptions
                       options={consorcios}
                       value={selectedConsorcios}
-                      getOptionDisabled={(option) => option.disabled}
+                      getOptionDisabled={(option) => option.disabled || selectedFavorecidos.length > 0}
                       isOptionEqualToValue={(option, value) => option.value === value.value}
                       onChange={(_, newValue) => handleSelection("consorcioName", newValue)}
                       renderInput={(params) => (
@@ -713,73 +727,16 @@ export default function FinancialMovementReport({ perfil }) {
                       options={especificos}
                       getOptionLabel={(option) => option.label}
                       filterSelectedOptions
-                      onChange={(_, newValue) => handleAutocompleteChange("especificos", newValue)}
+                      onChange={(_, newValue) => {
+                        setSelectedEspecificos(newValue.map((item) => item.label));
+                        handleAutocompleteChange("especificos", newValue);
+                      }}
                       renderInput={(params) => <TextField {...params} label="Selecionar Específicos" variant="outlined" />}
                     />
                   </Grid>
                 </>
               )}
-            </Grid>
 
-            {/* Linha 3: status (e motivos, quando houver) */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid item xs={12} sm={6} md={4}>
-                <Autocomplete
-                  id="status"
-                  multiple
-                  fullWidth
-                  getOptionLabel={(option) => option.label || option}
-                  filterSelectedOptions
-                  options={statusBase}
-                  value={selectedStatusOptions}
-                  onChange={(_, newValue) => handleAutocompleteChange("status", newValue)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label={isGuardador ? "Selecionar Status" : "Selecionar Status *"}
-                      variant="outlined"
-                      error={hasSearched && hasMissingStatusSelection}
-                      helperText={hasSearched && hasMissingStatusSelection ? "Selecione um status para pesquisar." : ""}
-                    />
-                  )}
-                />
-              </Grid>
-
-              {showErroStatus && (
-                <Grid item xs={12} sm={6} md={4}>
-                  <Autocomplete
-                    id="erroStatus"
-                    multiple
-                    fullWidth
-                    options={erroStatus}
-                    getOptionLabel={(option) => option.label || option}
-                    filterSelectedOptions
-                    value={selectedErroStatus}
-                    onChange={(_, newValue) => {
-                      const normalizedValue = normalizeErroStatusSelection(newValue);
-                      setSelectedErroStatus(normalizedValue);
-                      setValue("erroStatus", normalizedValue.map((option) => option.label));
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label={isGuardador ? "Motivo da Pendência" : "Motivos"}
-                        variant="outlined"
-                        error={isGuardador ? hasMissingErroStatusSelection : undefined}
-                        helperText={
-                          isGuardador && hasMissingErroStatusSelection
-                            ? "Selecione um motivo para a Pendência de Pagamento."
-                            : ""
-                        }
-                      />
-                    )}
-                  />
-                </Grid>
-              )}
-            </Grid>
-
-            {/* Linha 4: valores */}
-            <Grid container spacing={2}>
               <ValorRangeFilter control={control} getValues={getValues} trigger={trigger} clearErrors={clearErrors} />
             </Grid>
 
@@ -849,29 +806,71 @@ export default function FinancialMovementReport({ perfil }) {
             <Table size="small" sx={isGuardador ? { minWidth: 1280 } : undefined}>
               <TableHead>
                 <TableRow className="sticky top-0 bg-white z-10">
-                  <TableCell className="font-semibold py-1 text-sm leading-none">Data Tentativa Pagamento</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm" style={{ whiteSpace: 'nowrap' }}>
-                    {isGuardador ? 'Nome Guardador' : 'Nome'}
-                  </TableCell>
-                  <TableCell className="font-semibold p-1 text-sm" style={{ maxWidth: 220 }}>Email</TableCell>
-                  <TableCell className="font-semibold py-1 text-sm leading-none">Cód. Banco</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm">Banco</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm">CPF/CNPJ</TableCell>
-                  <TableCell className="font-semibold py-1 text-sm leading-none">
-                    {isGuardador ? 'Associação' : 'Consórcios | Modais'}
-                  </TableCell>
-                  {(isGuardador ? showEffectivePaymentDate : !showErroStatus) && (
-                    <TableCell className="font-semibold py-1 text-sm leading-none">Data Efetiva Pagamento</TableCell>
+                  {showStucColumns ? (
+                    <StucGratuidadeHeaderCells showDataPagamento />
+                  ) : (
+                    <>
+                      <TableCell className="font-semibold py-1 text-sm leading-none">
+                        <Tooltip title="Data Tentativa Pagamento"><span>Dt. Tent. Pagto.</span></Tooltip>
+                      </TableCell>
+                      <TableCell className="font-semibold p-1 text-sm" style={{ whiteSpace: 'nowrap' }}>
+                        <Tooltip title={isGuardador ? 'Nome Guardador' : 'Nome'}>
+                          <span>{isGuardador ? 'Nome Guardador' : 'Nome'}</span>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell className="font-semibold p-1 text-sm" style={{ maxWidth: 220 }}>
+                        <Tooltip title="Email"><span>Email</span></Tooltip>
+                      </TableCell>
+                      <TableCell className="font-semibold py-1 text-sm leading-none">
+                        <Tooltip title="Cód. Banco"><span>Cód. Banco</span></Tooltip>
+                      </TableCell>
+                      <TableCell className="font-semibold p-1 text-sm">
+                        <Tooltip title="Banco"><span>Banco</span></Tooltip>
+                      </TableCell>
+                      <TableCell className="font-semibold p-1 text-sm">
+                        <Tooltip title="CPF/CNPJ"><span>CPF/CNPJ</span></Tooltip>
+                      </TableCell>
+                      <TableCell className="font-semibold py-1 text-sm leading-none">
+                        <Tooltip title={isGuardador ? 'Associação' : 'Consórcios | Modais'}>
+                          <span>{isGuardador ? 'Associação' : 'Consórcios | Modais'}</span>
+                        </Tooltip>
+                      </TableCell>
+                      {(isGuardador ? showEffectivePaymentDate : !showErroStatus) && (
+                        <TableCell className="font-semibold py-1 text-sm leading-none">
+                          <Tooltip title="Data Efetiva Pagamento"><span>Dt. Efet. Pagto.</span></Tooltip>
+                        </TableCell>
+                      )}
+                      <TableCell className="font-semibold p-1 text-sm">
+                        <Tooltip title="Valor"><span>Valor</span></Tooltip>
+                      </TableCell>
+                      <TableCell className="font-semibold p-1 text-sm">
+                        <Tooltip title="Status"><span>Status</span></Tooltip>
+                      </TableCell>
+                      <TableCell className="font-semibold p-1 text-sm">
+                        <Tooltip title="Descrição do Erro"><span>Descrição do Erro</span></Tooltip>
+                      </TableCell>
+                    </>
                   )}
-                  <TableCell className="font-semibold p-1 text-sm">Valor</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm">Status</TableCell>
-                  <TableCell className="font-semibold p-1 text-sm">Descrição do Erro</TableCell>
                 </TableRow>
               </TableHead>
 
               <TableBody className="overflow-scroll">
                 {!isLoading ? (
-                  reportList?.count > 0 ? (
+                  showStucColumns ? (
+                    stucExplodedRows.length > 0 ? (
+                      <StucGratuidadeBodyRows
+                        rows={stucExplodedRows}
+                        formatCurrency={formatCurrency}
+                        showDataPagamento
+                      />
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={colSpan} className="text-center py-4">
+                          Não há dados para serem exibidos
+                        </TableCell>
+                      </TableRow>
+                    )
+                  ) : reportList?.count > 0 ? (
                     reportList.data?.map((report, index) => (
                       <TableRow key={index} className="hover:bg-gray-50">
                         <TableCell className="text-xs py-1">{report.dataReferencia}</TableCell>
@@ -976,8 +975,11 @@ export default function FinancialMovementReport({ perfil }) {
                       reportList.valorPendente > 0 ||
                       showErroStatus) && (
                       <TableRow>
-                        <TableCell />
-                        <TableCell colSpan={7} className="text-right font-bold text-black text-base pt-16">
+                        {!showStucColumns && <TableCell />}
+                        <TableCell
+                          colSpan={showStucColumns ? colSpan : 7}
+                          className="text-right font-bold text-black text-base pt-16"
+                        >
                           {(() => {
                             const isErrorReport = showErroStatus;
                             const valorPago = toNumber(reportList.valorPago);
@@ -1006,8 +1008,12 @@ export default function FinancialMovementReport({ perfil }) {
                             return totals.filter(Boolean).join("    |    ");
                           })()}
                         </TableCell>
-                        <TableCell />
-                        <TableCell />
+                        {!showStucColumns && (
+                          <>
+                            <TableCell />
+                            <TableCell />
+                          </>
+                        )}
                       </TableRow>
                     )}
                   </>
