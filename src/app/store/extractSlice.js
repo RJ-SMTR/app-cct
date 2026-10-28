@@ -293,6 +293,15 @@ export const getStatements = (dateRange, searchingDay, searchingWeek, userId, id
 
     dispatch(setWeekPendingBankRegistration(isSemAgrupamento));
 
+    // Sem ordem agrupada não há "dias anteriores" para buscar (getPreviousDays precisa de um
+    // ordemPagamentoAgrupadoId, que não existe aqui). Sem isto, isLoadingPrevious podia ficar
+    // preso em true para sempre (deixado assim por uma navegação anterior que o setou e nunca
+    // chegou a chamar getPreviousDays para zerá-lo), travando o spinner de "Dias Anteriores".
+    if (isSemAgrupamento) {
+        dispatch(setPendingList([]));
+        dispatch(setLoadingPrevious(false));
+    }
+
     const method = 'get';
     const token = window.localStorage.getItem('jwt_access_token');
 
