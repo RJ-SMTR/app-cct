@@ -6,7 +6,7 @@ import { navbarCloseMobile, selectFuseNavbar } from 'app/store/fuse/navbarSlice'
 import { selectFuseCurrentLayoutConfig } from 'app/store/fuse/settingsSlice';
 import NavbarStyle1Content from './NavbarStyle1Content';
 
-const navbarWidth = 280;
+const navbarWidth = 340;
 
 const StyledNavBar = styled('div')(({ theme, open, position }) => ({
   minWidth: navbarWidth,
