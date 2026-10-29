@@ -277,8 +277,8 @@ export default function StatementsApp() {
     navigate(montarUrlDetalhe({ ...filtro, ...intervalo }));
   };
 
-  // "Outras contas" só aparece se houver lançamento (contas fora do cadastro conhecido).
-  const contas = (dados?.contas ?? []).filter((c) => c.conta !== 'outras' || c.entradas.qtd + c.saidas.qtd > 0);
+  // A Conta Rotativo não é exibida. "Outras contas" só aparece se houver lançamento (contas fora do cadastro conhecido).
+  const contas = (dados?.contas ?? []).filter((c) => c.conta !== 'rotativo' && (c.conta !== 'outras' || c.entradas.qtd + c.saidas.qtd > 0));
 
   return (
     <Box className="p-24 pt-10">
