@@ -48,6 +48,9 @@ function Quadro({ titulo, valor, detalhe, cor }) {
   );
 }
 
+// "Todas" precisa de valor próprio: com value "" o combo fica em branco em vez de mostrar a palavra escolhida.
+const SITUACAO_TODAS = 'todas';
+
 const VAZIO = { total: 0, totais: { quantidade: 0, devendo: 0, valorIndevido: '0', valorDebitado: '0', saldoDevedor: '0' }, itens: [] };
 
 export default function PagamentosIndevidosApp() {
@@ -74,7 +77,7 @@ export default function PagamentosIndevidosApp() {
     setAplicado({ busca: termo, situacao });
   };
 
-  const parametros = useCallback(() => ({ busca: aplicado.busca || undefined, situacao: aplicado.situacao || undefined }), [aplicado]);
+  const parametros = useCallback(() => ({ busca: aplicado.busca || undefined, situacao: aplicado.situacao === SITUACAO_TODAS ? undefined : aplicado.situacao || undefined }), [aplicado]);
 
   useEffect(() => {
     let cancelado = false;
@@ -150,12 +153,12 @@ export default function PagamentosIndevidosApp() {
             }}
           />
           <TextField select label="Situação" value={situacao} onChange={(e) => setSituacao(e.target.value)} sx={{ minWidth: 180 }}>
-            <MenuItem value="">Todas</MenuItem>
             <MenuItem value="devendo">Devendo</MenuItem>
             <MenuItem value="quitado">Quitado</MenuItem>
+            <MenuItem value={SITUACAO_TODAS}>Todas</MenuItem>
           </TextField>
           <Button type="submit" variant="contained" color="secondary" sx={{ height: 56 }}>
-            Buscar
+            Pesquisar
           </Button>
           <Button
             variant="outlined"
