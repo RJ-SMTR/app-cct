@@ -153,9 +153,9 @@ export default function PagamentosIndevidosApp() {
             }}
           />
           <TextField select label="Situação" value={situacao} onChange={(e) => setSituacao(e.target.value)} sx={{ minWidth: 180 }}>
-            <MenuItem value="devendo">Devendo</MenuItem>
-            <MenuItem value="quitado">Quitado</MenuItem>
             <MenuItem value={SITUACAO_TODAS}>Todas</MenuItem>
+            <MenuItem value="quitado">Quitado</MenuItem>
+            <MenuItem value="devendo">Devendo</MenuItem>
           </TextField>
           <Button type="submit" variant="contained" color="secondary" sx={{ height: 56 }}>
             Pesquisar
