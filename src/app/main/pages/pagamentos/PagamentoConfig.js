@@ -37,6 +37,7 @@ const PagamentoConfig = {
     },
     {
       path: 'pagamentos/indevidos',
+      auth: authRoles.master,
       element: <PagamentosIndevidosLazy />,
     },
     {
