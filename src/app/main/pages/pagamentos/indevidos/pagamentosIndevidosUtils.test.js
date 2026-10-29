@@ -22,12 +22,15 @@ describe('pagamentosIndevidosUtils', () => {
     const folha = montarPlanilha(itens).Sheets['Pagamentos indevidos'];
     expect(folha.A1.v).toBe(CABECALHO_PLANILHA[0]);
     expect(folha.A2.v).toBe('A');
-    expect(folha.H2.v).toBe(60);
-    expect(folha.I3.v).toBe('Quitado');
+    expect(folha.B2.v).toBe('123.456.789-01');
+    expect(folha.C2.v).toBe('16/10/2026');
+    expect(folha.F2.v).toBe(60);
+    expect(folha.G3.v).toBe('Quitado');
     expect(folha.A4.v).toBe('TOTAL GERAL');
-    expect(folha.F4.v).toBe(150.1);
-    expect(folha.G4.v).toBe(90.1);
-    expect(folha.H4.v).toBe(60);
+    expect(folha.D4.v).toBe(150.1);
+    expect(folha.E4.v).toBe(90.1);
+    expect(folha.F4.v).toBe(60);
+    expect(CABECALHO_PLANILHA).toEqual(['Guardador', 'CPF/CNPJ', 'Referência', 'Indevido', 'Já debitado', 'Deve', 'Situação']);
   });
 
   it('nome do arquivo leva a data', () => {

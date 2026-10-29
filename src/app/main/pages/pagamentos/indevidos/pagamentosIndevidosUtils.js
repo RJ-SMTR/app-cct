@@ -18,7 +18,8 @@ export const formatCpfCnpj = (valor) => {
   return valor || '—';
 };
 
-export const CABECALHO_PLANILHA = ['Guardador', 'CPF/CNPJ', 'Data de referência', 'Valor pago', 'Valor a pagar', 'Valor indevido', 'Já debitado', 'Deve (saldo devedor)', 'Situação'];
+// Mesmas colunas, na mesma ordem e com os mesmos títulos do grid da tela.
+export const CABECALHO_PLANILHA = ['Guardador', 'CPF/CNPJ', 'Referência', 'Indevido', 'Já debitado', 'Deve', 'Situação'];
 
 const FORMATO_MOEDA = '"R$"\\ #,##0.00';
 const ESTILO_CABECALHO = {
@@ -50,22 +51,22 @@ export function montarPlanilha(itens) {
   itens.forEach((i, idx) => {
     const r = idx + 1;
     folha[utils.encode_cell({ r, c: 0 })] = { t: 's', v: i.guardador };
-    folha[utils.encode_cell({ r, c: 1 })] = { t: 's', v: i.cpfCnpj || '', z: '@' };
-    folha[utils.encode_cell({ r, c: 2 })] = { t: 's', v: i.dataReferencia ? formatData(i.dataReferencia) : '' };
-    [i.valorPago, i.valorPagar, i.valorIndevido, i.valorDebitado, i.saldoDevedor].forEach((v, k) => {
+    folha[utils.encode_cell({ r, c: 1 })] = { t: 's', v: formatCpfCnpj(i.cpfCnpj), z: '@' };
+    folha[utils.encode_cell({ r, c: 2 })] = { t: 's', v: formatData(i.dataReferencia) };
+    [i.valorIndevido, i.valorDebitado, i.saldoDevedor].forEach((v, k) => {
       folha[utils.encode_cell({ r, c: 3 + k })] = { t: 'n', v: numero(v), z: FORMATO_MOEDA };
     });
-    folha[utils.encode_cell({ r, c: 8 })] = { t: 's', v: ROTULO_SITUACAO[i.situacao] ?? i.situacao };
+    folha[utils.encode_cell({ r, c: 6 })] = { t: 's', v: ROTULO_SITUACAO[i.situacao] ?? i.situacao };
   });
   const total = somarLinhas(itens);
   const r = itens.length + 1;
   folha[utils.encode_cell({ r, c: 0 })] = { t: 's', v: 'TOTAL GERAL', s: ESTILO_TOTAL };
-  [5, 6, 7].forEach((c, k) => {
+  [3, 4, 5].forEach((c, k) => {
     const v = [total.valorIndevido, total.valorDebitado, total.saldoDevedor][k];
     folha[utils.encode_cell({ r, c })] = { t: 'n', v: numero(v), z: FORMATO_MOEDA, s: ESTILO_TOTAL };
   });
   folha['!ref'] = utils.encode_range({ s: { r: 0, c: 0 }, e: { r, c: CABECALHO_PLANILHA.length - 1 } });
-  folha['!cols'] = [{ wch: 38 }, { wch: 18 }, { wch: 18 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 20 }, { wch: 12 }];
+  folha['!cols'] = [{ wch: 38 }, { wch: 20 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 12 }];
   folha['!autofilter'] = { ref: utils.encode_range({ s: { r: 0, c: 0 }, e: { r: itens.length, c: CABECALHO_PLANILHA.length - 1 } }) };
   const livro = utils.book_new();
   utils.book_append_sheet(livro, folha, 'Pagamentos indevidos');
