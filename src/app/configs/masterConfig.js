@@ -211,6 +211,15 @@ const masterConfig = [
                 icon: 'heroicons-outline:shield-check',
                 url: 'auditoria',
             },
+            {
+                id: 'controle-remessa-erros-component',
+                auth: authRoles.masterTi,
+                title: 'Controle Remessa Erros',
+                translate: 'Controle Remessa Erros',
+                type: 'item',
+                icon: 'heroicons-outline:exclamation',
+                url: 'controle-remessa-erros',
+            },
         ],
     },
 ];
