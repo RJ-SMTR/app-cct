@@ -154,7 +154,8 @@ const masterConfig = [
     // 4. PENDÊNCIAS E REGULARIZAÇÕES - tratamento de exceções e situações pendentes
     {
         id: 'pendencias-component',
-        auth: authRoles.masterTi,
+        // O grupo abre para o Admin Master por causa de Indevidos de Guardadores; os demais itens seguem só para a TI.
+        auth: authRoles.master,
         title: 'Pendências e Regularizações',
         translate: 'Pendências e Regularizações',
         type: 'collapse',
@@ -162,6 +163,7 @@ const masterConfig = [
         children: [
             {
                 id: 'pagamentos-indevidos-component',
+                auth: authRoles.master,
                 title: 'Indevidos de Guardadores',
                 translate: 'Indevidos de Guardadores',
                 type: 'item',
@@ -170,6 +172,7 @@ const masterConfig = [
             },
             {
                 id: 'pagamentos-pendentes-permissionarios-component',
+                auth: authRoles.masterTi,
                 title: 'Pendências de Permissionários',
                 translate: 'Pendências de Permissionários',
                 type: 'item',
@@ -178,6 +181,7 @@ const masterConfig = [
             },
             {
                 id: 'pagamentos-pendentes-guardadores-component',
+                auth: authRoles.masterTi,
                 title: 'Pendências de Guardadores',
                 translate: 'Pendências de Guardadores',
                 type: 'item',
