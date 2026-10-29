@@ -33,6 +33,7 @@ import OrdemPagamentoConfig from '../main/pages/ordemPagamento/OrdemPagamentoCon
 import PagamentoConfig from '../main/pages/pagamentos/PagamentoConfig';
 import DashboardPagamentosConfig from '../main/pages/dashboardPagamentos/DashboardPagamentosConfig';
 import AuditoriaConfig from '../main/pages/auditoria/AuditoriaConfig';
+import ControleRemessaErroConfig from '../main/pages/controleRemessaErro/ControleRemessaErroConfig';
 
 function RootRedirect() {
   const user = useSelector(selectUser);
@@ -81,6 +82,7 @@ const routeConfigs = [
   PagamentoConfig,
   DashboardPagamentosConfig,
   AuditoriaConfig,
+  ControleRemessaErroConfig,
 ];
 
 const routes = [
