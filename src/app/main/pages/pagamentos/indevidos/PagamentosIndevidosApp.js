@@ -180,7 +180,6 @@ export default function PagamentosIndevidosApp() {
                   <TableCell>Guardador</TableCell>
                   <TableCell>CPF/CNPJ</TableCell>
                   <TableCell>Referência</TableCell>
-                  <TableCell align="right">Valor pago</TableCell>
                   <TableCell align="right">Indevido</TableCell>
                   <TableCell align="right">Já debitado</TableCell>
                   <TableCell align="right">Deve</TableCell>
@@ -193,7 +192,6 @@ export default function PagamentosIndevidosApp() {
                     <TableCell>{i.guardador}</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatCpfCnpj(i.cpfCnpj)}</TableCell>
                     <TableCell>{formatData(i.dataReferencia)}</TableCell>
-                    <TableCell align="right">{formatBRL(i.valorPago)}</TableCell>
                     <TableCell align="right">{formatBRL(i.valorIndevido)}</TableCell>
                     <TableCell align="right" sx={{ color: '#2e7d32', fontWeight: 500 }}>
                       {formatBRL(i.valorDebitado)}
