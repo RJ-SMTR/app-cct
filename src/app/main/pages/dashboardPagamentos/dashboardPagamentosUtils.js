@@ -8,6 +8,21 @@ export const SITUACOES = [
 
 export const CONTAS = ['bilhetagem', 'rotativo', 'cett'];
 
+// Mesmos grupos que a API devolve no resumo (GRUPOS_POR_CONTA); alimentam o filtro múltiplo do detalhe.
+const MODAIS = ['STPC', 'STPL', 'TEC'];
+export const GRUPOS_POR_CONTA = {
+  bilhetagem: ['GTU', 'Intersul', 'Internorte', 'MobiRio', 'Santa Cruz', 'Transcarioca', 'TUSE', 'VLT', ...MODAIS],
+  rotativo: ['Guardador'],
+  cett: [...MODAIS, 'Pagamento único'],
+};
+
+/** O filtro de grupo vai na URL e na API como lista separada por vírgula ("GTU,VLT"). */
+export const gruposDoFiltro = (grupo) =>
+  String(grupo || '')
+    .split(',')
+    .map((g) => g.trim())
+    .filter(Boolean);
+
 export const ROTA_DASHBOARD = '/dashboard-pagamentos';
 export const ROTA_DETALHE = '/dashboard-pagamentos/detalhe';
 

@@ -4,6 +4,9 @@ import { authRoles } from 'src/app/auth';
 const PagamentoConsorciosLazy = lazy(() => import('./PagamentoConsorciosApp'));
 const PagamentoModaisLazy = lazy(() => import('./PagamentoModaisApp'));
 const PagamentoGuardadoresLazy = lazy(() => import('./PagamentoGuardadoresApp'));
+const PagamentosIndevidosLazy = lazy(() => import('./indevidos/PagamentosIndevidosApp'));
+const PagamentoPermissionariosPendentesLazy = lazy(() => import('./PagamentoPermissionariosPendentesApp'));
+const PagamentoGuardadoresPendentesLazy = lazy(() => import('./PagamentoGuardadoresPendentesApp'));
 const PagamentoConsorciosPendenteLazy = lazy(() => import('./PagamentoConsorciosPendenteApp'));
 const PagamentoModaisPendenteLazy = lazy(() => import('./PagamentoModaisPendenteApp'));
 const PagamentoGuardadoresPendenteLazy = lazy(() => import('./PagamentoGuardadoresPendenteApp'));
@@ -18,7 +21,7 @@ const PagamentoConfig = {
       },
     },
   },
-  auth: authRoles.master,
+  auth: authRoles.masterTi,
   routes: [
     {
       path: 'pagamentos/consorcios',
@@ -31,6 +34,18 @@ const PagamentoConfig = {
     {
       path: 'pagamentos/guardadores',
       element: <PagamentoGuardadoresLazy />,
+    },
+    {
+      path: 'pagamentos/indevidos',
+      element: <PagamentosIndevidosLazy />,
+    },
+    {
+      path: 'pagamentos/pendentes/permissionarios',
+      element: <PagamentoPermissionariosPendentesLazy />,
+    },
+    {
+      path: 'pagamentos/pendentes/guardadores',
+      element: <PagamentoGuardadoresPendentesLazy />,
     },
     {
       path: 'pagamentos/pendente/consorcios',

@@ -235,6 +235,163 @@ function buildDailyPhotos(dailyResponse) {
   }));
 }
 
+function getPagamentoIndevidoStatus(statusRemessa) {
+  const status = Number(statusRemessa);
+
+  if (status === 3 || status === 5) {
+    return "Pago";
+  }
+
+  if (status === 4) {
+    return "Rejeitado";
+  }
+
+  if (status === 1 || status === 2) {
+    return "Aguardando Pagamento";
+  }
+
+  return "A pagar";
+}
+
+function formatDayMonth(dateOnly) {
+  const [, month, day] = String(dateOnly || "").split("-");
+  return day && month ? `${day}/${month}` : "";
+}
+
+/** "estorno pagamento em duplicidade em 03/09, 09/09 e 23/09": as datas dos pagamentos em duplicidade, quando se sabe. */
+export function buildDuplicateRefundNote(duplicateDates) {
+  const days = (Array.isArray(duplicateDates) ? duplicateDates : [])
+    .map(formatDayMonth)
+    .filter(Boolean);
+
+  if (days.length === 0) {
+    return "estorno pagamento em duplicidade";
+  }
+
+  const list =
+    days.length === 1
+      ? days[0]
+      : `${days.slice(0, -1).join(", ")} e ${days[days.length - 1]}`;
+
+  return `estorno pagamento em duplicidade em ${list}`;
+}
+
+/**
+ * Valor indevido a pagar do guardador (tabela pagamento_indevido). Cada linha é um pagamento em que o guardador recebeu menos
+ * que o devido (abatimento do indevido): data, valor devido, valor pago, diferença e status. `hasBalance` só é verdadeiro
+ * quando ainda há saldo devedor, que é quando o quadro aparece.
+ */
+export function buildPagamentoIndevido(response) {
+  const totals = response?.totais || {};
+  const entries = Array.isArray(response?.lancamentos) ? response.lancamentos : [];
+  const duplicateDates = (Array.isArray(response?.datasDuplicidade) ? response.datasDuplicidade : [])
+    .map(toDateOnly)
+    .filter(Boolean);
+  const note = buildDuplicateRefundNote(duplicateDates);
+
+  return {
+    duplicateDates,
+    totalIndevido: normalizeNumber(totals.valorIndevido),
+    totalAbatido: normalizeNumber(totals.valorDebitado),
+    totalSaldoDevedor: normalizeNumber(totals.saldoDevedor),
+    hasBalance: normalizeNumber(totals.saldoDevedor) > 0,
+    items: entries.map((entry, index) => {
+      const difference = normalizeNumber(entry.diferenca);
+
+      return {
+        id: `${toDateOnly(entry.data)}-${index}`,
+        date: toDateOnly(entry.data),
+        amountDue: normalizeNumber(entry.valorDevido),
+        amountPaid: normalizeNumber(entry.valorPago),
+        difference,
+        differenceNote: difference < 0 ? note : "",
+        status: getPagamentoIndevidoStatus(entry.statusRemessa),
+      };
+    }),
+  };
+}
+
+export const DUPLICATE_OFFSET_STATUS = "Abatimento por duplicidade";
+
+function formatMonthYear(dateOnly) {
+  const [year, month] = String(dateOnly || "").split("-");
+  return year && month ? `${month}/${year}` : "";
+}
+
+/**
+ * Motivo do status "Abatimento por duplicidade": "Valor pago em duplicidade em 09/2026".
+ * Os meses vêm das datas dos pagamentos em duplicidade (sem repetir, em ordem, "08/2026 e 09/2026"); sem datas, fica só a frase sem o mês.
+ */
+export function buildDuplicateOffsetReason(duplicateDates) {
+  const months = [
+    ...new Set(
+      (Array.isArray(duplicateDates) ? duplicateDates : [])
+        .map(formatMonthYear)
+        .filter(Boolean)
+    ),
+  ];
+  const base = "Valor pago em duplicidade";
+
+  if (months.length === 0) {
+    return base;
+  }
+
+  if (months.length === 1) {
+    return `${base} em ${months[0]}`;
+  }
+
+  return `${base} em ${months.slice(0, -1).join(", ")} e ${months[months.length - 1]}`;
+}
+
+function isPaidRemittanceStatus(statusRemessa) {
+  return Number(statusRemessa) === 3 || Number(statusRemessa) === 5;
+}
+
+/**
+ * Marca (`duplicateOffset`) os pagamentos da visão mensal que estão pagos e tiveram abatimento do pagamento indevido: o pagamento
+ * do mesmo dia com valor pago menor que o devido no quadro do indevido. Os demais seguem como vieram.
+ */
+export function markDuplicateOffsetPayments(monthlyPayments, pagamentoIndevido) {
+  const payments = Array.isArray(monthlyPayments) ? monthlyPayments : [];
+  const offsetDates = new Set(
+    (pagamentoIndevido?.items || [])
+      .filter((item) => item.difference < 0 && item.date)
+      .map((item) => item.date)
+  );
+
+  if (offsetDates.size === 0) {
+    return payments;
+  }
+
+  const reason = buildDuplicateOffsetReason(pagamentoIndevido?.duplicateDates);
+
+  return payments.map((payment) => {
+    const paymentDate = payment.dataTentativaPagamento || payment.paymentDate;
+
+    if (!isPaidRemittanceStatus(payment.statusRemessa) || !offsetDates.has(paymentDate)) {
+      return payment;
+    }
+
+    return { ...payment, duplicateOffset: { status: DUPLICATE_OFFSET_STATUS, reason } };
+  });
+}
+
+export async function getAgentePagamentoIndevido(userId) {
+  const token = window.localStorage.getItem("jwt_access_token");
+
+  if (!JwtService.isAuthTokenValid(token)) {
+    throw new Error("Sessão inválida. Faça login novamente.");
+  }
+
+  const response = await api.request(
+    buildRequestConfig(jwtServiceConfig.agentesPagamentoIndevido, token, {
+      userId: Number(userId),
+    })
+  );
+
+  return buildPagamentoIndevido(response.data);
+}
+
 function buildRequestConfig(url, token, params) {
   return {
     method: "get",

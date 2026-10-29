@@ -79,6 +79,7 @@ export const selectNavigation = createSelector(
     switch (userRole) {
 
       case 'Admin Master':
+      case 'Admin Master TI':
         configToUse = masterConfig;
         break;
       case 'Admin':

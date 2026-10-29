@@ -1,5 +1,6 @@
 import {
   formatBRL,
+  gruposDoFiltro,
   CABECALHO_DETALHADO,
   montarLinhasDetalhado,
   nomeArquivoExportacao,
@@ -119,6 +120,9 @@ describe('dashboardPagamentosUtils', () => {
 
   it('gera um nome de arquivo seguro a partir dos filtros', () => {
     expect(nomeArquivoExportacao({ conta: 'cett', situacao: 'pago', dataInicio: '2026-10-20', dataFim: '2026-10-20' })).toBe('detalhe-pagamentos_cett_pago_2026-10-20_2026-10-20.xlsx');
+    expect(nomeArquivoExportacao({ conta: 'bilhetagem', grupo: 'GTU,VLT', dataInicio: '2026-10-01', dataFim: '2026-10-31' })).toBe('detalhe-pagamentos_bilhetagem_GTU-VLT_2026-10-01_2026-10-31.xlsx');
+    expect(gruposDoFiltro(' GTU, VLT ,,')).toEqual(['GTU', 'VLT']);
+    expect(gruposDoFiltro(undefined)).toEqual([]);
     expect(nomeArquivoExportacao({ conta: 'bilhetagem', grupo: 'Santa Cruz', dataInicio: '2026-10-01', dataFim: '2026-10-31' })).toBe('detalhe-pagamentos_bilhetagem_Santa-Cruz_2026-10-01_2026-10-31.xlsx');
   });
 });

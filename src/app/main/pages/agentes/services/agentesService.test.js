@@ -17,10 +17,98 @@ jest.mock("../../../../auth/services/jwtService/jwtServiceConfig", () => ({
 }));
 
 import {
+  buildDuplicateOffsetReason,
+  buildDuplicateRefundNote,
   buildMonthlyPaymentRowKey,
   buildMonthlyPaymentRows,
+  buildPagamentoIndevido,
   getPaymentStatus,
+  markDuplicateOffsetPayments,
 } from "./agentesService";
+
+describe("buildPagamentoIndevido", () => {
+  const response = {
+    totais: {
+      quantidade: 1,
+      devendo: 1,
+      valorIndevido: "877.80",
+      valorDebitado: "238.00",
+      saldoDevedor: "639.80",
+    },
+    lancamentos: [
+      {
+        data: "2026-10-16",
+        valorDevido: "160.00",
+        valorPago: "120.00",
+        diferenca: "-40.00",
+        statusRemessa: 3,
+      },
+    ],
+    datasDuplicidade: ["2026-10-13"],
+  };
+
+  it("monta a linha Data, Valor devido, Valor pago, Diferença e Status, com a observação do estorno", () => {
+    const result = buildPagamentoIndevido(response);
+
+    expect(result).toMatchObject({ totalSaldoDevedor: 639.8, hasBalance: true });
+    expect(result.items).toEqual([
+      {
+        id: "2026-10-16-0",
+        date: "2026-10-16",
+        amountDue: 160,
+        amountPaid: 120,
+        difference: -40,
+        differenceNote: "estorno pagamento em duplicidade em 13/10",
+        status: "Pago",
+      },
+    ]);
+  });
+
+  it("lista as datas da duplicidade separadas por vírgula e 'e'", () => {
+    expect(buildDuplicateRefundNote(["2026-09-03", "2026-09-09", "2026-09-23"])).toBe(
+      "estorno pagamento em duplicidade em 03/09, 09/09 e 23/09"
+    );
+    expect(buildDuplicateRefundNote(["2026-09-03", "2026-09-23"])).toBe(
+      "estorno pagamento em duplicidade em 03/09 e 23/09"
+    );
+    expect(buildDuplicateRefundNote([])).toBe("estorno pagamento em duplicidade");
+  });
+
+  it("diferença zero ou positiva não leva observação de estorno", () => {
+    const result = buildPagamentoIndevido({
+      totais: { saldoDevedor: "10.00" },
+      lancamentos: [{ data: "2026-10-16", valorDevido: "10.00", valorPago: "10.00", diferenca: "0.00", statusRemessa: 3 }],
+    });
+
+    expect(result.items[0].differenceNote).toBe("");
+  });
+
+  it("mapeia o status da remessa", () => {
+    const status = (statusRemessa) =>
+      buildPagamentoIndevido({
+        totais: { saldoDevedor: "1.00" },
+        lancamentos: [{ data: "2026-10-16", valorDevido: "2", valorPago: "1", diferenca: "-1", statusRemessa }],
+      }).items[0].status;
+
+    expect(status(3)).toBe("Pago");
+    expect(status(5)).toBe("Pago");
+    expect(status(4)).toBe("Rejeitado");
+    expect(status(2)).toBe("Aguardando Pagamento");
+    expect(status(0)).toBe("A pagar");
+  });
+
+  it("não mostra o quadro quando o guardador não tem saldo devedor", () => {
+    expect(
+      buildPagamentoIndevido({ totais: { valorIndevido: "56.00", valorDebitado: "56.00", saldoDevedor: "0.00" }, lancamentos: [] })
+        .hasBalance
+    ).toBe(false);
+  });
+
+  it("resposta vazia ou sem lançamentos não quebra e não mostra o quadro", () => {
+    expect(buildPagamentoIndevido(undefined)).toMatchObject({ hasBalance: false, items: [] });
+    expect(buildPagamentoIndevido({ totais: {}, lancamentos: null })).toMatchObject({ totalSaldoDevedor: 0, items: [] });
+  });
+});
 
 describe("agentesService payment normalization", () => {
   it("keeps rows without a remittance attempt as A pagar", () => {
@@ -144,5 +232,42 @@ describe("agentesService payment normalization", () => {
     expect(buildMonthlyPaymentRowKey(monthlyRows[0], 0)).not.toBe(
       buildMonthlyPaymentRowKey(monthlyRows[1], 1)
     );
+  });
+});
+
+describe('Abatimento por duplicidade', () => {
+  const indevido = buildPagamentoIndevido({
+    totais: { quantidade: 1, devendo: 1, valorIndevido: '877.80', valorDebitado: '238.00', saldoDevedor: '639.80' },
+    lancamentos: [{ data: '2026-10-16', valorDevido: '238.00', valorPago: '0.00', diferenca: '-238.00', statusRemessa: 3 }],
+    datasDuplicidade: ['2026-09-03', '2026-09-09', '2026-09-23'],
+  });
+  const pagamento = (data, statusRemessa) => ({ paymentDate: data, dataTentativaPagamento: data, statusRemessa, totalPaymentValue: 238 });
+
+  it('monta o motivo com o mês (MM/AAAA) da duplicidade, sem repetir o mês', () => {
+    expect(buildDuplicateOffsetReason(['2026-09-03', '2026-09-09', '2026-09-23'])).toBe('Valor pago em duplicidade em 09/2026');
+    expect(buildDuplicateOffsetReason(['2026-08-12', '2026-09-03'])).toBe('Valor pago em duplicidade em 08/2026 e 09/2026');
+    expect(buildDuplicateOffsetReason([])).toBe('Valor pago em duplicidade');
+  });
+
+  it('marca o pagamento pago do dia em que houve abatimento', () => {
+    const marked = markDuplicateOffsetPayments([pagamento('2026-10-16', 3)], indevido);
+
+    expect(marked[0].duplicateOffset).toEqual({
+      status: 'Abatimento por duplicidade',
+      reason: 'Valor pago em duplicidade em 09/2026',
+    });
+  });
+
+  it('não marca pagamento de outro dia nem o que não está pago', () => {
+    const payments = [pagamento('2026-10-20', 3), pagamento('2026-10-16', 2), pagamento('2026-10-16', null), pagamento('2026-10-16', 4)];
+
+    markDuplicateOffsetPayments(payments, indevido).forEach((p) => expect(p.duplicateOffset).toBeUndefined());
+  });
+
+  it('sem abatimento (ou sem indevido) devolve os pagamentos como vieram', () => {
+    const payments = [pagamento('2026-10-16', 3)];
+
+    expect(markDuplicateOffsetPayments(payments, null)).toBe(payments);
+    expect(markDuplicateOffsetPayments(payments, { items: [{ date: '2026-10-16', difference: 0 }] })).toBe(payments);
   });
 });

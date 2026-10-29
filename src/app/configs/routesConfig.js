@@ -31,8 +31,9 @@ import AgentesSignInConfig from '../main/pages/agentes/sign-in/AgentesSignInConf
 import ChangePasswordConfig from '../main/pages/settings/changePassword/ChangePasswordConfig';
 import OrdemPagamentoConfig from '../main/pages/ordemPagamento/OrdemPagamentoConfig';
 import PagamentoConfig from '../main/pages/pagamentos/PagamentoConfig';
-import { podeVerDashboardPagamentos } from './dashboardAccess';
 import DashboardPagamentosConfig from '../main/pages/dashboardPagamentos/DashboardPagamentosConfig';
+import AuditoriaConfig from '../main/pages/auditoria/AuditoriaConfig';
+import ControleRemessaErroConfig from '../main/pages/controleRemessaErro/ControleRemessaErroConfig';
 
 function RootRedirect() {
   const user = useSelector(selectUser);
@@ -41,7 +42,7 @@ function RootRedirect() {
     ? '/agentes'
     : user?.role?.name?.includes('Financeiro')
       ? '/lancamentos'
-      : user?.role?.name === 'Admin Master' && podeVerDashboardPagamentos(user?.id)
+      : user?.role?.name === 'Admin Master TI'
         ? '/dashboard-pagamentos'
         : user?.role?.name?.includes('Admin')
           ? '/admin'
@@ -80,6 +81,8 @@ const routeConfigs = [
   OrdemPagamentoConfig,
   PagamentoConfig,
   DashboardPagamentosConfig,
+  AuditoriaConfig,
+  ControleRemessaErroConfig,
 ];
 
 const routes = [

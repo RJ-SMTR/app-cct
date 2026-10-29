@@ -66,7 +66,7 @@ export function getUserAccessTokens(user) {
 export function hasAgentesAccess(user) {
   const accessTokens = getUserAccessTokens(user);
 
-  return [ 'agente', 'admin', 'admin master'].some((token) => accessTokens.includes(token));
+  return ['agente', 'admin', 'admin master', 'admin master ti'].some((token) => accessTokens.includes(token));
 }
 
 export function isAgenteUser(user) {
@@ -78,5 +78,5 @@ export function isAgenteUser(user) {
 export function isAdminUser(user) {
   const accessTokens = getUserAccessTokens(user);
 
-  return ['admin', 'admin master'].some((token) => accessTokens.includes(token));
+  return ['admin', 'admin master', 'admin master ti'].some((token) => accessTokens.includes(token));
 }
