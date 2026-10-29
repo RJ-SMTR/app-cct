@@ -8,6 +8,8 @@ i18next.addResourceBundle('en', 'navigation', en);
 i18next.addResourceBundle('tr', 'navigation', tr);
 i18next.addResourceBundle('ar', 'navigation', ar);
 
+// Estrutura: Dashboard, Administrativo, Financeiro, Pagamentos, Pendências e Regularizações e Administração do Sistema.
+// Menu "Lançamentos Financeiro" e seus submenus seguem ocultos a pedido.
 const masterConfig = [
     {
         id: 'dashboard-pagamentos-component',
@@ -18,6 +20,7 @@ const masterConfig = [
         icon: 'heroicons-outline:chart-bar',
         url: 'dashboard-pagamentos',
     },
+    // 1. ADMINISTRATIVO - gestão cadastral e entrada de dados
     {
         id: 'Administrativo',
         title: 'Administrativo',
@@ -25,35 +28,22 @@ const masterConfig = [
         type: 'collapse',
         icon: 'heroicons-outline:briefcase',
         children: [
-
             {
                 id: 'Home-component',
-                title: 'Permissionário',
-                translate: 'Permissionário',
+                title: 'Permissionários',
+                translate: 'Permissionários',
                 type: 'item',
                 icon: 'material-symbols-outlined:airport_shuttle',
                 url: 'admin',
-
-
             },
             {
                 id: 'upload-component',
-                title: 'Upload',
-                translate: 'Upload',
+                title: 'Upload de arquivos',
+                translate: 'Upload de arquivos',
                 type: 'item',
                 icon: 'heroicons-outline:upload',
                 url: 'upload',
-
             },
-            // {
-            //     id: 'trigger-component',
-            //     title: 'trigger',
-            //     translate: 'Disparo',
-            //     type: 'item',
-            //     icon: 'heroicons-solid:mail',
-            //     url: 'disparo',
-            // },
-
             {
                 id: 'support',
                 title: 'Suporte',
@@ -62,20 +52,18 @@ const masterConfig = [
                 icon: 'material-outline:contact_support',
                 target: '_blank',
                 url: 'https://transportes.prefeitura.rio/atendimentodigital/',
-
             },
             {
                 id: 'agentes-component',
-                title: 'Guardador',
-                translate: 'Guardador',
+                title: 'Guardadores',
+                translate: 'Guardadores',
                 type: 'item',
                 icon: 'material-symbols-outlined:parking_sign',
                 url: 'agentes',
             },
-        ]
-
+        ],
     },
-    // GRUPO FINANCEIRO
+    // 2. FINANCEIRO - consulta financeira, execução e controle dos pagamentos
     {
         id: 'Financeiro',
         title: 'Financeiro',
@@ -84,42 +72,6 @@ const masterConfig = [
         icon: 'heroicons-outline:currency-dollar',
         url: 'group-finan-pai',
         children: [
-            // {
-            //     id: 'Agendamento',
-            //     title: 'Agendar Pagamentos',
-            //     subtitle: '',
-            //     type: 'item',
-            //     icon: '',
-            //     url: 'group-finan',
-
-
-            // },
-
-            // {
-            //     id: 'trigger-component',
-            //     title: 'report',
-            //     translate: 'Agendar Remessa ',
-            //     type: 'item',
-            //     icon: 'heroicons-outline:document-report',
-            //     url: 'agendar',
-            // },
-            // {
-            //     id: 'trigger-component',
-            //     title: 'balance',
-            //     translate: 'Aprovação Remessa ',
-            //     type: 'item',
-            //     icon: 'heroicons-outline:currency-dollar',
-            //     url: 'aprovacao-remessa',
-            // },
-            {
-                id: 'Visão Financeira',
-                title: 'Visão Financeira',
-                subtitle: '',
-                type: 'item',
-                icon: '',
-                url: 'group-finan',
-
-            },
             {
                 id: 'ordem-pagamento-component',
                 auth: authRoles.masterTi,
@@ -147,71 +99,12 @@ const masterConfig = [
                 ],
             },
             {
-                id: 'pagamentos-component',
-                auth: authRoles.masterTi,
-                title: 'Pagamentos',
-                translate: 'Pagamentos',
-                type: 'collapse',
-                icon: 'heroicons-outline:cash',
-                children: [
-                    {
-                        id: 'pagamentos-consorcios-component',
-                        title: 'Consórcios',
-                        translate: 'Consórcios',
-                        type: 'item',
-                        icon: 'heroicons-outline:office-building',
-                        url: 'pagamentos/consorcios',
-                    },
-                    {
-                        id: 'pagamentos-modais-component',
-                        title: 'Modais',
-                        translate: 'Modais',
-                        type: 'item',
-                        icon: 'heroicons-outline:truck',
-                        url: 'pagamentos/modais',
-                    },
-                    {
-                        id: 'pagamentos-guardadores-component',
-                        title: 'Guardadores',
-                        translate: 'Guardadores',
-                        type: 'item',
-                        icon: 'material-symbols-outlined:parking_sign',
-                        url: 'pagamentos/guardadores',
-                    },
-                    {
-                        id: 'pagamentos-indevidos-component',
-                        title: 'Indevidos Guardadores',
-                        translate: 'Indevidos Guardadores',
-                        type: 'item',
-                        icon: 'heroicons-outline:exclamation-circle',
-                        url: 'pagamentos/indevidos',
-                    },
-                    {
-                        id: 'pagamentos-pendentes-component',
-                        title: 'Pendentes',
-                        translate: 'Pendentes',
-                        type: 'collapse',
-                        icon: 'heroicons-outline:clock',
-                        children: [
-                            {
-                                id: 'pagamentos-pendentes-permissionarios-component',
-                                title: 'Permissionários',
-                                translate: 'Permissionários',
-                                type: 'item',
-                                icon: 'material-symbols-outlined:airport_shuttle',
-                                url: 'pagamentos/pendentes/permissionarios',
-                            },
-                            {
-                                id: 'pagamentos-pendentes-guardadores-component',
-                                title: 'Guardadores',
-                                translate: 'Guardadores',
-                                type: 'item',
-                                icon: 'material-symbols-outlined:parking_sign',
-                                url: 'pagamentos/pendentes/guardadores',
-                            },
-                        ],
-                    },
-                ],
+                id: 'trigger-component',
+                title: 'balance',
+                translate: 'Extrato',
+                type: 'item',
+                icon: 'heroicons-outline:currency-dollar',
+                url: 'extrato-contas',
             },
             {
                 id: 'report-component',
@@ -221,56 +114,82 @@ const masterConfig = [
                 icon: 'material-outline:ballot',
                 url: 'relatorio',
             },
-            {
-                id: 'trigger-component',
-                title: 'balance',
-                translate: 'Extrato ',
-                type: 'item',
-                icon: 'heroicons-outline:currency-dollar',
-                url: 'extrato-contas',
-            },
-
-
-            // Menu "Lançamentos Financeiro" e submenus ocultados a pedido.
-            // {
-            //     id: 'Financeiro',
-            //     title: 'Lançamentos Financeiro',
-            //     subtitle: '',
-            //     type: 'item',
-            //     icon: '',
-            //     url: 'group-finan',
-            // },
-            // {
-            //     id: 'trigger-component',
-            //     title: 'trigger',
-            //     translate: 'Lançamentos',
-            //     type: 'item',
-            //     icon: 'heroicons-outline:plus-circle',
-            //     url: 'lancamentos',
-            // },
-            // {
-            //     id: 'trigger-component',
-            //     title: 'trigger',
-            //     translate: 'Alçada de Aprovação',
-            //     type: 'item',
-            //     icon: 'heroicons-outline:currency-dollar',
-            //     url: 'aprovação',
-            // },
-            // {
-            //     id: 'trigger-component',
-            //     title: 'report',
-            //     translate: 'Relatório Lançamentos',
-            //     type: 'item',
-            //     icon: 'heroicons-outline:document-report',
-            //     url: 'relatorio-lançamento',
-            // },
-        ]
-
+        ],
     },
-    // GRUPO CONFIGURAÇÕES
+    // 3. PAGAMENTOS - organização dos pagamentos por modalidade e situação
+    {
+        id: 'pagamentos-component',
+        auth: authRoles.masterTi,
+        title: 'Pagamentos',
+        translate: 'Pagamentos',
+        type: 'collapse',
+        icon: 'heroicons-outline:cash',
+        children: [
+            {
+                id: 'pagamentos-consorcios-component',
+                title: 'Consórcios',
+                translate: 'Consórcios',
+                type: 'item',
+                icon: 'heroicons-outline:office-building',
+                url: 'pagamentos/consorcios',
+            },
+            {
+                id: 'pagamentos-modais-component',
+                title: 'Modais',
+                translate: 'Modais',
+                type: 'item',
+                icon: 'heroicons-outline:truck',
+                url: 'pagamentos/modais',
+            },
+            {
+                id: 'pagamentos-guardadores-component',
+                title: 'Guardadores',
+                translate: 'Guardadores',
+                type: 'item',
+                icon: 'material-symbols-outlined:parking_sign',
+                url: 'pagamentos/guardadores',
+            },
+        ],
+    },
+    // 4. PENDÊNCIAS E REGULARIZAÇÕES - tratamento de exceções e situações pendentes
+    {
+        id: 'pendencias-component',
+        auth: authRoles.masterTi,
+        title: 'Pendências e Regularizações',
+        translate: 'Pendências e Regularizações',
+        type: 'collapse',
+        icon: 'heroicons-outline:clipboard-list',
+        children: [
+            {
+                id: 'pagamentos-indevidos-component',
+                title: 'Indevidos de Guardadores',
+                translate: 'Indevidos de Guardadores',
+                type: 'item',
+                icon: 'heroicons-outline:exclamation-circle',
+                url: 'pagamentos/indevidos',
+            },
+            {
+                id: 'pagamentos-pendentes-permissionarios-component',
+                title: 'Pendências de Permissionários',
+                translate: 'Pendências de Permissionários',
+                type: 'item',
+                icon: 'material-symbols-outlined:airport_shuttle',
+                url: 'pagamentos/pendentes/permissionarios',
+            },
+            {
+                id: 'pagamentos-pendentes-guardadores-component',
+                title: 'Pendências de Guardadores',
+                translate: 'Pendências de Guardadores',
+                type: 'item',
+                icon: 'material-symbols-outlined:parking_sign',
+                url: 'pagamentos/pendentes/guardadores',
+            },
+        ],
+    },
+    // 5. ADMINISTRAÇÃO DO SISTEMA - configuração, acesso e rastreabilidade
     {
         id: 'Configuracoes',
-        title: 'Configurações',
+        title: 'Administração do Sistema',
         subtitle: '',
         type: 'collapse',
         icon: 'heroicons-outline:cog',
@@ -294,10 +213,6 @@ const masterConfig = [
             },
         ],
     },
-
-
-
-
 ];
 
 export default masterConfig;
