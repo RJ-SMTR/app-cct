@@ -235,8 +235,13 @@ function buildDailyPhotos(dailyResponse) {
   }));
 }
 
-function getPagamentoIndevidoStatus(statusRemessa) {
+function getPagamentoIndevidoStatus(statusRemessa, amountPaid) {
   const status = Number(statusRemessa);
+
+  // Valor enviado zerado pelo abatimento: o banco recusa o lançamento, mas o guardador não tem o que receber nesse dia (quitado pelo abatimento).
+  if (status === 4 && amountPaid === 0) {
+    return "Pago";
+  }
 
   if (status === 3 || status === 5) {
     return "Pago";
@@ -288,24 +293,29 @@ export function buildPagamentoIndevido(response) {
     .map(toDateOnly)
     .filter(Boolean);
   const note = buildDuplicateRefundNote(duplicateDates);
+  const hasBalance = normalizeNumber(totals.saldoDevedor) > 0;
+  const lastOffsetDate = entries.map((entry) => toDateOnly(entry.data)).filter(Boolean).sort().pop();
 
   return {
     duplicateDates,
     totalIndevido: normalizeNumber(totals.valorIndevido),
     totalAbatido: normalizeNumber(totals.valorDebitado),
     totalSaldoDevedor: normalizeNumber(totals.saldoDevedor),
-    hasBalance: normalizeNumber(totals.saldoDevedor) > 0,
+    hasBalance,
+    // Quitado: mês (AAAA-MM) do último abatimento, o mês em que o saldo zerou; o quadro segue visível só nele.
+    settledMonth: !hasBalance && lastOffsetDate ? lastOffsetDate.slice(0, 7) : null,
     items: entries.map((entry, index) => {
       const difference = normalizeNumber(entry.diferenca);
+      const amountPaid = normalizeNumber(entry.valorPago);
 
       return {
         id: `${toDateOnly(entry.data)}-${index}`,
         date: toDateOnly(entry.data),
         amountDue: normalizeNumber(entry.valorDevido),
-        amountPaid: normalizeNumber(entry.valorPago),
+        amountPaid,
         difference,
         differenceNote: difference < 0 ? note : "",
-        status: getPagamentoIndevidoStatus(entry.statusRemessa),
+        status: getPagamentoIndevidoStatus(entry.statusRemessa, amountPaid),
       };
     }),
   };
@@ -348,16 +358,16 @@ function isPaidRemittanceStatus(statusRemessa) {
 }
 
 /**
- * Marca (`duplicateOffset`) os pagamentos da visão mensal que estão pagos e tiveram abatimento do pagamento indevido: o pagamento
- * do mesmo dia com valor pago menor que o devido no quadro do indevido. Os demais seguem como vieram.
+ * Marca (`duplicateOffset`) os pagamentos da visão mensal que tiveram abatimento do pagamento indevido: o pagamento do mesmo dia
+ * com valor pago menor que o devido no quadro do indevido. Entram os pagos e também os não efetivados cujo valor enviado ao banco
+ * foi zerado pelo abatimento (o banco recusa lançamento zerado e o dia ficaria como "Pendência de Pagamento"/erro). Os demais
+ * seguem como vieram.
  */
 export function markDuplicateOffsetPayments(monthlyPayments, pagamentoIndevido) {
   const payments = Array.isArray(monthlyPayments) ? monthlyPayments : [];
-  const offsetDates = new Set(
-    (pagamentoIndevido?.items || [])
-      .filter((item) => item.difference < 0 && item.date)
-      .map((item) => item.date)
-  );
+  const offsets = (pagamentoIndevido?.items || []).filter((item) => item.difference < 0 && item.date);
+  const offsetDates = new Set(offsets.map((item) => item.date));
+  const zeroedDates = new Set(offsets.filter((item) => item.amountPaid === 0).map((item) => item.date));
 
   if (offsetDates.size === 0) {
     return payments;
@@ -368,7 +378,10 @@ export function markDuplicateOffsetPayments(monthlyPayments, pagamentoIndevido) 
   return payments.map((payment) => {
     const paymentDate = payment.dataTentativaPagamento || payment.paymentDate;
 
-    if (!isPaidRemittanceStatus(payment.statusRemessa) || !offsetDates.has(paymentDate)) {
+    const paid = isPaidRemittanceStatus(payment.statusRemessa);
+    const zeroedAndRejected = Number(payment.statusRemessa) === 4 && zeroedDates.has(paymentDate);
+
+    if (!offsetDates.has(paymentDate) || !(paid || zeroedAndRejected)) {
       return payment;
     }
 

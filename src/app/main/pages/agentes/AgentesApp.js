@@ -1346,7 +1346,7 @@ function AgentesApp() {
               onMonthChange={handleSelectedMonth}
             />
 
-            <PagamentoIndevidoCard indevido={pagamentoIndevido} />
+            <PagamentoIndevidoCard indevido={pagamentoIndevido} selectedMonth={selectedMonth} />
 
             {/* <Paper className="flex flex-col flex-auto p-16 rounded-2xl shadow overflow-hidden">
               <Typography className="text-lg font-medium tracking-tight leading-6 truncate">
