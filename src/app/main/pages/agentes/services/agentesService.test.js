@@ -104,6 +104,27 @@ describe("buildPagamentoIndevido", () => {
     ).toBe(false);
   });
 
+  it("quitado: guarda o mês do último abatimento para o quadro aparecer só nele", () => {
+    const result = buildPagamentoIndevido({
+      totais: { valorIndevido: "130.20", valorDebitado: "130.20", saldoDevedor: "0.00" },
+      lancamentos: [
+        { data: "2026-10-30", valorDevido: "86.80", valorPago: "0.00", diferenca: "-86.80", statusRemessa: 3 },
+        { data: "2026-09-16", valorDevido: "65.80", valorPago: "0.00", diferenca: "-65.80", statusRemessa: 3 },
+      ],
+    });
+    expect(result.hasBalance).toBe(false);
+    expect(result.settledMonth).toBe("2026-10");
+  });
+
+  it("com saldo devedor não há mês de quitação", () => {
+    expect(
+      buildPagamentoIndevido({
+        totais: { saldoDevedor: "64.40" },
+        lancamentos: [{ data: "2026-10-16", valorDevido: "65.80", valorPago: "0.00", diferenca: "-65.80", statusRemessa: 3 }],
+      }).settledMonth
+    ).toBeNull();
+  });
+
   it("resposta vazia ou sem lançamentos não quebra e não mostra o quadro", () => {
     expect(buildPagamentoIndevido(undefined)).toMatchObject({ hasBalance: false, items: [] });
     expect(buildPagamentoIndevido({ totais: {}, lancamentos: null })).toMatchObject({ totalSaldoDevedor: 0, items: [] });

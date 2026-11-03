@@ -288,13 +288,17 @@ export function buildPagamentoIndevido(response) {
     .map(toDateOnly)
     .filter(Boolean);
   const note = buildDuplicateRefundNote(duplicateDates);
+  const hasBalance = normalizeNumber(totals.saldoDevedor) > 0;
+  const lastOffsetDate = entries.map((entry) => toDateOnly(entry.data)).filter(Boolean).sort().pop();
 
   return {
     duplicateDates,
     totalIndevido: normalizeNumber(totals.valorIndevido),
     totalAbatido: normalizeNumber(totals.valorDebitado),
     totalSaldoDevedor: normalizeNumber(totals.saldoDevedor),
-    hasBalance: normalizeNumber(totals.saldoDevedor) > 0,
+    hasBalance,
+    // Quitado: mês (AAAA-MM) do último abatimento, o mês em que o saldo zerou; o quadro segue visível só nele.
+    settledMonth: !hasBalance && lastOffsetDate ? lastOffsetDate.slice(0, 7) : null,
     items: entries.map((entry, index) => {
       const difference = normalizeNumber(entry.diferenca);
 
