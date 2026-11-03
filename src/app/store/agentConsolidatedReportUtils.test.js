@@ -262,7 +262,7 @@ describe("agentConsolidatedReportUtils", () => {
     });
   });
 
-  it("keeps the erros selection exclusive with paid-status options", () => {
+  it("keeps every status selected, including Erros combined with others", () => {
     expect(
       normalizeAgentStatusSelection([
         { label: "Pago", value: "Pago" },
@@ -271,7 +271,10 @@ describe("agentConsolidatedReportUtils", () => {
         { label: "A pagar", value: "A pagar" },
       ])
     ).toEqual([
+      { label: "Pago", value: "Pago" },
       { label: "Erros", value: "Erros" },
+      { label: "Em processamento", value: "Em processamento" },
+      { label: "A pagar", value: "A pagar" },
     ]);
   });
 });

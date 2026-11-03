@@ -332,20 +332,9 @@ export function normalizeAgentStatusSelection(options = []) {
     return [];
   }
 
-  const normalizedOptions = options.map((option) => ({
+  return options.map((option) => ({
     ...option,
     value: getOptionValue(option),
     label: option?.label ?? getOptionValue(option),
   }));
-  const hasErrorStatus = normalizedOptions.some(
-    (option) => option.value === AGENT_REPORT_ERROR_STATUS_VALUE
-  );
-
-  if (!hasErrorStatus) {
-    return normalizedOptions;
-  }
-
-  return normalizedOptions.filter(
-    (option) => option.value === AGENT_REPORT_ERROR_STATUS_VALUE
-  );
 }
