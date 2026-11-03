@@ -427,6 +427,56 @@ export default function FinancialMovementReport({ perfil }) {
     return Number.isFinite(parsed) ? parsed : 0;
   }
 
+  // Renders the status breakdown at the end of the results table as a label/value grid
+  // instead of a single wrapped line of text, so each status total reads as its own row.
+  // 3 pairs per row on desktop, 1 pair (full width) per row on mobile - the grid auto-wraps,
+  // no manual pairing needed. On desktop the block shrinks to its content and sits flush
+  // against the right edge (ml: auto); on mobile it takes the full width. `rows` is
+  // [label, value] tuples in display order; `totalRow` (also [label, value]) renders as its
+  // own full-width line below, bold and separated with a top border.
+  const renderStatusTotals = (rows, totalRow) => (
+    <Box sx={{ width: { xs: "100%", md: "fit-content" }, ml: { md: "auto" } }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "auto 1fr", md: "repeat(3, auto auto)" },
+          columnGap: 3,
+          rowGap: 0.5,
+          width: { xs: "100%", md: "auto" },
+        }}
+      >
+        {rows.map(([label, value]) => (
+          <React.Fragment key={label}>
+            <Box component="span" className="font-normal text-grey-700" sx={{ whiteSpace: "nowrap" }}>
+              {label}
+            </Box>
+            <Box component="span" className="font-medium text-black" sx={{ textAlign: "right" }}>
+              {formatCurrency(value)}
+            </Box>
+          </React.Fragment>
+        ))}
+      </Box>
+      {totalRow && (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            width: "100%",
+            gap: 2,
+            borderTop: "1px solid",
+            borderColor: "divider",
+            mt: 1,
+            pt: 1,
+          }}
+          className="font-bold text-black"
+        >
+          <span>{totalRow[0]}</span>
+          <span>{formatCurrency(totalRow[1])}</span>
+        </Box>
+      )}
+    </Box>
+  );
+
   const handleMenuClick = (event) => setAnchorEl(event.currentTarget);
 
   const triggerBrowserDownload = ({ blob, filename, contentType }) => {
@@ -926,24 +976,30 @@ export default function FinancialMovementReport({ perfil }) {
                     reportList?.valorRejeitado > 0 ||
                     reportList?.valorTotal > 0 ||
                     reportList?.valorPendente > 0 ||
+                    reportList?.valorPendenciaPaga > 0 ||
+                    reportList?.valorAPagar > 0 ||
                     showErroStatus) && (
                     <TableRow>
                       <TableCell colSpan={colSpan} className="py-8 text-black">
-                        <Box className="flex gap-16 flex-wrap justify-end font-bold text-base">
-                          {reportList?.valorPago > 0 && <span>Pago: {formatCurrency(reportList.valorPago)}</span>}
-                          {reportList?.valorAguardandoPagamento > 0 && (
-                            <span>Aguardando Pagamento: {formatCurrency(reportList.valorAguardandoPagamento)}</span>
-                          )}
-                          {reportList?.valorAPagar > 0 && <span>A Pagar: {formatCurrency(reportList.valorAPagar)}</span>}
-                          {reportList?.valorPendenciaPaga > 0 && (
-                            <span>Pendência Paga: {formatCurrency(reportList.valorPendenciaPaga)}</span>
-                          )}
-                          {reportList?.valorEstornado > 0 && <span>Estorno: {formatCurrency(reportList.valorEstornado)}</span>}
-                          {reportList?.valorRejeitado > 0 && <span>Rejeitado: {formatCurrency(reportList.valorRejeitado)}</span>}
-                          {reportList?.valorTotal > 0 && (
-                            <span>Total Geral: {formatCurrency(reportList.valorTotal)}</span>
-                          )}
-                        </Box>
+                        {(() => {
+                          const valorPago = toNumber(reportList?.valorPago);
+                          const valorAPagar = toNumber(reportList?.valorAPagar);
+                          const valorAguardandoPagamento = toNumber(reportList?.valorAguardandoPagamento);
+                          const valorPendenciaPaga = toNumber(reportList?.valorPendenciaPaga);
+                          const valorEstornado = toNumber(reportList?.valorEstornado);
+                          const valorRejeitado = toNumber(reportList?.valorRejeitado);
+                          const totalGeral = toNumber(reportList?.valorTotal);
+                          const rows = [];
+
+                          if (valorPago > 0) rows.push(["Pago", valorPago]);
+                          if (valorAguardandoPagamento > 0) rows.push(["Aguardando Pagamento", valorAguardandoPagamento]);
+                          if (valorAPagar > 0) rows.push(["A Pagar", valorAPagar]);
+                          if (valorPendenciaPaga > 0) rows.push(["Pendência Paga", valorPendenciaPaga]);
+                          if (valorEstornado > 0) rows.push(["Estorno", valorEstornado]);
+                          if (valorRejeitado > 0) rows.push(["Rejeitado", valorRejeitado]);
+
+                          return renderStatusTotals(rows, ["Total Geral", totalGeral]);
+                        })()}
                       </TableCell>
                     </TableRow>
                   )
@@ -955,39 +1011,36 @@ export default function FinancialMovementReport({ perfil }) {
                       reportList.valorRejeitado > 0 ||
                       reportList.valorTotal > 0 ||
                       reportList.valorPendente > 0 ||
+                      reportList.valorPendenciaPaga > 0 ||
                       showErroStatus) && (
                       <TableRow>
                         {!showStucColumns && <TableCell />}
                         <TableCell
                           colSpan={showStucColumns ? colSpan : 7}
-                          className="text-right font-bold text-black text-base pt-16"
+                          className="text-right pt-16"
                         >
                           {(() => {
-                            const isErrorReport = showErroStatus;
                             const valorPago = toNumber(reportList.valorPago);
                             const valorEstornado = toNumber(reportList.valorEstornado);
                             const valorRejeitado = toNumber(reportList.valorRejeitado);
                             const valorAguardandoPagamento = toNumber(reportList.valorAguardandoPagamento);
                             const valorPendente = toNumber(reportList.valorPendente);
+                            const valorPendenciaPaga = toNumber(reportList.valorPendenciaPaga);
                             const totalPendenciaPagamento = valorEstornado + valorRejeitado + valorPendente;
                             const totalGeral = toNumber(reportList.valorTotal);
-                            const totalLabel = isErrorReport ? "Total Pendencia de Pagamento" : "Total Geral";
-                            const totalValue = isErrorReport ? totalPendenciaPagamento : totalGeral;
-                            const totals = [];
+                            const rows = [];
 
-                            if (valorPago > 0) totals.push(`Total Pago: ${formatCurrency(valorPago)}`);
-                            if (!showErroStatus && totalPendenciaPagamento > 0) {
-                              totals.push(`Total Pendencia de Pagamento: ${formatCurrency(totalPendenciaPagamento)}`);
+                            if (valorPago > 0) rows.push(["Pago", valorPago]);
+                            if (valorAguardandoPagamento > 0) rows.push(["Aguardando Pagamento", valorAguardandoPagamento]);
+                            if (valorPendenciaPaga > 0) rows.push(["Pendência Paga", valorPendenciaPaga]);
+                            if (valorEstornado > 0) rows.push(["Estorno", valorEstornado]);
+                            if (valorRejeitado > 0) rows.push(["Rejeitado", valorRejeitado]);
+                            if (valorPendente > 0) rows.push(["OPs atrasadas", valorPendente]);
+                            if (showErroStatus && totalPendenciaPagamento > 0) {
+                              rows.push(["Pendência de Pagamento (subtotal)", totalPendenciaPagamento]);
                             }
-                            if (valorEstornado > 0) totals.push(`Total Estorno: ${formatCurrency(valorEstornado)}`);
-                            if (valorRejeitado > 0) totals.push(`Total Rejeitado: ${formatCurrency(valorRejeitado)}`);
-                            if (valorAguardandoPagamento > 0) {
-                              totals.push(`Total Aguardando Pagamento: ${formatCurrency(valorAguardandoPagamento)}`);
-                            }
-                            if (valorPendente > 0) totals.push(`Total OPs atrasadas: ${formatCurrency(valorPendente)}`);
-                            if ((totalValue ?? 0) >= 0) totals.push(`${totalLabel}: ${formatCurrency(totalValue)}`);
 
-                            return totals.filter(Boolean).join("    |    ");
+                            return renderStatusTotals(rows, ["Total Geral", totalGeral]);
                           })()}
                         </TableCell>
                         {!showStucColumns && (
