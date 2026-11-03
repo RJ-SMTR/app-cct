@@ -204,15 +204,9 @@ export default function FinancialMovementReport({ perfil }) {
     }
 
     if (field === "status") {
-      // Pendência Paga tem regra de data diferente (data de pagamento, dia único) dos demais
-      // status (data de vencimento, intervalo). Por isso não pode ser combinada com eles.
-      const hasPendenciaPaga = newValue.some((i) => i.label === "Pendencia Paga");
-      if (hasPendenciaPaga && newValue.length > 1) {
-        newValue = newValue.filter((i) => i.label === "Pendencia Paga");
-        dispatch(
-          showMessage({ message: "Pendência Paga não pode ser combinada com outros status; os demais foram removidos." }),
-        );
-      }
+      // Pendência Paga é consultada pela data de pagamento, em qualquer intervalo (ADR 0001,
+      // api-cct) e combina livremente com os demais status no backend (UNION ALL por status
+      // selecionado) - não há mais motivo para bloquear a seleção aqui.
       setSelectedStatusOptions(newValue);
 
       const status = newValue.map((i) => i.label);
