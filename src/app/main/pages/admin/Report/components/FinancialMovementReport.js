@@ -980,7 +980,7 @@ export default function FinancialMovementReport({ perfil }) {
                     reportList?.valorAPagar > 0 ||
                     showErroStatus) && (
                     <TableRow>
-                      <TableCell colSpan={colSpan} className="py-8 text-black">
+                      <TableCell colSpan={colSpan} className="py-8 text-black" style={{ width: "100%" }}>
                         {(() => {
                           const valorPago = toNumber(reportList?.valorPago);
                           const valorAPagar = toNumber(reportList?.valorAPagar);
@@ -1014,11 +1014,7 @@ export default function FinancialMovementReport({ perfil }) {
                       reportList.valorPendenciaPaga > 0 ||
                       showErroStatus) && (
                       <TableRow>
-                        {!showStucColumns && <TableCell />}
-                        <TableCell
-                          colSpan={showStucColumns ? colSpan : 7}
-                          className="text-right pt-16"
-                        >
+                        <TableCell colSpan={colSpan} className="text-right pt-16" style={{ width: "100%" }}>
                           {(() => {
                             const valorPago = toNumber(reportList.valorPago);
                             const valorEstornado = toNumber(reportList.valorEstornado);
@@ -1043,12 +1039,6 @@ export default function FinancialMovementReport({ perfil }) {
                             return renderStatusTotals(rows, ["Total Geral", totalGeral]);
                           })()}
                         </TableCell>
-                        {!showStucColumns && (
-                          <>
-                            <TableCell />
-                            <TableCell />
-                          </>
-                        )}
                       </TableRow>
                     )}
                   </>
