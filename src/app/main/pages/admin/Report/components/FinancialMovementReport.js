@@ -430,50 +430,54 @@ export default function FinancialMovementReport({ perfil }) {
   // Renders the status breakdown at the end of the results table as a label/value grid
   // instead of a single wrapped line of text, so each status total reads as its own row.
   // 3 pairs per row on desktop, 1 pair (full width) per row on mobile - the grid auto-wraps,
-  // no manual pairing needed. On desktop the block shrinks to its content and sits flush
-  // against the right edge (ml: auto); on mobile it takes the full width. `rows` is
-  // [label, value] tuples in display order; `totalRow` (also [label, value]) renders as its
-  // own full-width line below, bold and separated with a top border.
+  // no manual pairing needed. The outer box always fills 100% of its <td> (so the cell's
+  // full width is actually used); on desktop the content block inside it shrinks to its own
+  // content and is pushed flush right via flex justify-content, on mobile it just takes the
+  // full width. `rows` is [label, value] tuples in display order; `totalRow` (also
+  // [label, value]) renders as its own full-width line below, bold and separated with a top
+  // border.
   const renderStatusTotals = (rows, totalRow) => (
-    <Box sx={{ width: { xs: "100%", md: "fit-content" }, ml: { md: "auto" } }}>
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "auto 1fr", md: "repeat(3, auto auto)" },
-          columnGap: 3,
-          rowGap: 0.5,
-          width: { xs: "100%", md: "auto" },
-        }}
-      >
-        {rows.map(([label, value]) => (
-          <React.Fragment key={label}>
-            <Box component="span" className="font-normal text-grey-700" sx={{ whiteSpace: "nowrap" }}>
-              {label}
-            </Box>
-            <Box component="span" className="font-medium text-black" sx={{ textAlign: "right" }}>
-              {formatCurrency(value)}
-            </Box>
-          </React.Fragment>
-        ))}
-      </Box>
-      {totalRow && (
+    <Box sx={{ width: "100%", display: "flex", justifyContent: { xs: "flex-start", md: "flex-end" } }}>
+      <Box sx={{ width: { xs: "100%", md: "fit-content" } }}>
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            width: "100%",
-            gap: 2,
-            borderTop: "1px solid",
-            borderColor: "divider",
-            mt: 1,
-            pt: 1,
+            display: "grid",
+            gridTemplateColumns: { xs: "auto 1fr", md: "repeat(3, auto auto)" },
+            columnGap: 3,
+            rowGap: 0.5,
+            width: { xs: "100%", md: "auto" },
           }}
-          className="font-bold text-black"
         >
-          <span>{totalRow[0]}</span>
-          <span>{formatCurrency(totalRow[1])}</span>
+          {rows.map(([label, value]) => (
+            <React.Fragment key={label}>
+              <Box component="span" className="font-normal text-grey-700" sx={{ whiteSpace: "nowrap" }}>
+                {label}
+              </Box>
+              <Box component="span" className="font-medium text-black" sx={{ textAlign: "right" }}>
+                {formatCurrency(value)}
+              </Box>
+            </React.Fragment>
+          ))}
         </Box>
-      )}
+        {totalRow && (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              width: "100%",
+              gap: 2,
+              borderTop: "1px solid",
+              borderColor: "divider",
+              mt: 1,
+              pt: 1,
+            }}
+            className="font-bold text-black"
+          >
+            <span>{totalRow[0]}</span>
+            <span>{formatCurrency(totalRow[1])}</span>
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 
@@ -545,7 +549,15 @@ export default function FinancialMovementReport({ perfil }) {
     return value || '-';
   };
 
-  const colSpan = showStucColumns ? STUC_GRATUIDADE_COLUMN_COUNT.withDataPagamento : (isGuardador ? 11 : 6);
+  // Base non-STUC columns: Dt. Tent. Pagto., Nome, Email, Cód. Banco, Banco, CPF/CNPJ,
+  // Consórcios|Associação, Valor, Status, Descrição do Erro - plus the "Dt. Efet. Pagto."
+  // column, shown conditionally (see the matching condition on the header/body cells below).
+  // Was previously hardcoded (isGuardador ? 11 : 6), which undercounted the Permissionário
+  // table (really 10-11 columns) and made colSpan-based footer/empty-state cells too narrow.
+  const hasEffectivePaymentDateColumn = isGuardador ? showEffectivePaymentDate : !showErroStatus;
+  const colSpan = showStucColumns
+    ? STUC_GRATUIDADE_COLUMN_COUNT.withDataPagamento
+    : 10 + (hasEffectivePaymentDateColumn ? 1 : 0);
 
   // STUC - Gratuidade: mesmo componente/função do Consolidado (ConsolidatedReportPage.js) -
   // ver shared/StucGratuidadeTable.js.
