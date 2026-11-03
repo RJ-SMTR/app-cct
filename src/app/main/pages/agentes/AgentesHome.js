@@ -30,6 +30,7 @@ import { selectUser } from 'app/store/userSlice';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import { getAgentUsers } from 'app/store/adminSlice';
 import { isAdminUser } from 'src/app/auth/utils/accessUtils';
+import { sortAgentsByName } from './agentesListSort';
 
 const ROWS_PER_PAGE_OPTIONS = [10, 50, 100, 250, 500, 1000];
 
@@ -202,7 +203,7 @@ function AgentesHome() {
   const agents = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
-    return allAgents.filter((agentUser) => {
+    return sortAgentsByName(allAgents).filter((agentUser) => {
       if (!agentMatchesAssociation(agentUser, selectedAssociation)) {
         return false;
       }
