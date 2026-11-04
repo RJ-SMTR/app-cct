@@ -260,6 +260,10 @@ export default function FinancialMovementReport({ perfil }) {
   const submitReportPermissionario = async (data, pageIndex, pageSize) => {
     if (!validateStatusSelection() || !validateErroStatusSelection() || !validateFavorecidoOuConsorcioSelection()) return;
     const pageRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: true });
+    // Só chamado pelo clique em Pesquisar (paginação usa submitPagePermissionario, abaixo) -
+    // limpa o resultado anterior antes de buscar, pra não mostrar dados/totais da busca antiga
+    // enquanto a nova carrega.
+    dispatch(setReportList([]));
     setIsLoading(true);
     try {
       const pageResponse = await dispatch(handleFinancialMovementPage(pageRequestData));
@@ -304,10 +308,17 @@ export default function FinancialMovementReport({ perfil }) {
     }
   };
 
-  const submitReportGuardador = async (data, pageIndex, pageSize) => {
+  const submitReportGuardador = async (data, pageIndex, pageSize, { isNewSearch = false } = {}) => {
     if (!validateErroStatusSelection()) return;
     const summaryRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: false });
     const pageRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: true });
+
+    // Só no clique em Pesquisar (não na paginação, que também passa por aqui) - limpa o
+    // resultado anterior antes de buscar, pra não mostrar dados/totais da busca antiga enquanto
+    // a nova carrega.
+    if (isNewSearch) {
+      dispatch(setReportList([]));
+    }
 
     setIsLoading(true);
     try {
@@ -334,7 +345,7 @@ export default function FinancialMovementReport({ perfil }) {
     setPage(0);
     setPageCursors([null]);
     if (isGuardador) {
-      await submitReportGuardador(data, 0, rowsPerPage);
+      await submitReportGuardador(data, 0, rowsPerPage, { isNewSearch: true });
     } else {
       submitReportPermissionario(data, 0, rowsPerPage);
     }
