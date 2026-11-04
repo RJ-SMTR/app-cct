@@ -2,23 +2,16 @@ import React, { useEffect, useState } from "react";
 import {
   Box,
   MenuItem,
-  Table,
-  TableHead,
-  TableBody,
   Autocomplete,
   TextField,
   Button,
-  TableRow,
-  TableCell,
   Paper,
   CircularProgress,
   Menu,
-  TableFooter,
-  TableContainer,
   TablePagination,
   Grid,
-  Tooltip,
 } from "@mui/material";
+import { DataGrid, ptBR as pt } from "@mui/x-data-grid";
 import SaveAltIcon from "@mui/icons-material/SaveAlt";
 import { format } from "date-fns";
 import { useDispatch, useSelector } from "react-redux";
@@ -46,12 +39,7 @@ import ValorRangeFilter from "./shared/ValorRangeFilter";
 import ReportPeriodFilter from "./shared/ReportPeriodFilter";
 import useFavorecidoGuardadorOptions from "./shared/useFavorecidoGuardadorOptions";
 import { applyPendenciaDePagamentoErro, applyEspecificosFlags } from "./shared/reportRequestUtils";
-import {
-  explodeStucGratuidadeRows,
-  STUC_GRATUIDADE_COLUMN_COUNT,
-  StucGratuidadeHeaderCells,
-  StucGratuidadeBodyRows,
-} from "./shared/StucGratuidadeTable";
+import { explodeStucGratuidadeRows, formatStucCpf } from "./shared/StucGratuidadeTable";
 import {
   STATUS_OPTIONS,
   ERRO_STATUS_OPTIONS,
@@ -111,7 +99,7 @@ export default function FinancialMovementReport({ perfil }) {
 
   const statusBase = STATUS_OPTIONS.filter((option) => option.label !== "Todos");
   const erroStatus = ERRO_STATUS_OPTIONS;
-  const consorcios = buildReportConsorcioOptions({ selectedField: selected });
+  const consorcios = buildReportConsorcioOptions({ selectedField: selected, includeGtu: true });
   const especificos = [{ label: 'Eleição' }, { label: 'Desativados' }, { label: 'STUC - Gratuidade' }];
 
   const dispatch = useDispatch();
@@ -260,6 +248,10 @@ export default function FinancialMovementReport({ perfil }) {
   const submitReportPermissionario = async (data, pageIndex, pageSize) => {
     if (!validateStatusSelection() || !validateErroStatusSelection() || !validateFavorecidoOuConsorcioSelection()) return;
     const pageRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: true });
+    // Só chamado pelo clique em Pesquisar (paginação usa submitPagePermissionario, abaixo) -
+    // limpa o resultado anterior antes de buscar, pra não mostrar dados/totais da busca antiga
+    // enquanto a nova carrega.
+    dispatch(setReportList([]));
     setIsLoading(true);
     try {
       const pageResponse = await dispatch(handleFinancialMovementPage(pageRequestData));
@@ -304,10 +296,17 @@ export default function FinancialMovementReport({ perfil }) {
     }
   };
 
-  const submitReportGuardador = async (data, pageIndex, pageSize) => {
+  const submitReportGuardador = async (data, pageIndex, pageSize, { isNewSearch = false } = {}) => {
     if (!validateErroStatusSelection()) return;
     const summaryRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: false });
     const pageRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: true });
+
+    // Só no clique em Pesquisar (não na paginação, que também passa por aqui) - limpa o
+    // resultado anterior antes de buscar, pra não mostrar dados/totais da busca antiga enquanto
+    // a nova carrega.
+    if (isNewSearch) {
+      dispatch(setReportList([]));
+    }
 
     setIsLoading(true);
     try {
@@ -334,7 +333,7 @@ export default function FinancialMovementReport({ perfil }) {
     setPage(0);
     setPageCursors([null]);
     if (isGuardador) {
-      await submitReportGuardador(data, 0, rowsPerPage);
+      await submitReportGuardador(data, 0, rowsPerPage, { isNewSearch: true });
     } else {
       submitReportPermissionario(data, 0, rowsPerPage);
     }
@@ -561,18 +560,10 @@ export default function FinancialMovementReport({ perfil }) {
     return value || '-';
   };
 
-  // Base non-STUC columns: Dt. Tent. Pagto., Nome, Email, Cód. Banco, Banco, CPF/CNPJ,
-  // Consórcios|Associação, Valor, Status, Descrição do Erro - plus the "Dt. Efet. Pagto."
-  // column, shown conditionally (see the matching condition on the header/body cells below).
-  // Was previously hardcoded (isGuardador ? 11 : 6), which undercounted the Permissionário
-  // table (really 10-11 columns) and made colSpan-based footer/empty-state cells too narrow.
   const hasEffectivePaymentDateColumn = isGuardador ? showEffectivePaymentDate : !showErroStatus;
-  const colSpan = showStucColumns
-    ? STUC_GRATUIDADE_COLUMN_COUNT.withDataPagamento
-    : 10 + (hasEffectivePaymentDateColumn ? 1 : 0);
 
-  // STUC - Gratuidade: mesmo componente/função do Consolidado (ConsolidatedReportPage.js) -
-  // ver shared/StucGratuidadeTable.js.
+  // STUC - Gratuidade: mesma função de explosão do Consolidado (ConsolidatedReportPage.js) -
+  // ver shared/StucGratuidadeTable.js. Um dia da janela de pagamento por linha.
   const stucExplodedRows = showStucColumns
     ? explodeStucGratuidadeRows(reportList.data, {
         nome: (report) => report.nomes,
@@ -581,6 +572,85 @@ export default function FinancialMovementReport({ perfil }) {
         dataPagamento: (report) => report.dataPagamento,
       })
     : [];
+
+  // ---- Grid rows/columns: mesma DataGrid do Consolidado (ConsolidatedReportPage.js), com
+  // filtro e ordenação de colunas inclusos, em vez da <Table> MUI manual que havia aqui. ----
+  const gridRows = showStucColumns
+    ? stucExplodedRows
+    : (Array.isArray(reportList.data) ? reportList.data.map((report, index) => ({ id: index, ...report })) : []);
+
+  const statusBadge = (status) => {
+    const label = status === "Pendentes" ? "OP Atrasada" : status;
+    return <span className={`px-3 py-1 rounded-full text-xs ${getStatusStyles(label)}`}>{label}</span>;
+  };
+
+  const gridColumns = showStucColumns
+    ? [
+        { field: 'nome', headerName: 'Nome', flex: 1, minWidth: 200 },
+        { field: 'cpfCnpj', headerName: 'CPF', width: 150, valueFormatter: (params) => formatStucCpf(params.value) },
+        { field: 'dataOrdem', headerName: 'Data Ordem', width: 130, valueFormatter: (params) => params.value ?? '-' },
+        {
+          field: 'valorOrdem',
+          headerName: 'Valor Ordem',
+          width: 150,
+          valueFormatter: (params) => (params.value != null ? formatCurrency(params.value) : '-'),
+        },
+        { field: 'valorLancamento', headerName: 'Valor Lançamento', width: 160, valueFormatter: (params) => formatCurrency(params.value) },
+        { field: 'dataPagamento', headerName: 'Data de Pagamento', width: 160, valueFormatter: (params) => params.value ?? '-' },
+      ]
+    : [
+        { field: 'dataReferencia', headerName: 'Dt. Tent. Pagto.', width: 130 },
+        {
+          field: 'nomes',
+          headerName: isGuardador ? 'Nome Guardador' : 'Nome',
+          flex: 1,
+          minWidth: 200,
+          valueGetter: (params) => (isGuardador ? getAssociationDisplayName(params.value) : params.value),
+        },
+        {
+          field: 'email',
+          headerName: 'Email',
+          flex: 1,
+          minWidth: 180,
+          valueGetter: (params) =>
+            isGuardador
+              ? (isKnownAssociationName(params.row.nomes) ? '-' : params.value || '-')
+              : isConsorcio(params.row, params.value),
+        },
+        {
+          field: 'codBanco',
+          headerName: 'Cód. Banco',
+          width: 110,
+          valueGetter: (params) => (isGuardador ? params.value || '-' : isConsorcio(params.row, params.value)),
+        },
+        {
+          field: 'nomeBanco',
+          headerName: 'Banco',
+          width: 160,
+          valueGetter: (params) => (isGuardador ? params.value || '-' : isConsorcio(params.row, params.value)),
+        },
+        { field: 'cpfCnpj', headerName: 'CPF/CNPJ', width: 160, valueFormatter: (params) => formatCpfCnpj(params.value) },
+        {
+          field: 'consorcio',
+          headerName: isGuardador ? 'Associação' : 'Consórcios | Modais',
+          width: 180,
+          valueGetter: (params) => (isGuardador ? getAssociationDisplayName(params.value) || '-' : params.value),
+        },
+        ...(hasEffectivePaymentDateColumn
+          ? [{
+              field: 'dataEfetivaPagamento',
+              headerName: 'Dt. Efet. Pagto.',
+              width: 150,
+              valueGetter: (params) =>
+                isGuardador
+                  ? getAgentEffectivePaymentDateLabel(params.row)
+                  : (params.row.status === 'Pendencia Paga' ? params.row.dataPagamento : '-'),
+            }]
+          : []),
+        { field: 'valor', headerName: 'Valor', width: 140, valueFormatter: (params) => formatCurrency(params.value) },
+        { field: 'status', headerName: 'Status', width: 150, renderCell: (params) => statusBadge(params.value) },
+        { field: 'descricaoErro', headerName: 'Descrição do Erro', flex: 1, minWidth: 200, valueGetter: (params) => params.value || '-' },
+      ];
 
   return (
     <>
@@ -879,220 +949,91 @@ export default function FinancialMovementReport({ perfil }) {
             nextIconButtonProps={{ disabled: !hasNextPage }}
           />
 
-          <TableContainer
-            sx={{ height: "50vh", width: "100%", overflowX: "auto", overflowY: "auto" }}
-          >
-            <Table size="small" sx={isGuardador ? { minWidth: 1280 } : undefined}>
-              <TableHead>
-                <TableRow className="sticky top-0 bg-white z-10">
-                  {showStucColumns ? (
-                    <StucGratuidadeHeaderCells showDataPagamento />
-                  ) : (
-                    <>
-                      <TableCell className="font-semibold py-1 text-sm leading-none">
-                        <Tooltip title="Data Tentativa Pagamento"><span>Dt. Tent. Pagto.</span></Tooltip>
-                      </TableCell>
-                      <TableCell className="font-semibold p-1 text-sm" style={{ whiteSpace: 'nowrap' }}>
-                        <Tooltip title={isGuardador ? 'Nome Guardador' : 'Nome'}>
-                          <span>{isGuardador ? 'Nome Guardador' : 'Nome'}</span>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell className="font-semibold p-1 text-sm" style={{ maxWidth: 220 }}>
-                        <Tooltip title="Email"><span>Email</span></Tooltip>
-                      </TableCell>
-                      <TableCell className="font-semibold py-1 text-sm leading-none">
-                        <Tooltip title="Cód. Banco"><span>Cód. Banco</span></Tooltip>
-                      </TableCell>
-                      <TableCell className="font-semibold p-1 text-sm">
-                        <Tooltip title="Banco"><span>Banco</span></Tooltip>
-                      </TableCell>
-                      <TableCell className="font-semibold p-1 text-sm">
-                        <Tooltip title="CPF/CNPJ"><span>CPF/CNPJ</span></Tooltip>
-                      </TableCell>
-                      <TableCell className="font-semibold py-1 text-sm leading-none">
-                        <Tooltip title={isGuardador ? 'Associação' : 'Consórcios | Modais'}>
-                          <span>{isGuardador ? 'Associação' : 'Consórcios | Modais'}</span>
-                        </Tooltip>
-                      </TableCell>
-                      {(isGuardador ? showEffectivePaymentDate : !showErroStatus) && (
-                        <TableCell className="font-semibold py-1 text-sm leading-none">
-                          <Tooltip title="Data Efetiva Pagamento"><span>Dt. Efet. Pagto.</span></Tooltip>
-                        </TableCell>
-                      )}
-                      <TableCell className="font-semibold p-1 text-sm">
-                        <Tooltip title="Valor"><span>Valor</span></Tooltip>
-                      </TableCell>
-                      <TableCell className="font-semibold p-1 text-sm">
-                        <Tooltip title="Status"><span>Status</span></Tooltip>
-                      </TableCell>
-                      <TableCell className="font-semibold p-1 text-sm">
-                        <Tooltip title="Descrição do Erro"><span>Descrição do Erro</span></Tooltip>
-                      </TableCell>
-                    </>
-                  )}
-                </TableRow>
-              </TableHead>
+          {/* Mesma DataGrid do Consolidado (ConsolidatedReportPage.js) - filtro e ordenação de
+              colunas inclusos - no lugar da <Table> MUI manual que havia aqui. */}
+          <div style={{ height: "50vh", width: "100%" }}>
+            <DataGrid
+              localeText={{
+                ...pt.components.MuiDataGrid.defaultProps.localeText,
+                noRowsLabel: 'Não há dados para serem exibidos',
+              }}
+              rows={gridRows}
+              columns={gridColumns}
+              loading={isLoading}
+              disableRowSelectionOnClick
+              hideFooter
+            />
+          </div>
 
-              <TableBody className="overflow-scroll">
-                {!isLoading ? (
-                  showStucColumns ? (
-                    stucExplodedRows.length > 0 ? (
-                      <StucGratuidadeBodyRows
-                        rows={stucExplodedRows}
-                        formatCurrency={formatCurrency}
-                        showDataPagamento
-                      />
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={colSpan} className="text-center py-4">
-                          Não há dados para serem exibidos
-                        </TableCell>
-                      </TableRow>
-                    )
-                  ) : reportList?.count > 0 ? (
-                    reportList.data?.map((report, index) => (
-                      <TableRow key={index} className="hover:bg-gray-50">
-                        <TableCell className="text-xs py-1">{report.dataReferencia}</TableCell>
-                        <TableCell className="text-xs py-6 px-1" style={{ whiteSpace: 'nowrap' }}>
-                          {isGuardador ? getAssociationDisplayName(report.nomes) : report.nomes}
-                        </TableCell>
-                        <TableCell className="text-xs py-6 px-1" style={{ maxWidth: 220, overflowWrap: 'break-word' }}>
-                          {isGuardador
-                            ? (isKnownAssociationName(report.nomes) ? '-' : report.email || '-')
-                            : isConsorcio(report, report.email)}
-                        </TableCell>
-                        <TableCell className="text-xs py-1">
-                          {isGuardador ? report.codBanco || '-' : isConsorcio(report, report.codBanco)}
-                        </TableCell>
-                        <TableCell
-                          className="text-xs py-6 px-1"
-                          style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: 120 }}
-                        >
-                          {isGuardador ? report.nomeBanco || '-' : isConsorcio(report, report.nomeBanco)}
-                        </TableCell>
-                        <TableCell className="text-xs py-6 px-1">{formatCpfCnpj(report.cpfCnpj)}</TableCell>
-                        <TableCell className="text-xs py-1">
-                          {isGuardador ? getAssociationDisplayName(report.consorcio) || '-' : report.consorcio}
-                        </TableCell>
+          {/* Mesmo bloco de totais abaixo do grid usado no Consolidado (em vez do rodapé fixo
+              dentro da <Table> antiga) - renderStatusTotals segue igual, só mudou onde é
+              encaixado. */}
+          {isGuardador ? (
+            (reportList?.valorPago > 0 ||
+              reportList?.valorEstornado > 0 ||
+              reportList?.valorRejeitado > 0 ||
+              reportList?.valorTotal > 0 ||
+              reportList?.valorPendente > 0 ||
+              reportList?.valorPendenciaPaga > 0 ||
+              reportList?.valorAPagar > 0 ||
+              showErroStatus) && (
+              <Box className="py-8 text-black" style={{ width: "100%" }}>
+                {(() => {
+                  const valorPago = toNumber(reportList?.valorPago);
+                  const valorAPagar = toNumber(reportList?.valorAPagar);
+                  const valorAguardandoPagamento = toNumber(reportList?.valorAguardandoPagamento);
+                  const valorPendenciaPaga = toNumber(reportList?.valorPendenciaPaga);
+                  const valorEstornado = toNumber(reportList?.valorEstornado);
+                  const valorRejeitado = toNumber(reportList?.valorRejeitado);
+                  const totalGeral = toNumber(reportList?.valorTotal);
+                  const rows = [];
 
-                        {(isGuardador ? showEffectivePaymentDate : !showErroStatus) && (
-                          <TableCell className="text-xs py-1">
-                            {isGuardador
-                              ? getAgentEffectivePaymentDateLabel(report)
-                              : report.status === 'Pendencia Paga' ? report.dataPagamento : '-'}
-                          </TableCell>
-                        )}
+                  if (valorPago > 0) rows.push(["Pago", valorPago]);
+                  if (valorAguardandoPagamento > 0) rows.push(["Aguardando Pagamento", valorAguardandoPagamento]);
+                  if (valorAPagar > 0) rows.push(["A Pagar", valorAPagar]);
+                  if (valorPendenciaPaga > 0) rows.push(["Pendência Paga", valorPendenciaPaga]);
+                  if (valorEstornado > 0) rows.push(["Estorno", valorEstornado]);
+                  if (valorRejeitado > 0) rows.push(["Rejeitado", valorRejeitado]);
 
-                        <TableCell className="text-xs py-6 px-1">{formatCurrency(report.valor)}</TableCell>
-                        <TableCell className="text-xs py-6 px-1">
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs ${getStatusStyles(
-                              report.status === "Pendentes" ? "OP Atrasada" : report.status,
-                            )}`}
-                          >
-                            {report.status === "Pendentes" ? "OP Atrasada" : report.status}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-xs py-6 px-1" style={{ maxWidth: 280, overflowWrap: 'break-word' }}>
-                          {report.descricaoErro || '-'}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={colSpan} className="text-center py-4">
-                        Não há dados para serem exibidos
-                      </TableCell>
-                    </TableRow>
-                  )
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={colSpan}>
-                      <Box className="flex justify-center items-center m-10">
-                        <CircularProgress />
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
+                  return renderStatusTotals(rows, ["Total Geral", totalGeral]);
+                })()}
+              </Box>
+            )
+          ) : (
+            (reportList.valorPago > 0 ||
+              reportList.valorEstornado > 0 ||
+              reportList.valorRejeitado > 0 ||
+              reportList.valorTotal > 0 ||
+              reportList.valorPendente > 0 ||
+              reportList.valorPendenciaPaga > 0 ||
+              showErroStatus) && (
+              <Box className="text-right pt-16" style={{ width: "100%" }}>
+                {(() => {
+                  const valorPago = toNumber(reportList.valorPago);
+                  const valorEstornado = toNumber(reportList.valorEstornado);
+                  const valorRejeitado = toNumber(reportList.valorRejeitado);
+                  const valorAguardandoPagamento = toNumber(reportList.valorAguardandoPagamento);
+                  const valorPendente = toNumber(reportList.valorPendente);
+                  const valorPendenciaPaga = toNumber(reportList.valorPendenciaPaga);
+                  const totalPendenciaPagamento = valorEstornado + valorRejeitado + valorPendente;
+                  const totalGeral = toNumber(reportList.valorTotal);
+                  const rows = [];
 
-              <TableFooter className="sticky bottom-0 bg-white z-10">
-                {isGuardador ? (
-                  (reportList?.valorPago > 0 ||
-                    reportList?.valorEstornado > 0 ||
-                    reportList?.valorRejeitado > 0 ||
-                    reportList?.valorTotal > 0 ||
-                    reportList?.valorPendente > 0 ||
-                    reportList?.valorPendenciaPaga > 0 ||
-                    reportList?.valorAPagar > 0 ||
-                    showErroStatus) && (
-                    <TableRow>
-                      <TableCell colSpan={colSpan} className="py-8 text-black" style={{ width: "100%" }}>
-                        {(() => {
-                          const valorPago = toNumber(reportList?.valorPago);
-                          const valorAPagar = toNumber(reportList?.valorAPagar);
-                          const valorAguardandoPagamento = toNumber(reportList?.valorAguardandoPagamento);
-                          const valorPendenciaPaga = toNumber(reportList?.valorPendenciaPaga);
-                          const valorEstornado = toNumber(reportList?.valorEstornado);
-                          const valorRejeitado = toNumber(reportList?.valorRejeitado);
-                          const totalGeral = toNumber(reportList?.valorTotal);
-                          const rows = [];
+                  if (valorPago > 0) rows.push(["Pago", valorPago]);
+                  if (valorAguardandoPagamento > 0) rows.push(["Aguardando Pagamento", valorAguardandoPagamento]);
+                  if (valorPendenciaPaga > 0) rows.push(["Pendência Paga", valorPendenciaPaga]);
+                  if (valorEstornado > 0) rows.push(["Estorno", valorEstornado]);
+                  if (valorRejeitado > 0) rows.push(["Rejeitado", valorRejeitado]);
+                  if (valorPendente > 0) rows.push(["OPs atrasadas", valorPendente]);
+                  if (showErroStatus && totalPendenciaPagamento > 0) {
+                    rows.push(["Pendência de Pagamento (subtotal)", totalPendenciaPagamento]);
+                  }
 
-                          if (valorPago > 0) rows.push(["Pago", valorPago]);
-                          if (valorAguardandoPagamento > 0) rows.push(["Aguardando Pagamento", valorAguardandoPagamento]);
-                          if (valorAPagar > 0) rows.push(["A Pagar", valorAPagar]);
-                          if (valorPendenciaPaga > 0) rows.push(["Pendência Paga", valorPendenciaPaga]);
-                          if (valorEstornado > 0) rows.push(["Estorno", valorEstornado]);
-                          if (valorRejeitado > 0) rows.push(["Rejeitado", valorRejeitado]);
-
-                          return renderStatusTotals(rows, ["Total Geral", totalGeral]);
-                        })()}
-                      </TableCell>
-                    </TableRow>
-                  )
-                ) : (
-                  <>
-                    <TableRow></TableRow>
-                    {(reportList.valorPago > 0 ||
-                      reportList.valorEstornado > 0 ||
-                      reportList.valorRejeitado > 0 ||
-                      reportList.valorTotal > 0 ||
-                      reportList.valorPendente > 0 ||
-                      reportList.valorPendenciaPaga > 0 ||
-                      showErroStatus) && (
-                      <TableRow>
-                        <TableCell colSpan={colSpan} className="text-right pt-16" style={{ width: "100%" }}>
-                          {(() => {
-                            const valorPago = toNumber(reportList.valorPago);
-                            const valorEstornado = toNumber(reportList.valorEstornado);
-                            const valorRejeitado = toNumber(reportList.valorRejeitado);
-                            const valorAguardandoPagamento = toNumber(reportList.valorAguardandoPagamento);
-                            const valorPendente = toNumber(reportList.valorPendente);
-                            const valorPendenciaPaga = toNumber(reportList.valorPendenciaPaga);
-                            const totalPendenciaPagamento = valorEstornado + valorRejeitado + valorPendente;
-                            const totalGeral = toNumber(reportList.valorTotal);
-                            const rows = [];
-
-                            if (valorPago > 0) rows.push(["Pago", valorPago]);
-                            if (valorAguardandoPagamento > 0) rows.push(["Aguardando Pagamento", valorAguardandoPagamento]);
-                            if (valorPendenciaPaga > 0) rows.push(["Pendência Paga", valorPendenciaPaga]);
-                            if (valorEstornado > 0) rows.push(["Estorno", valorEstornado]);
-                            if (valorRejeitado > 0) rows.push(["Rejeitado", valorRejeitado]);
-                            if (valorPendente > 0) rows.push(["OPs atrasadas", valorPendente]);
-                            if (showErroStatus && totalPendenciaPagamento > 0) {
-                              rows.push(["Pendência de Pagamento (subtotal)", totalPendenciaPagamento]);
-                            }
-
-                            return renderStatusTotals(rows, ["Total Geral", totalGeral]);
-                          })()}
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </>
-                )}
-              </TableFooter>
-            </Table>
-          </TableContainer>
+                  return renderStatusTotals(rows, ["Total Geral", totalGeral]);
+                })()}
+              </Box>
+            )
+          )}
         </Box>
       </Paper>
     </>
