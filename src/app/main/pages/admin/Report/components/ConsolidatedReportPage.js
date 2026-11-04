@@ -157,6 +157,11 @@ export default function ConsolidatedReportPage({ perfil }) {
   );
   const hasRows = isGuardador ? guardadorDisplayRows.length > 0 : (reportList.count ?? 0) > 0;
 
+  // Favorecido e Consórcio são mutuamente exclusivos (handleSelection abaixo), mas sem nenhum
+  // dos dois selecionado o backend assume "Todos" (ADR 0014, api-cct) - bloqueia o botão
+  // Pesquisar e mostra a mensagem de campo obrigatório em vez de deixar a busca ambígua passar.
+  const missingFavorecidoOrConsorcio = !isGuardador && selectedFavorecidos.length === 0 && selectedConsorcios.length === 0;
+
   // STUC - Gratuidade (ADR 0012, api-cct): tela, CSV, PDF e XLSX mostram só Nome + Valor
   // Lançamento, 1 linha por janela de pagamento (reportList.data já vem pivotado por janela do
   // backend - ver pivotStucGratuidadeRows/findConsolidadoStucGratuidade). A Movimentação
@@ -344,13 +349,10 @@ export default function ConsolidatedReportPage({ perfil }) {
     }
 
     if (field === 'status') {
-      // Pendência Paga tem regra de data diferente (data de pagamento, dia único) dos demais
-      // status (data de vencimento, intervalo). Por isso não pode ser combinada com eles.
-      const hasPendenciaPaga = newValue.some((i) => i.label === 'Pendencia Paga');
-      if (hasPendenciaPaga && newValue.length > 1) {
-        newValue = newValue.filter((i) => i.label === 'Pendencia Paga');
-        dispatch(showMessage({ message: 'Pendência Paga não pode ser combinada com outros status; os demais foram removidos.' }));
-      }
+      // Pendência Paga é consultada pela data de pagamento, em qualquer intervalo (ADR 0001,
+      // api-cct) e combina livremente com os demais status no backend (UNION por status
+      // selecionado, getQueryPendenciaPagaConsorcios/Vanzeiros) - não há mais motivo para
+      // bloquear a seleção aqui.
       setSelectedStatusOptions(newValue);
 
       const status = newValue.map((i) => i.label);
@@ -450,6 +452,14 @@ export default function ConsolidatedReportPage({ perfil }) {
   const submitPagePermissionario = (data, pageIndex, currentPageSize) => {
     if (whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus.length === 0) {
       dispatch(showMessage({ message: "Selecione um motivo para a Pendência de Pagamento." }));
+      return;
+    }
+
+    // Favorecido e Consórcio são mutuamente exclusivos (handleSelection acima), mas sem nenhum
+    // dos dois selecionado o backend assume "Todos" (ADR 0014, api-cct) - exigir um ou outro
+    // evita o caso ambíguo que motivou o ADR e mantém o resultado sempre delimitado.
+    if (selectedFavorecidos.length === 0 && selectedConsorcios.length === 0) {
+      dispatch(showMessage({ message: "Selecione um Favorecido ou um Consórcio para pesquisar." }));
       return;
     }
 
@@ -723,6 +733,12 @@ export default function ConsolidatedReportPage({ perfil }) {
               <ValorRangeFilter control={control} getValues={getValues} trigger={trigger} clearErrors={clearErrors} />
             </Grid>
 
+            {missingFavorecidoOrConsorcio && (
+              <span className="text-sm text-red-600 block mt-16">
+                Campo obrigatório: selecione um Favorecido ou um Consórcio para pesquisar.
+              </span>
+            )}
+
             {!isGuardador && whichStatusShow.includes("A pagar") && (
               <span className="text-sm text-red-600 block mt-16">
                 Atenção: Para o status "a pagar", a data escolhida deve ser referente a Data Ordem de Pagamento (sexta a
@@ -731,7 +747,15 @@ export default function ConsolidatedReportPage({ perfil }) {
             )}
 
             <Box className="mt-24">
-              <Button variant="contained" color="secondary" className="mr-10" aria-label="Pesquisar" type="submit" size="medium">
+              <Button
+                variant="contained"
+                color="secondary"
+                className="mr-10"
+                aria-label="Pesquisar"
+                type="submit"
+                size="medium"
+                disabled={missingFavorecidoOrConsorcio}
+              >
                 Pesquisar
               </Button>
               <Button variant="outlined" aria-label="Limpar Filtros" type="button" size="medium" onClick={handleClear}>
@@ -797,8 +821,8 @@ export default function ConsolidatedReportPage({ perfil }) {
               <Table size="small">
                 <TableHead>
                   <TableRow className="sticky top-0 bg-white z-10">
-                    <TableCell className="font-semibold p-1 text-sm" style={{ whiteSpace: 'nowrap' }}>Nome</TableCell>
-                    <TableCell className="font-semibold p-1 text-sm">Valor Lançamento</TableCell>
+                    <TableCell className="font-semibold p-1" style={{ whiteSpace: 'nowrap' }}>Nome</TableCell>
+                    <TableCell className="font-semibold p-1">Valor Lançamento</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -806,8 +830,8 @@ export default function ConsolidatedReportPage({ perfil }) {
                     (reportList.data?.length ?? 0) > 0 ? (
                       reportList.data.map((report, index) => (
                         <TableRow key={`${report.nomefavorecido}::${index}`} className="hover:bg-gray-50">
-                          <TableCell className="text-xs py-6 px-1" style={{ whiteSpace: 'nowrap' }}>{report.nomefavorecido}</TableCell>
-                          <TableCell className="text-xs py-6 px-1">{formatter.format(report.valor)}</TableCell>
+                          <TableCell className="py-6 px-1" style={{ whiteSpace: 'nowrap' }}>{report.nomefavorecido}</TableCell>
+                          <TableCell className="py-6 px-1">{formatter.format(report.valor)}</TableCell>
                         </TableRow>
                       ))
                     ) : (
@@ -872,9 +896,24 @@ export default function ConsolidatedReportPage({ perfil }) {
             </div>
             </>
           )}
-          <Box className="flex justify-end mt-16">
-            <span className="font-bold mr-8">Valor Total:</span>
-            <span className="font-bold">{formatter.format(totalValue ?? 0)}</span>
+          {/* Mesmo tratamento do "Total Geral" da Movimentação Financeira
+              (FinancialMovementReport.js/renderStatusTotals): linha full-width com borda
+              superior e negrito, em vez do flex justify-end simples que havia aqui. */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              width: "100%",
+              gap: 2,
+              borderTop: "1px solid",
+              borderColor: "divider",
+              mt: 2,
+              pt: 2,
+            }}
+            className="font-bold text-black"
+          >
+            <span>Valor Total</span>
+            <span>{formatter.format(totalValue ?? 0)}</span>
           </Box>
         </Box>
       </Paper>

@@ -134,6 +134,12 @@ export default function FinancialMovementReport({ perfil }) {
   // Permissionário: pesquisar sem status não é permitido (o guardador continua opcional).
   const hasMissingStatusSelection = !isGuardador && whichStatusShow.length === 0;
 
+  // Permissionário: Favorecido e Consórcio são mutuamente exclusivos (handleSelection acima),
+  // mas sem nenhum dos dois selecionado o backend assume "Todos" (ADR 0014, api-cct) - exigir
+  // um ou outro evita o caso ambíguo que motivou o ADR e mantém o resultado sempre delimitado.
+  const hasMissingFavorecidoOuConsorcioSelection =
+    !isGuardador && selectedFavorecidos.length === 0 && selectedConsorcios.length === 0;
+
   const validateStatusSelection = () => {
     if (!hasMissingStatusSelection) return true;
     dispatch(showMessage({ message: "Selecione um status para pesquisar." }));
@@ -143,6 +149,12 @@ export default function FinancialMovementReport({ perfil }) {
   const validateErroStatusSelection = () => {
     if (!hasMissingErroStatusSelection) return true;
     dispatch(showMessage({ message: "Selecione um motivo para a Pendência de Pagamento." }));
+    return false;
+  };
+
+  const validateFavorecidoOuConsorcioSelection = () => {
+    if (!hasMissingFavorecidoOuConsorcioSelection) return true;
+    dispatch(showMessage({ message: "Selecione um Favorecido ou um Consórcio para pesquisar." }));
     return false;
   };
 
@@ -168,7 +180,7 @@ export default function FinancialMovementReport({ perfil }) {
   };
 
   const getValidatedRequestData = (data, pageIndex, pageSize, options = {}) => {
-    if (!validateStatusSelection() || !validateErroStatusSelection()) return null;
+    if (!validateStatusSelection() || !validateErroStatusSelection() || !validateFavorecidoOuConsorcioSelection()) return null;
     return buildRequestData(data, pageIndex, pageSize, options);
   };
 
@@ -246,7 +258,7 @@ export default function FinancialMovementReport({ perfil }) {
   };
 
   const submitReportPermissionario = async (data, pageIndex, pageSize) => {
-    if (!validateStatusSelection() || !validateErroStatusSelection()) return;
+    if (!validateStatusSelection() || !validateErroStatusSelection() || !validateFavorecidoOuConsorcioSelection()) return;
     const pageRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: true });
     setIsLoading(true);
     try {
@@ -427,6 +439,60 @@ export default function FinancialMovementReport({ perfil }) {
     return Number.isFinite(parsed) ? parsed : 0;
   }
 
+  // Renders the status breakdown at the end of the results table as a label/value grid
+  // instead of a single wrapped line of text, so each status total reads as its own row.
+  // 3 pairs per row on desktop, 1 pair (full width) per row on mobile - the grid auto-wraps,
+  // no manual pairing needed. The outer box always fills 100% of its <td> (so the cell's
+  // full width is actually used); on desktop the content block inside it shrinks to its own
+  // content and is pushed flush right via flex justify-content, on mobile it just takes the
+  // full width. `rows` is [label, value] tuples in display order; `totalRow` (also
+  // [label, value]) renders as its own full-width line below, bold and separated with a top
+  // border.
+  const renderStatusTotals = (rows, totalRow) => (
+    <Box sx={{ width: "100%", display: "flex", justifyContent: { xs: "flex-start", md: "flex-end" } }}>
+      <Box sx={{ width: { xs: "100%", md: "fit-content" } }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "auto 1fr", md: "repeat(3, auto auto)" },
+            columnGap: 3,
+            rowGap: 0.5,
+            width: { xs: "100%", md: "auto" },
+          }}
+        >
+          {rows.map(([label, value]) => (
+            <React.Fragment key={label}>
+              <Box component="span" className="font-normal text-grey-700" sx={{ whiteSpace: "nowrap" }}>
+                {label}
+              </Box>
+              <Box component="span" className="font-medium text-black" sx={{ textAlign: "right" }}>
+                {formatCurrency(value)}
+              </Box>
+            </React.Fragment>
+          ))}
+        </Box>
+        {totalRow && (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              width: "100%",
+              gap: 2,
+              borderTop: "1px solid",
+              borderColor: "divider",
+              mt: 1,
+              pt: 1,
+            }}
+            className="font-bold text-black"
+          >
+            <span>{totalRow[0]}</span>
+            <span>{formatCurrency(totalRow[1])}</span>
+          </Box>
+        )}
+      </Box>
+    </Box>
+  );
+
   const handleMenuClick = (event) => setAnchorEl(event.currentTarget);
 
   const triggerBrowserDownload = ({ blob, filename, contentType }) => {
@@ -495,7 +561,15 @@ export default function FinancialMovementReport({ perfil }) {
     return value || '-';
   };
 
-  const colSpan = showStucColumns ? STUC_GRATUIDADE_COLUMN_COUNT.withDataPagamento : (isGuardador ? 11 : 6);
+  // Base non-STUC columns: Dt. Tent. Pagto., Nome, Email, Cód. Banco, Banco, CPF/CNPJ,
+  // Consórcios|Associação, Valor, Status, Descrição do Erro - plus the "Dt. Efet. Pagto."
+  // column, shown conditionally (see the matching condition on the header/body cells below).
+  // Was previously hardcoded (isGuardador ? 11 : 6), which undercounted the Permissionário
+  // table (really 10-11 columns) and made colSpan-based footer/empty-state cells too narrow.
+  const hasEffectivePaymentDateColumn = isGuardador ? showEffectivePaymentDate : !showErroStatus;
+  const colSpan = showStucColumns
+    ? STUC_GRATUIDADE_COLUMN_COUNT.withDataPagamento
+    : 10 + (hasEffectivePaymentDateColumn ? 1 : 0);
 
   // STUC - Gratuidade: mesmo componente/função do Consolidado (ConsolidatedReportPage.js) -
   // ver shared/StucGratuidadeTable.js.
@@ -669,6 +743,12 @@ export default function FinancialMovementReport({ perfil }) {
                           {...params}
                           label="Selecionar Favorecido"
                           variant="outlined"
+                          error={hasMissingFavorecidoOuConsorcioSelection}
+                          helperText={
+                            hasMissingFavorecidoOuConsorcioSelection
+                              ? "Selecione um Favorecido ou um Consórcio para pesquisar."
+                              : ""
+                          }
                           InputProps={{
                             ...params.InputProps,
                             endAdornment: (
@@ -696,7 +776,17 @@ export default function FinancialMovementReport({ perfil }) {
                       isOptionEqualToValue={(option, value) => option.value === value.value}
                       onChange={(_, newValue) => handleSelection("consorcioName", newValue)}
                       renderInput={(params) => (
-                        <TextField {...params} label="Selecionar Consórcios | Modais" variant="outlined" />
+                        <TextField
+                          {...params}
+                          label="Selecionar Consórcios | Modais"
+                          variant="outlined"
+                          error={hasMissingFavorecidoOuConsorcioSelection}
+                          helperText={
+                            hasMissingFavorecidoOuConsorcioSelection
+                              ? "Selecione um Favorecido ou um Consórcio para pesquisar."
+                              : ""
+                          }
+                        />
                       )}
                     />
                   </Grid>
@@ -730,7 +820,14 @@ export default function FinancialMovementReport({ perfil }) {
             )}
 
             <Box className="flex gap-10 mt-24">
-              <Button variant="contained" color="secondary" aria-label="Pesquisar" type="submit" size="medium">
+              <Button
+                variant="contained"
+                color="secondary"
+                aria-label="Pesquisar"
+                type="submit"
+                size="medium"
+                disabled={hasMissingFavorecidoOuConsorcioSelection}
+              >
                 Pesquisar
               </Button>
               <Button variant="outlined" aria-label="Limpar Filtros" type="button" size="medium" onClick={handleClear}>
@@ -926,24 +1023,30 @@ export default function FinancialMovementReport({ perfil }) {
                     reportList?.valorRejeitado > 0 ||
                     reportList?.valorTotal > 0 ||
                     reportList?.valorPendente > 0 ||
+                    reportList?.valorPendenciaPaga > 0 ||
+                    reportList?.valorAPagar > 0 ||
                     showErroStatus) && (
                     <TableRow>
-                      <TableCell colSpan={colSpan} className="py-8 text-black">
-                        <Box className="flex gap-16 flex-wrap justify-end font-bold text-base">
-                          {reportList?.valorPago > 0 && <span>Pago: {formatCurrency(reportList.valorPago)}</span>}
-                          {reportList?.valorAguardandoPagamento > 0 && (
-                            <span>Aguardando Pagamento: {formatCurrency(reportList.valorAguardandoPagamento)}</span>
-                          )}
-                          {reportList?.valorAPagar > 0 && <span>A Pagar: {formatCurrency(reportList.valorAPagar)}</span>}
-                          {reportList?.valorPendenciaPaga > 0 && (
-                            <span>Pendência Paga: {formatCurrency(reportList.valorPendenciaPaga)}</span>
-                          )}
-                          {reportList?.valorEstornado > 0 && <span>Estorno: {formatCurrency(reportList.valorEstornado)}</span>}
-                          {reportList?.valorRejeitado > 0 && <span>Rejeitado: {formatCurrency(reportList.valorRejeitado)}</span>}
-                          {reportList?.valorTotal > 0 && (
-                            <span>Total Geral: {formatCurrency(reportList.valorTotal)}</span>
-                          )}
-                        </Box>
+                      <TableCell colSpan={colSpan} className="py-8 text-black" style={{ width: "100%" }}>
+                        {(() => {
+                          const valorPago = toNumber(reportList?.valorPago);
+                          const valorAPagar = toNumber(reportList?.valorAPagar);
+                          const valorAguardandoPagamento = toNumber(reportList?.valorAguardandoPagamento);
+                          const valorPendenciaPaga = toNumber(reportList?.valorPendenciaPaga);
+                          const valorEstornado = toNumber(reportList?.valorEstornado);
+                          const valorRejeitado = toNumber(reportList?.valorRejeitado);
+                          const totalGeral = toNumber(reportList?.valorTotal);
+                          const rows = [];
+
+                          if (valorPago > 0) rows.push(["Pago", valorPago]);
+                          if (valorAguardandoPagamento > 0) rows.push(["Aguardando Pagamento", valorAguardandoPagamento]);
+                          if (valorAPagar > 0) rows.push(["A Pagar", valorAPagar]);
+                          if (valorPendenciaPaga > 0) rows.push(["Pendência Paga", valorPendenciaPaga]);
+                          if (valorEstornado > 0) rows.push(["Estorno", valorEstornado]);
+                          if (valorRejeitado > 0) rows.push(["Rejeitado", valorRejeitado]);
+
+                          return renderStatusTotals(rows, ["Total Geral", totalGeral]);
+                        })()}
                       </TableCell>
                     </TableRow>
                   )
@@ -955,47 +1058,34 @@ export default function FinancialMovementReport({ perfil }) {
                       reportList.valorRejeitado > 0 ||
                       reportList.valorTotal > 0 ||
                       reportList.valorPendente > 0 ||
+                      reportList.valorPendenciaPaga > 0 ||
                       showErroStatus) && (
                       <TableRow>
-                        {!showStucColumns && <TableCell />}
-                        <TableCell
-                          colSpan={showStucColumns ? colSpan : 7}
-                          className="text-right font-bold text-black text-base pt-16"
-                        >
+                        <TableCell colSpan={colSpan} className="text-right pt-16" style={{ width: "100%" }}>
                           {(() => {
-                            const isErrorReport = showErroStatus;
                             const valorPago = toNumber(reportList.valorPago);
                             const valorEstornado = toNumber(reportList.valorEstornado);
                             const valorRejeitado = toNumber(reportList.valorRejeitado);
                             const valorAguardandoPagamento = toNumber(reportList.valorAguardandoPagamento);
                             const valorPendente = toNumber(reportList.valorPendente);
+                            const valorPendenciaPaga = toNumber(reportList.valorPendenciaPaga);
                             const totalPendenciaPagamento = valorEstornado + valorRejeitado + valorPendente;
                             const totalGeral = toNumber(reportList.valorTotal);
-                            const totalLabel = isErrorReport ? "Total Pendencia de Pagamento" : "Total Geral";
-                            const totalValue = isErrorReport ? totalPendenciaPagamento : totalGeral;
-                            const totals = [];
+                            const rows = [];
 
-                            if (valorPago > 0) totals.push(`Total Pago: ${formatCurrency(valorPago)}`);
-                            if (!showErroStatus && totalPendenciaPagamento > 0) {
-                              totals.push(`Total Pendencia de Pagamento: ${formatCurrency(totalPendenciaPagamento)}`);
+                            if (valorPago > 0) rows.push(["Pago", valorPago]);
+                            if (valorAguardandoPagamento > 0) rows.push(["Aguardando Pagamento", valorAguardandoPagamento]);
+                            if (valorPendenciaPaga > 0) rows.push(["Pendência Paga", valorPendenciaPaga]);
+                            if (valorEstornado > 0) rows.push(["Estorno", valorEstornado]);
+                            if (valorRejeitado > 0) rows.push(["Rejeitado", valorRejeitado]);
+                            if (valorPendente > 0) rows.push(["OPs atrasadas", valorPendente]);
+                            if (showErroStatus && totalPendenciaPagamento > 0) {
+                              rows.push(["Pendência de Pagamento (subtotal)", totalPendenciaPagamento]);
                             }
-                            if (valorEstornado > 0) totals.push(`Total Estorno: ${formatCurrency(valorEstornado)}`);
-                            if (valorRejeitado > 0) totals.push(`Total Rejeitado: ${formatCurrency(valorRejeitado)}`);
-                            if (valorAguardandoPagamento > 0) {
-                              totals.push(`Total Aguardando Pagamento: ${formatCurrency(valorAguardandoPagamento)}`);
-                            }
-                            if (valorPendente > 0) totals.push(`Total OPs atrasadas: ${formatCurrency(valorPendente)}`);
-                            if ((totalValue ?? 0) >= 0) totals.push(`${totalLabel}: ${formatCurrency(totalValue)}`);
 
-                            return totals.filter(Boolean).join("    |    ");
+                            return renderStatusTotals(rows, ["Total Geral", totalGeral]);
                           })()}
                         </TableCell>
-                        {!showStucColumns && (
-                          <>
-                            <TableCell />
-                            <TableCell />
-                          </>
-                        )}
                       </TableRow>
                     )}
                   </>
