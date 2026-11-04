@@ -96,7 +96,7 @@ export default function StatementsDetalheApp() {
     setSearchParams(Object.fromEntries(Object.entries(proximo).filter(([, valor]) => valor)));
   };
 
-  const [paginacao, setPaginacao] = useState({ page: 0, pageSize: 50 });
+  const [paginacao, setPaginacao] = useState({ page: 0, pageSize: 100 });
   const [carregando, setCarregando] = useState(false);
   const [resultado, setResultado] = useState(VAZIO);
   const filtrosValidos = Boolean(filtros.conta && filtros.dataInicio && filtros.dataFim);
@@ -249,7 +249,7 @@ export default function StatementsDetalheApp() {
             count={resultado.total}
             page={paginacao.page}
             rowsPerPage={paginacao.pageSize}
-            rowsPerPageOptions={[25, 50, 100]}
+            rowsPerPageOptions={[100, 300, 500, 1000, 1500, 2000]}
             onPageChange={(_event, page) => setPaginacao((atual) => ({ ...atual, page }))}
             onRowsPerPageChange={(event) => setPaginacao({ page: 0, pageSize: Number(event.target.value) })}
             labelRowsPerPage="Linhas por página:"
