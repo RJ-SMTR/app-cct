@@ -134,6 +134,12 @@ export default function FinancialMovementReport({ perfil }) {
   // Permissionário: pesquisar sem status não é permitido (o guardador continua opcional).
   const hasMissingStatusSelection = !isGuardador && whichStatusShow.length === 0;
 
+  // Permissionário: Favorecido e Consórcio são mutuamente exclusivos (handleSelection acima),
+  // mas sem nenhum dos dois selecionado o backend assume "Todos" (ADR 0014, api-cct) - exigir
+  // um ou outro evita o caso ambíguo que motivou o ADR e mantém o resultado sempre delimitado.
+  const hasMissingFavorecidoOuConsorcioSelection =
+    !isGuardador && selectedFavorecidos.length === 0 && selectedConsorcios.length === 0;
+
   const validateStatusSelection = () => {
     if (!hasMissingStatusSelection) return true;
     dispatch(showMessage({ message: "Selecione um status para pesquisar." }));
@@ -143,6 +149,12 @@ export default function FinancialMovementReport({ perfil }) {
   const validateErroStatusSelection = () => {
     if (!hasMissingErroStatusSelection) return true;
     dispatch(showMessage({ message: "Selecione um motivo para a Pendência de Pagamento." }));
+    return false;
+  };
+
+  const validateFavorecidoOuConsorcioSelection = () => {
+    if (!hasMissingFavorecidoOuConsorcioSelection) return true;
+    dispatch(showMessage({ message: "Selecione um Favorecido ou um Consórcio para pesquisar." }));
     return false;
   };
 
@@ -168,7 +180,7 @@ export default function FinancialMovementReport({ perfil }) {
   };
 
   const getValidatedRequestData = (data, pageIndex, pageSize, options = {}) => {
-    if (!validateStatusSelection() || !validateErroStatusSelection()) return null;
+    if (!validateStatusSelection() || !validateErroStatusSelection() || !validateFavorecidoOuConsorcioSelection()) return null;
     return buildRequestData(data, pageIndex, pageSize, options);
   };
 
@@ -246,7 +258,7 @@ export default function FinancialMovementReport({ perfil }) {
   };
 
   const submitReportPermissionario = async (data, pageIndex, pageSize) => {
-    if (!validateStatusSelection() || !validateErroStatusSelection()) return;
+    if (!validateStatusSelection() || !validateErroStatusSelection() || !validateFavorecidoOuConsorcioSelection()) return;
     const pageRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: true });
     setIsLoading(true);
     try {
@@ -731,6 +743,12 @@ export default function FinancialMovementReport({ perfil }) {
                           {...params}
                           label="Selecionar Favorecido"
                           variant="outlined"
+                          error={hasMissingFavorecidoOuConsorcioSelection}
+                          helperText={
+                            hasMissingFavorecidoOuConsorcioSelection
+                              ? "Selecione um Favorecido ou um Consórcio para pesquisar."
+                              : ""
+                          }
                           InputProps={{
                             ...params.InputProps,
                             endAdornment: (
@@ -758,7 +776,17 @@ export default function FinancialMovementReport({ perfil }) {
                       isOptionEqualToValue={(option, value) => option.value === value.value}
                       onChange={(_, newValue) => handleSelection("consorcioName", newValue)}
                       renderInput={(params) => (
-                        <TextField {...params} label="Selecionar Consórcios | Modais" variant="outlined" />
+                        <TextField
+                          {...params}
+                          label="Selecionar Consórcios | Modais"
+                          variant="outlined"
+                          error={hasMissingFavorecidoOuConsorcioSelection}
+                          helperText={
+                            hasMissingFavorecidoOuConsorcioSelection
+                              ? "Selecione um Favorecido ou um Consórcio para pesquisar."
+                              : ""
+                          }
+                        />
                       )}
                     />
                   </Grid>
@@ -792,7 +820,14 @@ export default function FinancialMovementReport({ perfil }) {
             )}
 
             <Box className="flex gap-10 mt-24">
-              <Button variant="contained" color="secondary" aria-label="Pesquisar" type="submit" size="medium">
+              <Button
+                variant="contained"
+                color="secondary"
+                aria-label="Pesquisar"
+                type="submit"
+                size="medium"
+                disabled={hasMissingFavorecidoOuConsorcioSelection}
+              >
                 Pesquisar
               </Button>
               <Button variant="outlined" aria-label="Limpar Filtros" type="button" size="medium" onClick={handleClear}>
