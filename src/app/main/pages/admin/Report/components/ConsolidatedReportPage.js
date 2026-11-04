@@ -683,6 +683,12 @@ export default function ConsolidatedReportPage({ perfil }) {
                           {...params}
                           label="Selecionar Favorecido"
                           variant="outlined"
+                          error={missingFavorecidoOrConsorcio}
+                          helperText={
+                            missingFavorecidoOrConsorcio
+                              ? "Selecione um Favorecido ou um Consórcio para pesquisar."
+                              : ""
+                          }
                           InputProps={{
                             ...params.InputProps,
                             endAdornment: (
@@ -710,7 +716,19 @@ export default function ConsolidatedReportPage({ perfil }) {
                         getOptionDisabled={(option) => option.disabled || selectedFavorecidos.length > 0}
                         isOptionEqualToValue={(option, value) => option.value === value.value}
                         onChange={(_, newValue) => handleSelection('consorcioName', newValue)}
-                        renderInput={(params) => <TextField {...params} label="Selecionar Consórcios" variant="outlined" />}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Selecionar Consórcios"
+                            variant="outlined"
+                            error={missingFavorecidoOrConsorcio}
+                            helperText={
+                              missingFavorecidoOrConsorcio
+                                ? "Selecione um Favorecido ou um Consórcio para pesquisar."
+                                : ""
+                            }
+                          />
+                        )}
                       />
                     </Grid>
                   )}
@@ -732,12 +750,6 @@ export default function ConsolidatedReportPage({ perfil }) {
 
               <ValorRangeFilter control={control} getValues={getValues} trigger={trigger} clearErrors={clearErrors} />
             </Grid>
-
-            {missingFavorecidoOrConsorcio && (
-              <span className="text-sm text-red-600 block mt-16">
-                Campo obrigatório: selecione um Favorecido ou um Consórcio para pesquisar.
-              </span>
-            )}
 
             {!isGuardador && whichStatusShow.includes("A pagar") && (
               <span className="text-sm text-red-600 block mt-16">
