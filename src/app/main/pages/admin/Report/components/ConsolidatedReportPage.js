@@ -9,12 +9,6 @@ import {
   CircularProgress,
   Menu,
   Grid,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TablePagination,
 } from '@mui/material';
 import { DataGrid, ptBR as pt } from '@mui/x-data-grid';
@@ -182,7 +176,12 @@ export default function ConsolidatedReportPage({ perfil }) {
       ]
     : [
         { field: 'nomefavorecido', headerName: 'Nome', flex: 1, minWidth: 260 },
-        { field: 'valor', headerName: 'Valor Total', width: 180, valueFormatter: (params) => formatter.format(params.value ?? 0) },
+        {
+          field: 'valor',
+          headerName: showStucColumns ? 'Valor Lançamento' : 'Valor Total',
+          width: 180,
+          valueFormatter: (params) => formatter.format(params.value ?? 0),
+        },
       ];
 
   const totalValue = isGuardador ? guardadorTotal : (reportList.valor ?? 0);
@@ -821,101 +820,48 @@ export default function ConsolidatedReportPage({ perfil }) {
             />
           </header>
 
-          {showStucColumns ? (
-            // STUC - Gratuidade no Consolidado: só Nome + Valor Lançamento (tela e exports), 1
-            // linha por janela de pagamento - reportList.data já vem pivotado por janela do
-            // backend (ver pivotStucGratuidadeRows/findConsolidadoStucGratuidade).
-            <>
-            <TablePagination
-              component="div"
-              count={reportList?.count ?? 0}
-              page={page}
-              rowsPerPage={pageSize}
-              onPageChange={handlePermissionarioChangePage}
-              onRowsPerPageChange={handlePermissionarioChangeRowsPerPage}
-              labelRowsPerPage="Linhas por página"
-              labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-              rowsPerPageOptions={[10, 25, 50, 100]}
+          {/* STUC - Gratuidade (ADR 0012) usa a mesma DataGrid do Consolidado geral (filtro e
+              ordenação de colunas inclusos), só troca o header de "Valor Total" para "Valor
+              Lançamento" (ver gridColumns acima) - reportList.data já vem pivotado por janela de
+              pagamento pelo backend (ver pivotStucGratuidadeRows/findConsolidadoStucGratuidade). */}
+          <TablePagination
+            component="div"
+            count={isGuardador ? guardadorDisplayRows.length : (reportList?.count ?? 0)}
+            page={isGuardador ? guardadorPage : page}
+            rowsPerPage={isGuardador ? guardadorPageSize : pageSize}
+            onPageChange={isGuardador ? handleGuardadorChangePage : handlePermissionarioChangePage}
+            onRowsPerPageChange={isGuardador ? handleGuardadorChangeRowsPerPage : handlePermissionarioChangeRowsPerPage}
+            labelRowsPerPage="Linhas por página"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+            rowsPerPageOptions={[10, 25, 50, 100]}
+          />
+          <div style={{ height: '60vh', width: '100%' }}>
+            <DataGrid
+              localeText={{
+                ...pt.components.MuiDataGrid.defaultProps.localeText,
+                noRowsLabel: !isGuardador && !hasSearched
+                  ? 'Faça uma busca para visualizar os resultados'
+                  : 'Não há dados para serem exibidos',
+              }}
+              rows={gridRows}
+              columns={gridColumns}
+              loading={isLoading}
+              disableRowSelectionOnClick
+              hideFooter
+              {...(isGuardador
+                ? { paginationModel: { page: guardadorPage, pageSize: guardadorPageSize }, onPaginationModelChange: ({ page: newPage, pageSize: newPageSize }) => { setGuardadorPage(newPage); setGuardadorPageSize(newPageSize); } }
+                : {
+                    paginationMode: 'server',
+                    rowCount: reportList.count ?? 0,
+                    paginationModel: { page, pageSize },
+                    onPaginationModelChange: ({ page: newPage, pageSize: newPageSize }) => {
+                      if (!hasSearched) return;
+                      setPageSize(newPageSize);
+                      submitPagePermissionario(getValues(), newPage, newPageSize);
+                    },
+                  })}
             />
-            <TableContainer sx={{ height: '60vh', width: '100%', overflowX: 'auto', overflowY: 'auto' }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow className="sticky top-0 bg-white z-10">
-                    <TableCell className="font-semibold p-1" style={{ whiteSpace: 'nowrap' }}>Nome</TableCell>
-                    <TableCell className="font-semibold p-1">Valor Lançamento</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {!isLoading ? (
-                    (reportList.data?.length ?? 0) > 0 ? (
-                      reportList.data.map((report, index) => (
-                        <TableRow key={`${report.nomefavorecido}::${index}`} className="hover:bg-gray-50">
-                          <TableCell className="py-6 px-1" style={{ whiteSpace: 'nowrap' }}>{report.nomefavorecido}</TableCell>
-                          <TableCell className="py-6 px-1">{formatter.format(report.valor)}</TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={2} className="text-center py-4">
-                          {!hasSearched ? 'Faça uma busca para visualizar os resultados' : 'Não há dados para serem exibidos'}
-                        </TableCell>
-                      </TableRow>
-                    )
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={2}>
-                        <Box className="flex justify-center items-center m-10">
-                          <CircularProgress />
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            </>
-          ) : (
-            <>
-            <TablePagination
-              component="div"
-              count={isGuardador ? guardadorDisplayRows.length : (reportList?.count ?? 0)}
-              page={isGuardador ? guardadorPage : page}
-              rowsPerPage={isGuardador ? guardadorPageSize : pageSize}
-              onPageChange={isGuardador ? handleGuardadorChangePage : handlePermissionarioChangePage}
-              onRowsPerPageChange={isGuardador ? handleGuardadorChangeRowsPerPage : handlePermissionarioChangeRowsPerPage}
-              labelRowsPerPage="Linhas por página"
-              labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-              rowsPerPageOptions={[10, 25, 50, 100]}
-            />
-            <div style={{ height: '60vh', width: '100%' }}>
-              <DataGrid
-                localeText={{
-                  ...pt.components.MuiDataGrid.defaultProps.localeText,
-                  noRowsLabel: !isGuardador && !hasSearched
-                    ? 'Faça uma busca para visualizar os resultados'
-                    : 'Não há dados para serem exibidos',
-                }}
-                rows={gridRows}
-                columns={gridColumns}
-                loading={isLoading}
-                disableRowSelectionOnClick
-                hideFooter
-                {...(isGuardador
-                  ? { paginationModel: { page: guardadorPage, pageSize: guardadorPageSize }, onPaginationModelChange: ({ page: newPage, pageSize: newPageSize }) => { setGuardadorPage(newPage); setGuardadorPageSize(newPageSize); } }
-                  : {
-                      paginationMode: 'server',
-                      rowCount: reportList.count ?? 0,
-                      paginationModel: { page, pageSize },
-                      onPaginationModelChange: ({ page: newPage, pageSize: newPageSize }) => {
-                        if (!hasSearched) return;
-                        setPageSize(newPageSize);
-                        submitPagePermissionario(getValues(), newPage, newPageSize);
-                      },
-                    })}
-              />
-            </div>
-            </>
-          )}
+          </div>
           {/* Mesmo tratamento do "Total Geral" da Movimentação Financeira
               (FinancialMovementReport.js/renderStatusTotals): linha full-width com borda
               superior e negrito, em vez do flex justify-end simples que havia aqui. */}
