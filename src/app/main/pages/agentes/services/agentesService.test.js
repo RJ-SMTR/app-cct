@@ -104,6 +104,27 @@ describe("buildPagamentoIndevido", () => {
     ).toBe(false);
   });
 
+  it("quitado: guarda o mês do último abatimento para o quadro aparecer só nele", () => {
+    const result = buildPagamentoIndevido({
+      totais: { valorIndevido: "130.20", valorDebitado: "130.20", saldoDevedor: "0.00" },
+      lancamentos: [
+        { data: "2026-10-30", valorDevido: "86.80", valorPago: "0.00", diferenca: "-86.80", statusRemessa: 3 },
+        { data: "2026-09-16", valorDevido: "65.80", valorPago: "0.00", diferenca: "-65.80", statusRemessa: 3 },
+      ],
+    });
+    expect(result.hasBalance).toBe(false);
+    expect(result.settledMonth).toBe("2026-10");
+  });
+
+  it("com saldo devedor não há mês de quitação", () => {
+    expect(
+      buildPagamentoIndevido({
+        totais: { saldoDevedor: "64.40" },
+        lancamentos: [{ data: "2026-10-16", valorDevido: "65.80", valorPago: "0.00", diferenca: "-65.80", statusRemessa: 3 }],
+      }).settledMonth
+    ).toBeNull();
+  });
+
   it("resposta vazia ou sem lançamentos não quebra e não mostra o quadro", () => {
     expect(buildPagamentoIndevido(undefined)).toMatchObject({ hasBalance: false, items: [] });
     expect(buildPagamentoIndevido({ totais: {}, lancamentos: null })).toMatchObject({ totalSaldoDevedor: 0, items: [] });
@@ -258,8 +279,42 @@ describe('Abatimento por duplicidade', () => {
     });
   });
 
+  it('marca o dia não efetivado cujo valor enviado ao banco foi zerado pelo abatimento', () => {
+    const zerado = buildPagamentoIndevido({
+      totais: { quantidade: 1, devendo: 0, valorIndevido: '130.20', valorDebitado: '130.20', saldoDevedor: '0.00' },
+      lancamentos: [{ data: '2026-10-30', valorDevido: '86.80', valorPago: '0.00', diferenca: '-86.80', statusRemessa: 4 }],
+      datasDuplicidade: ['2026-09-03'],
+    });
+    const marked = markDuplicateOffsetPayments([pagamento('2026-10-30', 4), pagamento('2026-10-29', 4)], zerado);
+
+    expect(marked[0].duplicateOffset.status).toBe('Abatimento por duplicidade');
+    expect(marked[1].duplicateOffset).toBeUndefined();
+  });
+
+  it('no quadro, lançamento zerado pelo abatimento aparece como Pago e não como Rejeitado', () => {
+    const itens = buildPagamentoIndevido({
+      totais: { saldoDevedor: '58.20' },
+      lancamentos: [
+        { data: '2026-10-30', valorDevido: '68.60', valorPago: '0.00', diferenca: '-68.60', statusRemessa: 4 },
+        { data: '2026-10-29', valorDevido: '68.60', valorPago: '10.00', diferenca: '-58.60', statusRemessa: 4 },
+      ],
+    }).items;
+
+    expect(itens[0].status).toBe('Pago');
+    expect(itens[1].status).toBe('Rejeitado');
+  });
+
+  it('não efetivado com abatimento parcial (valor enviado maior que zero) continua como veio', () => {
+    const parcial = buildPagamentoIndevido({
+      totais: { quantidade: 1, devendo: 1, valorIndevido: '130.20', valorDebitado: '40.00', saldoDevedor: '90.20' },
+      lancamentos: [{ data: '2026-10-30', valorDevido: '86.80', valorPago: '46.80', diferenca: '-40.00', statusRemessa: 4 }],
+    });
+
+    expect(markDuplicateOffsetPayments([pagamento('2026-10-30', 4)], parcial)[0].duplicateOffset).toBeUndefined();
+  });
+
   it('não marca pagamento de outro dia nem o que não está pago', () => {
-    const payments = [pagamento('2026-10-20', 3), pagamento('2026-10-16', 2), pagamento('2026-10-16', null), pagamento('2026-10-16', 4)];
+    const payments = [pagamento('2026-10-20', 3), pagamento('2026-10-16', 2), pagamento('2026-10-16', null), pagamento('2026-10-16', 1)];
 
     markDuplicateOffsetPayments(payments, indevido).forEach((p) => expect(p.duplicateOffset).toBeUndefined());
   });
