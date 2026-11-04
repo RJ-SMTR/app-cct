@@ -896,9 +896,24 @@ export default function ConsolidatedReportPage({ perfil }) {
             </div>
             </>
           )}
-          <Box className="flex justify-end mt-16">
-            <span className="font-bold mr-8">Valor Total:</span>
-            <span className="font-bold">{formatter.format(totalValue ?? 0)}</span>
+          {/* Mesmo tratamento do "Total Geral" da Movimentação Financeira
+              (FinancialMovementReport.js/renderStatusTotals): linha full-width com borda
+              superior e negrito, em vez do flex justify-end simples que havia aqui. */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              width: "100%",
+              gap: 2,
+              borderTop: "1px solid",
+              borderColor: "divider",
+              mt: 2,
+              pt: 2,
+            }}
+            className="font-bold text-black"
+          >
+            <span>Valor Total</span>
+            <span>{formatter.format(totalValue ?? 0)}</span>
           </Box>
         </Box>
       </Paper>
