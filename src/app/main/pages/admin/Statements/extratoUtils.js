@@ -75,12 +75,13 @@ export function lerFiltrosDetalhe(searchParams) {
     descricao: get('descricao'),
     dia: get('dia'),
     busca: get('busca'),
+    nome: get('nome'),
     dataInicio: get('dataInicio'),
     dataFim: get('dataFim'),
   };
 }
 
-export const CABECALHO_PLANILHA = ['Data', 'Conta', 'Tipo', 'Valor', 'Histórico', 'Cód. histórico', 'Documento', 'CNPJ/CPF', 'Agência', 'Conta (nº)', 'NSR'];
+export const CABECALHO_PLANILHA = ['Data', 'Conta', 'Tipo', 'Valor', 'Histórico', 'Cód. histórico', 'Documento', 'CNPJ/CPF', 'Nome favorecido', 'Agência', 'Conta (nº)', 'NSR'];
 
 const FORMATO_MOEDA = '"R$"\\ #,##0.00';
 const ESTILO_CABECALHO = {
@@ -116,9 +117,10 @@ export function montarPlanilha(itens) {
     texto(5, i.codigoHistorico);
     texto(6, i.numeroDocumento);
     texto(7, i.numeroInscricao);
-    texto(8, i.agencia);
-    texto(9, i.numeroConta);
-    folha[utils.encode_cell({ r, c: 10 })] = { t: 'n', v: Number(i.nsr) || 0 };
+    texto(8, i.nomeFavorecido);
+    texto(9, i.agencia);
+    texto(10, i.numeroConta);
+    folha[utils.encode_cell({ r, c: 11 })] = { t: 'n', v: Number(i.nsr) || 0 };
   });
   const total = somarTipos(itens);
   let r = itens.length + 1;
@@ -132,7 +134,7 @@ export function montarPlanilha(itens) {
     r += 1;
   });
   folha['!ref'] = utils.encode_range({ s: { r: 0, c: 0 }, e: { r: r - 1, c: CABECALHO_PLANILHA.length - 1 } });
-  folha['!cols'] = [{ wch: 12 }, { wch: 18 }, { wch: 10 }, { wch: 18 }, { wch: 30 }, { wch: 14 }, { wch: 18 }, { wch: 16 }, { wch: 10 }, { wch: 16 }, { wch: 8 }];
+  folha['!cols'] = [{ wch: 12 }, { wch: 18 }, { wch: 10 }, { wch: 18 }, { wch: 30 }, { wch: 14 }, { wch: 18 }, { wch: 16 }, { wch: 30 }, { wch: 10 }, { wch: 16 }, { wch: 8 }];
   folha['!autofilter'] = { ref: utils.encode_range({ s: { r: 0, c: 0 }, e: { r: itens.length, c: CABECALHO_PLANILHA.length - 1 } }) };
   const livro = utils.book_new();
   utils.book_append_sheet(livro, folha, 'Extrato');
