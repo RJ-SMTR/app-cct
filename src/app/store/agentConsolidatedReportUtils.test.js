@@ -61,7 +61,22 @@ describe("agentConsolidatedReportUtils", () => {
     });
   });
 
-  it("serializes the erros filter using pago=false and keeps error detail flags", () => {
+  it("combines Pago and Erros without a specific reason as pago, rejeitado and estorno", () => {
+    const params = buildAgentConsolidatedReportParams({
+      dateRange: [julyStartDate, julyEndDate],
+      status: ["Pago", AGENT_REPORT_ERROR_STATUS_VALUE],
+    });
+
+    expect(params).toEqual({
+      dataInicio: "2026-07-01",
+      dataFim: "2026-07-31",
+      pago: true,
+      rejeitado: true,
+      estorno: true,
+    });
+  });
+
+  it("serializes the erros filter with the specific error reasons, without pago", () => {
     const params = buildAgentConsolidatedReportParams({
       dateRange: [julyStartDate, julyEndDate],
       status: [AGENT_REPORT_ERROR_STATUS_VALUE],
@@ -71,13 +86,12 @@ describe("agentConsolidatedReportUtils", () => {
     expect(params).toEqual({
       dataInicio: "2026-07-01",
       dataFim: "2026-07-31",
-      pago: false,
       rejeitado: true,
       estorno: true,
     });
   });
 
-  it("serializes all error reasons with only pago=false when Todos is selected", () => {
+  it("serializes all error reasons as rejeitado and estorno when Todos is selected", () => {
     const params = buildAgentConsolidatedReportParams({
       dateRange: [julyStartDate, julyEndDate],
       status: [AGENT_REPORT_ERROR_STATUS_VALUE],
@@ -87,7 +101,37 @@ describe("agentConsolidatedReportUtils", () => {
     expect(params).toEqual({
       dataInicio: "2026-07-01",
       dataFim: "2026-07-31",
-      pago: false,
+      rejeitado: true,
+      estorno: true,
+    });
+  });
+
+  it("serializes Erros alone with no reason selected as both rejeitado and estorno", () => {
+    const params = buildAgentConsolidatedReportParams({
+      dateRange: [julyStartDate, julyEndDate],
+      status: [AGENT_REPORT_ERROR_STATUS_VALUE],
+    });
+
+    expect(params).toEqual({
+      dataInicio: "2026-07-01",
+      dataFim: "2026-07-31",
+      rejeitado: true,
+      estorno: true,
+    });
+  });
+
+  it("combines A pagar and Erros without a specific reason as aPagar, rejeitado and estorno", () => {
+    const params = buildAgentConsolidatedReportParams({
+      dateRange: [julyStartDate, julyEndDate],
+      status: ["A pagar", AGENT_REPORT_ERROR_STATUS_VALUE],
+    });
+
+    expect(params).toEqual({
+      dataInicio: "2026-07-01",
+      dataFim: "2026-07-31",
+      aPagar: true,
+      rejeitado: true,
+      estorno: true,
     });
   });
 
@@ -262,7 +306,7 @@ describe("agentConsolidatedReportUtils", () => {
     });
   });
 
-  it("keeps the erros selection exclusive with paid-status options", () => {
+  it("keeps every status selected, including Erros combined with others", () => {
     expect(
       normalizeAgentStatusSelection([
         { label: "Pago", value: "Pago" },
@@ -271,7 +315,10 @@ describe("agentConsolidatedReportUtils", () => {
         { label: "A pagar", value: "A pagar" },
       ])
     ).toEqual([
+      { label: "Pago", value: "Pago" },
       { label: "Erros", value: "Erros" },
+      { label: "Em processamento", value: "Em processamento" },
+      { label: "A pagar", value: "A pagar" },
     ]);
   });
 });

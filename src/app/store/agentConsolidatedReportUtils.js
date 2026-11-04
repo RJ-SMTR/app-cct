@@ -164,14 +164,13 @@ export function buildAgentConsolidatedReportParams(filters = {}) {
   const selectedStatuses = new Set(filters.status || []);
   const selectedErrorReasons = new Set(filters.erroStatus || []);
   const hasErrorStatus = selectedStatuses.has(AGENT_REPORT_ERROR_STATUS_VALUE);
+  const hasSpecificErrorReason =
+    selectedErrorReasons.size > 0 && !selectedErrorReasons.has(AGENT_REPORT_SELECT_ALL_VALUE);
 
-  if (hasErrorStatus) {
-    params.pago = false;
-  } else if (selectedStatuses.has("Pago")) {
+  if (selectedStatuses.has("Pago")) {
     params.pago = true;
   }
-
-  if (!hasErrorStatus && selectedStatuses.has("A pagar")) {
+  if (selectedStatuses.has("A pagar")) {
     params.aPagar = true;
   }
   if (selectedStatuses.has("Em processamento")) {
@@ -180,21 +179,19 @@ export function buildAgentConsolidatedReportParams(filters = {}) {
   if (selectedStatuses.has("Pendencia Paga")) {
     params.pendenciaPaga = true;
   }
-  if (
-    hasErrorStatus &&
-    selectedErrorReasons.size > 0 &&
-    !selectedErrorReasons.has(AGENT_REPORT_SELECT_ALL_VALUE) &&
-    selectedErrorReasons.has("Rejeitado")
-  ) {
-    params.rejeitado = true;
-  }
-  if (
-    hasErrorStatus &&
-    selectedErrorReasons.size > 0 &&
-    !selectedErrorReasons.has(AGENT_REPORT_SELECT_ALL_VALUE) &&
-    selectedErrorReasons.has("Estorno")
-  ) {
-    params.estorno = true;
+
+  if (hasErrorStatus) {
+    if (hasSpecificErrorReason) {
+      if (selectedErrorReasons.has("Rejeitado")) {
+        params.rejeitado = true;
+      }
+      if (selectedErrorReasons.has("Estorno")) {
+        params.estorno = true;
+      }
+    } else {
+      params.rejeitado = true;
+      params.estorno = true;
+    }
   }
 
   return params;
@@ -332,20 +329,9 @@ export function normalizeAgentStatusSelection(options = []) {
     return [];
   }
 
-  const normalizedOptions = options.map((option) => ({
+  return options.map((option) => ({
     ...option,
     value: getOptionValue(option),
     label: option?.label ?? getOptionValue(option),
   }));
-  const hasErrorStatus = normalizedOptions.some(
-    (option) => option.value === AGENT_REPORT_ERROR_STATUS_VALUE
-  );
-
-  if (!hasErrorStatus) {
-    return normalizedOptions;
-  }
-
-  return normalizedOptions.filter(
-    (option) => option.value === AGENT_REPORT_ERROR_STATUS_VALUE
-  );
 }
