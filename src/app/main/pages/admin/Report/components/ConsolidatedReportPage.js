@@ -449,7 +449,7 @@ export default function ConsolidatedReportPage({ perfil }) {
     return requestData;
   };
 
-  const submitPagePermissionario = (data, pageIndex, currentPageSize) => {
+  const submitPagePermissionario = (data, pageIndex, currentPageSize, { isNewSearch = false } = {}) => {
     if (whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus.length === 0) {
       dispatch(showMessage({ message: "Selecione um motivo para a Pendência de Pagamento." }));
       return;
@@ -461,6 +461,13 @@ export default function ConsolidatedReportPage({ perfil }) {
     if (selectedFavorecidos.length === 0 && selectedConsorcios.length === 0) {
       dispatch(showMessage({ message: "Selecione um Favorecido ou um Consórcio para pesquisar." }));
       return;
+    }
+
+    // Só no clique em Pesquisar (não na paginação, que também passa por aqui) - limpa o
+    // resultado anterior antes de buscar, pra não mostrar dados/total da busca antiga enquanto
+    // a nova carrega.
+    if (isNewSearch) {
+      dispatch(setReportList([]));
     }
 
     setIsLoading(true);
@@ -496,6 +503,7 @@ export default function ConsolidatedReportPage({ perfil }) {
     }
 
     setDateError(false);
+    setReportBlocks([]);
     setIsLoading(true);
     setGuardadorPage(0);
     try {
@@ -515,7 +523,7 @@ export default function ConsolidatedReportPage({ perfil }) {
     if (isGuardador) {
       submitGuardador(data);
     } else {
-      submitPagePermissionario(data, 0, pageSize);
+      submitPagePermissionario(data, 0, pageSize, { isNewSearch: true });
     }
   };
 
