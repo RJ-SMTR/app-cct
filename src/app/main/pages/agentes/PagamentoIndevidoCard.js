@@ -43,12 +43,14 @@ function getStatusChipProps(status) {
 }
 
 /**
- * Quadro do valor indevido do guardador (tabela pagamento_indevido). Só aparece quando ainda há saldo devedor: sem saldo, sem
- * pagamento indevido ou se a consulta falhar, nada é exibido e o resto da tela não é afetado. Recebe o indevido já buscado
- * (`useAgentePagamentoIndevido`), o mesmo que marca o "Abatimento por duplicidade" na visão mensal.
+ * Quadro do valor indevido do guardador (tabela pagamento_indevido). Aparece enquanto há saldo devedor e, depois de quitado,
+ * somente no mês da quitação (`settledMonth` = `selectedMonth`). Sem pagamento indevido ou se a consulta falhar, nada é exibido
+ * e o resto da tela não é afetado. Recebe o indevido já buscado (`useAgentePagamentoIndevido`), o mesmo que marca o
+ * "Abatimento por duplicidade" na visão mensal.
  */
-const PagamentoIndevidoCard = memo(function PagamentoIndevidoCard({ indevido }) {
-  if (!indevido?.hasBalance) {
+const PagamentoIndevidoCard = memo(function PagamentoIndevidoCard({ indevido, selectedMonth }) {
+  const quitadoNoMes = !indevido?.hasBalance && !!indevido?.settledMonth && indevido.settledMonth === selectedMonth;
+  if (!indevido?.hasBalance && !quitadoNoMes) {
     return null;
   }
 
@@ -106,8 +108,8 @@ const PagamentoIndevidoCard = memo(function PagamentoIndevidoCard({ indevido }) 
       </TableContainer>
 
       <Typography className="mt-16" color="text.secondary">
-        Saldo devedor ainda a descontar:{" "}
-        <Typography component="span" className="font-semibold" color="error">
+        {quitadoNoMes ? "Débito quitado. Saldo devedor:" : "Saldo devedor ainda a descontar:"}{" "}
+        <Typography component="span" className="font-semibold" color={quitadoNoMes ? "success.main" : "error"}>
           {formatCurrency(indevido.totalSaldoDevedor)}
         </Typography>
       </Typography>
