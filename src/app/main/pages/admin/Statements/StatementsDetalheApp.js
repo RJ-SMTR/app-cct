@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { Alert, Box, Button, Card, Chip, CircularProgress, Grid, InputAdornment, TablePagination, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, Chip, CircularProgress, Grid, InputAdornment, MenuItem, TablePagination, TextField, Typography } from '@mui/material';
 import { DataGrid, ptBR as pt } from '@mui/x-data-grid';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SearchIcon from '@mui/icons-material/Search';
@@ -50,9 +50,12 @@ const COLUNAS = [
   { field: 'descricao', headerName: 'Histórico', flex: 1, minWidth: 220 },
   { field: 'numeroDocumento', headerName: 'Documento', width: 170 },
   { field: 'numeroInscricao', headerName: 'CNPJ/CPF', width: 150 },
+  { field: 'nomeFavorecido', headerName: 'Nome Favorecido', width: 240 },
   { field: 'numeroConta', headerName: 'Conta', width: 140 },
   { field: 'nsr', headerName: 'NSR', width: 80 },
 ];
+
+const tiposDaUrl = (tipo) => (tipo === 'C' || tipo === 'D' ? [tipo] : []);
 
 const VAZIO = { total: 0, entradas: 0, saidas: 0, itens: [] };
 
@@ -64,6 +67,8 @@ export default function StatementsDetalheApp() {
 
   const paraData = (iso) => (iso ? dayjs(iso).toDate() : null);
   const [busca, setBusca] = useState(filtros.busca ?? '');
+  const [nome, setNome] = useState(filtros.nome ?? '');
+  const [tipos, setTipos] = useState(tiposDaUrl(filtros.tipo));
   const [periodo, setPeriodo] = useState([paraData(filtros.dataInicio), paraData(filtros.dataFim)]);
   const [erroPeriodo, setErroPeriodo] = useState(null);
   const [erroBusca, setErroBusca] = useState(null);
@@ -71,6 +76,8 @@ export default function StatementsDetalheApp() {
   // Mantém os campos iguais à URL (voltar/avançar do navegador ou clique em outro ponto do dashboard).
   useEffect(() => {
     setBusca(filtros.busca ?? '');
+    setNome(filtros.nome ?? '');
+    setTipos(tiposDaUrl(filtros.tipo));
     setPeriodo([paraData(filtros.dataInicio), paraData(filtros.dataFim)]);
     setErroPeriodo(null);
     setErroBusca(null);
@@ -84,14 +91,15 @@ export default function StatementsDetalheApp() {
       return;
     }
     const termo = limparBusca ? '' : busca.trim();
-    if (termo && termo.length < BUSCA_MINIMA) {
+    const termoNome = limparBusca ? '' : nome.trim();
+    if ((termo && termo.length < BUSCA_MINIMA) || (termoNome && termoNome.length < BUSCA_MINIMA)) {
       setErroBusca(`Digite ao menos ${BUSCA_MINIMA} caracteres.`);
       return;
     }
     setErroPeriodo(null);
     setErroBusca(null);
     // Mudar o período invalida o "dia" escolhido num gráfico.
-    const proximo = { ...filtros, busca: termo || undefined, dataInicio: toIsoDate(periodo[0]), dataFim: toIsoDate(periodo[1]) };
+    const proximo = { ...filtros, busca: termo || undefined, nome: termoNome || undefined, tipo: tipos.length === 1 ? tipos[0] : undefined, dataInicio: toIsoDate(periodo[0]), dataFim: toIsoDate(periodo[1]) };
     if (proximo.dia && (proximo.dia < proximo.dataInicio || proximo.dia > proximo.dataFim)) delete proximo.dia;
     setSearchParams(Object.fromEntries(Object.entries(proximo).filter(([, valor]) => valor)));
   };
@@ -144,6 +152,7 @@ export default function StatementsDetalheApp() {
     ['Tipo', ROTULO_TIPO[filtros.tipo]],
     ['Histórico', filtros.descricao],
     ['Dia', filtros.dia && formatData(filtros.dia)],
+    ['Favorecido', filtros.nome],
     ['Busca', filtros.busca],
     ['Período', filtros.dataInicio && `${formatData(filtros.dataInicio)} a ${formatData(filtros.dataFim)}`],
   ].filter(([, valor]) => valor);
@@ -185,10 +194,31 @@ export default function StatementsDetalheApp() {
                 ),
               }}
             />
+            <TextField
+              label="Nome favorecido"
+              value={nome}
+              onChange={(e) => {
+                setNome(e.target.value);
+                setErroBusca(null);
+              }}
+              sx={{ minWidth: 260 }}
+            />
+            <TextField
+              select
+              label="Tipo"
+              InputLabelProps={{ shrink: true }}
+              value={tipos}
+              onChange={(e) => setTipos(e.target.value)}
+              SelectProps={{ multiple: true, renderValue: (v) => (v.length ? v.map((t) => ROTULO_TIPO[t]).join(' e ') : 'Entrada e Saída') }}
+              sx={{ minWidth: 180 }}
+            >
+              <MenuItem value="C">Entrada</MenuItem>
+              <MenuItem value="D">Saída</MenuItem>
+            </TextField>
             <Button type="submit" variant="contained" color="secondary" sx={{ height: 56 }}>
               Buscar
             </Button>
-            {filtros.busca && (
+            {(filtros.busca || filtros.nome) && (
               <Button sx={{ height: 56 }} onClick={(event) => aplicarFiltros(event, { limparBusca: true })}>
                 Limpar busca
               </Button>
