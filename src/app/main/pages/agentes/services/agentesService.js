@@ -263,24 +263,6 @@ function formatDayMonth(dateOnly) {
   return day && month ? `${day}/${month}` : "";
 }
 
-/** "estorno pagamento em duplicidade em 03/09, 09/09 e 23/09": as datas dos pagamentos em duplicidade, quando se sabe. */
-export function buildDuplicateRefundNote(duplicateDates) {
-  const days = (Array.isArray(duplicateDates) ? duplicateDates : [])
-    .map(formatDayMonth)
-    .filter(Boolean);
-
-  if (days.length === 0) {
-    return "estorno pagamento em duplicidade";
-  }
-
-  const list =
-    days.length === 1
-      ? days[0]
-      : `${days.slice(0, -1).join(", ")} e ${days[days.length - 1]}`;
-
-  return `estorno pagamento em duplicidade em ${list}`;
-}
-
 function formatBRL(value) {
   return Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
@@ -292,25 +274,24 @@ function joinWithAnd(items) {
 }
 
 /**
- * Diz qual ordem foi paga em duplicidade:
- * "Ordem de 14/08 (R$ 204,40) paga em 03/09 e de novo em 23/09". Várias ordens ficam separadas por "; ".
- * Sem as ordens (API antiga), cai nas datas: "estorno pagamento em duplicidade em 23/09".
+ * Explicação simples do desconto de uma linha do indevido, em linguagem do dia a dia:
+ * { note: "Descontamos R$ 100,00 do que foi pago a mais antes.", detail: "Dias pagos a mais: 03/09 e 23/09." }
+ * Quando o valor pago foi zero, avisa antes que nada foi pago naquele dia. Sem desconto (diferença zero ou positiva), devolve vazio.
  */
-export function buildDuplicateOrdersNote(duplicates, fallbackDates) {
-  const orders = (Array.isArray(duplicates) ? duplicates : []).filter(
-    (item) => item?.dataOrdem && item?.pagoEm && Array.isArray(item.repetidoEm) && item.repetidoEm.length > 0
-  );
-
-  if (orders.length === 0) {
-    return buildDuplicateRefundNote(fallbackDates);
+export function buildDifferenceExplanation(difference, amountPaid, duplicateDates) {
+  if (!(difference < 0)) {
+    return { note: "", detail: "" };
   }
 
-  return orders
-    .map((item) => {
-      const repeated = joinWithAnd(item.repetidoEm.map(formatDayMonth).filter(Boolean));
-      return `Ordem de ${formatDayMonth(toDateOnly(item.dataOrdem))} (${formatBRL(normalizeNumber(item.valor))}) paga em ${formatDayMonth(toDateOnly(item.pagoEm))} e de novo em ${repeated}`;
-    })
-    .join("; ");
+  const discount = `Descontamos ${formatBRL(Math.abs(difference))} do que foi pago a mais antes.`;
+  const note = amountPaid === 0 ? `Não pagamos nada neste dia. ${discount}` : discount;
+  const days = (Array.isArray(duplicateDates) ? duplicateDates : []).map(formatDayMonth).filter(Boolean);
+
+  if (days.length === 0) {
+    return { note, detail: "" };
+  }
+
+  return { note, detail: `${days.length === 1 ? "Dia pago a mais" : "Dias pagos a mais"}: ${joinWithAnd(days)}.` };
 }
 
 /**
@@ -324,7 +305,6 @@ export function buildPagamentoIndevido(response) {
   const duplicateDates = (Array.isArray(response?.datasDuplicidade) ? response.datasDuplicidade : [])
     .map(toDateOnly)
     .filter(Boolean);
-  const note = buildDuplicateOrdersNote(response?.duplicidades, duplicateDates);
   const hasBalance = normalizeNumber(totals.saldoDevedor) > 0;
   const lastOffsetDate = entries.map((entry) => toDateOnly(entry.data)).filter(Boolean).sort().pop();
 
@@ -340,29 +320,49 @@ export function buildPagamentoIndevido(response) {
       const difference = normalizeNumber(entry.diferenca);
       const amountPaid = normalizeNumber(entry.valorPago);
 
+      const explanation = buildDifferenceExplanation(difference, amountPaid, duplicateDates);
+
       return {
         id: `${toDateOnly(entry.data)}-${index}`,
         date: toDateOnly(entry.data),
         amountDue: normalizeNumber(entry.valorDevido),
         amountPaid,
         difference,
-        differenceNote: difference < 0 ? note : "",
+        differenceNote: explanation.note,
+        differenceDetail: explanation.detail,
         status: getPagamentoIndevidoStatus(entry.statusRemessa, amountPaid),
       };
     }),
   };
 }
 
-export const DUPLICATE_OFFSET_STATUS = "Abatimento por duplicidade";
+export const DUPLICATE_OFFSET_STATUS = "Desconto por pagamento a mais";
 
+const MONTH_NAMES = [
+  "janeiro",
+  "fevereiro",
+  "março",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
+];
+
+/** "setembro/2026" a partir de AAAA-MM-DD. */
 function formatMonthYear(dateOnly) {
   const [year, month] = String(dateOnly || "").split("-");
-  return year && month ? `${month}/${year}` : "";
+  const name = MONTH_NAMES[Number(month) - 1];
+  return year && name ? `${name}/${year}` : "";
 }
 
 /**
- * Motivo do status "Abatimento por duplicidade": "Valor pago em duplicidade em 09/2026".
- * Os meses vêm das datas dos pagamentos em duplicidade (sem repetir, em ordem, "08/2026 e 09/2026"); sem datas, fica só a frase sem o mês.
+ * Motivo do status "Desconto por pagamento a mais": "Pagamos a mais em setembro/2026".
+ * Os meses vêm das datas dos pagamentos em duplicidade (sem repetir, em ordem, "agosto/2026 e setembro/2026"); sem datas, fica só a frase sem o mês.
  */
 export function buildDuplicateOffsetReason(duplicateDates) {
   const months = [
@@ -372,7 +372,7 @@ export function buildDuplicateOffsetReason(duplicateDates) {
         .filter(Boolean)
     ),
   ];
-  const base = "Valor pago em duplicidade";
+  const base = "Pagamos a mais";
 
   if (months.length === 0) {
     return base;
