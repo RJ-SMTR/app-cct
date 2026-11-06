@@ -266,7 +266,7 @@ describe("agentesService payment normalization", () => {
   });
 });
 
-describe('Desconto por pagamento a mais', () => {
+describe('Abatimento por duplicidade', () => {
   const indevido = buildPagamentoIndevido({
     totais: { quantidade: 1, devendo: 1, valorIndevido: '877.80', valorDebitado: '238.00', saldoDevedor: '639.80' },
     lancamentos: [{ data: '2026-10-16', valorDevido: '238.00', valorPago: '0.00', diferenca: '-238.00', statusRemessa: 3 }],
@@ -274,18 +274,18 @@ describe('Desconto por pagamento a mais', () => {
   });
   const pagamento = (data, statusRemessa) => ({ paymentDate: data, dataTentativaPagamento: data, statusRemessa, totalPaymentValue: 238 });
 
-  it('monta o motivo com o mês (nome/AAAA) do pagamento a mais, sem repetir o mês', () => {
-    expect(buildDuplicateOffsetReason(['2026-09-03', '2026-09-09', '2026-09-23'])).toBe('Pagamos a mais em setembro/2026');
-    expect(buildDuplicateOffsetReason(['2026-08-12', '2026-09-03'])).toBe('Pagamos a mais em agosto/2026 e setembro/2026');
-    expect(buildDuplicateOffsetReason([])).toBe('Pagamos a mais');
+  it('monta o motivo com o mês (MM/AAAA) do pagamento em duplicidade, sem repetir o mês', () => {
+    expect(buildDuplicateOffsetReason(['2026-09-03', '2026-09-09', '2026-09-23'])).toBe('Valor pago em duplicidade em 09/2026');
+    expect(buildDuplicateOffsetReason(['2026-08-12', '2026-09-03'])).toBe('Valor pago em duplicidade em 08/2026 e 09/2026');
+    expect(buildDuplicateOffsetReason([])).toBe('Valor pago em duplicidade');
   });
 
   it('marca o pagamento pago do dia em que houve abatimento', () => {
     const marked = markDuplicateOffsetPayments([pagamento('2026-10-16', 3)], indevido);
 
     expect(marked[0].duplicateOffset).toEqual({
-      status: 'Desconto por pagamento a mais',
-      reason: 'Pagamos a mais em setembro/2026',
+      status: 'Abatimento por duplicidade',
+      reason: 'Valor pago em duplicidade em 09/2026',
     });
   });
 
@@ -297,7 +297,7 @@ describe('Desconto por pagamento a mais', () => {
     });
     const marked = markDuplicateOffsetPayments([pagamento('2026-10-30', 4), pagamento('2026-10-29', 4)], zerado);
 
-    expect(marked[0].duplicateOffset.status).toBe('Desconto por pagamento a mais');
+    expect(marked[0].duplicateOffset.status).toBe('Abatimento por duplicidade');
     expect(marked[1].duplicateOffset).toBeUndefined();
   });
 

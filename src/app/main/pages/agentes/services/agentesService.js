@@ -336,33 +336,16 @@ export function buildPagamentoIndevido(response) {
   };
 }
 
-export const DUPLICATE_OFFSET_STATUS = "Desconto por pagamento a mais";
+export const DUPLICATE_OFFSET_STATUS = "Abatimento por duplicidade";
 
-const MONTH_NAMES = [
-  "janeiro",
-  "fevereiro",
-  "março",
-  "abril",
-  "maio",
-  "junho",
-  "julho",
-  "agosto",
-  "setembro",
-  "outubro",
-  "novembro",
-  "dezembro",
-];
-
-/** "setembro/2026" a partir de AAAA-MM-DD. */
 function formatMonthYear(dateOnly) {
   const [year, month] = String(dateOnly || "").split("-");
-  const name = MONTH_NAMES[Number(month) - 1];
-  return year && name ? `${name}/${year}` : "";
+  return year && month ? `${month}/${year}` : "";
 }
 
 /**
- * Motivo do status "Desconto por pagamento a mais": "Pagamos a mais em setembro/2026".
- * Os meses vêm das datas dos pagamentos em duplicidade (sem repetir, em ordem, "agosto/2026 e setembro/2026"); sem datas, fica só a frase sem o mês.
+ * Motivo do status "Abatimento por duplicidade": "Valor pago em duplicidade em 09/2026".
+ * Os meses vêm das datas dos pagamentos em duplicidade (sem repetir, em ordem, "08/2026 e 09/2026"); sem datas, fica só a frase sem o mês.
  */
 export function buildDuplicateOffsetReason(duplicateDates) {
   const months = [
@@ -372,7 +355,7 @@ export function buildDuplicateOffsetReason(duplicateDates) {
         .filter(Boolean)
     ),
   ];
-  const base = "Pagamos a mais";
+  const base = "Valor pago em duplicidade";
 
   if (months.length === 0) {
     return base;
