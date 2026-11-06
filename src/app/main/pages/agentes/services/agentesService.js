@@ -294,38 +294,6 @@ export function buildDifferenceExplanation(difference, amountPaid, duplicateDate
   return { note, detail: `${days.length === 1 ? "Dia pago a mais" : "Dias pagos a mais"}: ${joinWithAnd(days)}.` };
 }
 
-function formatBRL(value) {
-  return Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
-function joinWithAnd(items) {
-  return items.length <= 1
-    ? items.join("")
-    : `${items.slice(0, -1).join(", ")} e ${items[items.length - 1]}`;
-}
-
-/**
- * Diz qual ordem foi paga em duplicidade:
- * "Ordem de 14/08 (R$ 204,40) paga em 03/09 e de novo em 23/09". Várias ordens ficam separadas por "; ".
- * Sem as ordens (API antiga), cai nas datas: "estorno pagamento em duplicidade em 23/09".
- */
-export function buildDuplicateOrdersNote(duplicates, fallbackDates) {
-  const orders = (Array.isArray(duplicates) ? duplicates : []).filter(
-    (item) => item?.dataOrdem && item?.pagoEm && Array.isArray(item.repetidoEm) && item.repetidoEm.length > 0
-  );
-
-  if (orders.length === 0) {
-    return buildDuplicateRefundNote(fallbackDates);
-  }
-
-  return orders
-    .map((item) => {
-      const repeated = joinWithAnd(item.repetidoEm.map(formatDayMonth).filter(Boolean));
-      return `Ordem de ${formatDayMonth(toDateOnly(item.dataOrdem))} (${formatBRL(normalizeNumber(item.valor))}) paga em ${formatDayMonth(toDateOnly(item.pagoEm))} e de novo em ${repeated}`;
-    })
-    .join("; ");
-}
-
 /**
  * Valor indevido a pagar do guardador (tabela pagamento_indevido). Cada linha é um pagamento em que o guardador recebeu menos
  * que o devido (abatimento do indevido): data, valor devido, valor pago, diferença e status. `hasBalance` só é verdadeiro
