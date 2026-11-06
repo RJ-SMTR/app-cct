@@ -18,6 +18,7 @@ jest.mock("../../../../auth/services/jwtService/jwtServiceConfig", () => ({
 
 import {
   buildDuplicateOffsetReason,
+  buildDuplicateOrdersNote,
   buildDuplicateRefundNote,
   buildMonthlyPaymentRowKey,
   buildMonthlyPaymentRows,
@@ -72,6 +73,36 @@ describe("buildPagamentoIndevido", () => {
       "estorno pagamento em duplicidade em 03/09 e 23/09"
     );
     expect(buildDuplicateRefundNote([])).toBe("estorno pagamento em duplicidade");
+  });
+
+  it("diz qual ordem foi paga em duplicidade, com o valor e as duas datas de pagamento", () => {
+    const note = buildDuplicateOrdersNote(
+      [
+        { dataOrdem: "2026-08-14", valor: "204.40", pagoEm: "2026-09-03", repetidoEm: ["2026-09-23"] },
+        { dataOrdem: "2026-08-18", valor: "119.00", pagoEm: "2026-09-03", repetidoEm: ["2026-09-23", "2026-10-01"] },
+      ],
+      ["2026-09-23"]
+    ).replace(/ /g, " ");
+
+    expect(note).toBe(
+      "Ordem de 14/08 (R$ 204,40) paga em 03/09 e de novo em 23/09; Ordem de 18/08 (R$ 119,00) paga em 03/09 e de novo em 23/09 e 01/10"
+    );
+  });
+
+  it("sem as ordens (API antiga) a observação volta às datas da duplicidade", () => {
+    expect(buildDuplicateOrdersNote(undefined, ["2026-09-23"])).toBe("estorno pagamento em duplicidade em 23/09");
+    expect(buildDuplicateOrdersNote([], [])).toBe("estorno pagamento em duplicidade");
+  });
+
+  it("a observação da linha do indevido usa a ordem duplicada quando a API manda", () => {
+    const result = buildPagamentoIndevido({
+      ...response,
+      duplicidades: [{ dataOrdem: "2026-10-09", valor: "50.00", pagoEm: "2026-10-10", repetidoEm: ["2026-10-13"] }],
+    });
+
+    expect(result.items[0].differenceNote.replace(/ /g, " ")).toBe(
+      "Ordem de 09/10 (R$ 50,00) paga em 10/10 e de novo em 13/10"
+    );
   });
 
   it("diferença zero ou positiva não leva observação de estorno", () => {
