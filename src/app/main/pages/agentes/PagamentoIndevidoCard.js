@@ -46,7 +46,7 @@ function getStatusChipProps(status) {
  * Quadro do valor indevido do guardador (tabela pagamento_indevido). Aparece enquanto há saldo devedor e, depois de quitado,
  * somente no mês da quitação (`settledMonth` = `selectedMonth`). Sem pagamento indevido ou se a consulta falhar, nada é exibido
  * e o resto da tela não é afetado. Recebe o indevido já buscado (`useAgentePagamentoIndevido`), o mesmo que marca o
- * "Abatimento por duplicidade" na visão mensal.
+ * "Desconto por pagamento a mais" na visão mensal.
  */
 const PagamentoIndevidoCard = memo(function PagamentoIndevidoCard({ indevido, selectedMonth }) {
   const quitadoNoMes = !indevido?.hasBalance && !!indevido?.settledMonth && indevido.settledMonth === selectedMonth;
@@ -92,8 +92,13 @@ const PagamentoIndevidoCard = memo(function PagamentoIndevidoCard({ indevido, se
                   <TableCell>
                     <div>{formatAmount(item.difference)}</div>
                     {item.differenceNote ? (
-                      <Typography variant="caption" color="text.secondary" sx={{ fontStyle: "italic" }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360 }}>
                         {item.differenceNote}
+                      </Typography>
+                    ) : null}
+                    {item.differenceDetail ? (
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        {item.differenceDetail}
                       </Typography>
                     ) : null}
                   </TableCell>
