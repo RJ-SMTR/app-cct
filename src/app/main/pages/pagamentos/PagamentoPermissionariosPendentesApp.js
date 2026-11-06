@@ -7,6 +7,7 @@ export default function PagamentoPermissionariosPendentesApp() {
       title="Pendentes - Permissionários"
       apiBasePath="/pagamentos/pendentes/permissionarios"
       nomeColuna="Modal"
+      comBuscaPorNome
       permitirEdicaoValorBi
       mostrarBotoesRapidosData={false}
     />
