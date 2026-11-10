@@ -1,7 +1,6 @@
 import {
   buildAgentConsolidadoV2Params,
   paginateConsolidadoV2,
-  shouldUseAgentFinancialMovementV2,
   shouldUseConsolidadoV2,
   shouldUseFinancialMovementV2,
   splitAgentParamsByStatus,
@@ -22,49 +21,33 @@ describe('shouldUseConsolidadoV2', () => {
     [{ todosVanzeiros: true }],
     [{ todosConsorcios: true }],
     [{ consorcioNome: 'STPC' }],
-    [{ todosConsorcios: true, eleicao: true }],
-    [{ todosVanzeiros: true, stucGratuidade: true }],
+    [{ userIds: '1' }],
+    [{ todosVanzeiros: true, todosConsorcios: true }],
+    [{ todosVanzeiros: true, pendentes: true }],
+    [{ todosVanzeiros: true, desativados: true }],
+    [{ consorcioNome: 'STPC', eleicao: true }],
+    [{ todosConsorcios: true, stucGratuidade: true }],
   ])('uses v2 for %j', (params) => {
     expect(shouldUseConsolidadoV2(params)).toBe(true);
   });
 
   it.each([
-    [{ todosVanzeiros: true, userIds: '1' }],
-    [{ todosVanzeiros: true, pendentes: true }],
-    [{ todosVanzeiros: true, desativados: true }],
-    [{ todosVanzeiros: true, todosConsorcios: true }],
     [{}],
-    [{ consorcioNome: 'STPC', eleicao: true }],
-    [{ todosConsorcios: true, stucGratuidade: true }],
+    [{ userIds: '1', consorcioNome: 'STPC' }],
+    [{ todosVanzeiros: true, consorcioNome: 'STPC' }],
+    [{ todosVanzeiros: true, stucGratuidade: true, desativados: true }],
+    [{ todosVanzeiros: true, stucGratuidade: true, pendentes: true }],
+    [{ todosVanzeiros: true, todosConsorcios: true, eleicao: true }],
   ])('keeps v1 for %j', (params) => {
     expect(shouldUseConsolidadoV2(params)).toBe(false);
   });
 });
 
 describe('shouldUseFinancialMovementV2', () => {
-  it('keeps v1 only for desativados', () => {
-    expect(shouldUseFinancialMovementV2({ userIds: '1', pago: true })).toBe(true);
-    expect(shouldUseFinancialMovementV2({ desativados: true })).toBe(false);
-  });
-});
-
-describe('filters the v2 Financial Movement would ignore', () => {
-  it.each([
-    [{ eleicao: true, userIds: '1' }],
-    [{ eleicao: true, consorcioNome: 'VLT' }],
-    [{ eleicao: true, todosConsorcios: true }],
-    [{ stucGratuidade: true, consorcioNome: 'VLT' }],
-  ])('keeps v1 for %j', (params) => {
-    expect(shouldUseFinancialMovementV2(params)).toBe(false);
-  });
-
-  it('keeps STUC by favorecido on v2', () => {
-    expect(shouldUseFinancialMovementV2({ stucGratuidade: true, userIds: '1' })).toBe(true);
-  });
-
-  it('keeps Guardador association filters on v1', () => {
-    expect(shouldUseAgentFinancialMovementV2({ consorcioNome: 'SINGAERJ' })).toBe(false);
-    expect(shouldUseAgentFinancialMovementV2({ todosConsorcios: true })).toBe(true);
+  it('keeps v1 only for STUC with desativados', () => {
+    expect(shouldUseFinancialMovementV2({ desativados: true })).toBe(true);
+    expect(shouldUseFinancialMovementV2({ eleicao: true, userIds: '1' })).toBe(true);
+    expect(shouldUseFinancialMovementV2({ stucGratuidade: true, desativados: true })).toBe(false);
   });
 });
 
@@ -73,8 +56,8 @@ describe('buildAgentConsolidadoV2Params', () => {
     expect(buildAgentConsolidadoV2Params({ dataInicio: 'x', consorcioNome: 'Todos' })).toEqual({ dataInicio: 'x' });
   });
 
-  it.each([[{ userIds: '1' }], [{ consorcioNome: 'SINGAERJ' }]])('returns null for %j', (params) => {
-    expect(buildAgentConsolidadoV2Params(params)).toBeNull();
+  it('keeps a specific association and guardador', () => {
+    expect(buildAgentConsolidadoV2Params({ userIds: '1', consorcioNome: 'SINGAERJ' })).toEqual({ userIds: '1', consorcioNome: 'SINGAERJ' });
   });
 });
 

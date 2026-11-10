@@ -11,7 +11,6 @@ import {
 import {
   buildAgentConsolidadoV2Params,
   paginateConsolidadoV2,
-  shouldUseAgentFinancialMovementV2,
   shouldUseConsolidadoV2,
   shouldUseFinancialMovementV2,
   splitAgentParamsByStatus,
@@ -194,6 +193,9 @@ function handleData(data) {
   if (data.cursorValor) {
     requestData.cursorValor = data.cursorValor;
   }
+  if (data.cursorChaveLinha) {
+    requestData.cursorChaveLinha = data.cursorChaveLinha;
+  }
   if (data.cursorCpfCnpj) {
     requestData.cursorCpfCnpj = data.cursorCpfCnpj;
   }
@@ -336,25 +338,14 @@ export const fetchAgentConsolidatedReport = (data) => async () => {
   }
 
   const requestData = buildAgentConsolidatedReportParams(data);
-  const v2Params = buildAgentConsolidadoV2Params(requestData);
-
-  if (v2Params) {
-    const url = toApiV2Url(api.defaults.baseURL, `${jwtServiceConfig.guardadorFinancialMovement}/consolidado`);
-    const blocks = await Promise.all(
-      splitAgentParamsByStatus(v2Params).map(async ({ status, params }) =>
-        toAgentConsolidadoBlock(status, await requestReport(url, params, token))
-      )
-    );
-    return normalizeAgentConsolidatedReportBlocks(blocks);
-  }
-
-  const responseData = await requestReport(
-    jwtServiceConfig.consolidadoGuardador,
-    requestData,
-    token
+  const url = toApiV2Url(api.defaults.baseURL, `${jwtServiceConfig.guardadorFinancialMovement}/consolidado`);
+  const blocks = await Promise.all(
+    splitAgentParamsByStatus(buildAgentConsolidadoV2Params(requestData)).map(async ({ status, params }) =>
+      toAgentConsolidadoBlock(status, await requestReport(url, params, token))
+    )
   );
 
-  return normalizeAgentConsolidatedReportBlocks(responseData);
+  return normalizeAgentConsolidatedReportBlocks(blocks);
 };
 
 export const handleFinancialMovementSummary = (data, options = {}) => async (dispatch) => {
@@ -561,6 +552,7 @@ export function handleAgentFinancialData(data) {
   if (data.cursorNome) requestData.cursorNome = data.cursorNome;
   if (data.cursorStatus) requestData.cursorStatus = data.cursorStatus;
   if (data.cursorValor) requestData.cursorValor = data.cursorValor;
+  if (data.cursorChaveLinha) requestData.cursorChaveLinha = data.cursorChaveLinha;
   if (data.cursorCpfCnpj) requestData.cursorCpfCnpj = data.cursorCpfCnpj;
   if (data.cursorNomeConsorcio) requestData.cursorNomeConsorcio = data.cursorNomeConsorcio;
   if (data.cursorCodBanco) requestData.cursorCodBanco = data.cursorCodBanco;
@@ -577,7 +569,7 @@ export const handleAgentFinancialMovementSummary = (data, options = {}) => async
   if (JwtService.isAuthTokenValid(token)) {
     return new Promise(async (resolve, reject) => {
       const requestData = handleAgentFinancialData(data);
-      const reportTypeUrl = `${jwtServiceConfig.guardadorFinancialMovement}/report/${shouldUseAgentFinancialMovementV2(requestData) ? 'v2/' : ''}summary`;
+      const reportTypeUrl = `${jwtServiceConfig.guardadorFinancialMovement}/report/v2/summary`;
 
       try {
         const responseData = await requestReport(reportTypeUrl, requestData, token);
@@ -600,7 +592,7 @@ export const handleAgentFinancialMovementPage = (data) => async (dispatch) => {
   if (JwtService.isAuthTokenValid(token)) {
     return new Promise(async (resolve, reject) => {
       const requestData = handleAgentFinancialData(data);
-      const reportTypeUrl = `${jwtServiceConfig.guardadorFinancialMovement}/report/${shouldUseAgentFinancialMovementV2(requestData) ? 'v2/' : ''}page`;
+      const reportTypeUrl = `${jwtServiceConfig.guardadorFinancialMovement}/report/v2/page`;
 
       try {
         const responseData = await requestReport(reportTypeUrl, requestData, token);
@@ -619,7 +611,7 @@ export const handleAgentFinancialMovementExport = (data) => async () => {
   if (JwtService.isAuthTokenValid(token)) {
     return new Promise(async (resolve, reject) => {
       const requestData = handleAgentFinancialData(data);
-      const reportTypeUrl = `${jwtServiceConfig.guardadorFinancialMovement}/report/${shouldUseAgentFinancialMovementV2(requestData) ? 'v2/' : ''}export/download`;
+      const reportTypeUrl = `${jwtServiceConfig.guardadorFinancialMovement}/report/v2/export/download`;
 
       try {
         const response = await requestReportDownload(reportTypeUrl, {

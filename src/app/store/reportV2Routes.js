@@ -2,48 +2,34 @@ export function toApiV2Url(baseURL, path) {
   return `${baseURL.replace(/\/v1\/?$/, '/v2/')}${path.replace(/^\/+/, '')}`;
 }
 
-// The v2 Consolidado has no combined view and rejects several filters the screen offers. Those
-// searches stay on v1 instead of failing or silently returning a different report.
+// Combinations the v2 Consolidado still rejects or answers with a different view than v1.
 export function shouldUseConsolidadoV2(params = {}) {
-  if (params.userIds || params.pendentes || params.desativados) {
-    return false;
-  }
-  if (params.eleicao && params.consorcioNome) {
-    return false;
-  }
-  if (params.stucGratuidade && (params.consorcioNome || params.todosConsorcios)) {
-    return false;
-  }
-
   const porConsorcio = Boolean(params.consorcioNome || params.todosConsorcios);
-  const porFavorecido = Boolean(params.todosVanzeiros);
-  return porConsorcio !== porFavorecido;
+  const porFavorecido = Boolean(params.todosVanzeiros || params.userIds);
+
+  if (!porConsorcio && !porFavorecido) {
+    return false;
+  }
+  if (params.stucGratuidade && (params.pendentes || params.desativados)) {
+    return false;
+  }
+  if (params.userIds && porConsorcio) {
+    return false;
+  }
+  if (params.todosVanzeiros && params.consorcioNome) {
+    return false;
+  }
+  return !(params.eleicao && params.todosVanzeiros && params.todosConsorcios);
 }
 
-// The v2 Financial Movement silently ignores these filters, so they stay on v1: "desativados",
-// any favorecido/consorcio filter on Eleicao, and consorcio filters on STUC-Gratuidade.
+// STUC-Gratuidade has no "desativados" filter on v2: there it would be silently ignored.
 export function shouldUseFinancialMovementV2(params = {}) {
-  if (params.desativados) {
-    return false;
-  }
-  const temConsorcio = Boolean(params.consorcioNome || params.todosConsorcios);
-  if (params.eleicao && (params.userIds || temConsorcio)) {
-    return false;
-  }
-  return !(params.stucGratuidade && temConsorcio);
-}
-
-// Guardador has no consorcio on v2, so an association filter would be silently ignored there.
-export function shouldUseAgentFinancialMovementV2(params = {}) {
-  return !params.consorcioNome;
+  return !(params.stucGratuidade && params.desativados);
 }
 
 export function buildAgentConsolidadoV2Params(params = {}) {
-  if (params.userIds || (params.consorcioNome && params.consorcioNome !== 'Todos')) {
-    return null;
-  }
   const { consorcioNome, ...v2Params } = params;
-  return v2Params;
+  return consorcioNome && consorcioNome !== 'Todos' ? { ...v2Params, consorcioNome } : v2Params;
 }
 
 // The v2 Consolidado returns every row at once; the screen expects one page at a time.

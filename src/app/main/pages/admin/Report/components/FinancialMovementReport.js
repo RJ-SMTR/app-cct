@@ -281,6 +281,7 @@ export default function FinancialMovementReport({ perfil }) {
       pageRequestData.cursorCpfCnpj = cursor.cpfCnpj;
       pageRequestData.cursorNomeConsorcio = cursor.nomeConsorcio;
       pageRequestData.cursorValor = cursor.valor;
+      pageRequestData.cursorChaveLinha = cursor.chaveLinha;
     }
 
     try {
@@ -354,6 +355,7 @@ export default function FinancialMovementReport({ perfil }) {
         cursorCpfCnpj: cursor?.cpfCnpj,
         cursorNomeConsorcio: cursor?.nomeConsorcio,
         cursorValor: cursor?.valor,
+        cursorChaveLinha: cursor?.chaveLinha,
       };
       await submitReportGuardador(pageData, newPage, rowsPerPage);
       return;
@@ -490,6 +492,15 @@ export default function FinancialMovementReport({ perfil }) {
           >
             <span>{totalRow[0]}</span>
             <span>{formatCurrency(totalRow[1])}</span>
+          </Box>
+        )}
+        {toNumber(reportList?.valorSemFavorecido) > 0 && (
+          <Box
+            sx={{ display: "flex", justifyContent: "space-between", width: "100%", gap: 2, mt: 1 }}
+            className="font-normal text-grey-700"
+          >
+            <span>Sem favorecido (fora do total)</span>
+            <span>{formatCurrency(reportList.valorSemFavorecido)}</span>
           </Box>
         )}
       </Box>
@@ -977,6 +988,7 @@ export default function FinancialMovementReport({ perfil }) {
               reportList?.valorEstornado > 0 ||
               reportList?.valorRejeitado > 0 ||
               reportList?.valorTotal > 0 ||
+              reportList?.valorSemFavorecido > 0 ||
               reportList?.valorPendente > 0 ||
               reportList?.valorPendenciaPaga > 0 ||
               reportList?.valorAPagar > 0 ||
@@ -1008,6 +1020,7 @@ export default function FinancialMovementReport({ perfil }) {
               reportList.valorEstornado > 0 ||
               reportList.valorRejeitado > 0 ||
               reportList.valorTotal > 0 ||
+              reportList.valorSemFavorecido > 0 ||
               reportList.valorPendente > 0 ||
               reportList.valorPendenciaPaga > 0 ||
               showErroStatus) && (
