@@ -1,4 +1,4 @@
-import { diferencas, formatData, formatBRL, limparFiltros, mensagemDeErro, resumirJson } from './auditoriaUtils';
+import { diferencas, formatData, formatBRL, limparFiltros, mensagemDeErro, resumirJson, validarPeriodoSincronizacao } from './auditoriaUtils';
 
 describe('auditoriaUtils', () => {
   it('formata data ISO sem deslocar o dia', () => {
@@ -29,5 +29,12 @@ describe('auditoriaUtils', () => {
   it('extrai a mensagem de erro da API', () => {
     expect(mensagemDeErro({ response: { data: { error: 'Acesso restrito.' } } })).toBe('Acesso restrito.');
     expect(mensagemDeErro({})).toBe('Não foi possível concluir a operação.');
+  });
+
+  it('valida o período da sincronização manual', () => {
+    expect(validarPeriodoSincronizacao('2026-11-06', '2026-11-06')).toBe('');
+    expect(validarPeriodoSincronizacao('', '2026-11-06')).toMatch(/Informe/);
+    expect(validarPeriodoSincronizacao('2026-11-07', '2026-11-06')).toMatch(/menor ou igual/);
+    expect(validarPeriodoSincronizacao('2026-10-01', '2026-11-06')).toMatch(/máximo/);
   });
 });
