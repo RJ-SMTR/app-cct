@@ -66,7 +66,7 @@ const PagamentoIndevidoCard = memo(function PagamentoIndevidoCard({ indevido, se
       </div>
 
       <TableContainer sx={{ maxHeight: 440, overflowX: "auto" }} className="mt-24">
-        <Table stickyHeader sx={{ minWidth: 560 }}>
+        <Table stickyHeader sx={{ minWidth: 900 }}>
           <TableHead>
             <TableRow>
               <TableCell>Data</TableCell>
@@ -89,11 +89,12 @@ const PagamentoIndevidoCard = memo(function PagamentoIndevidoCard({ indevido, se
                   <TableCell>{formatDate(item.date)}</TableCell>
                   <TableCell>{formatAmount(item.amountDue)}</TableCell>
                   <TableCell>{formatAmount(item.amountPaid)}</TableCell>
-                  <TableCell>
-                    <div>{formatAmount(item.difference)}</div>
-                    {item.differenceNote ? (
-                      <Typography variant="caption" color="text.secondary" sx={{ fontStyle: "italic" }}>
-                        {item.differenceNote}
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>
+                    {formatAmount(item.difference)}
+                    {item.differenceNote || item.differenceDetail ? (
+                      <Typography component="span" variant="body2" color="text.secondary">
+                        {" — "}
+                        {[item.differenceNote, item.differenceDetail].filter(Boolean).join(" ")}
                       </Typography>
                     ) : null}
                   </TableCell>

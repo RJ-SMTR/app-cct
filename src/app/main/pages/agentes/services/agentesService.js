@@ -263,22 +263,35 @@ function formatDayMonth(dateOnly) {
   return day && month ? `${day}/${month}` : "";
 }
 
-/** "estorno pagamento em duplicidade em 03/09, 09/09 e 23/09": as datas dos pagamentos em duplicidade, quando se sabe. */
-export function buildDuplicateRefundNote(duplicateDates) {
-  const days = (Array.isArray(duplicateDates) ? duplicateDates : [])
-    .map(formatDayMonth)
-    .filter(Boolean);
+function formatBRL(value) {
+  return Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
 
-  if (days.length === 0) {
-    return "estorno pagamento em duplicidade";
+function joinWithAnd(items) {
+  return items.length <= 1
+    ? items.join("")
+    : `${items.slice(0, -1).join(", ")} e ${items[items.length - 1]}`;
+}
+
+/**
+ * Explicação simples do desconto de uma linha do indevido, em linguagem do dia a dia:
+ * { note: "Descontamos R$ 100,00 do que foi pago a mais antes.", detail: "Dias pagos a mais: 03/09 e 23/09." }
+ * Quando o valor pago foi zero, avisa antes que nada foi pago naquele dia. Sem desconto (diferença zero ou positiva), devolve vazio.
+ */
+export function buildDifferenceExplanation(difference, amountPaid, duplicateDates) {
+  if (!(difference < 0)) {
+    return { note: "", detail: "" };
   }
 
-  const list =
-    days.length === 1
-      ? days[0]
-      : `${days.slice(0, -1).join(", ")} e ${days[days.length - 1]}`;
+  const discount = `Descontamos ${formatBRL(Math.abs(difference))} do que foi pago a mais antes.`;
+  const note = amountPaid === 0 ? `Não pagamos nada neste dia. ${discount}` : discount;
+  const days = (Array.isArray(duplicateDates) ? duplicateDates : []).map(formatDayMonth).filter(Boolean);
 
-  return `estorno pagamento em duplicidade em ${list}`;
+  if (days.length === 0) {
+    return { note, detail: "" };
+  }
+
+  return { note, detail: `${days.length === 1 ? "Dia pago a mais" : "Dias pagos a mais"}: ${joinWithAnd(days)}.` };
 }
 
 /**
@@ -292,7 +305,6 @@ export function buildPagamentoIndevido(response) {
   const duplicateDates = (Array.isArray(response?.datasDuplicidade) ? response.datasDuplicidade : [])
     .map(toDateOnly)
     .filter(Boolean);
-  const note = buildDuplicateRefundNote(duplicateDates);
   const hasBalance = normalizeNumber(totals.saldoDevedor) > 0;
   const lastOffsetDate = entries.map((entry) => toDateOnly(entry.data)).filter(Boolean).sort().pop();
 
@@ -308,13 +320,16 @@ export function buildPagamentoIndevido(response) {
       const difference = normalizeNumber(entry.diferenca);
       const amountPaid = normalizeNumber(entry.valorPago);
 
+      const explanation = buildDifferenceExplanation(difference, amountPaid, duplicateDates);
+
       return {
         id: `${toDateOnly(entry.data)}-${index}`,
         date: toDateOnly(entry.data),
         amountDue: normalizeNumber(entry.valorDevido),
         amountPaid,
         difference,
-        differenceNote: difference < 0 ? note : "",
+        differenceNote: explanation.note,
+        differenceDetail: explanation.detail,
         status: getPagamentoIndevidoStatus(entry.statusRemessa, amountPaid),
       };
     }),

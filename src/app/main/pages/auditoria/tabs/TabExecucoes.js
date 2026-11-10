@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button, Chip, Typography } from '@mui/material';
 import ListagemAuditoria from '../ListagemAuditoria';
 import { CampoSelecao } from '../campos';
+import SincronizarOrdensDialog from '../SincronizarOrdensDialog';
 import { COR_STATUS_EXECUCAO, ROTULO_STATUS_EXECUCAO, formatData, formatDataHora } from '../auditoriaUtils';
 
 export default function TabExecucoes({ abrir }) {
@@ -12,6 +13,7 @@ export default function TabExecucoes({ abrir }) {
       endpoint="auditoria/execucoes"
       filtrosAplicados={filtros}
       onFiltrar={setFiltros}
+      extra={<SincronizarOrdensDialog onConcluir={() => setFiltros((atual) => ({ ...atual }))} />}
       campos={(f, set) => (
         <>
           <CampoSelecao

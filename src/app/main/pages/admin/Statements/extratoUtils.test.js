@@ -61,12 +61,14 @@ describe('extratoUtils', () => {
 
   it('planilha: saída negativa e totais ao final', () => {
     const itens = [
-      { data: '2026-10-01', conta: 'cett', tipo: 'C', valor: '100.10', descricao: 'PIX RECEBIDO', numeroDocumento: '1', nsr: 1 },
+      { data: '2026-10-01', conta: 'cett', tipo: 'C', valor: '100.10', descricao: 'PIX RECEBIDO', numeroDocumento: '1', nomeFavorecido: 'MARIA SILVA', nsr: 1 },
       { data: '2026-10-01', conta: 'cett', tipo: 'D', valor: '30.05', descricao: 'ENVIO DE TED', numeroDocumento: '2', nsr: 2 },
     ];
     expect(somarTipos(itens)).toEqual({ entradas: 100.1, saidas: 30.05 });
     const folha = montarPlanilha(itens).Sheets.Extrato;
     expect(folha.D2.v).toBe(100.1);
+    expect(folha.I2.v).toBe('MARIA SILVA');
+    expect(folha.L2.v).toBe(1);
     expect(folha.D3.v).toBe(-30.05);
     expect(folha.A4.v).toBe('TOTAL ENTRADAS');
     expect(folha.D6.v).toBe(70.05);

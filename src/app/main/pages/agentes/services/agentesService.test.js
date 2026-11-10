@@ -18,7 +18,7 @@ jest.mock("../../../../auth/services/jwtService/jwtServiceConfig", () => ({
 
 import {
   buildDuplicateOffsetReason,
-  buildDuplicateRefundNote,
+  buildDifferenceExplanation,
   buildMonthlyPaymentRowKey,
   buildMonthlyPaymentRows,
   buildPagamentoIndevido,
@@ -58,20 +58,30 @@ describe("buildPagamentoIndevido", () => {
         amountDue: 160,
         amountPaid: 120,
         difference: -40,
-        differenceNote: "estorno pagamento em duplicidade em 13/10",
+        differenceNote: "Descontamos R$ 40,00 do que foi pago a mais antes.",
+        differenceDetail: "Dia pago a mais: 13/10.",
         status: "Pago",
       },
     ]);
   });
 
-  it("lista as datas da duplicidade separadas por vírgula e 'e'", () => {
-    expect(buildDuplicateRefundNote(["2026-09-03", "2026-09-09", "2026-09-23"])).toBe(
-      "estorno pagamento em duplicidade em 03/09, 09/09 e 23/09"
-    );
-    expect(buildDuplicateRefundNote(["2026-09-03", "2026-09-23"])).toBe(
-      "estorno pagamento em duplicidade em 03/09 e 23/09"
-    );
-    expect(buildDuplicateRefundNote([])).toBe("estorno pagamento em duplicidade");
+  it("explica o desconto em linguagem simples, com os dias pagos a mais", () => {
+    const explanation = buildDifferenceExplanation(-100, 167.4, ["2026-09-03", "2026-09-09", "2026-09-23"]);
+
+    expect(explanation.note.replace(/ /g, " ")).toBe("Descontamos R$ 100,00 do que foi pago a mais antes.");
+    expect(explanation.detail).toBe("Dias pagos a mais: 03/09, 09/09 e 23/09.");
+    expect(buildDifferenceExplanation(-100, 167.4, ["2026-09-23"]).detail).toBe("Dia pago a mais: 23/09.");
+  });
+
+  it("quando nada foi pago no dia, avisa isso antes do desconto", () => {
+    const { note } = buildDifferenceExplanation(-238, 0, []);
+
+    expect(note.replace(/ /g, " ")).toBe("Não pagamos nada neste dia. Descontamos R$ 238,00 do que foi pago a mais antes.");
+  });
+
+  it("sem as datas da duplicidade não escreve a segunda linha; sem desconto não escreve nada", () => {
+    expect(buildDifferenceExplanation(-40, 120, []).detail).toBe("");
+    expect(buildDifferenceExplanation(0, 10, ["2026-09-23"])).toEqual({ note: "", detail: "" });
   });
 
   it("diferença zero ou positiva não leva observação de estorno", () => {
@@ -264,7 +274,7 @@ describe('Abatimento por duplicidade', () => {
   });
   const pagamento = (data, statusRemessa) => ({ paymentDate: data, dataTentativaPagamento: data, statusRemessa, totalPaymentValue: 238 });
 
-  it('monta o motivo com o mês (MM/AAAA) da duplicidade, sem repetir o mês', () => {
+  it('monta o motivo com o mês (MM/AAAA) do pagamento em duplicidade, sem repetir o mês', () => {
     expect(buildDuplicateOffsetReason(['2026-09-03', '2026-09-09', '2026-09-23'])).toBe('Valor pago em duplicidade em 09/2026');
     expect(buildDuplicateOffsetReason(['2026-08-12', '2026-09-03'])).toBe('Valor pago em duplicidade em 08/2026 e 09/2026');
     expect(buildDuplicateOffsetReason([])).toBe('Valor pago em duplicidade');

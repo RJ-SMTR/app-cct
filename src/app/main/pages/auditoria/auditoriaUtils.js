@@ -61,3 +61,14 @@ export const diferencas = (antes, depois) => {
 
 export const mensagemDeErro = (error, padrao = 'Não foi possível concluir a operação.') =>
   error?.response?.data?.error || error?.response?.data?.message || padrao;
+
+export const MAX_DIAS_SINCRONIZACAO = 31;
+
+/** Valida o período da sincronização manual (AAAA-MM-DD); devolve a mensagem de erro ou '' se estiver ok. */
+export const validarPeriodoSincronizacao = (dataInicio, dataFim) => {
+  if (!dataInicio || !dataFim) return 'Informe a data inicial e a data final.';
+  if (dataInicio > dataFim) return 'A data inicial deve ser menor ou igual à data final.';
+  const dias = Math.round((new Date(`${dataFim}T00:00:00Z`) - new Date(`${dataInicio}T00:00:00Z`)) / 86400000) + 1;
+  if (dias > MAX_DIAS_SINCRONIZACAO) return `O período máximo é de ${MAX_DIAS_SINCRONIZACAO} dias (informado: ${dias}).`;
+  return '';
+};
