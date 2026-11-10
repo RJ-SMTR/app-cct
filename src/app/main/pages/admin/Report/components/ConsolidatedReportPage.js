@@ -881,6 +881,15 @@ export default function ConsolidatedReportPage({ perfil }) {
             <span>Valor Total</span>
             <span>{formatter.format(totalValue ?? 0)}</span>
           </Box>
+          {!isGuardador && reportList.valorSemFavorecido > 0 && (
+            <Box
+              sx={{ display: "flex", justifyContent: "space-between", width: "100%", gap: 2, mt: 1 }}
+              className="font-normal text-grey-700"
+            >
+              <span>Sem favorecido (fora do total)</span>
+              <span>{formatter.format(reportList.valorSemFavorecido)}</span>
+            </Box>
+          )}
         </Box>
       </Paper>
     </>
