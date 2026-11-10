@@ -146,6 +146,9 @@ export default function PagamentoRemessaPage({
   const [enviarBancoDialog, setEnviarBancoDialog] = useState(null); // { senha }
   const [isEnviando, setIsEnviando] = useState(false);
   const [renovarNsaDialog, setRenovarNsaDialog] = useState(null); // { nsa }
+  // Remessa reaberta pelo Renovar NSA: os pagamentos já estão preparados no servidor, mas esta tela (que só lista o que preparou nesta
+  // visita) pode estar vazia; sem isso o "Gerar Remessa" ficava desabilitado e a remessa renovada não podia ser gerada.
+  const [remessaReaberta, setRemessaReaberta] = useState(false);
   const [isRenovandoNsa, setIsRenovandoNsa] = useState(false);
 
   const pollingTimeoutRef = useRef(null);
@@ -452,6 +455,7 @@ export default function PagamentoRemessaPage({
       .delete(`${apiBasePath}/preparo`, { headers: authHeaders() })
       .then((response) => {
         setRows([]);
+        setRemessaReaberta(false);
         setRowCount(0);
         setValorTotalServidor(0);
         setCnabPreview([]);
@@ -504,6 +508,7 @@ export default function PagamentoRemessaPage({
         const { nsaAnterior, nsaNovo } = response.data ?? {};
         setRenovarNsaDialog(null);
         setCnabPreview([]);
+        setRemessaReaberta(true);
         dispatch(
           showMessage({
             message: `NSA ${nsaAnterior} substituído pelo NSA ${nsaNovo}. Clique em "Gerar Remessa" para gerar o arquivo novamente.`,
@@ -694,7 +699,7 @@ export default function PagamentoRemessaPage({
           <Button
             variant="contained"
             startIcon={<DescriptionIcon />}
-            disabled={(paginaNoServidor ? rowCount === 0 : rows.length === 0) || isGerandoRemessa || isPreparing}
+            disabled={((paginaNoServidor ? rowCount === 0 : rows.length === 0) && !remessaReaberta) || isGerandoRemessa || isPreparing}
             onClick={handleGerarRemessa}
           >
             {isGerandoRemessa ? 'Gerando...' : 'Gerar Remessa'}
