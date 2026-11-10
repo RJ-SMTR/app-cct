@@ -2,31 +2,6 @@ export function toApiV2Url(baseURL, path) {
   return `${baseURL.replace(/\/v1\/?$/, '/v2/')}${path.replace(/^\/+/, '')}`;
 }
 
-// Combinations the v2 Consolidado still rejects or answers with a different view than v1.
-export function shouldUseConsolidadoV2(params = {}) {
-  const porConsorcio = Boolean(params.consorcioNome || params.todosConsorcios);
-  const porFavorecido = Boolean(params.todosVanzeiros || params.userIds);
-
-  if (!porConsorcio && !porFavorecido) {
-    return false;
-  }
-  if (params.stucGratuidade && (params.pendentes || params.desativados)) {
-    return false;
-  }
-  if (params.userIds && porConsorcio) {
-    return false;
-  }
-  if (params.todosVanzeiros && params.consorcioNome) {
-    return false;
-  }
-  return !(params.eleicao && params.todosVanzeiros && params.todosConsorcios);
-}
-
-// STUC-Gratuidade has no "desativados" filter on v2: there it would be silently ignored.
-export function shouldUseFinancialMovementV2(params = {}) {
-  return !(params.stucGratuidade && params.desativados);
-}
-
 export function buildAgentConsolidadoV2Params(params = {}) {
   const { consorcioNome, ...v2Params } = params;
   return consorcioNome && consorcioNome !== 'Todos' ? { ...v2Params, consorcioNome } : v2Params;

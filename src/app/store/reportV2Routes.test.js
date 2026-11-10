@@ -1,8 +1,6 @@
 import {
   buildAgentConsolidadoV2Params,
   paginateConsolidadoV2,
-  shouldUseConsolidadoV2,
-  shouldUseFinancialMovementV2,
   splitAgentParamsByStatus,
   toAgentConsolidadoBlock,
   toApiV2Url,
@@ -13,41 +11,6 @@ describe('toApiV2Url', () => {
     expect(toApiV2Url('http://localhost:3000/api/v1/', 'cnab/relatorio-novo-remessa/consolidado')).toBe(
       'http://localhost:3000/api/v2/cnab/relatorio-novo-remessa/consolidado',
     );
-  });
-});
-
-describe('shouldUseConsolidadoV2', () => {
-  it.each([
-    [{ todosVanzeiros: true }],
-    [{ todosConsorcios: true }],
-    [{ consorcioNome: 'STPC' }],
-    [{ userIds: '1' }],
-    [{ todosVanzeiros: true, todosConsorcios: true }],
-    [{ todosVanzeiros: true, pendentes: true }],
-    [{ todosVanzeiros: true, desativados: true }],
-    [{ consorcioNome: 'STPC', eleicao: true }],
-    [{ todosConsorcios: true, stucGratuidade: true }],
-  ])('uses v2 for %j', (params) => {
-    expect(shouldUseConsolidadoV2(params)).toBe(true);
-  });
-
-  it.each([
-    [{}],
-    [{ userIds: '1', consorcioNome: 'STPC' }],
-    [{ todosVanzeiros: true, consorcioNome: 'STPC' }],
-    [{ todosVanzeiros: true, stucGratuidade: true, desativados: true }],
-    [{ todosVanzeiros: true, stucGratuidade: true, pendentes: true }],
-    [{ todosVanzeiros: true, todosConsorcios: true, eleicao: true }],
-  ])('keeps v1 for %j', (params) => {
-    expect(shouldUseConsolidadoV2(params)).toBe(false);
-  });
-});
-
-describe('shouldUseFinancialMovementV2', () => {
-  it('keeps v1 only for STUC with desativados', () => {
-    expect(shouldUseFinancialMovementV2({ desativados: true })).toBe(true);
-    expect(shouldUseFinancialMovementV2({ eleicao: true, userIds: '1' })).toBe(true);
-    expect(shouldUseFinancialMovementV2({ stucGratuidade: true, desativados: true })).toBe(false);
   });
 });
 

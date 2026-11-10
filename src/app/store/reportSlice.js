@@ -11,8 +11,6 @@ import {
 import {
   buildAgentConsolidadoV2Params,
   paginateConsolidadoV2,
-  shouldUseConsolidadoV2,
-  shouldUseFinancialMovementV2,
   splitAgentParamsByStatus,
   toAgentConsolidadoBlock,
   toApiV2Url,
@@ -354,7 +352,7 @@ export const handleFinancialMovementSummary = (data, options = {}) => async (dis
   if (JwtService.isAuthTokenValid(token)) {
     return new Promise(async (resolve, reject) => {
       const requestData = handleData(data);
-      const reportTypeUrl = `${jwtServiceConfig.report}/report/${shouldUseFinancialMovementV2(requestData) ? 'v2/' : ''}summary`;
+      const reportTypeUrl = `${jwtServiceConfig.report}/report/v2/summary`;
 
       try {
         const responseData = await requestReport(reportTypeUrl, requestData, token);
@@ -377,13 +375,13 @@ export const handleConsolidadoPage = (data) => async (dispatch) => {
   if (JwtService.isAuthTokenValid(token)) {
     return new Promise(async (resolve, reject) => {
       const requestData = handleData(data);
-      const useV2 = shouldUseConsolidadoV2(requestData);
+
       const path = `${jwtServiceConfig.report}/consolidado`;
-      const reportTypeUrl = useV2 ? toApiV2Url(api.defaults.baseURL, path) : path;
+      const reportTypeUrl = toApiV2Url(api.defaults.baseURL, path);
 
       try {
         const rawResponse = await requestReport(reportTypeUrl, requestData, token);
-        const responseData = useV2 ? paginateConsolidadoV2(rawResponse, requestData.page, requestData.pageSize) : rawResponse;
+        const responseData = paginateConsolidadoV2(rawResponse, requestData.page, requestData.pageSize);
         dispatch(setReportList(responseData));
         resolve(responseData);
       } catch (error) {
@@ -399,7 +397,7 @@ export const handleFinancialMovementPage = (data) => async (dispatch) => {
   if (JwtService.isAuthTokenValid(token)) {
     return new Promise(async (resolve, reject) => {
       const requestData = handleData(data);
-      const reportTypeUrl = `${jwtServiceConfig.report}/report/${shouldUseFinancialMovementV2(requestData) ? 'v2/' : ''}page`;
+      const reportTypeUrl = `${jwtServiceConfig.report}/report/v2/page`;
 
       try {
         const responseData = await requestReport(reportTypeUrl, requestData, token);
@@ -418,7 +416,7 @@ export const handleFinancialMovementExport = (data) => async () => {
   if (JwtService.isAuthTokenValid(token)) {
     return new Promise(async (resolve, reject) => {
       const requestData = handleData(data);
-      const reportTypeUrl = `${jwtServiceConfig.report}/report/${shouldUseFinancialMovementV2(requestData) ? 'v2/' : ''}export/download`;
+      const reportTypeUrl = `${jwtServiceConfig.report}/report/v2/export/download`;
 
       try {
         const response = await requestReportDownload(reportTypeUrl, {
