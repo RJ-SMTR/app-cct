@@ -156,18 +156,14 @@ export default function ConsolidatedReportPage({ perfil }) {
   // Pesquisar e mostra a mensagem de campo obrigatório em vez de deixar a busca ambígua passar.
   const missingFavorecidoOrConsorcio = !isGuardador && selectedFavorecidos.length === 0 && selectedConsorcios.length === 0;
 
-  // STUC - Gratuidade (ADR 0012, api-cct): tela, CSV, PDF e XLSX mostram só Nome + Valor
-  // Lançamento, 1 linha por janela de pagamento (reportList.data já vem pivotado por janela do
-  // backend - ver pivotStucGratuidadeRows/findConsolidadoStucGratuidade). A Movimentação
-  // Financeira (FinancialMovementReport.js/StucGratuidadeTable.js) mantém CPF/Data Ordem/Valor
-  // Ordem/Data Pagamento - telas e exports diferentes, não precisam ficar em sincronia. Só
-  // Permissionário.
+  // STUC - Gratuidade: a API devolve uma linha por favorecido com o total do periodo (decisao de
+  // 2026-11-10); a Movimentacao Financeira segue detalhada por janela e por dia.
   const showStucColumns = !isGuardador && selectedEspecificos.includes('STUC - Gratuidade');
 
   // ---- Grid rows/columns ----
   const gridRows = isGuardador
     ? guardadorDisplayRows.map((row) => ({ id: row.nome, ...row }))
-    : (Array.isArray(reportList.data) ? reportList.data.map((report) => ({ id: report.nomefavorecido, ...report })) : []);
+    : (Array.isArray(reportList.data) ? reportList.data.map((report, index) => ({ id: `${index}-${report.nomefavorecido}`, ...report })) : []);
 
   const gridColumns = isGuardador
     ? [
@@ -178,7 +174,7 @@ export default function ConsolidatedReportPage({ perfil }) {
         { field: 'nomefavorecido', headerName: 'Nome', flex: 1, minWidth: 260 },
         {
           field: 'valor',
-          headerName: showStucColumns ? 'Valor Lançamento' : 'Valor Total',
+          headerName: 'Valor Total',
           width: 180,
           valueFormatter: (params) => formatter.format(params.value ?? 0),
         },
@@ -208,12 +204,12 @@ export default function ConsolidatedReportPage({ perfil }) {
     if (showStucColumns) {
       const rows = reportList.data?.map((report) => ({
         Nome: report.nomefavorecido,
-        "Valor Lançamento": formatter.format(report.valor ?? 0),
+        "Valor Total": formatter.format(report.valor ?? 0),
       })) ?? [];
       return [
-        { Nome: "Status selecionado", "Valor Lançamento": selectedStatusLabelForExport || "Todos" },
+        { Nome: "Status selecionado", "Valor Total": selectedStatusLabelForExport || "Todos" },
         ...rows,
-        { Nome: "Valor Total", "Valor Lançamento": formatter.format(reportList?.valor) },
+        { Nome: "Valor Total", "Valor Total": formatter.format(reportList?.valor) },
       ];
     }
     const rows = reportList.data?.map((report) => ({
@@ -241,7 +237,7 @@ export default function ConsolidatedReportPage({ perfil }) {
     const head = isGuardador
       ? ["Nome", "Valor Total"]
       : showStucColumns
-        ? ["Nome", "Valor Lançamento"]
+        ? ["Nome", "Valor Total"]
         : ["Nome", "Valor Total"];
 
     doc.autoTable({
@@ -289,7 +285,7 @@ export default function ConsolidatedReportPage({ perfil }) {
     const header = isGuardador
       ? ["Nome", "Valor"]
       : showStucColumns
-        ? ["Nome", "Valor Lançamento"]
+        ? ["Nome", "Valor Total"]
         : ["Nome", "Valor"];
 
     const sheetData = [
