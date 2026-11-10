@@ -279,6 +279,8 @@ export default function FinancialMovementReport({ perfil }) {
       pageRequestData.cursorNome = cursor.nomes;
       pageRequestData.cursorStatus = cursor.status;
       pageRequestData.cursorCpfCnpj = cursor.cpfCnpj;
+      pageRequestData.cursorNomeConsorcio = cursor.nomeConsorcio;
+      pageRequestData.cursorValor = cursor.valor;
     }
 
     try {
@@ -350,6 +352,8 @@ export default function FinancialMovementReport({ perfil }) {
         cursorNome: cursor?.nomes,
         cursorStatus: cursor?.status,
         cursorCpfCnpj: cursor?.cpfCnpj,
+        cursorNomeConsorcio: cursor?.nomeConsorcio,
+        cursorValor: cursor?.valor,
       };
       await submitReportGuardador(pageData, newPage, rowsPerPage);
       return;
