@@ -152,7 +152,9 @@ export default function FinancialMovementReport({ perfil }) {
     requestData = applyPendenciaDePagamentoErro(requestData, {
       whichStatusShow,
       selectedErroStatus,
-      addPendentesOnTodos: isGuardador,
+      // "Todos" inclui as OPs atrasadas, igual ao Consolidado: sem isso, os dois relatorios davam
+      // totais diferentes com Pendencia de Pagamento (ou todos os status) selecionada.
+      addPendentesOnTodos: true,
     });
 
     if (!isGuardador) {
