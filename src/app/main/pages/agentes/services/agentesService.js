@@ -305,6 +305,13 @@ export function buildPagamentoIndevido(response) {
   const duplicateDates = (Array.isArray(response?.datasDuplicidade) ? response.datasDuplicidade : [])
     .map(toDateOnly)
     .filter(Boolean);
+  // "Dias pagos a mais" do descritivo usam a data da ordem (referência do pagamento); sem ela, caem nas datas dos pagamentos repetidos.
+  const orderDates = [
+    ...new Set(
+      (Array.isArray(response?.duplicidades) ? response.duplicidades : []).map((item) => toDateOnly(item?.dataOrdem)).filter(Boolean)
+    ),
+  ].sort();
+  const explanationDates = orderDates.length > 0 ? orderDates : duplicateDates;
   const hasBalance = normalizeNumber(totals.saldoDevedor) > 0;
   const lastOffsetDate = entries.map((entry) => toDateOnly(entry.data)).filter(Boolean).sort().pop();
 
@@ -320,7 +327,7 @@ export function buildPagamentoIndevido(response) {
       const difference = normalizeNumber(entry.diferenca);
       const amountPaid = normalizeNumber(entry.valorPago);
 
-      const explanation = buildDifferenceExplanation(difference, amountPaid, duplicateDates);
+      const explanation = buildDifferenceExplanation(difference, amountPaid, explanationDates);
 
       return {
         id: `${toDateOnly(entry.data)}-${index}`,
@@ -388,7 +395,7 @@ export function markDuplicateOffsetPayments(monthlyPayments, pagamentoIndevido) 
     return payments;
   }
 
-  const reason = buildDuplicateOffsetReason(pagamentoIndevido?.duplicateDates);
+  const defaultReason = buildDuplicateOffsetReason(pagamentoIndevido?.duplicateDates);
 
   return payments.map((payment) => {
     const paymentDate = payment.dataTentativaPagamento || payment.paymentDate;
@@ -400,7 +407,7 @@ export function markDuplicateOffsetPayments(monthlyPayments, pagamentoIndevido) 
       return payment;
     }
 
-    return { ...payment, duplicateOffset: { status: DUPLICATE_OFFSET_STATUS, reason } };
+    return { ...payment, duplicateOffset: { status: DUPLICATE_OFFSET_STATUS, reason: defaultReason } };
   });
 }
 
