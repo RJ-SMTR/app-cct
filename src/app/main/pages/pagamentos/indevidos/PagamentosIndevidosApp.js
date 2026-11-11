@@ -24,7 +24,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { api } from 'app/configs/api/api';
 import { showMessage } from 'app/store/fuse/messageSlice';
-import { baixarPlanilha, formatBRL, formatCpfCnpj, formatData, nomeArquivo, ROTULO_SITUACAO } from './pagamentosIndevidosUtils';
+import { baixarPlanilha, formatBRL, formatCpfCnpj, formatData, formatDiasOrdens, nomeArquivo, ROTULO_SITUACAO } from './pagamentosIndevidosUtils';
 
 const BUSCA_MINIMA = 2;
 
@@ -182,8 +182,9 @@ export default function PagamentosIndevidosApp() {
                 <TableRow>
                   <TableCell>Guardador</TableCell>
                   <TableCell>CPF/CNPJ</TableCell>
-                  <TableCell>Referência</TableCell>
+                  <TableCell>Ordens Duplicadas</TableCell>
                   <TableCell align="right">Indevido</TableCell>
+                  <TableCell>Debitado em</TableCell>
                   <TableCell align="right">Já debitado</TableCell>
                   <TableCell align="right">Deve</TableCell>
                   <TableCell>Situação</TableCell>
@@ -194,8 +195,9 @@ export default function PagamentosIndevidosApp() {
                   <TableRow key={i.id} hover>
                     <TableCell>{i.guardador}</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatCpfCnpj(i.cpfCnpj)}</TableCell>
-                    <TableCell>{formatData(i.dataReferencia)}</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDiasOrdens(i.ordensDuplicadas)}</TableCell>
                     <TableCell align="right">{formatBRL(i.valorIndevido)}</TableCell>
+                    <TableCell>{formatData(i.dataReferencia)}</TableCell>
                     <TableCell align="right" sx={{ color: '#2e7d32', fontWeight: 500 }}>
                       {formatBRL(i.valorDebitado)}
                     </TableCell>
