@@ -388,7 +388,9 @@ export function markDuplicateOffsetPayments(monthlyPayments, pagamentoIndevido) 
     return payments;
   }
 
-  const reason = buildDuplicateOffsetReason(pagamentoIndevido?.duplicateDates);
+  const defaultReason = buildDuplicateOffsetReason(pagamentoIndevido?.duplicateDates);
+  // Mesmo texto do quadro do indevido para o dia ("Descontamos R$ 100,00 do que foi pago a mais antes. Dias pagos a mais: ...").
+  const itemByDate = new Map(offsets.map((item) => [item.date, item]));
 
   return payments.map((payment) => {
     const paymentDate = payment.dataTentativaPagamento || payment.paymentDate;
@@ -399,6 +401,9 @@ export function markDuplicateOffsetPayments(monthlyPayments, pagamentoIndevido) 
     if (!offsetDates.has(paymentDate) || !(paid || zeroedAndRejected)) {
       return payment;
     }
+
+    const item = itemByDate.get(paymentDate);
+    const reason = [item?.differenceNote, item?.differenceDetail].filter(Boolean).join(" ") || defaultReason;
 
     return { ...payment, duplicateOffset: { status: DUPLICATE_OFFSET_STATUS, reason } };
   });

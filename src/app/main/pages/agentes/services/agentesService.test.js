@@ -285,8 +285,23 @@ describe('Abatimento por duplicidade', () => {
 
     expect(marked[0].duplicateOffset).toEqual({
       status: 'Abatimento por duplicidade',
-      reason: 'Valor pago em duplicidade em 09/2026',
+      reason: 'Não pagamos nada neste dia. Descontamos R$ 238,00 do que foi pago a mais antes. Dias pagos a mais: 03/09, 09/09 e 23/09.',
     });
+  });
+
+  it('o motivo de cada dia usa o descritivo do quadro daquele dia (valor descontado próprio)', () => {
+    const dois = buildPagamentoIndevido({
+      totais: { quantidade: 1, devendo: 1, valorIndevido: '500.00', valorDebitado: '200.00', saldoDevedor: '300.00' },
+      lancamentos: [
+        { data: '2026-11-10', valorDevido: '201.60', valorPago: '101.60', diferenca: '-100.00', statusRemessa: 3 },
+        { data: '2026-11-06', valorDevido: '267.40', valorPago: '167.40', diferenca: '-100.00', statusRemessa: 3 },
+      ],
+      datasDuplicidade: ['2026-09-23'],
+    });
+    const marked = markDuplicateOffsetPayments([pagamento('2026-11-10', 3), pagamento('2026-11-06', 3)], dois);
+
+    expect(marked[0].duplicateOffset.reason).toBe('Descontamos R$ 100,00 do que foi pago a mais antes. Dia pago a mais: 23/09.');
+    expect(marked[1].duplicateOffset.reason).toBe(marked[0].duplicateOffset.reason);
   });
 
   it('marca o dia não efetivado cujo valor enviado ao banco foi zerado pelo abatimento', () => {

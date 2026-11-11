@@ -355,6 +355,33 @@ function getTotalPhotosCount(validPhotosCount, rejectedPhotosCount) {
 
 const DUPLICATE_OFFSET_BADGE_COLOR = "#7b1fa2";
 
+/**
+ * Data efetiva do pagamento na visão mensal. Dia com abatimento do indevido sem data efetiva própria mostra, como referência, a data da
+ * ordem (tentativa de pagamento) em cinza; os demais seguem como antes ("-" quando não há data efetiva diferente da tentativa).
+ */
+function renderEffectivePaymentDate(payment) {
+  const effectiveDate =
+    shouldShowEffectivePaymentDate(payment.statusRemessa) &&
+    payment.dataEfetivaPagamento &&
+    !areSameCalendarDay(payment.dataTentativaPagamento, payment.dataEfetivaPagamento)
+      ? formatDateLabel(payment.dataEfetivaPagamento)
+      : null;
+
+  if (effectiveDate) {
+    return effectiveDate;
+  }
+
+  if (payment.duplicateOffset) {
+    return (
+      <Typography component="span" variant="body2" color="text.secondary" title="Data da ordem (tentativa de pagamento)">
+        {formatDateLabel(payment.dataTentativaPagamento || payment.paymentDate)}
+      </Typography>
+    );
+  }
+
+  return "-";
+}
+
 function ValidPhotosStatusBadge({ status, paymentStatus, duplicateOffset }) {
   if (duplicateOffset) {
     return (
@@ -720,16 +747,7 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           {/* <TableCell>{getTotalPhotosCount(payment.validPhotosCount, payment.rejectedPhotosCount)}</TableCell> */}
           {/* <TableCell>{payment.validPhotosCount}</TableCell> */}
           <TableCell>{formatCurrency(payment.totalPaymentValue)}</TableCell>
-          <TableCell>
-            {shouldShowEffectivePaymentDate(payment.statusRemessa)
-              ? areSameCalendarDay(
-                payment.dataTentativaPagamento,
-                payment.dataEfetivaPagamento
-              )
-                ? "-"
-                : formatDateLabel(payment.dataEfetivaPagamento)
-              : "-"}
-          </TableCell>
+          <TableCell>{renderEffectivePaymentDate(payment)}</TableCell>
 
           <TableCell
             align="center"
