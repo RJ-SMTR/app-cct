@@ -183,8 +183,8 @@ export default function PagamentosIndevidosApp() {
                   <TableCell>Guardador</TableCell>
                   <TableCell>CPF/CNPJ</TableCell>
                   <TableCell>Ordens Duplicadas</TableCell>
-                  <TableCell>Debitado em</TableCell>
                   <TableCell align="right">Indevido</TableCell>
+                  <TableCell>Debitado em</TableCell>
                   <TableCell align="right">Já debitado</TableCell>
                   <TableCell align="right">Deve</TableCell>
                   <TableCell>Situação</TableCell>
@@ -196,8 +196,8 @@ export default function PagamentosIndevidosApp() {
                     <TableCell>{i.guardador}</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatCpfCnpj(i.cpfCnpj)}</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDiasOrdens(i.ordensDuplicadas)}</TableCell>
-                    <TableCell>{formatData(i.dataReferencia)}</TableCell>
                     <TableCell align="right">{formatBRL(i.valorIndevido)}</TableCell>
+                    <TableCell>{formatData(i.dataReferencia)}</TableCell>
                     <TableCell align="right" sx={{ color: '#2e7d32', fontWeight: 500 }}>
                       {formatBRL(i.valorDebitado)}
                     </TableCell>
