@@ -1,4 +1,4 @@
-import { CABECALHO_PLANILHA, formatCpfCnpj, formatData, montarPlanilha, nomeArquivo, somarLinhas } from './pagamentosIndevidosUtils';
+import { CABECALHO_PLANILHA, formatCpfCnpj, formatData, formatDiasOrdens, montarPlanilha, nomeArquivo, somarLinhas } from './pagamentosIndevidosUtils';
 
 const itens = [
   { guardador: 'A', cpfCnpj: '12345678901', dataReferencia: '2026-10-16', valorPago: '100.00', valorPagar: '0.00', valorIndevido: '100.00', valorDebitado: '40.00', saldoDevedor: '60.00', situacao: 'devendo' },
@@ -30,10 +30,20 @@ describe('pagamentosIndevidosUtils', () => {
     expect(folha.D4.v).toBe(150.1);
     expect(folha.E4.v).toBe(90.1);
     expect(folha.F4.v).toBe(60);
-    expect(CABECALHO_PLANILHA).toEqual(['Guardador', 'CPF/CNPJ', 'Referência', 'Indevido', 'Já debitado', 'Deve', 'Situação']);
+    expect(CABECALHO_PLANILHA).toEqual(['Guardador', 'CPF/CNPJ', 'Debitado em', 'Indevido', 'Já debitado', 'Deve', 'Situação']);
   });
 
   it('nome do arquivo leva a data', () => {
     expect(nomeArquivo(new Date('2026-10-20T12:00:00Z'))).toBe('pagamentos-indevidos-guardadores_2026-10-20.xlsx');
+  });
+});
+
+describe('formatDiasOrdens', () => {
+  it('lista os dias das ordens duplicadas como "14/08 e 18/08"', () => {
+    expect(formatDiasOrdens(['2026-08-14', '2026-08-18'])).toBe('14/08 e 18/08');
+    expect(formatDiasOrdens(['2026-07-28', '2026-07-31', '2026-09-03'])).toBe('28/07, 31/07 e 03/09');
+    expect(formatDiasOrdens(['2026-08-14'])).toBe('14/08');
+    expect(formatDiasOrdens([])).toBe('—');
+    expect(formatDiasOrdens(undefined)).toBe('—');
   });
 });

@@ -5,6 +5,13 @@ export const ROTULO_SITUACAO = { devendo: 'Devendo', quitado: 'Quitado' };
 const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 export const formatBRL = (valor) => brl.format(Number(valor) || 0);
 
+/** Dias (AAAA-MM-DD) como "14/08 e 18/08"; sem dias, traço. */
+export const formatDiasOrdens = (dias) => {
+  const lista = (Array.isArray(dias) ? dias : []).map((d) => String(d).match(/^\d{4}-(\d{2})-(\d{2})/)).filter(Boolean).map((m) => `${m[2]}/${m[1]}`);
+  if (lista.length === 0) return '—';
+  return lista.length === 1 ? lista[0] : `${lista.slice(0, -1).join(', ')} e ${lista[lista.length - 1]}`;
+};
+
 export const formatData = (iso) => {
   const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : '—';
@@ -18,8 +25,8 @@ export const formatCpfCnpj = (valor) => {
   return valor || '—';
 };
 
-// Mesmas colunas, na mesma ordem e com os mesmos títulos do grid da tela.
-export const CABECALHO_PLANILHA = ['Guardador', 'CPF/CNPJ', 'Referência', 'Indevido', 'Já debitado', 'Deve', 'Situação'];
+// Mesmos títulos do grid da tela (a coluna Ordens Duplicadas só existe na tela).
+export const CABECALHO_PLANILHA = ['Guardador', 'CPF/CNPJ', 'Debitado em', 'Indevido', 'Já debitado', 'Deve', 'Situação'];
 
 const FORMATO_MOEDA = '"R$"\\ #,##0.00';
 const ESTILO_CABECALHO = {
