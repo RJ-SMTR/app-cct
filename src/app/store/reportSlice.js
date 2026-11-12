@@ -4,6 +4,7 @@ import { api } from 'app/configs/api/api';
 import accounting from 'accounting';
 import dayjs from 'dayjs';
 import JwtService from '../auth/services/jwtService';
+import { withReportRequestControl } from './reportRequestControl';
 import {
   buildAgentConsolidatedReportParams,
   normalizeAgentConsolidatedReportBlocks,
@@ -213,7 +214,8 @@ function handleData(data) {
   return requestData;
 }
 
-const buildGetConfig = (url, token, params) => ({
+// Relatórios: timeout de 130 s e cancelamento pela pesquisa seguinte (reportRequestControl, ADR 0023 da api-cct).
+const buildGetConfig = (url, token, params) => withReportRequestControl({
   method: 'get',
   maxBodyLength: Infinity,
   url,
@@ -223,7 +225,7 @@ const buildGetConfig = (url, token, params) => ({
   params,
 });
 
-const buildPostConfig = (url, token, data) => ({
+const buildPostConfig = (url, token, data) => withReportRequestControl({
   method: 'post',
   maxBodyLength: Infinity,
   url,
@@ -244,8 +246,10 @@ const requestReportPost = async (url, data, token) => {
 };
 
 const requestReportDownload = async (url, data, token) => {
+  // A exportação tem o mesmo timeout, mas não é cancelada por uma pesquisa nova.
   return api.request({
     ...buildPostConfig(url, token, data),
+    signal: undefined,
     responseType: 'blob',
   });
 };

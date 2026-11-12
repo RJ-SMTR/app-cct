@@ -22,10 +22,10 @@ import {
   handleFinancialMovementPage,
   handleAgentFinancialMovementExport,
   handleAgentFinancialMovementPage,
-  handleAgentFinancialMovementSummary,
   setReportList,
 } from "app/store/reportSlice";
 import { showMessage } from "app/store/fuse/messageSlice";
+import { beginReportSearch, REPORT_TIMEOUT_MESSAGE, reportErrorMessage } from "app/store/reportRequestControl";
 import {
   getAgentEffectivePaymentDateLabel,
   getAssociationDisplayName,
@@ -255,13 +255,17 @@ export default function FinancialMovementReport({ perfil }) {
     // enquanto a nova carrega.
     dispatch(setReportList([]));
     setIsLoading(true);
+    let cancelada = false;
     try {
       const pageResponse = await dispatch(handleFinancialMovementPage(pageRequestData));
       setPageCursors([null, pageResponse?.nextCursor ?? null]);
-    } catch {
-      dispatch(showMessage({ message: "Erro na busca, verifique os campos e tente novamente." }));
+    } catch (error) {
+      const message = reportErrorMessage(error, "Erro na busca, verifique os campos e tente novamente.");
+      cancelada = message === null;
+      if (message === REPORT_TIMEOUT_MESSAGE) dispatch(setReportList([]));
+      if (message) dispatch(showMessage({ message }));
     } finally {
-      setIsLoading(false);
+      if (!cancelada) setIsLoading(false);
     }
   };
 
@@ -286,6 +290,7 @@ export default function FinancialMovementReport({ perfil }) {
       pageRequestData.cursorChaveLinha = cursor.chaveLinha;
     }
 
+    let cancelada = false;
     try {
       const pageResponse = await dispatch(handleFinancialMovementPage(pageRequestData));
       setPageCursors((prev) => {
@@ -294,16 +299,17 @@ export default function FinancialMovementReport({ perfil }) {
         return updated;
       });
       setPage(pageIndex);
-    } catch {
-      dispatch(showMessage({ message: "Erro na busca, verifique os campos e tente novamente." }));
+    } catch (error) {
+      const message = reportErrorMessage(error, "Erro na busca, verifique os campos e tente novamente.");
+      cancelada = message === null;
+      if (message) dispatch(showMessage({ message }));
     } finally {
-      setIsLoading(false);
+      if (!cancelada) setIsLoading(false);
     }
   };
 
   const submitReportGuardador = async (data, pageIndex, pageSize, { isNewSearch = false } = {}) => {
     if (!validateErroStatusSelection()) return;
-    const summaryRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: false });
     const pageRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: true });
 
     // Só no clique em Pesquisar (não na paginação, que também passa por aqui) - limpa o
@@ -314,8 +320,10 @@ export default function FinancialMovementReport({ perfil }) {
     }
 
     setIsLoading(true);
+    let cancelada = false;
     try {
-      await dispatch(handleAgentFinancialMovementSummary(summaryRequestData, { resetData: true }));
+      // A primeira página (sem cursor) já traz o resumo, e as seguintes trazem só as linhas: o resumo não é
+      // recalculado a cada clique de página (ADR 0023 da api-cct).
       const pageResponse = await dispatch(handleAgentFinancialMovementPage(pageRequestData));
       const newNextCursor = pageResponse?.nextCursor ?? null;
 
@@ -326,14 +334,19 @@ export default function FinancialMovementReport({ perfil }) {
       });
       setPage(pageIndex);
       setHasSearched(true);
-    } catch {
-      dispatch(showMessage({ message: "Erro na busca do relatório de guardadores. Verifique os filtros." }));
+    } catch (error) {
+      const message = reportErrorMessage(error, "Erro na busca do relatório de guardadores. Verifique os filtros.");
+      cancelada = message === null;
+      if (message === REPORT_TIMEOUT_MESSAGE) dispatch(setReportList([]));
+      if (message) dispatch(showMessage({ message }));
     } finally {
-      setIsLoading(false);
+      if (!cancelada) setIsLoading(false);
     }
   };
 
   const onSubmit = async (data) => {
+    // Pesquisa nova: cancela o que a anterior ainda espera (ADR 0023 da api-cct).
+    beginReportSearch();
     setHasSearched(true);
     setPage(0);
     setPageCursors([null]);

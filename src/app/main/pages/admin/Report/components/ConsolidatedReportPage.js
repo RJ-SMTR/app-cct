@@ -23,6 +23,7 @@ import { utils, writeFile as writeFileXLSX } from 'xlsx';
 
 import { handleConsolidadoPage, fetchAgentConsolidatedReport, setReportList } from 'app/store/reportSlice';
 import { showMessage } from 'app/store/fuse/messageSlice';
+import { beginReportSearch, REPORT_TIMEOUT_MESSAGE, reportErrorMessage } from 'app/store/reportRequestControl';
 import {
   flattenAgentConsolidatedReportBlocks,
   getAgentConsolidatedReportTotal,
@@ -504,8 +505,11 @@ export default function ConsolidatedReportPage({ perfil }) {
         setIsLoading(false);
         setPage(pageIndex);
       })
-      .catch(() => {
-        dispatch(showMessage({ message: 'Erro na busca, verifique os campos e tente novamente.' }));
+      .catch((error) => {
+        const message = reportErrorMessage(error, 'Erro na busca, verifique os campos e tente novamente.');
+        if (message === null) return;
+        if (message === REPORT_TIMEOUT_MESSAGE) dispatch(setReportList([]));
+        dispatch(showMessage({ message }));
         setIsLoading(false);
       });
   };
@@ -532,19 +536,26 @@ export default function ConsolidatedReportPage({ perfil }) {
     setReportBlocks([]);
     setIsLoading(true);
     setGuardadorPage(0);
+    let cancelada = false;
     try {
       const responseBlocks = await dispatch(fetchAgentConsolidatedReport(data));
       setReportBlocks(responseBlocks);
       setHasSearched(true);
-    } catch {
-      setReportBlocks([]);
-      dispatch(showMessage({ message: "Erro na busca do relatório de agentes. Verifique os filtros e tente novamente." }));
+    } catch (error) {
+      const message = reportErrorMessage(error, "Erro na busca do relatório de agentes. Verifique os filtros e tente novamente.");
+      cancelada = message === null;
+      if (!cancelada) {
+        setReportBlocks([]);
+        dispatch(showMessage({ message }));
+      }
     } finally {
-      setIsLoading(false);
+      if (!cancelada) setIsLoading(false);
     }
   };
 
   const onSubmit = (data) => {
+    // Pesquisa nova: cancela o que a anterior ainda espera (ADR 0023 da api-cct).
+    beginReportSearch();
     setHasSearched(true);
     if (isGuardador) {
       submitGuardador(data);

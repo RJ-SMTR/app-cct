@@ -5,7 +5,7 @@ jest.mock('../auth/services/jwtService', () => ({
   default: {},
 }));
 
-import { handleAgentFinancialData } from './reportSlice';
+import reportReducer, { handleAgentFinancialData, mergeReportList, setReportList } from './reportSlice';
 
 const dateRange = [new Date(2026, 8, 1), new Date(2026, 8, 30)];
 
@@ -63,5 +63,19 @@ describe('handleAgentFinancialData status flags', () => {
       expect(requestData.todosConsorcios).toBe(true);
       expect(requestData.consorcioNome).toBeUndefined();
     });
+  });
+});
+
+// ADR 0023 da api-cct: a página seguinte da Movimentação Financeira não traz o resumo; a tela mantém os totais da
+// primeira página.
+describe('mergeReportList keeps the first page totals', () => {
+  it('keeps valorTotal and count when the next page brings only rows', () => {
+    const primeiraPagina = reportReducer(undefined, setReportList({ count: 120, valorTotal: 999.5, valorPago: 900, data: [{ id: 1 }] }));
+
+    const segundaPagina = reportReducer(primeiraPagina, mergeReportList({ currentPage: 2, pageSize: 50, data: [{ id: 2 }], nextCursor: null }));
+
+    expect(segundaPagina.reportList).toEqual(
+      expect.objectContaining({ count: 120, valorTotal: 999.5, valorPago: 900, currentPage: 2, data: [{ id: 2 }] }),
+    );
   });
 });
