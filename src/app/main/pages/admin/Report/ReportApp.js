@@ -8,6 +8,7 @@ import {
   setSynthData,
   setTotalSynth,
 } from 'app/store/reportSlice';
+import { beginReportSearch } from 'app/store/reportRequestControl';
 import ConsolidatedReportPage from './components/ConsolidatedReportPage';
 import FinancialMovementReport from './components/FinancialMovementReport';
 import { REPORT_AUDIENCE_OPTIONS, shouldShowAudienceSelector } from './reportSelection';
@@ -19,6 +20,9 @@ function ReportApp() {
   const [selectedAudience, setSelectedAudience] = useState('');
 
   const resetReportState = () => {
+    // Trocar de relatório ou de perfil cancela a pesquisa em andamento, para a resposta antiga não cair na
+    // tela nova (ADR 0023 da api-cct).
+    beginReportSearch();
     dispatch(setSynthData([]));
     dispatch(setTotalSynth(''));
     dispatch(setReportList([]));

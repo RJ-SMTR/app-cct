@@ -22,7 +22,6 @@ import {
   handleFinancialMovementPage,
   handleAgentFinancialMovementExport,
   handleAgentFinancialMovementPage,
-  handleAgentFinancialMovementSummary,
   setReportList,
 } from "app/store/reportSlice";
 import { showMessage } from "app/store/fuse/messageSlice";
@@ -311,7 +310,6 @@ export default function FinancialMovementReport({ perfil }) {
 
   const submitReportGuardador = async (data, pageIndex, pageSize, { isNewSearch = false } = {}) => {
     if (!validateErroStatusSelection()) return;
-    const summaryRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: false });
     const pageRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: true });
 
     // Só no clique em Pesquisar (não na paginação, que também passa por aqui) - limpa o
@@ -324,7 +322,8 @@ export default function FinancialMovementReport({ perfil }) {
     setIsLoading(true);
     let cancelada = false;
     try {
-      await dispatch(handleAgentFinancialMovementSummary(summaryRequestData, { resetData: true }));
+      // A primeira página (sem cursor) já traz o resumo, e as seguintes trazem só as linhas: o resumo não é
+      // recalculado a cada clique de página (ADR 0023 da api-cct).
       const pageResponse = await dispatch(handleAgentFinancialMovementPage(pageRequestData));
       const newNextCursor = pageResponse?.nextCursor ?? null;
 
