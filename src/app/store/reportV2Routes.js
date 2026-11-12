@@ -40,3 +40,23 @@ export function toAgentConsolidadoBlock(status, response) {
     data: rows.map((row) => ({ nome: row.nomefavorecido, valor: row.valor })),
   };
 }
+
+// Status text of the API (StatusPagamento) to the status flag each Guardador block uses.
+const STATUS_TO_AGENT_FLAG = {
+  Pago: 'pago',
+  'A Pagar': 'aPagar',
+  'Aguardando Pagamento': 'emProcessamento',
+  'Pendencia Paga': 'pendenciaPaga',
+  Rejeitado: 'rejeitado',
+  Estorno: 'estorno',
+};
+
+// ADR 0023 da api-cct (T11): with porStatus=true the API answers one block per status from a single query.
+// Returns null when the API still answers the old single-total shape, so the caller falls back to one
+// request per status (the deploy order of the two repos does not matter).
+export function toAgentConsolidadoBlocksPorStatus(response) {
+  if (!Array.isArray(response)) {
+    return null;
+  }
+  return response.map((block) => toAgentConsolidadoBlock(STATUS_TO_AGENT_FLAG[block.status] ?? block.status, block));
+}

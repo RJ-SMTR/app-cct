@@ -14,6 +14,7 @@ import {
   paginateConsolidadoV2,
   splitAgentParamsByStatus,
   toAgentConsolidadoBlock,
+  toAgentConsolidadoBlocksPorStatus,
   toApiV2Url,
 } from './reportV2Routes';
 
@@ -341,8 +342,20 @@ export const fetchAgentConsolidatedReport = (data) => async () => {
 
   const requestData = buildAgentConsolidatedReportParams(data);
   const url = toApiV2Url(api.defaults.baseURL, `${jwtServiceConfig.guardadorFinancialMovement}/consolidado`);
+  const v2Params = buildAgentConsolidadoV2Params(requestData);
+  const porStatus = splitAgentParamsByStatus(v2Params);
+
+  // ADR 0023 da api-cct (T11): mais de um status vai numa requisição só (porStatus=true), em vez de uma
+  // consulta inteira por status. Se a API ainda não conhece porStatus, volta para uma requisição por status.
+  if (porStatus.length > 1) {
+    const blocosUmaConsulta = toAgentConsolidadoBlocksPorStatus(await requestReport(url, { ...v2Params, porStatus: true }, token));
+    if (blocosUmaConsulta) {
+      return normalizeAgentConsolidatedReportBlocks(blocosUmaConsulta);
+    }
+  }
+
   const blocks = await Promise.all(
-    splitAgentParamsByStatus(buildAgentConsolidadoV2Params(requestData)).map(async ({ status, params }) =>
+    porStatus.map(async ({ status, params }) =>
       toAgentConsolidadoBlock(status, await requestReport(url, params, token))
     )
   );
