@@ -4,6 +4,7 @@ import {
   splitAgentParamsByStatus,
   toAgentConsolidadoBlock,
   toApiV2Url,
+  toAgentConsolidadoBlocksPorStatus,
 } from './reportV2Routes';
 
 describe('toApiV2Url', () => {
@@ -53,5 +54,26 @@ describe('toAgentConsolidadoBlock', () => {
       valor: 9,
       data: [{ nome: 'A', valor: 9 }],
     });
+  });
+});
+
+// ADR 0023 da api-cct (T11): todos os status selecionados em uma requisição só (porStatus=true).
+describe('toAgentConsolidadoBlocksPorStatus', () => {
+  it('maps each status block of the porStatus answer to the flag the screen uses', () => {
+    const resposta = [
+      { status: 'Pago', count: 1, valor: 9, data: [{ nomefavorecido: 'A', valor: 9 }] },
+      { status: 'Aguardando Pagamento', count: 0, valor: 0, data: [] },
+      { status: 'Estorno', count: 1, valor: 2, data: [{ nomefavorecido: 'B', valor: 2 }] },
+    ];
+
+    expect(toAgentConsolidadoBlocksPorStatus(resposta)).toEqual([
+      { status: 'pago', count: 1, valor: 9, data: [{ nome: 'A', valor: 9 }] },
+      { status: 'emProcessamento', count: 0, valor: 0, data: [] },
+      { status: 'estorno', count: 1, valor: 2, data: [{ nome: 'B', valor: 2 }] },
+    ]);
+  });
+
+  it('returns null when the API answered the old single-total shape (deploy order)', () => {
+    expect(toAgentConsolidadoBlocksPorStatus({ count: 1, valor: 9, data: [] })).toBeNull();
   });
 });

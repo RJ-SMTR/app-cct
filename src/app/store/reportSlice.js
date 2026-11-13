@@ -4,6 +4,7 @@ import { api } from 'app/configs/api/api';
 import accounting from 'accounting';
 import dayjs from 'dayjs';
 import JwtService from '../auth/services/jwtService';
+import { withReportRequestControl } from './reportRequestControl';
 import {
   buildAgentConsolidatedReportParams,
   normalizeAgentConsolidatedReportBlocks,
@@ -13,6 +14,7 @@ import {
   paginateConsolidadoV2,
   splitAgentParamsByStatus,
   toAgentConsolidadoBlock,
+  toAgentConsolidadoBlocksPorStatus,
   toApiV2Url,
 } from './reportV2Routes';
 
@@ -213,7 +215,8 @@ function handleData(data) {
   return requestData;
 }
 
-const buildGetConfig = (url, token, params) => ({
+// Relatórios: timeout de 130 s e cancelamento pela pesquisa seguinte (reportRequestControl, ADR 0023 da api-cct).
+const buildGetConfig = (url, token, params) => withReportRequestControl({
   method: 'get',
   maxBodyLength: Infinity,
   url,
@@ -223,7 +226,7 @@ const buildGetConfig = (url, token, params) => ({
   params,
 });
 
-const buildPostConfig = (url, token, data) => ({
+const buildPostConfig = (url, token, data) => withReportRequestControl({
   method: 'post',
   maxBodyLength: Infinity,
   url,
@@ -244,8 +247,10 @@ const requestReportPost = async (url, data, token) => {
 };
 
 const requestReportDownload = async (url, data, token) => {
+  // A exportação tem o mesmo timeout, mas não é cancelada por uma pesquisa nova.
   return api.request({
     ...buildPostConfig(url, token, data),
+    signal: undefined,
     responseType: 'blob',
   });
 };
@@ -337,8 +342,20 @@ export const fetchAgentConsolidatedReport = (data) => async () => {
 
   const requestData = buildAgentConsolidatedReportParams(data);
   const url = toApiV2Url(api.defaults.baseURL, `${jwtServiceConfig.guardadorFinancialMovement}/consolidado`);
+  const v2Params = buildAgentConsolidadoV2Params(requestData);
+  const porStatus = splitAgentParamsByStatus(v2Params);
+
+  // ADR 0023 da api-cct (T11): mais de um status vai numa requisição só (porStatus=true), em vez de uma
+  // consulta inteira por status. Se a API ainda não conhece porStatus, volta para uma requisição por status.
+  if (porStatus.length > 1) {
+    const blocosUmaConsulta = toAgentConsolidadoBlocksPorStatus(await requestReport(url, { ...v2Params, porStatus: true }, token));
+    if (blocosUmaConsulta) {
+      return normalizeAgentConsolidatedReportBlocks(blocosUmaConsulta);
+    }
+  }
+
   const blocks = await Promise.all(
-    splitAgentParamsByStatus(buildAgentConsolidadoV2Params(requestData)).map(async ({ status, params }) =>
+    porStatus.map(async ({ status, params }) =>
       toAgentConsolidadoBlock(status, await requestReport(url, params, token))
     )
   );
