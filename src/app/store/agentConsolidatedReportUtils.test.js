@@ -135,7 +135,7 @@ describe("agentConsolidatedReportUtils", () => {
     });
   });
 
-  it("sends no userIds for Todos guardadores and preserves Todos for associacoes", () => {
+  it("sends todosGuardadores (no userIds) for Todos guardadores and preserves Todos for associacoes", () => {
     const params = buildAgentConsolidatedReportParams({
       dateRange: [julyStartDate, julyEndDate],
       agentNames: [AGENT_REPORT_SELECT_ALL_VALUE],
@@ -145,6 +145,7 @@ describe("agentConsolidatedReportUtils", () => {
     expect(params).toEqual({
       dataInicio: "2026-07-01",
       dataFim: "2026-07-31",
+      todosGuardadores: true,
       consorcioNome: "Todos",
     });
   });

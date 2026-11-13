@@ -467,7 +467,11 @@ export function handleAgentFinancialData(data) {
     const userIds = data.agentNames
       .map((i) => (typeof i === 'object' ? (i.id || i.userId || i.value) : i))
       .filter((id) => id && id !== 'Todos');
-    if (userIds.length > 0 && !data.agentNames.some((i) => (typeof i === 'object' ? (i.value || i.label) : i) === 'Todos')) {
+    const todosGuardadores = data.agentNames.some((i) => (typeof i === 'object' ? (i.value || i.label) : i) === 'Todos');
+    if (todosGuardadores) {
+      // With an association filter the API sums every guardador and the association's own payment.
+      requestData.todosGuardadores = true;
+    } else if (userIds.length > 0) {
       requestData.userIds = userIds.join(',');
     }
   } else if (data.name && data.name.length > 0) {

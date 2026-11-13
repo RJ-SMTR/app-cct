@@ -119,8 +119,8 @@ export default function FinancialMovementReport({ perfil }) {
   const hasMissingErroStatusSelection =
     whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus.length === 0;
 
-  // Permissionário: pesquisar sem status não é permitido (o guardador continua opcional).
-  const hasMissingStatusSelection = !isGuardador && whichStatusShow.length === 0;
+  // Pesquisar sem status não é permitido, no Permissionário e no Guardador.
+  const hasMissingStatusSelection = whichStatusShow.length === 0;
 
   // Permissionário: Favorecido e Consórcio são mutuamente exclusivos (handleSelection acima),
   // mas sem nenhum dos dois selecionado o backend assume "Todos" (ADR 0014, api-cct) - exigir
@@ -309,7 +309,7 @@ export default function FinancialMovementReport({ perfil }) {
   };
 
   const submitReportGuardador = async (data, pageIndex, pageSize, { isNewSearch = false } = {}) => {
-    if (!validateErroStatusSelection()) return;
+    if (!validateStatusSelection() || !validateErroStatusSelection()) return;
     const pageRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: true });
 
     // Só no clique em Pesquisar (não na paginação, que também passa por aqui) - limpa o
@@ -713,10 +713,10 @@ export default function FinancialMovementReport({ perfil }) {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label={isGuardador ? "Selecionar Status" : "Selecionar Status *"}
+                      label="Selecionar Status *"
                       variant="outlined"
-                      error={hasSearched && hasMissingStatusSelection}
-                      helperText={hasSearched && hasMissingStatusSelection ? "Selecione um status para pesquisar." : ""}
+                      error={(isGuardador || hasSearched) && hasMissingStatusSelection}
+                      helperText={(isGuardador || hasSearched) && hasMissingStatusSelection ? "Selecione um status para pesquisar." : ""}
                     />
                   )}
                 />
@@ -926,7 +926,7 @@ export default function FinancialMovementReport({ perfil }) {
                 aria-label="Pesquisar"
                 type="submit"
                 size="medium"
-                disabled={hasMissingFavorecidoOuConsorcioSelection}
+                disabled={hasMissingFavorecidoOuConsorcioSelection || (isGuardador && hasMissingStatusSelection)}
               >
                 Pesquisar
               </Button>
