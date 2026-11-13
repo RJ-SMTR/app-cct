@@ -715,8 +715,8 @@ export default function FinancialMovementReport({ perfil }) {
                       {...params}
                       label="Selecionar Status *"
                       variant="outlined"
-                      error={hasSearched && hasMissingStatusSelection}
-                      helperText={hasSearched && hasMissingStatusSelection ? "Selecione um status para pesquisar." : ""}
+                      error={(isGuardador || hasSearched) && hasMissingStatusSelection}
+                      helperText={(isGuardador || hasSearched) && hasMissingStatusSelection ? "Selecione um status para pesquisar." : ""}
                     />
                   )}
                 />
@@ -926,7 +926,7 @@ export default function FinancialMovementReport({ perfil }) {
                 aria-label="Pesquisar"
                 type="submit"
                 size="medium"
-                disabled={hasMissingFavorecidoOuConsorcioSelection}
+                disabled={hasMissingFavorecidoOuConsorcioSelection || (isGuardador && hasMissingStatusSelection)}
               >
                 Pesquisar
               </Button>

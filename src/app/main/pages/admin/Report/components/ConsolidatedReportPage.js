@@ -632,8 +632,8 @@ export default function ConsolidatedReportPage({ perfil }) {
                         {...params}
                         label={isGuardador ? "Selecionar Status *" : "Selecionar Status"}
                         variant="outlined"
-                        error={isGuardador && hasSearched && missingGuardadorStatus}
-                        helperText={isGuardador && hasSearched && missingGuardadorStatus ? "Selecione um status para pesquisar." : ""}
+                        error={missingGuardadorStatus}
+                        helperText={missingGuardadorStatus ? "Selecione um status para pesquisar." : ""}
                       />
                     )}
                   />
@@ -826,7 +826,7 @@ export default function ConsolidatedReportPage({ perfil }) {
                 aria-label="Pesquisar"
                 type="submit"
                 size="medium"
-                disabled={missingFavorecidoOrConsorcio}
+                disabled={missingFavorecidoOrConsorcio || missingGuardadorStatus}
               >
                 Pesquisar
               </Button>
