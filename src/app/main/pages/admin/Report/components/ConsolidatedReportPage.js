@@ -157,6 +157,8 @@ export default function ConsolidatedReportPage({ perfil }) {
   // dos dois selecionado o backend assume "Todos" (ADR 0014, api-cct) - bloqueia o botão
   // Pesquisar e mostra a mensagem de campo obrigatório em vez de deixar a busca ambígua passar.
   const missingFavorecidoOrConsorcio = !isGuardador && selectedFavorecidos.length === 0 && selectedConsorcios.length === 0;
+  // Guardador: o status é obrigatório para pesquisar.
+  const missingGuardadorStatus = isGuardador && selectedStatusOptions.length === 0;
 
   // STUC - Gratuidade: a API devolve uma linha por janela de pagamento (ate 4 dias) e a tela, o CSV,
   // o PDF e o XLSX mostram um dia por linha com o valor do dia, como a Movimentacao Financeira
@@ -527,6 +529,11 @@ export default function ConsolidatedReportPage({ perfil }) {
       return;
     }
 
+    if (!data.status || data.status.length === 0) {
+      dispatch(showMessage({ message: "Selecione um status para pesquisar." }));
+      return;
+    }
+
     if (data.status.includes("Erros") && selectedErroStatus.length === 0) {
       dispatch(showMessage({ message: "Selecione um motivo para Pendência de pagamento." }));
       return;
@@ -620,7 +627,15 @@ export default function ConsolidatedReportPage({ perfil }) {
                     isOptionEqualToValue={isGuardador ? (option, value) => option.value === value.value : undefined}
                     filterSelectedOptions={!isGuardador}
                     onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
-                    renderInput={(params) => <TextField {...params} label="Selecionar Status" variant="outlined" />}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label={isGuardador ? "Selecionar Status *" : "Selecionar Status"}
+                        variant="outlined"
+                        error={isGuardador && hasSearched && missingGuardadorStatus}
+                        helperText={isGuardador && hasSearched && missingGuardadorStatus ? "Selecione um status para pesquisar." : ""}
+                      />
+                    )}
                   />
                 </Grid>
               )}
