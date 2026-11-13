@@ -309,7 +309,7 @@ export default function FinancialMovementReport({ perfil }) {
   };
 
   const submitReportGuardador = async (data, pageIndex, pageSize, { isNewSearch = false } = {}) => {
-    if (!validateErroStatusSelection()) return;
+    if (!validateStatusSelection() || !validateErroStatusSelection()) return;
     const pageRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: true });
 
     // Só no clique em Pesquisar (não na paginação, que também passa por aqui) - limpa o
