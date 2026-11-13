@@ -16,8 +16,14 @@ describe('toApiV2Url', () => {
 });
 
 describe('buildAgentConsolidadoV2Params', () => {
-  it('drops the "Todos" association, which is not a filter', () => {
-    expect(buildAgentConsolidadoV2Params({ dataInicio: 'x', consorcioNome: 'Todos' })).toEqual({ dataInicio: 'x' });
+  // "Todas as associações" is the guardadores linked to an association, not the total: it must reach the API
+  // as todosConsorcios, as the Movimentação Financeira sends it, or both filters show the same total.
+  it('sends the "Todos" association as todosConsorcios', () => {
+    expect(buildAgentConsolidadoV2Params({ dataInicio: 'x', consorcioNome: 'Todos' })).toEqual({ dataInicio: 'x', todosConsorcios: true });
+  });
+
+  it('sends no association filter when no association is selected', () => {
+    expect(buildAgentConsolidadoV2Params({ dataInicio: 'x' })).toEqual({ dataInicio: 'x' });
   });
 
   it('keeps a specific association and guardador', () => {

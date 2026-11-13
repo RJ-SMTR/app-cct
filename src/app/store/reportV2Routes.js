@@ -2,9 +2,14 @@ export function toApiV2Url(baseURL, path) {
   return `${baseURL.replace(/\/v1\/?$/, '/v2/')}${path.replace(/^\/+/, '')}`;
 }
 
+// "Todas as associações" is the guardadores linked to an association (todosConsorcios), as the Movimentação
+// Financeira sends it; dropping it made the Consolidado show the same total for guardadores and associações.
 export function buildAgentConsolidadoV2Params(params = {}) {
   const { consorcioNome, ...v2Params } = params;
-  return consorcioNome && consorcioNome !== 'Todos' ? { ...v2Params, consorcioNome } : v2Params;
+  if (!consorcioNome) {
+    return v2Params;
+  }
+  return consorcioNome === 'Todos' ? { ...v2Params, todosConsorcios: true } : { ...v2Params, consorcioNome };
 }
 
 // The v2 Consolidado returns every row at once; the screen expects one page at a time.
