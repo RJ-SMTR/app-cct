@@ -12,6 +12,7 @@ export default function PagamentoGuardadoresApp() {
       mostrarBotoesRapidosData={false}
       permitirRenovarNsa
       permitirDescontoIndevido
+      carregarPreparadosAoAbrir
     />
   );
 }

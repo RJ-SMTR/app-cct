@@ -108,6 +108,7 @@ export default function PagamentoRemessaPage({
   permitirGratuidade = false,
   permitirRenovarNsa = false,
   permitirDescontoIndevido = false,
+  carregarPreparadosAoAbrir = false,
 }) {
   const dispatch = useDispatch();
   const [dateRange, setDateRange] = useState([]);
@@ -202,6 +203,24 @@ export default function PagamentoRemessaPage({
     buscarPagina(paginationModel);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paginaNoServidor, paginationModel.page, paginationModel.pageSize, buscaDebounced]);
+
+  // Telas em modo simples (lista vem do POST de preparar) perdiam a lista ao recarregar/reabrir a tela, mesmo com os pagamentos
+  // já preparados no servidor, e o "Gerar Remessa" ficava desabilitado. Com a opção ligada, busca os preparados de hoje ao abrir.
+  useEffect(() => {
+    if (!carregarPreparadosAoAbrir || paginaNoServidor) return;
+    api
+      .get(`${apiBasePath}/preparados`, { headers: authHeaders() })
+      .then((response) => {
+        if (!isMountedRef.current) return;
+        const preparados = Array.isArray(response.data) ? response.data : [];
+        // Não sobrescreve uma lista que o usuário acabou de preparar nesta visita.
+        setRows((atual) => (atual.length > 0 ? atual : preparados));
+      })
+      .catch(() => {
+        dispatch(showMessage({ message: 'Erro ao carregar os pagamentos preparados.' }));
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Se o preparo assíncrono ficou rodando de uma visita anterior à tela (ex.: usuário
   // navegou pra outra página e voltou), retoma o polling em vez de deixar a tela achar
