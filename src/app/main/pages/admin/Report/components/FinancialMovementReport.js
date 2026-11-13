@@ -119,8 +119,8 @@ export default function FinancialMovementReport({ perfil }) {
   const hasMissingErroStatusSelection =
     whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus.length === 0;
 
-  // Permissionário: pesquisar sem status não é permitido (o guardador continua opcional).
-  const hasMissingStatusSelection = !isGuardador && whichStatusShow.length === 0;
+  // Pesquisar sem status não é permitido, no Permissionário e no Guardador.
+  const hasMissingStatusSelection = whichStatusShow.length === 0;
 
   // Permissionário: Favorecido e Consórcio são mutuamente exclusivos (handleSelection acima),
   // mas sem nenhum dos dois selecionado o backend assume "Todos" (ADR 0014, api-cct) - exigir
@@ -713,7 +713,7 @@ export default function FinancialMovementReport({ perfil }) {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label={isGuardador ? "Selecionar Status" : "Selecionar Status *"}
+                      label="Selecionar Status *"
                       variant="outlined"
                       error={hasSearched && hasMissingStatusSelection}
                       helperText={hasSearched && hasMissingStatusSelection ? "Selecione um status para pesquisar." : ""}

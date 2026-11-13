@@ -146,6 +146,12 @@ export function buildAgentConsolidatedReportParams(filters = {}) {
     params.userIds = userIds;
   }
 
+  // "Todos os guardadores": with an association filter the API sums both (every guardador + the association's
+  // own payment), so it must know Todos was selected, not just that no id was sent.
+  if (Array.isArray(filters.agentNames) && filters.agentNames.includes(AGENT_REPORT_SELECT_ALL_VALUE)) {
+    params.todosGuardadores = true;
+  }
+
   const consorcioNome = buildCommaSeparatedFilter(filters.associations);
   if (consorcioNome) {
     params.consorcioNome = consorcioNome;
