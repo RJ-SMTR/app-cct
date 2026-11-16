@@ -41,6 +41,13 @@ describe('splitAgentParamsByStatus', () => {
     ]);
   });
 
+  it('creates its own request for the abatimento por duplicidade', () => {
+    expect(splitAgentParamsByStatus({ dataInicio: 'x', pago: true, abatimentoDuplicidade: true })).toEqual([
+      { status: 'pago', params: { dataInicio: 'x', pago: true } },
+      { status: 'abatimentoDuplicidade', params: { dataInicio: 'x', abatimentoDuplicidade: true } },
+    ]);
+  });
+
   it('makes a single request when no status is selected', () => {
     expect(splitAgentParamsByStatus({ dataInicio: 'x' })).toEqual([{ status: 'todos', params: { dataInicio: 'x' } }]);
   });
@@ -70,6 +77,14 @@ describe('toAgentConsolidadoBlocksPorStatus', () => {
       { status: 'pago', count: 1, valor: 9, data: [{ nome: 'A', valor: 9 }] },
       { status: 'emProcessamento', count: 0, valor: 0, data: [] },
       { status: 'estorno', count: 1, valor: 2, data: [{ nome: 'B', valor: 2 }] },
+    ]);
+  });
+
+  it('maps the "Abatimento por duplicidade" block to its flag', () => {
+    const resposta = [{ status: 'Abatimento por duplicidade', count: 1, valor: 40, data: [{ nomefavorecido: 'A', valor: 40 }] }];
+
+    expect(toAgentConsolidadoBlocksPorStatus(resposta)).toEqual([
+      { status: 'abatimentoDuplicidade', count: 1, valor: 40, data: [{ nome: 'A', valor: 40 }] },
     ]);
   });
 

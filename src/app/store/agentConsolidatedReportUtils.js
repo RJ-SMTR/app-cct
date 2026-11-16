@@ -15,6 +15,7 @@ export const AGENT_REPORT_STATUS_LABELS = {
   pendenciaPaga: "Pendência paga",
   rejeitado: "Rejeitado",
   estorno: "Estorno",
+  abatimentoDuplicidade: "Abatimento por duplicidade",
 };
 
 function getOptionValue(option) {
@@ -178,6 +179,9 @@ export function buildAgentConsolidatedReportParams(filters = {}) {
   }
   if (selectedStatuses.has("Pendencia Paga")) {
     params.pendenciaPaga = true;
+  }
+  if (selectedStatuses.has("Abatimento por duplicidade")) {
+    params.abatimentoDuplicidade = true;
   }
 
   if (hasErrorStatus) {

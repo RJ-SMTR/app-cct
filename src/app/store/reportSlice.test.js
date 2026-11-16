@@ -22,6 +22,13 @@ describe('handleAgentFinancialData status flags', () => {
     expect(requestData.aPagar).toBeUndefined();
   });
 
+  it('sends abatimentoDuplicidade for the "Abatimento por duplicidade" option', () => {
+    const requestData = handleAgentFinancialData({ dateRange, status: ['Pago', 'Abatimento por duplicidade'] });
+
+    expect(requestData.abatimentoDuplicidade).toBe(true);
+    expect(requestData.pago).toBe(true);
+  });
+
   it('keeps sending only the selected flags', () => {
     const requestData = handleAgentFinancialData({
       dateRange,

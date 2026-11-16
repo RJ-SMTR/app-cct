@@ -42,6 +42,8 @@ import { applyPendenciaDePagamentoErro, applyEspecificosFlags } from "./shared/r
 import { explodeStucGratuidadeRows, formatStucCpf } from "./shared/StucGratuidadeTable";
 import {
   STATUS_OPTIONS,
+  GUARDADOR_FINANCIAL_STATUS_OPTIONS,
+  ABATIMENTO_DUPLICIDADE_STATUS,
   ERRO_STATUS_OPTIONS,
   MIN_SELECTABLE_DATE_GUARDADOR,
   MIN_SELECTABLE_DATE_PERMISSIONARIO,
@@ -97,7 +99,8 @@ export default function FinancialMovementReport({ perfil }) {
   // (não somando) as colunas normais da Movimentação Financeira. Só Permissionário.
   const showStucColumns = !isGuardador && selectedEspecificos.includes('STUC - Gratuidade');
 
-  const statusBase = STATUS_OPTIONS.filter((option) => option.label !== "Todos");
+  // Guardador tem também o "Abatimento por duplicidade" (desconto do pagamento indevido).
+  const statusBase = (isGuardador ? GUARDADOR_FINANCIAL_STATUS_OPTIONS : STATUS_OPTIONS).filter((option) => option.label !== "Todos");
   const erroStatus = ERRO_STATUS_OPTIONS;
   const consorcios = buildReportConsorcioOptions({ selectedField: selected, includeGtu: true });
   const especificos = [{ label: 'Eleição' }, { label: 'Desativados' }, { label: 'STUC - Gratuidade' }];
@@ -578,6 +581,9 @@ export default function FinancialMovementReport({ perfil }) {
         return "bg-blue-400 text-black";
       case "A Pagar":
         return "bg-gray-400 text-black";
+      // Mesma cor roxa do badge da tela de Agentes.
+      case ABATIMENTO_DUPLICIDADE_STATUS:
+        return "bg-purple-300 text-black";
       default:
         return "bg-red-300 text-black";
     }
@@ -679,7 +685,7 @@ export default function FinancialMovementReport({ perfil }) {
           : []),
         { field: 'valor', headerName: 'Valor', width: 140, valueFormatter: (params) => formatCurrency(params.value) },
         { field: 'status', headerName: 'Status', width: 150, renderCell: (params) => statusBadge(params.value) },
-        { field: 'descricaoErro', headerName: 'Descrição do Erro', flex: 1, minWidth: 200, valueGetter: (params) => params.value || '-' },
+        { field: 'descricaoErro', headerName: isGuardador ? 'Motivo' : 'Descrição do Erro', flex: 1, minWidth: 200, valueGetter: (params) => params.value || '-' },
       ];
 
   return (
@@ -1007,6 +1013,7 @@ export default function FinancialMovementReport({ perfil }) {
               reportList?.valorPendente > 0 ||
               reportList?.valorPendenciaPaga > 0 ||
               reportList?.valorAPagar > 0 ||
+              reportList?.valorAbatimentoDuplicidade > 0 ||
               showErroStatus) && (
               <Box className="py-8 text-black" style={{ width: "100%" }}>
                 {(() => {
@@ -1016,6 +1023,7 @@ export default function FinancialMovementReport({ perfil }) {
                   const valorPendenciaPaga = toNumber(reportList?.valorPendenciaPaga);
                   const valorEstornado = toNumber(reportList?.valorEstornado);
                   const valorRejeitado = toNumber(reportList?.valorRejeitado);
+                  const valorAbatimentoDuplicidade = toNumber(reportList?.valorAbatimentoDuplicidade);
                   const totalGeral = toNumber(reportList?.valorTotal);
                   const rows = [];
 
@@ -1025,6 +1033,7 @@ export default function FinancialMovementReport({ perfil }) {
                   if (valorPendenciaPaga > 0) rows.push(["Pendência Paga", valorPendenciaPaga]);
                   if (valorEstornado > 0) rows.push(["Estorno", valorEstornado]);
                   if (valorRejeitado > 0) rows.push(["Rejeitado", valorRejeitado]);
+                  if (valorAbatimentoDuplicidade > 0) rows.push([ABATIMENTO_DUPLICIDADE_STATUS, valorAbatimentoDuplicidade]);
 
                   return renderStatusTotals(rows, ["Total Geral", totalGeral]);
                 })()}

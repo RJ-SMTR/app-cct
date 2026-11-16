@@ -537,6 +537,9 @@ export function handleAgentFinancialData(data) {
         case 'A Pagar':
           requestData.aPagar = true;
           break;
+        case 'Abatimento por duplicidade':
+          requestData.abatimentoDuplicidade = true;
+          break;
         default:
           break;
       }
