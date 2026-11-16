@@ -35,7 +35,12 @@ import { buildReportConsorcioOptions } from './consorcioOptions';
 import ValorRangeFilter from './shared/ValorRangeFilter';
 import ReportPeriodFilter from './shared/ReportPeriodFilter';
 import useFavorecidoGuardadorOptions from './shared/useFavorecidoGuardadorOptions';
-import { applyPendenciaDePagamentoErro, applyEspecificosFlags } from './shared/reportRequestUtils';
+import {
+  applyPendenciaDePagamentoErro,
+  applyEspecificosFlags,
+  MOTIVO_OBRIGATORIO_MENSAGEM,
+  motivoObrigatorioFaltando,
+} from './shared/reportRequestUtils';
 import { explodeStucGratuidadeRows, formatStucCpf } from './shared/StucGratuidadeTable';
 import {
   STATUS_OPTIONS,
@@ -161,6 +166,8 @@ export default function ConsolidatedReportPage({ perfil }) {
   const missingFavorecidoOrConsorcio = !isGuardador && selectedFavorecidos.length === 0 && selectedConsorcios.length === 0;
   // Guardador: o status é obrigatório para pesquisar.
   const missingGuardadorStatus = isGuardador && selectedStatusOptions.length === 0;
+  // Pendência de Pagamento sem motivo não pode ser pesquisada (Permissionário e Guardador).
+  const missingMotivo = motivoObrigatorioFaltando({ showErroStatus, selectedErroStatus });
 
   // STUC - Gratuidade: a API devolve uma linha por janela de pagamento (ate 4 dias) e a tela, o CSV,
   // o PDF e o XLSX mostram um dia por linha com o valor do dia, como a Movimentacao Financeira
@@ -481,8 +488,8 @@ export default function ConsolidatedReportPage({ perfil }) {
   };
 
   const submitPagePermissionario = (data, pageIndex, currentPageSize, { isNewSearch = false } = {}) => {
-    if (whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus.length === 0) {
-      dispatch(showMessage({ message: "Selecione um motivo para a Pendência de Pagamento." }));
+    if (missingMotivo) {
+      dispatch(showMessage({ message: MOTIVO_OBRIGATORIO_MENSAGEM }));
       return;
     }
 
@@ -536,8 +543,8 @@ export default function ConsolidatedReportPage({ perfil }) {
       return;
     }
 
-    if (data.status.includes("Erros") && selectedErroStatus.length === 0) {
-      dispatch(showMessage({ message: "Selecione um motivo para Pendência de pagamento." }));
+    if (missingMotivo) {
+      dispatch(showMessage({ message: MOTIVO_OBRIGATORIO_MENSAGEM }));
       return;
     }
 
@@ -664,7 +671,16 @@ export default function ConsolidatedReportPage({ perfil }) {
                       setSelectedErroStatus(normalizedValue);
                       setValue("erroStatus", normalizedValue.map((option) => (isGuardador ? option.value : option.label)));
                     }}
-                    renderInput={(params) => <TextField {...params} label="Motivos" variant="outlined" />}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Motivos"
+                        variant="outlined"
+                        required
+                        error={missingMotivo}
+                        helperText={missingMotivo ? MOTIVO_OBRIGATORIO_MENSAGEM : ''}
+                      />
+                    )}
                   />
                 </Grid>
               )}
@@ -828,7 +844,7 @@ export default function ConsolidatedReportPage({ perfil }) {
                 aria-label="Pesquisar"
                 type="submit"
                 size="medium"
-                disabled={missingFavorecidoOrConsorcio || missingGuardadorStatus}
+                disabled={missingFavorecidoOrConsorcio || missingGuardadorStatus || missingMotivo}
               >
                 Pesquisar
               </Button>
