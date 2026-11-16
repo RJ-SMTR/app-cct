@@ -26,8 +26,13 @@ const AGENT_STATUS_FLAGS = ['pago', 'aPagar', 'emProcessamento', 'pendenciaPaga'
 
 // The Guardador screen shows one block per status, and the v2 route answers one total per
 // favorecido, so each selected status gets its own request.
+// "Pago" traz junto o "Abatimento por duplicidade" (api-cct), com bloco e total próprios: o abatimento entra
+// como mais um status, para a tela pedir os blocos por status em vez de somar o abatimento no Pago.
 export function splitAgentParamsByStatus(params = {}) {
   const selected = AGENT_STATUS_FLAGS.filter((flag) => params[flag]);
+  if (params.pago && !params.abatimentoDuplicidade) {
+    selected.push('abatimentoDuplicidade');
+  }
   const base = Object.fromEntries(Object.entries(params).filter(([key]) => !AGENT_STATUS_FLAGS.includes(key)));
 
   if (selected.length === 0) {
