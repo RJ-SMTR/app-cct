@@ -22,7 +22,7 @@ export function paginateConsolidadoV2(response, page, pageSize) {
   return { ...response, data: rows.slice(start, start + pageSize) };
 }
 
-const AGENT_STATUS_FLAGS = ['pago', 'aPagar', 'emProcessamento', 'pendenciaPaga', 'rejeitado', 'estorno'];
+const AGENT_STATUS_FLAGS = ['pago', 'aPagar', 'emProcessamento', 'pendenciaPaga', 'rejeitado', 'estorno', 'abatimentoDuplicidade'];
 
 // The Guardador screen shows one block per status, and the v2 route answers one total per
 // favorecido, so each selected status gets its own request.
@@ -54,6 +54,7 @@ const STATUS_TO_AGENT_FLAG = {
   'Pendencia Paga': 'pendenciaPaga',
   Rejeitado: 'rejeitado',
   Estorno: 'estorno',
+  'Abatimento por duplicidade': 'abatimentoDuplicidade',
 };
 
 // ADR 0023 da api-cct (T11): with porStatus=true the API answers one block per status from a single query.

@@ -11,6 +11,13 @@ export const STATUS_OPTIONS = [
   { label: 'Pendencia Paga' },
 ];
 
+// Status só do Guardador: pagamento com abatimento do pagamento indevido (o mesmo da tela de
+// Agentes, DUPLICATE_OFFSET_STATUS). O label é traduzido no flag "abatimentoDuplicidade" em
+// app/store/reportSlice.js (handleAgentFinancialData).
+export const ABATIMENTO_DUPLICIDADE_STATUS = 'Abatimento por duplicidade';
+
+export const GUARDADOR_FINANCIAL_STATUS_OPTIONS = [...STATUS_OPTIONS, { label: ABATIMENTO_DUPLICIDADE_STATUS }];
+
 export const ERRO_STATUS_OPTIONS = [
   { label: 'Todos' },
   { label: 'Estorno' },

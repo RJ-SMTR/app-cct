@@ -56,6 +56,8 @@ const GUARDADOR_STATUS_OPTIONS = [
   { label: "Pago", value: "Pago" },
   { label: "Pendência de pagamento", value: "Erros" },
   { label: "Pendência paga", value: "Pendencia Paga" },
+  // Pagamento com abatimento do pagamento indevido, como na tela de Agentes.
+  { label: "Abatimento por duplicidade", value: "Abatimento por duplicidade" },
 ];
 
 const GUARDADOR_ERRO_STATUS_OPTIONS = [

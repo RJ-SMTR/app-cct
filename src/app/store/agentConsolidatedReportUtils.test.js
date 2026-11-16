@@ -61,6 +61,19 @@ describe("agentConsolidatedReportUtils", () => {
     });
   });
 
+  it("serializes the abatimentoDuplicidade filter when Abatimento por duplicidade is selected", () => {
+    const params = buildAgentConsolidatedReportParams({
+      dateRange: [julyStartDate, julyEndDate],
+      status: ["Abatimento por duplicidade"],
+    });
+
+    expect(params).toEqual({
+      dataInicio: "2026-07-01",
+      dataFim: "2026-07-31",
+      abatimentoDuplicidade: true,
+    });
+  });
+
   it("combines Pago and Erros without a specific reason as pago, rejeitado and estorno", () => {
     const params = buildAgentConsolidatedReportParams({
       dateRange: [julyStartDate, julyEndDate],
