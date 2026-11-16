@@ -7,6 +7,7 @@ import JwtService from '../auth/services/jwtService';
 import { withReportRequestControl } from './reportRequestControl';
 import {
   buildAgentConsolidatedReportParams,
+  getSelectedBothAssociationsNames,
   normalizeAgentConsolidatedReportBlocks,
 } from './agentConsolidatedReportUtils';
 import {
@@ -483,7 +484,11 @@ export function handleAgentFinancialData(data) {
     }
   }
 
-  if (data.associations && data.associations.length > 0) {
+  const bothAssociations = getSelectedBothAssociationsNames(data.associations);
+  if (bothAssociations) {
+    requestData.consorcioNome = bothAssociations.join(',');
+    requestData.exigirTodasAssociacoes = true;
+  } else if (data.associations && data.associations.length > 0) {
     if (data.associations.some((i) => (typeof i === 'object' ? (i.value || i.label) : i) === 'Todos')) {
       requestData.todosConsorcios = true;
     } else {
