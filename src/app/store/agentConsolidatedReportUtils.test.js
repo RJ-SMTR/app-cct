@@ -14,6 +14,8 @@ import {
   normalizeAgentStatusSelection,
   normalizeAgentConsolidatedReportBlocks,
   shouldShowAgentEffectivePaymentDateColumn,
+  getSelectedBothAssociationsNames,
+  normalizeSelectAllAutocompleteValue,
 } from "./agentConsolidatedReportUtils";
 
 describe("agentConsolidatedReportUtils", () => {
@@ -300,9 +302,41 @@ describe("agentConsolidatedReportUtils", () => {
 
       expect(options).toEqual([
         { label: "Todos", value: "Todos" },
+        { label: "ANGLAE/SINGAERJ (ambas)", value: `AMBAS::${anglae} / ${singaerj}` },
         { label: "ANGLAE", value: anglae },
         { label: "SINGAERJ", value: singaerj },
       ]);
+    });
+
+    describe("ANGLAE/SINGAERJ (ambas)", () => {
+      const bothValue = `AMBAS::${anglae} / ${singaerj}`;
+
+      it("is offered only when both associations exist", () => {
+        const options = buildAssociationAutocompleteOptions([
+          { fullName: "Maria", associacoes: [{ label: singaerj }] },
+        ]);
+
+        expect(options.map((option) => option.label)).toEqual(["Todos", "SINGAERJ"]);
+      });
+
+      it("sends both names with exigirTodasAssociacoes in the consolidated report", () => {
+        const params = buildAgentConsolidatedReportParams({ associations: [bothValue] });
+
+        expect(params.consorcioNome).toBe(`${anglae},${singaerj}`);
+        expect(params.exigirTodasAssociacoes).toBe(true);
+        expect(getSelectedBothAssociationsNames([{ value: bothValue }])).toEqual([anglae, singaerj]);
+      });
+
+      it("does not combine with single associations: the last one picked wins", () => {
+        const both = { label: "ANGLAE/SINGAERJ (ambas)", value: bothValue };
+        const single = { label: "SINGAERJ", value: singaerj };
+
+        expect(normalizeSelectAllAutocompleteValue([single, both])).toEqual([both]);
+        expect(normalizeSelectAllAutocompleteValue([both, single])).toEqual([single]);
+        expect(
+          normalizeSelectAllAutocompleteValue([both, { label: "Todos", value: "Todos" }])
+        ).toEqual([{ label: "Todos", value: "Todos" }]);
+      });
     });
   });
 

@@ -52,6 +52,51 @@ function getSingleAssociationDisplayName(name) {
   return matchKnownAssociation(normalizeAssociationName(name)) ?? name;
 }
 
+// "ANGLAE/SINGAERJ (ambas)": only the guardadores linked to both associations at the same time.
+// The value carries the two full names, sent to the API with exigirTodasAssociacoes.
+export const AGENT_REPORT_BOTH_ASSOCIATIONS_LABEL = "ANGLAE/SINGAERJ (ambas)";
+const BOTH_ASSOCIATIONS_PREFIX = "AMBAS::";
+
+export function isBothAssociationsValue(value) {
+  return typeof value === "string" && value.startsWith(BOTH_ASSOCIATIONS_PREFIX);
+}
+
+// Full names of the both-associations option, when it is selected; null otherwise.
+export function getSelectedBothAssociationsNames(values) {
+  if (!Array.isArray(values)) {
+    return null;
+  }
+
+  const selected = values.map(getOptionValue).find(isBothAssociationsValue);
+  return selected
+    ? selected.slice(BOTH_ASSOCIATIONS_PREFIX.length).split(ASSOCIATION_SEPARATOR)
+    : null;
+}
+
+function buildBothAssociationsOption(associationNames) {
+  const fullNameByKnown = new Map();
+
+  associationNames
+    .flatMap((name) => String(name).split(ASSOCIATION_SEPARATOR))
+    .forEach((name) => {
+      const known = matchKnownAssociation(normalizeAssociationName(name));
+      if (known && !fullNameByKnown.has(known)) {
+        fullNameByKnown.set(known, name.trim());
+      }
+    });
+
+  const anglae = fullNameByKnown.get("ANGLAE");
+  const singaerj = fullNameByKnown.get("SINGAERJ");
+  if (!anglae || !singaerj) {
+    return null;
+  }
+
+  return {
+    label: AGENT_REPORT_BOTH_ASSOCIATIONS_LABEL,
+    value: `${BOTH_ASSOCIATIONS_PREFIX}${anglae}${ASSOCIATION_SEPARATOR}${singaerj}`,
+  };
+}
+
 // Purely visual: the full names of these two associations are too long for the tables.
 // A guardador with several associations arrives as one joined value, so each one is shortened.
 export function getAssociationDisplayName(name) {
@@ -146,9 +191,15 @@ export function buildAgentConsolidatedReportParams(filters = {}) {
     params.userIds = userIds;
   }
 
-  const consorcioNome = buildCommaSeparatedFilter(filters.associations);
-  if (consorcioNome) {
-    params.consorcioNome = consorcioNome;
+  const bothAssociations = getSelectedBothAssociationsNames(filters.associations);
+  if (bothAssociations) {
+    params.consorcioNome = bothAssociations.join(",");
+    params.exigirTodasAssociacoes = true;
+  } else {
+    const consorcioNome = buildCommaSeparatedFilter(filters.associations);
+    if (consorcioNome) {
+      params.consorcioNome = consorcioNome;
+    }
   }
 
   const valorMin = normalizeCurrencyFilterValue(filters.valorMin);
@@ -299,8 +350,11 @@ export function buildAssociationAutocompleteOptions(agentUsers = []) {
     firstAssociation.localeCompare(secondAssociation)
   );
 
+  const bothAssociationsOption = buildBothAssociationsOption(uniqueAssociations);
+
   return [
     { label: AGENT_REPORT_SELECT_ALL_VALUE, value: AGENT_REPORT_SELECT_ALL_VALUE },
+    ...(bothAssociationsOption ? [bothAssociationsOption] : []),
     ...uniqueAssociations.map((association) => ({
       label: getAssociationDisplayName(association),
       value: association,
@@ -317,11 +371,17 @@ export function normalizeSelectAllAutocompleteValue(options = []) {
     (option) => option?.value === AGENT_REPORT_SELECT_ALL_VALUE
   );
 
-  if (!selectedAllOption) {
-    return options;
+  if (selectedAllOption) {
+    return [selectedAllOption];
   }
 
-  return [selectedAllOption];
+  // The both-associations option does not combine with single associations: the last one picked wins.
+  const lastOption = options[options.length - 1];
+  if (isBothAssociationsValue(lastOption?.value)) {
+    return [lastOption];
+  }
+
+  return options.filter((option) => !isBothAssociationsValue(option?.value));
 }
 
 export function normalizeAgentStatusSelection(options = []) {
