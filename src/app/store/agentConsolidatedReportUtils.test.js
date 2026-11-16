@@ -16,6 +16,7 @@ import {
   shouldShowAgentEffectivePaymentDateColumn,
   getSelectedBothAssociationsNames,
   normalizeSelectAllAutocompleteValue,
+  isAssociationOptionDisabled,
 } from "./agentConsolidatedReportUtils";
 
 describe("agentConsolidatedReportUtils", () => {
@@ -336,6 +337,20 @@ describe("agentConsolidatedReportUtils", () => {
         expect(
           normalizeSelectAllAutocompleteValue([both, { label: "Todos", value: "Todos" }])
         ).toEqual([{ label: "Todos", value: "Todos" }]);
+      });
+
+      it("disables the incompatible options in the select", () => {
+        const both = { label: "ANGLAE/SINGAERJ (ambas)", value: bothValue };
+        const single = { label: "SINGAERJ", value: singaerj };
+        const todos = { label: "Todos", value: "Todos" };
+
+        expect(isAssociationOptionDisabled(single, [both])).toBe(true);
+        expect(isAssociationOptionDisabled(both, [single])).toBe(true);
+        expect(isAssociationOptionDisabled(todos, [both])).toBe(false);
+        expect(isAssociationOptionDisabled(todos, [single])).toBe(false);
+        expect(isAssociationOptionDisabled(both, [])).toBe(false);
+        expect(isAssociationOptionDisabled(both, [todos])).toBe(false);
+        expect(isAssociationOptionDisabled(single, [{ label: "ANGLAE", value: anglae }])).toBe(false);
       });
     });
   });
