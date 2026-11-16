@@ -8,6 +8,7 @@ import { withReportRequestControl } from './reportRequestControl';
 import {
   buildAgentConsolidatedReportParams,
   getSelectedBothAssociationsNames,
+  withoutBothAssociations,
   normalizeAgentConsolidatedReportBlocks,
 } from './agentConsolidatedReportUtils';
 import {
@@ -488,7 +489,8 @@ export function handleAgentFinancialData(data) {
     if (data.associations.some((i) => (typeof i === 'object' ? (i.value || i.label) : i) === 'Todos')) {
       requestData.todosConsorcios = true;
     } else {
-      const assocValues = data.associations
+      // "ambas" combined with ANGLAE/SINGAERJ: the single associations already bring those guardadores.
+      const assocValues = withoutBothAssociations(data.associations)
         .map((i) => (typeof i === 'object' ? (i.value || i.label) : i))
         .filter((v) => v && v !== 'Todos');
       if (assocValues.length > 0) {
