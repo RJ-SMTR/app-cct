@@ -31,6 +31,7 @@ import {
   getAssociationDisplayName,
   isKnownAssociationName,
   normalizeSelectAllAutocompleteValue,
+  isAssociationOptionDisabled,
   shouldShowAgentEffectivePaymentDateColumn,
 } from "app/store/agentConsolidatedReportUtils";
 import { normalizeErroStatusSelection } from "./reportUtils";
@@ -805,6 +806,7 @@ export default function FinancialMovementReport({ perfil }) {
                       loading={loadingUsers}
                       getOptionLabel={(option) => option.label || option}
                       isOptionEqualToValue={(option, value) => option.value === value.value}
+                      getOptionDisabled={(option) => isAssociationOptionDisabled(option, selectedAssociationOptions)}
                       onChange={(_, newValue) => handleAutocompleteChange("associations", newValue)}
                       renderInput={(params) => (
                         <TextField

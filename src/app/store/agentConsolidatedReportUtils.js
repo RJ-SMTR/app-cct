@@ -394,6 +394,25 @@ export function normalizeSelectAllAutocompleteValue(options = []) {
   return options.filter((option) => !isBothAssociationsValue(option?.value));
 }
 
+// Blocks the combination in the select itself: with "ambas" selected the single associations are
+// disabled, and with any single association selected "ambas" is disabled. "Todos" stays enabled.
+export function isAssociationOptionDisabled(option, selectedOptions = []) {
+  const optionValue = getOptionValue(option);
+  if (optionValue === AGENT_REPORT_SELECT_ALL_VALUE || !Array.isArray(selectedOptions)) {
+    return false;
+  }
+
+  const selectedValues = selectedOptions
+    .map(getOptionValue)
+    .filter((value) => value && value !== AGENT_REPORT_SELECT_ALL_VALUE);
+
+  if (isBothAssociationsValue(optionValue)) {
+    return selectedValues.some((value) => !isBothAssociationsValue(value));
+  }
+
+  return selectedValues.some(isBothAssociationsValue);
+}
+
 export function normalizeAgentStatusSelection(options = []) {
   if (!Array.isArray(options) || options.length === 0) {
     return [];

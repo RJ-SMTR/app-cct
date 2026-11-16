@@ -29,6 +29,7 @@ import {
   getAgentConsolidatedReportTotal,
   normalizeAgentStatusSelection,
   normalizeSelectAllAutocompleteValue,
+  isAssociationOptionDisabled,
 } from 'app/store/agentConsolidatedReportUtils';
 import { normalizeErroStatusSelection } from './reportUtils';
 import { buildReportConsorcioOptions } from './consorcioOptions';
@@ -727,6 +728,7 @@ export default function ConsolidatedReportPage({ perfil }) {
                       loading={loadingUsers}
                       getOptionLabel={(option) => option.label}
                       isOptionEqualToValue={(option, value) => option.value === value.value}
+                      getOptionDisabled={(option) => isAssociationOptionDisabled(option, selectedAssociationOptions)}
                       onChange={(_, newValue) => handleAutocompleteChange("associations", newValue)}
                       renderInput={(params) => (
                         <TextField {...params} label="Selecionar Associações" variant="outlined" />
