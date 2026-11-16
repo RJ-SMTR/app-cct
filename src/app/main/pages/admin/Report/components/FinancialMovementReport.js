@@ -38,7 +38,12 @@ import { buildReportConsorcioOptions } from "./consorcioOptions";
 import ValorRangeFilter from "./shared/ValorRangeFilter";
 import ReportPeriodFilter from "./shared/ReportPeriodFilter";
 import useFavorecidoGuardadorOptions from "./shared/useFavorecidoGuardadorOptions";
-import { applyPendenciaDePagamentoErro, applyEspecificosFlags } from "./shared/reportRequestUtils";
+import {
+  applyPendenciaDePagamentoErro,
+  applyEspecificosFlags,
+  MOTIVO_OBRIGATORIO_MENSAGEM,
+  motivoObrigatorioFaltando,
+} from "./shared/reportRequestUtils";
 import { explodeStucGratuidadeRows, formatStucCpf } from "./shared/StucGratuidadeTable";
 import {
   STATUS_OPTIONS,
@@ -119,8 +124,9 @@ export default function FinancialMovementReport({ perfil }) {
     setValue("dateRange", []);
   }, [perfil, setValue]);
 
-  const hasMissingErroStatusSelection =
-    whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus.length === 0;
+  // Pendência de Pagamento sem motivo não pode ser pesquisada (Permissionário e Guardador): o botão
+  // Pesquisar fica desabilitado e o campo Motivos mostra o erro.
+  const hasMissingErroStatusSelection = motivoObrigatorioFaltando({ showErroStatus, selectedErroStatus });
 
   // Pesquisar sem status não é permitido, no Permissionário e no Guardador.
   const hasMissingStatusSelection = whichStatusShow.length === 0;
@@ -139,7 +145,7 @@ export default function FinancialMovementReport({ perfil }) {
 
   const validateErroStatusSelection = () => {
     if (!hasMissingErroStatusSelection) return true;
-    dispatch(showMessage({ message: "Selecione um motivo para a Pendência de Pagamento." }));
+    dispatch(showMessage({ message: MOTIVO_OBRIGATORIO_MENSAGEM }));
     return false;
   };
 
@@ -748,12 +754,9 @@ export default function FinancialMovementReport({ perfil }) {
                         {...params}
                         label={isGuardador ? "Motivo da Pendência" : "Motivos"}
                         variant="outlined"
-                        error={isGuardador ? hasMissingErroStatusSelection : undefined}
-                        helperText={
-                          isGuardador && hasMissingErroStatusSelection
-                            ? "Selecione um motivo para a Pendência de Pagamento."
-                            : ""
-                        }
+                        required
+                        error={hasMissingErroStatusSelection}
+                        helperText={hasMissingErroStatusSelection ? MOTIVO_OBRIGATORIO_MENSAGEM : ""}
                       />
                     )}
                   />
@@ -932,7 +935,7 @@ export default function FinancialMovementReport({ perfil }) {
                 aria-label="Pesquisar"
                 type="submit"
                 size="medium"
-                disabled={hasMissingFavorecidoOuConsorcioSelection || (isGuardador && hasMissingStatusSelection)}
+                disabled={hasMissingFavorecidoOuConsorcioSelection || (isGuardador && hasMissingStatusSelection) || hasMissingErroStatusSelection}
               >
                 Pesquisar
               </Button>
