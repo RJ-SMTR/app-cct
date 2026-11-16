@@ -35,9 +35,21 @@ describe('paginateConsolidadoV2', () => {
 
 describe('splitAgentParamsByStatus', () => {
   it('creates one request per selected status', () => {
-    expect(splitAgentParamsByStatus({ dataInicio: 'x', pago: true, estorno: true })).toEqual([
-      { status: 'pago', params: { dataInicio: 'x', pago: true } },
+    expect(splitAgentParamsByStatus({ dataInicio: 'x', aPagar: true, estorno: true })).toEqual([
+      { status: 'aPagar', params: { dataInicio: 'x', aPagar: true } },
       { status: 'estorno', params: { dataInicio: 'x', estorno: true } },
+    ]);
+  });
+
+  it('"Pago" brings the abatimento por duplicidade as its own block', () => {
+    expect(splitAgentParamsByStatus({ dataInicio: 'x', pago: true })).toEqual([
+      { status: 'pago', params: { dataInicio: 'x', pago: true } },
+      { status: 'abatimentoDuplicidade', params: { dataInicio: 'x', abatimentoDuplicidade: true } },
+    ]);
+    expect(splitAgentParamsByStatus({ dataInicio: 'x', pago: true, estorno: true }).map(({ status }) => status)).toEqual([
+      'pago',
+      'estorno',
+      'abatimentoDuplicidade',
     ]);
   });
 
