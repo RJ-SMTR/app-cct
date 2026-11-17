@@ -61,6 +61,30 @@ export function montarGraficoGrupos(conta, metrica) {
   };
 }
 
+/**
+ * Barras duplas: duas barras por consórcio/modal. A primeira é a de "Pago"; a segunda empilha "Não pago" e "Em aberto".
+ * Cada barra é uma posição do eixo X (`slots`); cada série só tem valor nas posições em que aparece.
+ */
+export function montarGraficoGruposDuplo(conta, metrica) {
+  const grupos = conta?.grupos ?? [];
+  const slots = grupos.flatMap((g) => [
+    { grupo: g.grupo, tipo: 'pago' },
+    { grupo: g.grupo, tipo: 'pendente' },
+  ]);
+  const valorDe = (g, situacao) => Number(metrica === 'valor' ? g[situacao].valor : g[situacao].qtd) || 0;
+  const porGrupo = new Map(grupos.map((g) => [g.grupo, g]));
+  const serie = (situacao, tipo) => ({
+    key: situacao,
+    name: ROTULO_SITUACAO[situacao],
+    data: slots.map((s) => (s.tipo === tipo ? valorDe(porGrupo.get(s.grupo), situacao) : 0)),
+  });
+  return {
+    slots,
+    categorias: slots.map((s) => [s.grupo, s.tipo === 'pago' ? 'Pago' : 'Pendente']),
+    series: [serie('pago', 'pago'), serie('naoPago', 'pendente'), serie('emAberto', 'pendente')],
+  };
+}
+
 /** Rosca dos motivos de uma situação (por padrão "não pago"). */
 export function montarGraficoMotivos(conta, situacao, metrica) {
   const motivos = (conta?.motivos ?? []).filter((m) => m.situacao === situacao);
