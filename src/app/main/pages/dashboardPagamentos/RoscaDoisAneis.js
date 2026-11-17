@@ -1,60 +1,83 @@
 import { useMemo, useState } from 'react';
 import { Box, Typography } from '@mui/material';
-import { formatBRL, formatQtd } from './dashboardPagamentosUtils';
+import { formatMetrica } from './dashboardPagamentosUtils';
 
-export const CORES_ROSCA = ['#008FFB', '#00E396', '#FEB019', '#FF4560', '#775DD0', '#3F51B5', '#546E7A', '#D4526E', '#8D5B4C', '#F86624'];
-
-/** Fração (0..1) de cada valor no total. Total zero devolve tudo zerado. */
-export function calcularFracoes(valores) {
-  const nums = valores.map((v) => Math.max(Number(v) || 0, 0));
-  const total = nums.reduce((a, b) => a + b, 0);
-  return nums.map((v) => (total > 0 ? v / total : 0));
-}
+export const CORES_MOTIVOS = ['#3f8f5b', '#e5a23c', '#775DD0', '#00A3C4', '#D4526E', '#8D5B4C', '#546E7A', '#3F51B5', '#F86624', '#9CCC65'];
 
 const TAMANHO = 300;
 const CENTRO = TAMANHO / 2;
-const ESPESSURA = 38;
-const FOLGA = 6;
+const ESPESSURA = 36;
+const FOLGA = 8;
 const RAIO_EXTERNO = CENTRO - ESPESSURA / 2 - 4;
 const RAIO_INTERNO = RAIO_EXTERNO - ESPESSURA - FOLGA;
 
-function Anel({ raio, fracoes, cores, ativo, onAtivar, onSelecionar, rotuloAnel, rotulos }) {
+const numero = (v) => Math.max(Number(v) || 0, 0);
+const pct = (f) => `${(f * 100).toFixed(1).replace('.', ',')}%`;
+
+/**
+ * Monta os dois anéis. Anel externo: uma fatia por situação. Anel interno: uma fatia por motivo, na ordem das situações,
+ * ocupando o mesmo ângulo da situação a que pertence (o que sobra da situação sem motivo fica como espaço vazio).
+ * Função pura, exportada para teste.
+ */
+export function montarAneis(situacoes, motivos, metrica) {
+  const campo = metrica === 'valor' ? 'valor' : 'qtd';
+  const total = situacoes.reduce((s, x) => s + numero(x[campo]), 0);
+  const frac = (v) => (total > 0 ? numero(v) / total : 0);
+
+  const externo = situacoes.map((s) => ({ id: `s:${s.key}`, rotulo: s.label, cor: s.color, valor: numero(s[campo]), fracao: frac(s[campo]), situacao: s.key }));
+
+  const interno = [];
+  let indiceCor = 0;
+  situacoes.forEach((s) => {
+    const dela = motivos.filter((m) => m.situacao === s.key && numero(m[campo]) > 0);
+    dela.forEach((m) => {
+      interno.push({ id: `m:${s.key}:${m.codigo}`, rotulo: m.descricao, cor: CORES_MOTIVOS[indiceCor % CORES_MOTIVOS.length], valor: numero(m[campo]), fracao: frac(m[campo]), situacao: s.key, motivo: m });
+      indiceCor += 1;
+    });
+    const resto = numero(s[campo]) - dela.reduce((a, m) => a + numero(m[campo]), 0);
+    if (resto > 0) interno.push({ id: `v:${s.key}`, vazio: true, fracao: frac(resto), valor: resto, situacao: s.key });
+  });
+
+  return { total, externo, interno };
+}
+
+function Anel({ raio, fatias, ativo, onAtivar, onSelecionar, nomeAnel }) {
   const perimetro = 2 * Math.PI * raio;
   let acumulado = 0;
   return (
     <g transform={`rotate(-90 ${CENTRO} ${CENTRO})`}>
       <circle cx={CENTRO} cy={CENTRO} r={raio} fill="none" stroke="rgba(128,128,128,0.15)" strokeWidth={ESPESSURA} />
-      {fracoes.map((fracao, i) => {
-        if (fracao <= 0) return null;
-        const comprimento = fracao * perimetro;
+      {fatias.map((f) => {
+        const comprimento = f.fracao * perimetro;
         const inicio = acumulado;
         acumulado += comprimento;
-        const esmaecer = ativo !== null && ativo !== i;
+        if (f.vazio || f.fracao <= 0) return null;
+        const esmaecer = ativo !== null && ativo !== f.id;
         return (
           <circle
-            key={i}
+            key={f.id}
             cx={CENTRO}
             cy={CENTRO}
             r={raio}
             fill="none"
-            stroke={cores[i % cores.length]}
-            strokeWidth={ativo === i ? ESPESSURA + 6 : ESPESSURA}
+            stroke={f.cor}
+            strokeWidth={ativo === f.id ? ESPESSURA + 6 : ESPESSURA}
             strokeDasharray={`${comprimento} ${perimetro - comprimento}`}
             strokeDashoffset={-inicio}
             opacity={esmaecer ? 0.35 : 1}
             style={{ cursor: 'pointer', transition: 'opacity .15s, stroke-width .15s' }}
             tabIndex={0}
             role="button"
-            aria-label={`${rotuloAnel}: ${rotulos[i]}`}
-            onMouseEnter={() => onAtivar(i)}
+            aria-label={`${nomeAnel}: ${f.rotulo}`}
+            onMouseEnter={() => onAtivar(f.id)}
             onMouseLeave={() => onAtivar(null)}
-            onFocus={() => onAtivar(i)}
+            onFocus={() => onAtivar(f.id)}
             onBlur={() => onAtivar(null)}
-            onClick={() => onSelecionar(i)}
+            onClick={() => onSelecionar(f)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                onSelecionar(i);
+                onSelecionar(f);
               }
             }}
           />
@@ -64,74 +87,64 @@ function Anel({ raio, fracoes, cores, ativo, onAtivar, onSelecionar, rotuloAnel,
   );
 }
 
-const pct = (f) => `${(f * 100).toFixed(1).replace('.', ',')}%`;
-
 /**
- * Rosca com duas escalas: anel externo por valor (R$) e anel interno por quantidade.
- * `motivos`: [{ descricao, valor, qtd }]. `onSelecionar(motivo)` é chamado ao clicar numa fatia ou numa linha da legenda.
+ * Rosca dupla: anel externo por situação (pago / não pago / em aberto) e anel interno por motivo, total no centro.
+ * `situacoes`: [{ key, label, color, valor, qtd }]; `motivos`: [{ situacao, codigo, descricao, valor, qtd }].
  */
-export default function RoscaDoisAneis({ motivos, onSelecionar }) {
+export default function RoscaDoisAneis({ situacoes, motivos, metrica = 'valor', onSelecionarSituacao, onSelecionarMotivo }) {
   const [ativo, setAtivo] = useState(null);
-  const { fracoesValor, fracoesQtd, totalValor, totalQtd } = useMemo(
-    () => ({
-      fracoesValor: calcularFracoes(motivos.map((m) => m.valor)),
-      fracoesQtd: calcularFracoes(motivos.map((m) => m.qtd)),
-      totalValor: motivos.reduce((s, m) => s + (Number(m.valor) || 0), 0),
-      totalQtd: motivos.reduce((s, m) => s + (Number(m.qtd) || 0), 0),
-    }),
-    [motivos],
-  );
-  const rotulos = motivos.map((m) => m.descricao);
-  const selecionar = (i) => onSelecionar?.(motivos[i]);
-  const m = ativo !== null ? motivos[ativo] : null;
+  const { total, externo, interno } = useMemo(() => montarAneis(situacoes, motivos, metrica), [situacoes, motivos, metrica]);
+  const todas = [...externo, ...interno];
+  const f = ativo ? todas.find((x) => x.id === ativo) : null;
+
+  const selecionar = (fatia) => {
+    if (fatia.motivo) onSelecionarMotivo?.(fatia.motivo);
+    else onSelecionarSituacao?.(fatia.situacao);
+  };
+  const rotuloMetrica = metrica === 'valor' ? 'Valor' : 'Pagamentos';
+  const legendaMotivos = interno.filter((x) => !x.vazio);
 
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-        <svg viewBox={`0 0 ${TAMANHO} ${TAMANHO}`} width="100%" style={{ maxWidth: 340 }} role="group" aria-label="Motivos dos não pagos: anel externo por valor, anel interno por quantidade">
-          <Anel raio={RAIO_EXTERNO} fracoes={fracoesValor} cores={CORES_ROSCA} ativo={ativo} onAtivar={setAtivo} onSelecionar={selecionar} rotuloAnel="Valor" rotulos={rotulos} />
-          <Anel raio={RAIO_INTERNO} fracoes={fracoesQtd} cores={CORES_ROSCA} ativo={ativo} onAtivar={setAtivo} onSelecionar={selecionar} rotuloAnel="Quantidade" rotulos={rotulos} />
+        <svg viewBox={`0 0 ${TAMANHO} ${TAMANHO}`} width="100%" style={{ maxWidth: 340 }} role="group" aria-label="Pagamentos: anel externo por situação, anel interno por motivo">
+          <Anel raio={RAIO_EXTERNO} fatias={externo} ativo={ativo} onAtivar={setAtivo} onSelecionar={selecionar} nomeAnel="Situação" />
+          <Anel raio={RAIO_INTERNO} fatias={interno} ativo={ativo} onAtivar={setAtivo} onSelecionar={selecionar} nomeAnel="Motivo" />
           <g textAnchor="middle" fill="currentColor" style={{ pointerEvents: 'none' }}>
-            {m ? (
-              <>
-                <text x={CENTRO} y={CENTRO - 14} fontSize="11" opacity="0.7">{m.descricao.length > 22 ? `${m.descricao.slice(0, 21)}…` : m.descricao}</text>
-                <text x={CENTRO} y={CENTRO + 4} fontSize="14" fontWeight="600">{formatBRL(m.valor)}</text>
-                <text x={CENTRO} y={CENTRO + 22} fontSize="12">{formatQtd(m.qtd)} pagamento(s)</text>
-              </>
-            ) : (
-              <>
-                <text x={CENTRO} y={CENTRO - 14} fontSize="11" opacity="0.7">Total</text>
-                <text x={CENTRO} y={CENTRO + 4} fontSize="14" fontWeight="600">{formatBRL(totalValor)}</text>
-                <text x={CENTRO} y={CENTRO + 22} fontSize="12">{formatQtd(totalQtd)} pagamento(s)</text>
-              </>
+            <text x={CENTRO} y={CENTRO - 14} fontSize="11" opacity="0.7">
+              {f && !f.vazio ? (f.rotulo.length > 22 ? `${f.rotulo.slice(0, 21)}…` : f.rotulo) : `Total (${rotuloMetrica.toLowerCase()})`}
+            </text>
+            <text x={CENTRO} y={CENTRO + 6} fontSize="15" fontWeight="600">
+              {formatMetrica(f && !f.vazio ? f.valor : total, metrica)}
+            </text>
+            {f && !f.vazio && (
+              <text x={CENTRO} y={CENTRO + 24} fontSize="12">{pct(total > 0 ? f.valor / total : 0)}</text>
             )}
           </g>
         </svg>
       </Box>
-      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mb: 1 }}>
-        Anel externo: valor (R$) · Anel interno: quantidade
-      </Typography>
-      <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
-        {motivos.map((mt, i) => (
-          <Box
-            component="li"
-            key={i}
-            onMouseEnter={() => setAtivo(i)}
-            onMouseLeave={() => setAtivo(null)}
-            onClick={() => selecionar(i)}
-            sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5, px: 1, cursor: 'pointer', borderRadius: 1, bgcolor: ativo === i ? 'action.hover' : 'transparent' }}
-          >
-            <Box sx={{ width: 12, height: 12, borderRadius: '50%', flexShrink: 0, bgcolor: CORES_ROSCA[i % CORES_ROSCA.length] }} />
-            <Typography variant="body2" sx={{ flex: 1, minWidth: 0 }} noWrap title={mt.descricao}>{mt.descricao}</Typography>
-            <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
-              {formatBRL(mt.valor)} ({pct(fracoesValor[i])})
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-              · {formatQtd(mt.qtd)} ({pct(fracoesQtd[i])})
-            </Typography>
+
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 2, mb: 1 }}>
+        {externo.map((s) => (
+          <Box key={s.id} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, cursor: 'pointer' }} onClick={() => onSelecionarSituacao?.(s.situacao)} onMouseEnter={() => setAtivo(s.id)} onMouseLeave={() => setAtivo(null)}>
+            <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: s.cor }} />
+            <Typography variant="body2">{s.rotulo}: {formatMetrica(s.valor, metrica)}</Typography>
           </Box>
         ))}
       </Box>
+      {legendaMotivos.length > 0 && (
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 2 }}>
+          {legendaMotivos.map((m) => (
+            <Box key={m.id} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, cursor: 'pointer' }} onClick={() => onSelecionarMotivo?.(m.motivo)} onMouseEnter={() => setAtivo(m.id)} onMouseLeave={() => setAtivo(null)}>
+              <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: m.cor }} />
+              <Typography variant="body2" color="text.secondary">{m.rotulo}: {formatMetrica(m.valor, metrica)}</Typography>
+            </Box>
+          ))}
+        </Box>
+      )}
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 1 }}>
+        Anel externo: situação · Anel interno: motivo (clique para ver o detalhe)
+      </Typography>
     </Box>
   );
 }
