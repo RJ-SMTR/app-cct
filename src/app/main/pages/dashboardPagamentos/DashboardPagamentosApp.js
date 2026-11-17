@@ -86,13 +86,13 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
         // Clicar numa barra abre o detalhe daquele consórcio/modal naquela situação.
         dataPointSelection: (_event, _ctx, { seriesIndex, dataPointIndex }) => {
           if (seriesIndex < 0 || dataPointIndex < 0) return;
-          onAbrirDetalhe({ conta: conta.conta, grupo: grafico.slots[dataPointIndex].grupo, situacao: grafico.series[seriesIndex].key });
+          onAbrirDetalhe({ conta: conta.conta, grupo: grafico.categorias[dataPointIndex], situacao: grafico.series[seriesIndex].key });
         },
       },
     },
     colors: grafico.series.map((s) => COR_SITUACAO[s.key]),
     plotOptions: { bar: { columnWidth: '70%' } },
-    xaxis: { categories: grafico.categorias, labels: { rotate: 0, trim: false, hideOverlappingLabels: false, style: { fontSize: '11px' } } },
+    xaxis: { categories: grafico.categorias, labels: { rotate: -45, trim: true } },
     yaxis: { title: { text: metrica === 'valor' ? 'Valor (R$)' : 'Quantidade de pagamentos' }, labels: { formatter: (v) => formatMetrica(v, metrica) } },
     dataLabels: { enabled: false },
     // Tooltip só da barra sob o mouse (cada barra tem séries diferentes).
