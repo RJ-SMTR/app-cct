@@ -31,7 +31,6 @@ import {
   formatMetrica,
   formatQtd,
   montarGraficoGrupos,
-  montarGraficoMotivos,
   montarUrlDetalhe,
   periodoDaUrl,
   toIsoDate,
@@ -73,12 +72,13 @@ function Indicador({ situacao, totais, onClick }) {
 }
 
 function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
-  const grafico = useMemo(() => montarGraficoGrupos(conta, metrica), [conta, metrica]);
-  // A rosca mostra as duas escalas ao mesmo tempo (valor e quantidade), então não depende do seletor de métrica.
-  const rosca = useMemo(() => montarGraficoMotivos(conta, 'naoPago', 'valor'), [conta]);
+  // Barras duplas: um gráfico por escala (valor em R$ e quantidade), cada um com os 3 status.
+  const graficoValor = useMemo(() => montarGraficoGrupos(conta, 'valor'), [conta]);
+  const graficoQtd = useMemo(() => montarGraficoGrupos(conta, 'qtd'), [conta]);
+  const situacoesRosca = useMemo(() => SITUACOES.map((s) => ({ ...s, valor: conta[s.key].valor, qtd: conta[s.key].qtd })), [conta]);
   const vazio = SITUACOES.every((s) => conta[s.key].qtd === 0);
 
-  const opcoesBarras = {
+  const opcoesBarras = (grafico, metricaBarra) => ({
     chart: {
       type: 'bar',
       stacked: true,
@@ -94,16 +94,17 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
     colors: SITUACOES.map((s) => s.color),
     plotOptions: { bar: { columnWidth: '60%' } },
     xaxis: { categories: grafico.categorias, labels: { rotate: -45, trim: true } },
-    yaxis: { labels: { formatter: (v) => formatMetrica(v, metrica) } },
+    yaxis: { title: { text: metricaBarra === 'valor' ? 'Valor (R$)' : 'Quantidade de pagamentos' }, labels: { formatter: (v) => formatMetrica(v, metricaBarra) } },
     dataLabels: { enabled: false },
-    tooltip: { y: { formatter: (v) => formatMetrica(v, metrica) } },
+    tooltip: { y: { formatter: (v) => formatMetrica(v, metricaBarra) } },
     legend: { position: 'top' },
     states: { active: { filter: { type: 'none' } } },
-  };
+  });
 
-  // Clicar numa fatia (ou na legenda) abre o detalhe dos pagamentos com aquele motivo.
+  const abrirSituacao = (situacao) => onAbrirDetalhe({ conta: conta.conta, situacao });
+  // Clicar numa fatia do anel interno (ou na legenda) abre o detalhe dos pagamentos com aquele motivo.
   const abrirMotivo = (motivo) => {
-    if (motivo) onAbrirDetalhe({ conta: conta.conta, situacao: 'naoPago', motivo: motivo.codigo });
+    if (motivo) onAbrirDetalhe({ conta: conta.conta, situacao: motivo.situacao, motivo: motivo.codigo });
   };
 
   return (
@@ -129,23 +130,18 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
         <Alert severity="info">Nenhum pagamento com vencimento entre {periodo.dataInicio} e {periodo.dataFim} nesta conta.</Alert>
       ) : (
         <Grid container spacing={2}>
-          <Grid item xs={12} lg={conta.grupos.length > 1 ? 8 : 5}>
+          <Grid item xs={12} lg={8}>
             <Typography variant="subtitle2" color="text.secondary">
               {conta.grupos.length > 1 ? 'Por consórcio / modal' : 'Por situação'} (clique numa barra para ver o detalhe)
             </Typography>
-            <Chart options={opcoesBarras} series={grafico.series} type="bar" height={340} />
+            <Chart options={opcoesBarras(graficoValor, 'valor')} series={graficoValor.series} type="bar" height={300} />
+            <Chart options={opcoesBarras(graficoQtd, 'qtd')} series={graficoQtd.series} type="bar" height={300} />
           </Grid>
-          <Grid item xs={12} lg={conta.grupos.length > 1 ? 4 : 7}>
+          <Grid item xs={12} lg={4}>
             <Typography variant="subtitle2" color="text.secondary">
-              Motivos dos não pagos (clique numa fatia)
+              Situação e motivos
             </Typography>
-            {rosca.motivos.length ? (
-              <RoscaDoisAneis motivos={rosca.motivos} onSelecionar={abrirMotivo} />
-            ) : (
-              <Alert severity="success" sx={{ mt: 2 }}>
-                Nenhum pagamento não efetivado no período.
-              </Alert>
-            )}
+            <RoscaDoisAneis situacoes={situacoesRosca} motivos={conta.motivos} metrica={metrica} onSelecionarSituacao={abrirSituacao} onSelecionarMotivo={abrirMotivo} />
           </Grid>
         </Grid>
       )}
