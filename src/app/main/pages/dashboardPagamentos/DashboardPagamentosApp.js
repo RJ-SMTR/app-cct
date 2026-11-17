@@ -30,7 +30,7 @@ import {
   formatBRL,
   formatMetrica,
   formatQtd,
-  montarGraficoGrupos,
+  montarGraficoGruposDuplo,
   montarUrlDetalhe,
   periodoDaUrl,
   toIsoDate,
@@ -72,13 +72,12 @@ function Indicador({ situacao, totais, onClick }) {
 }
 
 function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
-  // Barras duplas: um gráfico por escala (valor em R$ e quantidade), cada um com os 3 status.
-  const graficoValor = useMemo(() => montarGraficoGrupos(conta, 'valor'), [conta]);
-  const graficoQtd = useMemo(() => montarGraficoGrupos(conta, 'qtd'), [conta]);
+  // Barras duplas: duas barras por consórcio/modal (Pago | Não pago + Em aberto), na escala escolhida no seletor.
+  const grafico = useMemo(() => montarGraficoGruposDuplo(conta, metrica), [conta, metrica]);
   const situacoesRosca = useMemo(() => SITUACOES.map((s) => ({ ...s, valor: conta[s.key].valor, qtd: conta[s.key].qtd })), [conta]);
   const vazio = SITUACOES.every((s) => conta[s.key].qtd === 0);
 
-  const opcoesBarras = (grafico, metricaBarra) => ({
+  const opcoesBarras = {
     chart: {
       type: 'bar',
       stacked: true,
@@ -87,19 +86,20 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
         // Clicar numa barra abre o detalhe daquele consórcio/modal naquela situação.
         dataPointSelection: (_event, _ctx, { seriesIndex, dataPointIndex }) => {
           if (seriesIndex < 0 || dataPointIndex < 0) return;
-          onAbrirDetalhe({ conta: conta.conta, grupo: grafico.categorias[dataPointIndex], situacao: SITUACOES[seriesIndex].key });
+          onAbrirDetalhe({ conta: conta.conta, grupo: grafico.slots[dataPointIndex].grupo, situacao: grafico.series[seriesIndex].key });
         },
       },
     },
-    colors: SITUACOES.map((s) => s.color),
-    plotOptions: { bar: { columnWidth: '60%' } },
-    xaxis: { categories: grafico.categorias, labels: { rotate: -45, trim: true } },
-    yaxis: { title: { text: metricaBarra === 'valor' ? 'Valor (R$)' : 'Quantidade de pagamentos' }, labels: { formatter: (v) => formatMetrica(v, metricaBarra) } },
+    colors: grafico.series.map((s) => COR_SITUACAO[s.key]),
+    plotOptions: { bar: { columnWidth: '70%' } },
+    xaxis: { categories: grafico.categorias, labels: { rotate: 0, trim: false, hideOverlappingLabels: false, style: { fontSize: '11px' } } },
+    yaxis: { title: { text: metrica === 'valor' ? 'Valor (R$)' : 'Quantidade de pagamentos' }, labels: { formatter: (v) => formatMetrica(v, metrica) } },
     dataLabels: { enabled: false },
-    tooltip: { y: { formatter: (v) => formatMetrica(v, metricaBarra) } },
+    // Tooltip só da barra sob o mouse (cada barra tem séries diferentes).
+    tooltip: { shared: false, y: { formatter: (v) => formatMetrica(v, metrica) } },
     legend: { position: 'top' },
     states: { active: { filter: { type: 'none' } } },
-  });
+  };
 
   const abrirSituacao = (situacao) => onAbrirDetalhe({ conta: conta.conta, situacao });
   // Clicar numa fatia do anel interno (ou na legenda) abre o detalhe dos pagamentos com aquele motivo.
@@ -134,8 +134,7 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
             <Typography variant="subtitle2" color="text.secondary">
               {conta.grupos.length > 1 ? 'Por consórcio / modal' : 'Por situação'} (clique numa barra para ver o detalhe)
             </Typography>
-            <Chart options={opcoesBarras(graficoValor, 'valor')} series={graficoValor.series} type="bar" height={300} />
-            <Chart options={opcoesBarras(graficoQtd, 'qtd')} series={graficoQtd.series} type="bar" height={300} />
+            <Chart options={opcoesBarras} series={grafico.series} type="bar" height={380} />
           </Grid>
           <Grid item xs={12} lg={4}>
             <Typography variant="subtitle2" color="text.secondary">
