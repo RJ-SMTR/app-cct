@@ -40,21 +40,19 @@ describe('dashboardPagamentosUtils', () => {
     expect(montarGraficoGrupos(conta, 'valor').series[1].data).toEqual([50, 0]);
   });
 
-  it('barras duplas: duas barras por consórcio, Pago e (Não pago + Em aberto), cada série só na sua barra', () => {
+  it('barras duplas: uma categoria por consórcio e duas barras (grupos Pago e Pendente), séries na ordem da pilha', () => {
     const g = montarGraficoGruposDuplo(conta, 'valor');
-    expect(g.slots).toEqual([
-      { grupo: 'VLT', tipo: 'pago' },
-      { grupo: 'VLT', tipo: 'pendente' },
-      { grupo: 'STPL', tipo: 'pago' },
-      { grupo: 'STPL', tipo: 'pendente' },
+    expect(g.categorias).toEqual(['VLT', 'STPL']);
+    expect(g.series.map((x) => [x.key, x.group])).toEqual([
+      ['pago', 'pago'],
+      ['naoPago', 'pendente'],
+      ['emAberto', 'pendente'],
     ]);
-    expect(g.categorias[1]).toEqual(['VLT', 'Pendente']);
-    expect(g.series.map((x) => x.key)).toEqual(['pago', 'naoPago', 'emAberto']);
-    expect(g.series[0].data).toEqual([1000, 0, 500, 0]);
-    expect(g.series[1].data).toEqual([0, 50, 0, 0]);
-    expect(g.series[2].data).toEqual([0, 0, 0, 20]);
-    expect(montarGraficoGruposDuplo(conta, 'qtd').series[2].data).toEqual([0, 0, 0, 2]);
-    expect(montarGraficoGruposDuplo(undefined, 'qtd').slots).toEqual([]);
+    expect(g.series[0].data).toEqual([1000, 500]);
+    expect(g.series[1].data).toEqual([50, 0]);
+    expect(g.series[2].data).toEqual([0, 20]);
+    expect(montarGraficoGruposDuplo(conta, 'qtd').series[2].data).toEqual([0, 2]);
+    expect(montarGraficoGruposDuplo(undefined, 'qtd').categorias).toEqual([]);
   });
 
   it('não quebra com conta ausente', () => {
