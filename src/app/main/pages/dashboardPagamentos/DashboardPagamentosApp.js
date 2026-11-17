@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import Chart from 'react-apexcharts';
+import RoscaDoisAneis from './RoscaDoisAneis';
 import {
   Alert,
   Box,
@@ -73,7 +74,8 @@ function Indicador({ situacao, totais, onClick }) {
 
 function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
   const grafico = useMemo(() => montarGraficoGrupos(conta, metrica), [conta, metrica]);
-  const rosca = useMemo(() => montarGraficoMotivos(conta, 'naoPago', metrica), [conta, metrica]);
+  // A rosca mostra as duas escalas ao mesmo tempo (valor e quantidade), então não depende do seletor de métrica.
+  const rosca = useMemo(() => montarGraficoMotivos(conta, 'naoPago', 'valor'), [conta]);
   const vazio = SITUACOES.every((s) => conta[s.key].qtd === 0);
 
   const opcoesBarras = {
@@ -99,21 +101,9 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
     states: { active: { filter: { type: 'none' } } },
   };
 
-  const opcoesRosca = {
-    chart: {
-      type: 'donut',
-      events: {
-        // Clicar numa fatia abre o detalhe dos pagamentos com aquele motivo.
-        dataPointSelection: (_event, _ctx, { dataPointIndex }) => {
-          const motivo = rosca.motivos[dataPointIndex];
-          if (motivo) onAbrirDetalhe({ conta: conta.conta, situacao: 'naoPago', motivo: motivo.codigo });
-        },
-      },
-    },
-    labels: rosca.rotulos,
-    legend: { position: 'bottom' },
-    dataLabels: { enabled: false },
-    tooltip: { y: { formatter: (v) => formatMetrica(v, metrica) } },
+  // Clicar numa fatia (ou na legenda) abre o detalhe dos pagamentos com aquele motivo.
+  const abrirMotivo = (motivo) => {
+    if (motivo) onAbrirDetalhe({ conta: conta.conta, situacao: 'naoPago', motivo: motivo.codigo });
   };
 
   return (
@@ -149,8 +139,8 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
             <Typography variant="subtitle2" color="text.secondary">
               Motivos dos não pagos (clique numa fatia)
             </Typography>
-            {rosca.valores.length ? (
-              <Chart options={opcoesRosca} series={rosca.valores} type="donut" height={340} />
+            {rosca.motivos.length ? (
+              <RoscaDoisAneis motivos={rosca.motivos} onSelecionar={abrirMotivo} />
             ) : (
               <Alert severity="success" sx={{ mt: 2 }}>
                 Nenhum pagamento não efetivado no período.
