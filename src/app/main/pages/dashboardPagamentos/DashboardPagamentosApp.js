@@ -9,9 +9,7 @@ import {
   Button,
   Card,
   CircularProgress,
-  FormControlLabel,
   Grid,
-  Switch,
   Table,
   TableBody,
   TableCell,
@@ -78,12 +76,31 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
   const grafico = useMemo(() => montarGraficoGruposDuplo(conta, metrica), [conta, metrica]);
   const situacoesRosca = useMemo(() => SITUACOES.map((s) => ({ ...s, valor: conta[s.key].valor, qtd: conta[s.key].qtd })), [conta]);
   const vazio = SITUACOES.every((s) => conta[s.key].qtd === 0);
-  // Escala logarítmica no eixo Y: valores pequenos (um pagamento não pago) continuam visíveis ao lado de milhões.
-  const [escalaLog, setEscalaLog] = useState(true);
+  // Escalas do eixo Y: "dupla" (Pago no eixo esquerdo, Pendente no direito), "log" ou "linear". Com valores pequenos
+  // (um pagamento não pago) ao lado de milhões, a linear esconde as barras menores.
+  const [escala, setEscala] = useState('dupla');
+  const escalaLog = escala === 'log';
   const seriesBarras = useMemo(
     () => (escalaLog ? grafico.series.map((s) => ({ ...s, data: s.data.map((v) => (v > 0 ? v : null)) })) : grafico.series),
     [grafico, escalaLog],
   );
+
+  const nomeMetrica = metrica === 'valor' ? 'Valor (R$)' : 'Quantidade de pagamentos';
+  const rotulosY = { formatter: (v) => formatMetrica(v, metrica) };
+  const yaxisBarras =
+    escala === 'dupla'
+      ? [
+          // Eixo esquerdo: barra de Pago (valores altos).
+          { seriesName: grafico.series[0].name, min: 0, title: { text: `Pago – ${nomeMetrica}`, style: { color: COR_SITUACAO.pago } }, labels: { ...rotulosY, style: { colors: COR_SITUACAO.pago } } },
+          // Eixo direito: barra de Pendente (Não pago + Em aberto), escala própria e menor.
+          { seriesName: grafico.series[1].name, opposite: true, min: 0, title: { text: `Pendente – ${nomeMetrica}`, style: { color: COR_SITUACAO.naoPago } }, labels: { ...rotulosY, style: { colors: COR_SITUACAO.naoPago } } },
+          { seriesName: grafico.series[1].name, opposite: true, show: false },
+        ]
+      : {
+          title: { text: `${nomeMetrica}${escalaLog ? ' – escala logarítmica' : ''}` },
+          labels: rotulosY,
+          ...(escalaLog ? { logarithmic: true, logBase: 10, min: 1 } : {}),
+        };
 
   const opcoesBarras = {
     chart: {
@@ -101,11 +118,7 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
     colors: grafico.series.map((s) => COR_SITUACAO[s.key]),
     plotOptions: { bar: { columnWidth: '70%' } },
     xaxis: { categories: grafico.categorias, labels: { rotate: -45, trim: true } },
-    yaxis: {
-      title: { text: `${metrica === 'valor' ? 'Valor (R$)' : 'Quantidade de pagamentos'}${escalaLog ? ' – escala logarítmica' : ''}` },
-      labels: { formatter: (v) => formatMetrica(v, metrica) },
-      ...(escalaLog ? { logarithmic: true, logBase: 10, min: 1 } : {}),
-    },
+    yaxis: yaxisBarras,
     dataLabels: { enabled: false },
     // Tooltip só da barra sob o mouse (cada barra tem séries diferentes).
     tooltip: { shared: false, y: { formatter: (v) => formatMetrica(v, metrica) } },
@@ -147,10 +160,11 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
               <Typography variant="subtitle2" color="text.secondary">
                 {conta.grupos.length > 1 ? 'Por consórcio / modal' : 'Por situação'} (clique numa barra para ver o detalhe)
               </Typography>
-              <FormControlLabel
-                control={<Switch size="small" checked={escalaLog} onChange={(e) => setEscalaLog(e.target.checked)} />}
-                label={<Typography variant="caption">Escala logarítmica</Typography>}
-              />
+              <ToggleButtonGroup exclusive size="small" value={escala} onChange={(_e, v) => v && setEscala(v)} aria-label="Escala do eixo Y">
+                <ToggleButton value="dupla">Duas escalas</ToggleButton>
+                <ToggleButton value="log">Logarítmica</ToggleButton>
+                <ToggleButton value="linear">Linear</ToggleButton>
+              </ToggleButtonGroup>
             </Box>
             <Chart options={opcoesBarras} series={seriesBarras} type="bar" height={380} />
           </Grid>
