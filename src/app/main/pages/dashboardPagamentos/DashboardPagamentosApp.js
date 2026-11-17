@@ -9,7 +9,9 @@ import {
   Button,
   Card,
   CircularProgress,
+  FormControlLabel,
   Grid,
+  Switch,
   Table,
   TableBody,
   TableCell,
@@ -76,6 +78,12 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
   const grafico = useMemo(() => montarGraficoGruposDuplo(conta, metrica), [conta, metrica]);
   const situacoesRosca = useMemo(() => SITUACOES.map((s) => ({ ...s, valor: conta[s.key].valor, qtd: conta[s.key].qtd })), [conta]);
   const vazio = SITUACOES.every((s) => conta[s.key].qtd === 0);
+  // Escala logarítmica no eixo Y: valores pequenos (um pagamento não pago) continuam visíveis ao lado de milhões.
+  const [escalaLog, setEscalaLog] = useState(true);
+  const seriesBarras = useMemo(
+    () => (escalaLog ? grafico.series.map((s) => ({ ...s, data: s.data.map((v) => (v > 0 ? v : null)) })) : grafico.series),
+    [grafico, escalaLog],
+  );
 
   const opcoesBarras = {
     chart: {
@@ -93,7 +101,11 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
     colors: grafico.series.map((s) => COR_SITUACAO[s.key]),
     plotOptions: { bar: { columnWidth: '70%' } },
     xaxis: { categories: grafico.categorias, labels: { rotate: -45, trim: true } },
-    yaxis: { title: { text: metrica === 'valor' ? 'Valor (R$)' : 'Quantidade de pagamentos' }, labels: { formatter: (v) => formatMetrica(v, metrica) } },
+    yaxis: {
+      title: { text: `${metrica === 'valor' ? 'Valor (R$)' : 'Quantidade de pagamentos'}${escalaLog ? ' – escala logarítmica' : ''}` },
+      labels: { formatter: (v) => formatMetrica(v, metrica) },
+      ...(escalaLog ? { logarithmic: true, logBase: 10, min: 1 } : {}),
+    },
     dataLabels: { enabled: false },
     // Tooltip só da barra sob o mouse (cada barra tem séries diferentes).
     tooltip: { shared: false, y: { formatter: (v) => formatMetrica(v, metrica) } },
@@ -131,10 +143,16 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
       ) : (
         <Grid container spacing={2}>
           <Grid item xs={12} lg={8}>
-            <Typography variant="subtitle2" color="text.secondary">
-              {conta.grupos.length > 1 ? 'Por consórcio / modal' : 'Por situação'} (clique numa barra para ver o detalhe)
-            </Typography>
-            <Chart options={opcoesBarras} series={grafico.series} type="bar" height={380} />
+            <Box className="flex flex-wrap items-center justify-between">
+              <Typography variant="subtitle2" color="text.secondary">
+                {conta.grupos.length > 1 ? 'Por consórcio / modal' : 'Por situação'} (clique numa barra para ver o detalhe)
+              </Typography>
+              <FormControlLabel
+                control={<Switch size="small" checked={escalaLog} onChange={(e) => setEscalaLog(e.target.checked)} />}
+                label={<Typography variant="caption">Escala logarítmica</Typography>}
+              />
+            </Box>
+            <Chart options={opcoesBarras} series={seriesBarras} type="bar" height={380} />
           </Grid>
           <Grid item xs={12} lg={4}>
             <Typography variant="subtitle2" color="text.secondary">
