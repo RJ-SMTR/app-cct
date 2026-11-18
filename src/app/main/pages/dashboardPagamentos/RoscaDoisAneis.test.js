@@ -7,40 +7,43 @@ const situacoes = [
   { key: 'emAberto', label: 'Em aberto', color: '#ed6c02', valor: 100, qtd: 1 },
 ];
 const motivos = [
+  { situacao: 'pago', codigo: 'OK', descricao: 'Efetivado', valor: 600, qtd: 6 },
   { situacao: 'naoPago', codigo: 'AB', descricao: 'Conta inválida', valor: 200, qtd: 2 },
   { situacao: 'naoPago', codigo: 'CD', descricao: 'Saldo insuficiente', valor: 50, qtd: 1 },
   { situacao: 'emAberto', codigo: 'EF', descricao: 'Aguardando', valor: 100, qtd: 1 },
 ];
 
 describe('montarAneis', () => {
-  it('anel externo por situação e interno por motivo, na mesma proporção do total', () => {
-    const { total, externo, interno } = montarAneis(situacoes, motivos, 'valor');
-    expect(total).toBe(1000);
-    expect(externo.map((x) => x.fracao)).toEqual([0.6, 0.3, 0.1]);
-    // pago não tem motivo (espaço vazio de 0,6), depois os dois motivos de não pago + resto 0,05, e o de em aberto
-    expect(interno.map((x) => [x.id, x.fracao, !!x.vazio])).toEqual([
-      ['v:pago', 0.6, true],
-      ['m:naoPago:AB', 0.2, false],
-      ['m:naoPago:CD', 0.05, false],
-      ['v:naoPago', 0.05, true],
-      ['m:emAberto:EF', 0.1, false],
+  it('anel externo com os pagos e anel interno com não pagos e aguardando pagamento, cada um fechando 100%', () => {
+    const { totalPagos, totalPendentes, externo, interno } = montarAneis(situacoes, motivos, 'valor');
+    expect(totalPagos).toBe(600);
+    expect(totalPendentes).toBe(400);
+    expect(externo.map((x) => [x.rotulo, x.fracao])).toEqual([['Efetivado', 1]]);
+    expect(interno.map((x) => [x.rotulo, x.fracao])).toEqual([
+      ['Conta inválida', 0.5],
+      ['Saldo insuficiente', 0.125],
+      ['Não pago (sem motivo)', 0.125],
+      ['Aguardando', 0.25],
     ]);
+    expect(interno.map((x) => x.situacao)).toEqual(['naoPago', 'naoPago', 'naoPago', 'emAberto']);
   });
 
-  it('usa a quantidade quando a métrica é qtd e não gera NaN com total zero', () => {
-    expect(montarAneis(situacoes, motivos, 'qtd').total).toBe(10);
+  it('situação sem motivos vira uma fatia com o nome da situação; qtd usa a quantidade; total zero não gera NaN', () => {
+    const semMotivos = montarAneis(situacoes, [], 'qtd');
+    expect(semMotivos.externo.map((x) => [x.rotulo, x.valor])).toEqual([['Pago', 6]]);
+    expect(semMotivos.interno.map((x) => [x.rotulo, x.valor])).toEqual([['Não pago', 3], ['Em aberto', 1]]);
     const zerado = montarAneis(situacoes.map((s) => ({ ...s, valor: 0, qtd: 0 })), [], 'valor');
-    expect(zerado.externo.every((x) => x.fracao === 0)).toBe(true);
+    expect(zerado.externo).toEqual([]);
+    expect(zerado.interno).toEqual([]);
   });
 });
 
 describe('RoscaDoisAneis', () => {
-  it('desenha uma fatia por situação e uma por motivo, com o total no centro e sem legenda', () => {
+  it('desenha uma fatia por motivo em cada anel, com os totais no centro e sem legenda', () => {
     const html = renderToStaticMarkup(<RoscaDoisAneis situacoes={situacoes} motivos={motivos} metrica="valor" />);
-    expect(html.match(/role="button"/g)).toHaveLength(3 + 3);
-    expect(html).toContain('Motivo: Conta inválida');
+    expect(html.match(/role="button"/g)).toHaveLength(1 + 4);
+    expect(html).toContain('Pagos: Efetivado');
+    expect(html).toContain('Anel externo: pagos');
     expect(html).not.toContain('Conta inválida: R$');
-    expect(html).toContain('Anel externo: situação');
-    expect(html).toContain('Total (valor)');
   });
 });
