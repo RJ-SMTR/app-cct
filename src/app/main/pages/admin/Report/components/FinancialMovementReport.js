@@ -341,7 +341,8 @@ export default function FinancialMovementReport({ perfil }) {
       // recalculado a cada clique de página (ADR 0023 da api-cct).
       const [pageResponse, totalLines] = await Promise.all([
         dispatch(handleAgentFinancialMovementPage(pageRequestData)),
-        isNewSearch ? dispatch(fetchAgentFinancialMovementAssociationTotals(pageRequestData)) : null,
+        // A linha da associação é complementar: se a rota falhar, o relatório sai sem ela.
+        isNewSearch ? dispatch(fetchAgentFinancialMovementAssociationTotals(pageRequestData)).catch(() => []) : null,
       ]);
       if (isNewSearch) setAssociationTotalLines(totalLines);
       const newNextCursor = pageResponse?.nextCursor ?? null;

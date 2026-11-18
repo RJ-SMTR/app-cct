@@ -574,7 +574,8 @@ export default function ConsolidatedReportPage({ perfil }) {
     try {
       const [responseBlocks, totalLines] = await Promise.all([
         dispatch(fetchAgentConsolidatedReport(data)),
-        dispatch(fetchAgentConsolidatedAssociationTotals(data)),
+        // A linha da associação é complementar: se a rota falhar, o relatório sai sem ela.
+        dispatch(fetchAgentConsolidatedAssociationTotals(data)).catch(() => []),
       ]);
       setReportBlocks(responseBlocks);
       setAssociationTotalLines(totalLines);
