@@ -6,6 +6,9 @@ export const SITUACOES = [
   { key: 'emAberto', label: 'Em aberto', color: '#ed6c02' },
 ];
 
+/** Situações exibidas nos gráficos: só o que já teve retorno do banco (status 3 e 5 = Pago, 4 = Não pago). Em aberto fica de fora. */
+export const SITUACOES_GRAFICO = SITUACOES.filter((s) => s.key !== 'emAberto');
+
 export const CONTAS = ['bilhetagem', 'rotativo', 'cett'];
 
 // Mesmos grupos que a API devolve no resumo (GRUPOS_POR_CONTA); alimentam o filtro múltiplo do detalhe.
@@ -62,9 +65,8 @@ export function montarGraficoGrupos(conta, metrica) {
 }
 
 /**
- * Barras duplas: duas barras por consórcio/modal. A primeira é a de "Pago"; a segunda empilha "Não pago" e "Em aberto".
- * O nome do consórcio aparece uma vez no eixo X; as duas barras saem de séries com `group` (barras agrupadas e
- * empilhadas do ApexCharts): grupo "pago" e grupo "pendente".
+ * Barras duplas: duas barras por consórcio/modal, "Pago" (status 3 e 5) e "Não pago" (status 4); Em aberto não entra.
+ * O nome do consórcio aparece uma vez no eixo X; as duas barras saem de séries com `group` (barras agrupadas do ApexCharts).
  */
 export function montarGraficoGruposDuplo(conta, metrica) {
   const grupos = conta?.grupos ?? [];
@@ -76,7 +78,7 @@ export function montarGraficoGruposDuplo(conta, metrica) {
   });
   return {
     categorias: grupos.map((g) => g.grupo),
-    series: [serie('pago', 'pago'), serie('naoPago', 'pendente'), serie('emAberto', 'pendente')],
+    series: [serie('pago', 'pago'), serie('naoPago', 'naoPago')],
   };
 }
 

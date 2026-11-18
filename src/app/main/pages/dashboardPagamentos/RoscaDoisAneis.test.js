@@ -35,10 +35,11 @@ describe('montarAneis', () => {
 });
 
 describe('RoscaDoisAneis', () => {
-  it('desenha uma fatia por situação e uma por motivo, com o total no centro e as legendas', () => {
+  it('desenha uma fatia por situação e uma por motivo, com o total no centro e sem legenda', () => {
     const html = renderToStaticMarkup(<RoscaDoisAneis situacoes={situacoes} motivos={motivos} metrica="valor" />);
     expect(html.match(/role="button"/g)).toHaveLength(3 + 3);
-    expect(html).toContain('Conta inválida');
+    expect(html).toContain('Motivo: Conta inválida');
+    expect(html).not.toContain('Conta inválida: R$');
     expect(html).toContain('Anel externo: situação');
     expect(html).toContain('Total (valor)');
   });

@@ -102,7 +102,6 @@ export default function RoscaDoisAneis({ situacoes, motivos, metrica = 'valor', 
     else onSelecionarSituacao?.(fatia.situacao);
   };
   const rotuloMetrica = metrica === 'valor' ? 'Valor' : 'Pagamentos';
-  const legendaMotivos = interno.filter((x) => !x.vazio);
 
   return (
     <Box>
@@ -124,24 +123,6 @@ export default function RoscaDoisAneis({ situacoes, motivos, metrica = 'valor', 
         </svg>
       </Box>
 
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 2, mb: 1 }}>
-        {externo.map((s) => (
-          <Box key={s.id} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, cursor: 'pointer' }} onClick={() => onSelecionarSituacao?.(s.situacao)} onMouseEnter={() => setAtivo(s.id)} onMouseLeave={() => setAtivo(null)}>
-            <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: s.cor }} />
-            <Typography variant="body2">{s.rotulo}: {formatMetrica(s.valor, metrica)}</Typography>
-          </Box>
-        ))}
-      </Box>
-      {legendaMotivos.length > 0 && (
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 2 }}>
-          {legendaMotivos.map((m) => (
-            <Box key={m.id} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, cursor: 'pointer' }} onClick={() => onSelecionarMotivo?.(m.motivo)} onMouseEnter={() => setAtivo(m.id)} onMouseLeave={() => setAtivo(null)}>
-              <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: m.cor }} />
-              <Typography variant="body2" color="text.secondary">{m.rotulo}: {formatMetrica(m.valor, metrica)}</Typography>
-            </Box>
-          ))}
-        </Box>
-      )}
       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 1 }}>
         Anel externo: situação · Anel interno: motivo (clique para ver o detalhe)
       </Typography>
