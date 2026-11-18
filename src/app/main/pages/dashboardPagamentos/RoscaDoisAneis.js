@@ -2,8 +2,6 @@ import { useMemo, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import { formatMetrica } from './dashboardPagamentosUtils';
 
-export const CORES_MOTIVOS = ['#3f8f5b', '#e5a23c', '#775DD0', '#00A3C4', '#D4526E', '#8D5B4C', '#546E7A', '#3F51B5', '#F86624', '#9CCC65'];
-
 const TAMANHO = 300;
 const CENTRO = TAMANHO / 2;
 const ESPESSURA = 36;
@@ -14,31 +12,44 @@ const RAIO_INTERNO = RAIO_EXTERNO - ESPESSURA - FOLGA;
 const numero = (v) => Math.max(Number(v) || 0, 0);
 const pct = (f) => `${(f * 100).toFixed(1).replace('.', ',')}%`;
 
+/** Clareia uma cor #rrggbb misturando com branco (fração 0..1). */
+function clarear(hex, fracao) {
+  const n = parseInt(hex.slice(1), 16);
+  const mix = (c) => Math.round(c + (255 - c) * fracao);
+  const r = mix((n >> 16) & 255);
+  const g = mix((n >> 8) & 255);
+  const b = mix(n & 255);
+  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+}
+
+/** Fatias de um conjunto de situações: uma por motivo; o que a situação tem a mais que seus motivos vira uma fatia da própria situação. */
+function fatiasDeSituacoes(situacoes, motivos, campo) {
+  const fatias = [];
+  situacoes.forEach((s) => {
+    const dela = motivos.filter((m) => m.situacao === s.key && numero(m[campo]) > 0);
+    let i = 0;
+    dela.forEach((m) => {
+      fatias.push({ id: `m:${s.key}:${m.codigo}`, rotulo: m.descricao, cor: clarear(s.color, Math.min(i * 0.22, 0.66)), valor: numero(m[campo]), situacao: s.key, motivo: m });
+      i += 1;
+    });
+    const resto = numero(s[campo]) - dela.reduce((a, m) => a + numero(m[campo]), 0);
+    if (resto > 0) {
+      fatias.push({ id: `s:${s.key}`, rotulo: dela.length ? `${s.label} (sem motivo)` : s.label, cor: clarear(s.color, Math.min(i * 0.22, 0.66)), valor: resto, situacao: s.key });
+    }
+  });
+  const total = fatias.reduce((a, f) => a + f.valor, 0);
+  return { total, fatias: fatias.map((f) => ({ ...f, fracao: total > 0 ? f.valor / total : 0 })) };
+}
+
 /**
- * Monta os dois anéis. Anel externo: uma fatia por situação. Anel interno: uma fatia por motivo, na ordem das situações,
- * ocupando o mesmo ângulo da situação a que pertence (o que sobra da situação sem motivo fica como espaço vazio).
- * Função pura, exportada para teste.
+ * Monta os dois anéis. Anel externo: os pagos, uma fatia por motivo. Anel interno: os não pagos e aguardando pagamento (em aberto), uma fatia
+ * por motivo. Cada anel fecha o seu próprio total (100%). Função pura, exportada para teste.
  */
 export function montarAneis(situacoes, motivos, metrica) {
   const campo = metrica === 'valor' ? 'valor' : 'qtd';
-  const total = situacoes.reduce((s, x) => s + numero(x[campo]), 0);
-  const frac = (v) => (total > 0 ? numero(v) / total : 0);
-
-  const externo = situacoes.map((s) => ({ id: `s:${s.key}`, rotulo: s.label, cor: s.color, valor: numero(s[campo]), fracao: frac(s[campo]), situacao: s.key }));
-
-  const interno = [];
-  let indiceCor = 0;
-  situacoes.forEach((s) => {
-    const dela = motivos.filter((m) => m.situacao === s.key && numero(m[campo]) > 0);
-    dela.forEach((m) => {
-      interno.push({ id: `m:${s.key}:${m.codigo}`, rotulo: m.descricao, cor: CORES_MOTIVOS[indiceCor % CORES_MOTIVOS.length], valor: numero(m[campo]), fracao: frac(m[campo]), situacao: s.key, motivo: m });
-      indiceCor += 1;
-    });
-    const resto = numero(s[campo]) - dela.reduce((a, m) => a + numero(m[campo]), 0);
-    if (resto > 0) interno.push({ id: `v:${s.key}`, vazio: true, fracao: frac(resto), valor: resto, situacao: s.key });
-  });
-
-  return { total, externo, interno };
+  const pagos = fatiasDeSituacoes(situacoes.filter((s) => s.key === 'pago'), motivos, campo);
+  const pendentes = fatiasDeSituacoes(situacoes.filter((s) => s.key !== 'pago'), motivos, campo);
+  return { totalPagos: pagos.total, totalPendentes: pendentes.total, externo: pagos.fatias, interno: pendentes.fatias };
 }
 
 function Anel({ raio, fatias, ativo, onAtivar, onSelecionar, nomeAnel }) {
@@ -51,7 +62,7 @@ function Anel({ raio, fatias, ativo, onAtivar, onSelecionar, nomeAnel }) {
         const comprimento = f.fracao * perimetro;
         const inicio = acumulado;
         acumulado += comprimento;
-        if (f.vazio || f.fracao <= 0) return null;
+        if (f.fracao <= 0) return null;
         const esmaecer = ativo !== null && ativo !== f.id;
         return (
           <circle
@@ -88,43 +99,47 @@ function Anel({ raio, fatias, ativo, onAtivar, onSelecionar, nomeAnel }) {
 }
 
 /**
- * Rosca dupla: anel externo por situação (pago / não pago / em aberto) e anel interno por motivo, total no centro.
+ * Rosca dupla: anel externo com os pagos e anel interno com os não pagos e aguardando pagamento (em aberto), ambos por motivo.
  * `situacoes`: [{ key, label, color, valor, qtd }]; `motivos`: [{ situacao, codigo, descricao, valor, qtd }].
  */
 export default function RoscaDoisAneis({ situacoes, motivos, metrica = 'valor', onSelecionarSituacao, onSelecionarMotivo }) {
   const [ativo, setAtivo] = useState(null);
-  const { total, externo, interno } = useMemo(() => montarAneis(situacoes, motivos, metrica), [situacoes, motivos, metrica]);
-  const todas = [...externo, ...interno];
-  const f = ativo ? todas.find((x) => x.id === ativo) : null;
+  const { totalPagos, totalPendentes, externo, interno } = useMemo(() => montarAneis(situacoes, motivos, metrica), [situacoes, motivos, metrica]);
+  const f = ativo ? [...externo, ...interno].find((x) => x.id === ativo) : null;
 
   const selecionar = (fatia) => {
     if (fatia.motivo) onSelecionarMotivo?.(fatia.motivo);
     else onSelecionarSituacao?.(fatia.situacao);
   };
-  const rotuloMetrica = metrica === 'valor' ? 'Valor' : 'Pagamentos';
+  const cortar = (t) => (t.length > 24 ? `${t.slice(0, 23)}…` : t);
 
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-        <svg viewBox={`0 0 ${TAMANHO} ${TAMANHO}`} width="100%" style={{ maxWidth: 340 }} role="group" aria-label="Pagamentos: anel externo por situação, anel interno por motivo">
-          <Anel raio={RAIO_EXTERNO} fatias={externo} ativo={ativo} onAtivar={setAtivo} onSelecionar={selecionar} nomeAnel="Situação" />
-          <Anel raio={RAIO_INTERNO} fatias={interno} ativo={ativo} onAtivar={setAtivo} onSelecionar={selecionar} nomeAnel="Motivo" />
+        <svg viewBox={`0 0 ${TAMANHO} ${TAMANHO}`} width="100%" style={{ maxWidth: 340 }} role="group" aria-label="Pagamentos: anel externo com os pagos, anel interno com os não pagos e aguardando pagamento">
+          <Anel raio={RAIO_EXTERNO} fatias={externo} ativo={ativo} onAtivar={setAtivo} onSelecionar={selecionar} nomeAnel="Pagos" />
+          <Anel raio={RAIO_INTERNO} fatias={interno} ativo={ativo} onAtivar={setAtivo} onSelecionar={selecionar} nomeAnel="Não pagos e aguardando pagamento" />
           <g textAnchor="middle" fill="currentColor" style={{ pointerEvents: 'none' }}>
-            <text x={CENTRO} y={CENTRO - 14} fontSize="11" opacity="0.7">
-              {f && !f.vazio ? (f.rotulo.length > 22 ? `${f.rotulo.slice(0, 21)}…` : f.rotulo) : `Total (${rotuloMetrica.toLowerCase()})`}
-            </text>
-            <text x={CENTRO} y={CENTRO + 6} fontSize="15" fontWeight="600">
-              {formatMetrica(f && !f.vazio ? f.valor : total, metrica)}
-            </text>
-            {f && !f.vazio && (
-              <text x={CENTRO} y={CENTRO + 24} fontSize="12">{pct(total > 0 ? f.valor / total : 0)}</text>
+            {f ? (
+              <>
+                <text x={CENTRO} y={CENTRO - 14} fontSize="11" opacity="0.7">{cortar(f.rotulo)}</text>
+                <text x={CENTRO} y={CENTRO + 6} fontSize="15" fontWeight="600">{formatMetrica(f.valor, metrica)}</text>
+                <text x={CENTRO} y={CENTRO + 24} fontSize="12">{pct(f.fracao)}</text>
+              </>
+            ) : (
+              <>
+                <text x={CENTRO} y={CENTRO - 16} fontSize="10" opacity="0.7">Pagos</text>
+                <text x={CENTRO} y={CENTRO - 2} fontSize="13" fontWeight="600">{formatMetrica(totalPagos, metrica)}</text>
+                <text x={CENTRO} y={CENTRO + 16} fontSize="10" opacity="0.7">Não pagos / aguardando</text>
+                <text x={CENTRO} y={CENTRO + 30} fontSize="13" fontWeight="600">{formatMetrica(totalPendentes, metrica)}</text>
+              </>
             )}
           </g>
         </svg>
       </Box>
 
       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 1 }}>
-        Anel externo: situação · Anel interno: motivo (clique para ver o detalhe)
+        Anel externo: pagos · Anel interno: não pagos e aguardando pagamento (clique para ver o detalhe)
       </Typography>
     </Box>
   );

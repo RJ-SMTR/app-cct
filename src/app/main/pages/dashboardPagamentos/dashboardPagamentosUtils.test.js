@@ -6,6 +6,7 @@ import {
   nomeArquivoExportacao,
   lerFiltrosDetalhe,
   montarGraficoGrupos,
+  agruparMotivosEmAberto,
   montarGraficoGruposDuplo,
   montarGraficoMotivos,
   montarUrlDetalhe,
@@ -35,22 +36,39 @@ describe('dashboardPagamentosUtils', () => {
   it('monta o gráfico empilhado por consórcio/modal, na ordem da API, por quantidade ou por valor', () => {
     const porQtd = montarGraficoGrupos(conta, 'qtd');
     expect(porQtd.categorias).toEqual(['VLT', 'STPL']);
-    expect(porQtd.series.map((s) => s.name)).toEqual(['Pago', 'Não pago', 'Em aberto']);
+    expect(porQtd.series.map((s) => s.name)).toEqual(['Pago', 'Não pago', 'Aguardando pagamento']);
     expect(porQtd.series[0].data).toEqual([9, 5]);
     expect(montarGraficoGrupos(conta, 'valor').series[1].data).toEqual([50, 0]);
   });
 
-  it('barras duplas: uma categoria por consórcio e duas barras (Pago e Não pago); Em aberto fica de fora', () => {
+  it('barras duplas: uma categoria por consórcio e duas barras (Pago e Não pago + Aguardando pagamento)', () => {
     const g = montarGraficoGruposDuplo(conta, 'valor');
     expect(g.categorias).toEqual(['VLT', 'STPL']);
     expect(g.series.map((x) => [x.key, x.group])).toEqual([
       ['pago', 'pago'],
-      ['naoPago', 'naoPago'],
+      ['naoPago', 'pendente'],
+      ['emAberto', 'pendente'],
     ]);
+    expect(g.series[2].name).toBe('Aguardando pagamento');
     expect(g.series[0].data).toEqual([1000, 500]);
     expect(g.series[1].data).toEqual([50, 0]);
-    expect(montarGraficoGruposDuplo(conta, 'qtd').series[1].data).toEqual([1, 0]);
+    expect(g.series[2].data).toEqual([0, 20]);
+    expect(montarGraficoGruposDuplo(conta, 'qtd').series[2].data).toEqual([0, 2]);
     expect(montarGraficoGruposDuplo(undefined, 'qtd').categorias).toEqual([]);
+  });
+
+  it('motivos em aberto viram uma linha só, "Aguardando pagamento", sem código', () => {
+    const motivos = [
+      { situacao: 'pago', codigo: 'EFETIVADO', descricao: 'Efetivado', qtd: 5, valor: 50 },
+      { situacao: 'emAberto', codigo: 'AGUARDANDO', descricao: 'Aguardando pagamento', qtd: 35, valor: 100 },
+      { situacao: 'emAberto', codigo: 'ENVIADO', descricao: 'Enviado ao banco (aguardando retorno)', qtd: 1, valor: 20 },
+    ];
+    expect(agruparMotivosEmAberto(motivos)).toEqual([
+      motivos[0],
+      { situacao: 'emAberto', codigo: undefined, descricao: 'Aguardando pagamento', qtd: 36, valor: 120 },
+    ]);
+    expect(agruparMotivosEmAberto(motivos.slice(0, 1))).toEqual(motivos.slice(0, 1));
+    expect(agruparMotivosEmAberto(undefined)).toEqual([]);
   });
 
   it('não quebra com conta ausente', () => {

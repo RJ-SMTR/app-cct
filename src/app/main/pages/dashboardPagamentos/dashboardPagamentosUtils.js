@@ -3,11 +3,8 @@ import dayjs from 'dayjs';
 export const SITUACOES = [
   { key: 'pago', label: 'Pago', color: '#2e7d32' },
   { key: 'naoPago', label: 'Não pago', color: '#d32f2f' },
-  { key: 'emAberto', label: 'Em aberto', color: '#ed6c02' },
+  { key: 'emAberto', label: 'Aguardando pagamento', color: '#ed6c02' },
 ];
-
-/** Situações exibidas nos gráficos: só o que já teve retorno do banco (status 3 e 5 = Pago, 4 = Não pago). Em aberto fica de fora. */
-export const SITUACOES_GRAFICO = SITUACOES.filter((s) => s.key !== 'emAberto');
 
 export const CONTAS = ['bilhetagem', 'rotativo', 'cett'];
 
@@ -65,8 +62,9 @@ export function montarGraficoGrupos(conta, metrica) {
 }
 
 /**
- * Barras duplas: duas barras por consórcio/modal, "Pago" (status 3 e 5) e "Não pago" (status 4); Em aberto não entra.
- * O nome do consórcio aparece uma vez no eixo X; as duas barras saem de séries com `group` (barras agrupadas do ApexCharts).
+ * Barras duplas: duas barras por consórcio/modal. A primeira é a de "Pago"; a segunda empilha "Não pago" e
+ * "Aguardando pagamento" (em aberto). O nome do consórcio aparece uma vez no eixo X; as duas barras saem de séries
+ * com `group` (barras agrupadas e empilhadas do ApexCharts).
  */
 export function montarGraficoGruposDuplo(conta, metrica) {
   const grupos = conta?.grupos ?? [];
@@ -78,8 +76,26 @@ export function montarGraficoGruposDuplo(conta, metrica) {
   });
   return {
     categorias: grupos.map((g) => g.grupo),
-    series: [serie('pago', 'pago'), serie('naoPago', 'naoPago')],
+    series: [serie('pago', 'pago'), serie('naoPago', 'pendente'), serie('emAberto', 'pendente')],
   };
+}
+
+/**
+ * Tudo que está em aberto aparece como "Aguardando pagamento": os motivos de "em aberto" viram uma linha só (sem código,
+ * então o clique abre a situação inteira). Os demais motivos ficam como vieram.
+ */
+export function agruparMotivosEmAberto(motivos) {
+  const lista = motivos ?? [];
+  const abertos = lista.filter((m) => m.situacao === 'emAberto');
+  if (abertos.length === 0) return lista;
+  const unico = {
+    situacao: 'emAberto',
+    codigo: undefined,
+    descricao: ROTULO_SITUACAO.emAberto,
+    qtd: abertos.reduce((s, m) => s + (Number(m.qtd) || 0), 0),
+    valor: abertos.reduce((s, m) => s + (Number(m.valor) || 0), 0),
+  };
+  return [...lista.filter((m) => m.situacao !== 'emAberto'), unico];
 }
 
 /** Rosca dos motivos de uma situação (por padrão "não pago"). */
