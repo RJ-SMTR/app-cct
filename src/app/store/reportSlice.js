@@ -6,8 +6,10 @@ import dayjs from 'dayjs';
 import JwtService from '../auth/services/jwtService';
 import { withReportRequestControl } from './reportRequestControl';
 import {
+  buildAgentAssociationTotalLines,
   buildAgentConsolidatedReportParams,
   getSelectedBothAssociationsNames,
+  hasAgentAssociationFilter,
   normalizeAgentConsolidatedReportBlocks,
 } from './agentConsolidatedReportUtils';
 import {
@@ -363,6 +365,29 @@ export const fetchAgentConsolidatedReport = (data) => async () => {
 
   return normalizeAgentConsolidatedReportBlocks(blocks);
 };
+
+// Linha de cada associação no resultado do Guardador (Consolidado e Movimentação Financeira): GET
+// guardador/associacoes com os mesmos filtros da pesquisa. Sem filtro de associação não há linha nem requisição.
+const requestAgentAssociationTotalLines = async (requestParams) => {
+  const token = window.localStorage.getItem('jwt_access_token');
+
+  if (!JwtService.isAuthTokenValid(token)) {
+    return Promise.reject(new Error('Sessão inválida. Faça login novamente.'));
+  }
+  if (!hasAgentAssociationFilter(requestParams)) {
+    return [];
+  }
+
+  const url = toApiV2Url(api.defaults.baseURL, `${jwtServiceConfig.guardadorFinancialMovement}/associacoes`);
+  const totals = await requestReport(url, requestParams, token);
+  return buildAgentAssociationTotalLines(totals, requestParams);
+};
+
+export const fetchAgentConsolidatedAssociationTotals = (data) => async () =>
+  requestAgentAssociationTotalLines(buildAgentConsolidadoV2Params(buildAgentConsolidatedReportParams(data)));
+
+export const fetchAgentFinancialMovementAssociationTotals = (data) => async () =>
+  requestAgentAssociationTotalLines(handleAgentFinancialData(data));
 
 export const handleFinancialMovementSummary = (data, options = {}) => async (dispatch) => {
   const token = window.localStorage.getItem('jwt_access_token');

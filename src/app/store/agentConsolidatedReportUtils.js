@@ -405,3 +405,32 @@ export function normalizeAgentStatusSelection(options = []) {
     label: option?.label ?? getOptionValue(option),
   }));
 }
+
+export const AGENT_ASSOCIATION_OWN_PAYMENT_LABEL = "Valor pago à associação";
+export const AGENT_ASSOCIATION_GUARDADORES_LABEL = "Valor dos guardadores da associação";
+
+// Request params (Consolidado or Movimentação) carry an association filter: only then the result shows one line
+// per association.
+export function hasAgentAssociationFilter(requestParams = {}) {
+  return Boolean(requestParams.consorcioNome || requestParams.todosConsorcios);
+}
+
+// One line per association in the result (Rayanne's rule, 2026-11-18), from GET guardador/associacoes:
+// - only the association selected (no guardador): the association's own payment;
+// - "Todos os guardadores" (or specific guardadores) + association: the guardadores linked to that association;
+// - "ANGLAE/SINGAERJ (ambas)": the guardadores of both, since the association's own payment never enters there.
+export function buildAgentAssociationTotalLines(totals, requestParams = {}) {
+  if (!Array.isArray(totals) || totals.length === 0) {
+    return [];
+  }
+
+  const showGuardadores = Boolean(
+    requestParams.todosGuardadores || requestParams.userIds || requestParams.exigirTodasAssociacoes
+  );
+
+  return totals.map((total) => ({
+    nome: getAssociationDisplayName(total?.nome) || "-",
+    label: showGuardadores ? AGENT_ASSOCIATION_GUARDADORES_LABEL : AGENT_ASSOCIATION_OWN_PAYMENT_LABEL,
+    valor: Number(showGuardadores ? total?.valorGuardadores : total?.valorAssociacao) || 0,
+  }));
+}

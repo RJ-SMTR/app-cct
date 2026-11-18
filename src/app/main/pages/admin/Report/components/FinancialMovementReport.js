@@ -22,6 +22,7 @@ import {
   handleFinancialMovementPage,
   handleAgentFinancialMovementExport,
   handleAgentFinancialMovementPage,
+  fetchAgentFinancialMovementAssociationTotals,
   setReportList,
 } from "app/store/reportSlice";
 import { showMessage } from "app/store/fuse/messageSlice";
@@ -36,6 +37,7 @@ import {
 import { normalizeErroStatusSelection } from "./reportUtils";
 import { buildReportConsorcioOptions } from "./consorcioOptions";
 import ValorRangeFilter from "./shared/ValorRangeFilter";
+import AssociationTotals from "./shared/AssociationTotals";
 import ReportPeriodFilter from "./shared/ReportPeriodFilter";
 import useFavorecidoGuardadorOptions from "./shared/useFavorecidoGuardadorOptions";
 import {
@@ -83,6 +85,9 @@ export default function FinancialMovementReport({ perfil }) {
   });
   const [selectedAgentOptions, setSelectedAgentOptions] = useState([]);
   const [selectedAssociationOptions, setSelectedAssociationOptions] = useState([]);
+  // Só guardador: uma linha por associação selecionada (nome + valor), ver buildAgentAssociationTotalLines.
+  // Vem só na pesquisa nova; a paginação não muda os filtros, então as linhas continuam valendo.
+  const [associationTotalLines, setAssociationTotalLines] = useState([]);
   const [selectedStatusOptions, setSelectedStatusOptions] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const [whichStatusShow, setWhichStatus] = useState([]);
@@ -326,6 +331,7 @@ export default function FinancialMovementReport({ perfil }) {
     // a nova carrega.
     if (isNewSearch) {
       dispatch(setReportList([]));
+      setAssociationTotalLines([]);
     }
 
     setIsLoading(true);
@@ -333,7 +339,11 @@ export default function FinancialMovementReport({ perfil }) {
     try {
       // A primeira página (sem cursor) já traz o resumo, e as seguintes trazem só as linhas: o resumo não é
       // recalculado a cada clique de página (ADR 0023 da api-cct).
-      const pageResponse = await dispatch(handleAgentFinancialMovementPage(pageRequestData));
+      const [pageResponse, totalLines] = await Promise.all([
+        dispatch(handleAgentFinancialMovementPage(pageRequestData)),
+        isNewSearch ? dispatch(fetchAgentFinancialMovementAssociationTotals(pageRequestData)) : null,
+      ]);
+      if (isNewSearch) setAssociationTotalLines(totalLines);
       const newNextCursor = pageResponse?.nextCursor ?? null;
 
       setPageCursors((prevCursors) => {
@@ -346,7 +356,10 @@ export default function FinancialMovementReport({ perfil }) {
     } catch (error) {
       const message = reportErrorMessage(error, "Erro na busca do relatório de guardadores. Verifique os filtros.");
       cancelada = message === null;
-      if (message === REPORT_TIMEOUT_MESSAGE) dispatch(setReportList([]));
+      if (message === REPORT_TIMEOUT_MESSAGE) {
+        dispatch(setReportList([]));
+        setAssociationTotalLines([]);
+      }
       if (message) dispatch(showMessage({ message }));
     } finally {
       if (!cancelada) setIsLoading(false);
@@ -426,6 +439,7 @@ export default function FinancialMovementReport({ perfil }) {
     }
 
     dispatch(setReportList([]));
+    setAssociationTotalLines([]);
     setSelectedErroStatus([]);
     setShowErroStatus(false);
     setWhichStatus([]);
@@ -1078,6 +1092,7 @@ export default function FinancialMovementReport({ perfil }) {
               </Box>
             )
           )}
+          {isGuardador && <AssociationTotals lines={associationTotalLines} formatValue={formatCurrency} />}
         </Box>
       </Paper>
     </>
