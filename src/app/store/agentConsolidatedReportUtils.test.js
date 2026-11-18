@@ -1,4 +1,5 @@
 import {
+  buildAgentConsolidatedDisplayRows,
   AGENT_FINANCIAL_MOVEMENT_DATE_FORMAT,
   AGENT_FINANCIAL_MOVEMENT_DATE_SEPARATOR,
   AGENT_REPORT_ERROR_STATUS_VALUE,
@@ -419,5 +420,49 @@ describe("association total lines", () => {
   it("is empty without totals", () => {
     expect(buildAgentAssociationTotalLines(undefined, { consorcioNome: ANGLAE })).toEqual([]);
     expect(buildAgentAssociationTotalLines([], { consorcioNome: ANGLAE })).toEqual([]);
+  });
+});
+
+describe("buildAgentConsolidatedDisplayRows", () => {
+  const pago = {
+    rawStatus: "pago",
+    statusLabel: "Pago",
+    data: [
+      { nome: "ALEXANDRE JOSÉ PINHEIRO", valor: 2685.2 },
+      { nome: "ADEMAIR BASILIO", valor: 3962 },
+    ],
+  };
+  const abatimento = {
+    rawStatus: "abatimentoDuplicidade",
+    statusLabel: "Abatimento por duplicidade",
+    data: [{ nome: "ALEXANDRE JOSÉ PINHEIRO", valor: 137.2 }],
+  };
+
+  it("keeps one row per status, so a name in Pago and Abatimento shows twice with its status", () => {
+    expect(buildAgentConsolidatedDisplayRows([pago, abatimento])).toEqual([
+      { nome: "ADEMAIR BASILIO", status: "Pago", valor: 3962 },
+      { nome: "ALEXANDRE JOSÉ PINHEIRO", status: "Pago", valor: 2685.2 },
+      { nome: "ALEXANDRE JOSÉ PINHEIRO", status: "Abatimento por duplicidade", valor: 137.2 },
+    ]);
+  });
+
+  it("the same name follows the order of the status blocks", () => {
+    const rows = buildAgentConsolidatedDisplayRows([abatimento, pago]);
+    expect(rows.filter((row) => row.nome === "ALEXANDRE JOSÉ PINHEIRO").map((row) => row.status)).toEqual([
+      "Abatimento por duplicidade",
+      "Pago",
+    ]);
+  });
+
+  it("the 'todos' block has no status", () => {
+    const todos = { rawStatus: "todos", statusLabel: "Todos", data: [{ nome: "B", valor: 2 }, { nome: "A", valor: 1 }] };
+    expect(buildAgentConsolidatedDisplayRows([todos, pago])).toEqual([
+      { nome: "A", status: null, valor: 1 },
+      { nome: "B", status: null, valor: 2 },
+    ]);
+  });
+
+  it("is empty without blocks", () => {
+    expect(buildAgentConsolidatedDisplayRows()).toEqual([]);
   });
 });
