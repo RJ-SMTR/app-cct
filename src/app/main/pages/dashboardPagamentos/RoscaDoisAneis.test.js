@@ -15,16 +15,15 @@ const motivos = [
 ];
 
 describe('montarAneis', () => {
-  it('anel externo só com a "Pendência paga" (efetivados ficam de fora); interno com não pagos por motivo e aguardando pagamento', () => {
+  it('anel externo só com a "Pendência paga" (efetivados ficam de fora); interno só com não pagos por motivo (aguardando pagamento fora)', () => {
     const { totalPagos, totalPendentes, externo, interno } = montarAneis(situacoes, motivos, 'valor');
     expect(totalPagos).toBe(50);
     expect(externo.map((x) => [x.rotulo, x.fracao])).toEqual([['Pendência paga', 1]]);
-    expect(totalPendentes).toBe(400);
+    expect(totalPendentes).toBe(300);
     expect(interno.map((x) => [x.rotulo, x.fracao])).toEqual([
-      ['Conta inválida', 0.5],
-      ['Saldo insuficiente', 0.125],
-      ['Não pago (sem motivo)', 0.125],
-      ['Aguardando pagamento', 0.25],
+      ['Conta inválida', 2 / 3],
+      ['Saldo insuficiente', 1 / 6],
+      ['Não pago (sem motivo)', 1 / 6],
     ]);
   });
 
@@ -48,7 +47,7 @@ describe('montarAneis', () => {
 describe('RoscaDoisAneis', () => {
   it('desenha uma fatia no anel externo (pendência paga) e uma por motivo no interno, sem legenda', () => {
     const html = renderToStaticMarkup(<RoscaDoisAneis situacoes={situacoes} motivos={motivos} metrica="valor" />);
-    expect(html.match(/role="button"/g)).toHaveLength(1 + 4);
+    expect(html.match(/role="button"/g)).toHaveLength(1 + 3);
     expect(html).toContain('Pendência paga: Pendência paga');
     expect(html).toContain('Anel externo: pendência paga');
     expect(html).not.toContain('Efetivado');
