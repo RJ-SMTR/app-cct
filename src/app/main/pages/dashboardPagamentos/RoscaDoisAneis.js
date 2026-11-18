@@ -22,33 +22,53 @@ function clarear(hex, fracao) {
   return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
 }
 
-/** Fatias de um conjunto de situações: uma por motivo; o que a situação tem a mais que seus motivos vira uma fatia da própria situação. */
-function fatiasDeSituacoes(situacoes, motivos, campo) {
-  const fatias = [];
-  situacoes.forEach((s) => {
-    const dela = motivos.filter((m) => m.situacao === s.key && numero(m[campo]) > 0);
-    let i = 0;
-    dela.forEach((m) => {
-      fatias.push({ id: `m:${s.key}:${m.codigo}`, rotulo: m.descricao, cor: clarear(s.color, Math.min(i * 0.22, 0.66)), valor: numero(m[campo]), situacao: s.key, motivo: m });
-      i += 1;
-    });
-    const resto = numero(s[campo]) - dela.reduce((a, m) => a + numero(m[campo]), 0);
-    if (resto > 0) {
-      fatias.push({ id: `s:${s.key}`, rotulo: dela.length ? `${s.label} (sem motivo)` : s.label, cor: clarear(s.color, Math.min(i * 0.22, 0.66)), valor: resto, situacao: s.key });
-    }
-  });
+/** Cores distintas, uma por motivo de "não pago" (assim cada motivo se distingue bem no anel). */
+export const CORES_MOTIVOS_NAO_PAGO = ['#d32f2f', '#7b1fa2', '#1565c0', '#00838f', '#5d4037', '#c2185b', '#455a64', '#ef6c00'];
+
+/** Código do motivo dos pagos que aparece na rosca: só "Pendência paga" (os efetivados normais ficam de fora). */
+export const MOTIVO_PAGO_NA_ROSCA = 'PENDENCIA_PAGA';
+
+const comTotal = (fatias) => {
   const total = fatias.reduce((a, f) => a + f.valor, 0);
   return { total, fatias: fatias.map((f) => ({ ...f, fracao: total > 0 ? f.valor / total : 0 })) };
+};
+
+/** Anel externo: apenas os pagos com motivo "Pendência paga" (uma fatia por motivo dessa situação, se houver mais de um). */
+function fatiasPagos(situacoes, motivos, campo) {
+  const pago = situacoes.find((s) => s.key === 'pago');
+  if (!pago) return comTotal([]);
+  const dela = motivos.filter((m) => m.situacao === 'pago' && m.codigo === MOTIVO_PAGO_NA_ROSCA && numero(m[campo]) > 0);
+  return comTotal(dela.map((m) => ({ id: `m:pago:${m.codigo}`, rotulo: m.descricao, cor: pago.color, valor: numero(m[campo]), situacao: 'pago', motivo: m })));
 }
 
 /**
- * Monta os dois anéis. Anel externo: os pagos, uma fatia por motivo. Anel interno: os não pagos e aguardando pagamento (em aberto), uma fatia
- * por motivo. Cada anel fecha o seu próprio total (100%). Função pura, exportada para teste.
+ * Anel interno: não pagos separados por motivo (cada motivo com a sua cor) e aguardando pagamento (em aberto) com a cor
+ * da situação. O que a situação tem a mais que seus motivos vira uma fatia da própria situação.
+ */
+function fatiasPendentes(situacoes, motivos, campo) {
+  const fatias = [];
+  situacoes.filter((s) => s.key !== 'pago').forEach((s) => {
+    const dela = motivos.filter((m) => m.situacao === s.key && numero(m[campo]) > 0);
+    dela.forEach((m, i) => {
+      const cor = s.key === 'naoPago' ? CORES_MOTIVOS_NAO_PAGO[i % CORES_MOTIVOS_NAO_PAGO.length] : clarear(s.color, Math.min(i * 0.22, 0.66));
+      fatias.push({ id: `m:${s.key}:${m.codigo}`, rotulo: m.descricao, cor, valor: numero(m[campo]), situacao: s.key, motivo: m });
+    });
+    const resto = numero(s[campo]) - dela.reduce((a, m) => a + numero(m[campo]), 0);
+    if (resto > 0) {
+      fatias.push({ id: `s:${s.key}`, rotulo: dela.length ? `${s.label} (sem motivo)` : s.label, cor: clarear(s.color, Math.min(dela.length * 0.22, 0.66)), valor: resto, situacao: s.key });
+    }
+  });
+  return comTotal(fatias);
+}
+
+/**
+ * Monta os dois anéis. Anel externo: só os pagos com motivo "Pendência paga". Anel interno: os não pagos separados por motivo e
+ * os aguardando pagamento (em aberto). Cada anel fecha o seu próprio total (100%). Função pura, exportada para teste.
  */
 export function montarAneis(situacoes, motivos, metrica) {
   const campo = metrica === 'valor' ? 'valor' : 'qtd';
-  const pagos = fatiasDeSituacoes(situacoes.filter((s) => s.key === 'pago'), motivos, campo);
-  const pendentes = fatiasDeSituacoes(situacoes.filter((s) => s.key !== 'pago'), motivos, campo);
+  const pagos = fatiasPagos(situacoes, motivos, campo);
+  const pendentes = fatiasPendentes(situacoes, motivos, campo);
   return { totalPagos: pagos.total, totalPendentes: pendentes.total, externo: pagos.fatias, interno: pendentes.fatias };
 }
 
@@ -116,8 +136,8 @@ export default function RoscaDoisAneis({ situacoes, motivos, metrica = 'valor', 
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-        <svg viewBox={`0 0 ${TAMANHO} ${TAMANHO}`} width="100%" style={{ maxWidth: 340 }} role="group" aria-label="Pagamentos: anel externo com os pagos, anel interno com os não pagos e aguardando pagamento">
-          <Anel raio={RAIO_EXTERNO} fatias={externo} ativo={ativo} onAtivar={setAtivo} onSelecionar={selecionar} nomeAnel="Pagos" />
+        <svg viewBox={`0 0 ${TAMANHO} ${TAMANHO}`} width="100%" style={{ maxWidth: 340 }} role="group" aria-label="Pagamentos: anel externo com a pendência paga, anel interno com os não pagos e aguardando pagamento">
+          <Anel raio={RAIO_EXTERNO} fatias={externo} ativo={ativo} onAtivar={setAtivo} onSelecionar={selecionar} nomeAnel="Pendência paga" />
           <Anel raio={RAIO_INTERNO} fatias={interno} ativo={ativo} onAtivar={setAtivo} onSelecionar={selecionar} nomeAnel="Não pagos e aguardando pagamento" />
           <g textAnchor="middle" fill="currentColor" style={{ pointerEvents: 'none' }}>
             {f ? (
@@ -129,7 +149,7 @@ export default function RoscaDoisAneis({ situacoes, motivos, metrica = 'valor', 
             ) : (
               // Totais zerados não são exibidos.
               [
-                { rotulo: 'Pagos', total: totalPagos },
+                { rotulo: 'Pendência paga', total: totalPagos },
                 { rotulo: 'Não pagos / aguardando', total: totalPendentes },
               ]
                 .filter((t) => t.total > 0)
@@ -148,7 +168,7 @@ export default function RoscaDoisAneis({ situacoes, motivos, metrica = 'valor', 
       </Box>
 
       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 1 }}>
-        Anel externo: pagos · Anel interno: não pagos e aguardando pagamento (clique para ver o detalhe)
+        Anel externo: pendência paga · Anel interno: não pagos e aguardando pagamento (clique para ver o detalhe)
       </Typography>
     </Box>
   );
