@@ -82,10 +82,6 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
   // (um pagamento não pago) ao lado de milhões, a linear esconde as barras menores.
   const [escala, setEscala] = useState('dupla');
   const escalaLog = escala === 'log';
-  const seriesBarras = useMemo(
-    () => (escalaLog ? grafico.series.map((s) => ({ ...s, data: s.data.map((v) => (v > 0 ? v : null)) })) : grafico.series),
-    [grafico, escalaLog],
-  );
 
   const nomeMetrica = metrica === 'valor' ? 'Valor (R$)' : 'Quantidade de pagamentos';
   const rotulosY = { formatter: (v) => formatMetrica(v, metrica) };
@@ -168,7 +164,7 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
                 <ToggleButton value="linear">Linear</ToggleButton>
               </ToggleButtonGroup>
             </Box>
-            <Chart options={opcoesBarras} series={seriesBarras} type="bar" height={380} />
+            <Chart options={opcoesBarras} series={grafico.series} type="bar" height={380} />
           </Grid>
           <Grid item xs={12} lg={4}>
             <Typography variant="subtitle2" color="text.secondary">
