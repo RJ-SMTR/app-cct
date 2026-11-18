@@ -43,12 +43,13 @@ const COLUNAS = [
   {
     field: 'situacao',
     headerName: 'Situação',
-    width: 120,
+    width: 180,
     renderCell: ({ value }) => (
       <Chip size="small" label={ROTULO_SITUACAO[value] ?? value} sx={{ bgcolor: COR_SITUACAO[value], color: '#fff', fontWeight: 500 }} />
     ),
   },
-  { field: 'motivoDescricao', headerName: 'Motivo', flex: 1, minWidth: 220 },
+  // Tudo que está em aberto aparece como "Aguardando pagamento" (a API já devolve assim; o app garante para respostas antigas).
+  { field: 'motivoDescricao', headerName: 'Motivo', flex: 1, minWidth: 220, valueGetter: ({ row }) => (row.situacao === 'emAberto' ? ROTULO_SITUACAO.emAberto : row.motivoDescricao) },
   { field: 'valor', headerName: 'Valor', width: 140, align: 'right', headerAlign: 'right', valueFormatter: ({ value }) => formatBRL(value) },
   {
     field: 'contaBancaria',
@@ -159,7 +160,7 @@ export default function DashboardPagamentosDetalheApp() {
     ['Conta', ROTULO_CONTA[filtros.conta] ?? filtros.conta],
     ['Grupo', gruposDoFiltro(filtros.grupo).join(', ')],
     ['Situação', ROTULO_SITUACAO[filtros.situacao] ?? filtros.situacao],
-    ['Motivo', resultado.itens[0]?.motivo === filtros.motivo ? resultado.itens[0]?.motivoDescricao : filtros.motivo],
+    ['Motivo', filtros.motivo && (filtros.situacao === 'emAberto' ? ROTULO_SITUACAO.emAberto : resultado.itens[0]?.motivo === filtros.motivo ? resultado.itens[0]?.motivoDescricao : filtros.motivo)],
     ['Favorecido', filtros.busca],
     ['Período', filtros.dataInicio && `${formatarData(filtros.dataInicio)} a ${formatarData(filtros.dataFim)}`],
   ].filter(([, valor]) => valor);
