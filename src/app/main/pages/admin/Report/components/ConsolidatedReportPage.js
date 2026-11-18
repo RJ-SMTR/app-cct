@@ -21,7 +21,12 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { utils, writeFile as writeFileXLSX } from 'xlsx';
 
-import { handleConsolidadoPage, fetchAgentConsolidatedReport, setReportList } from 'app/store/reportSlice';
+import {
+  handleConsolidadoPage,
+  fetchAgentConsolidatedAssociationTotals,
+  fetchAgentConsolidatedReport,
+  setReportList,
+} from 'app/store/reportSlice';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import { beginReportSearch, REPORT_TIMEOUT_MESSAGE, reportErrorMessage } from 'app/store/reportRequestControl';
 import {
@@ -33,6 +38,7 @@ import {
 import { normalizeErroStatusSelection } from './reportUtils';
 import { buildReportConsorcioOptions } from './consorcioOptions';
 import ValorRangeFilter from './shared/ValorRangeFilter';
+import AssociationTotals from './shared/AssociationTotals';
 import ReportPeriodFilter from './shared/ReportPeriodFilter';
 import useFavorecidoGuardadorOptions from './shared/useFavorecidoGuardadorOptions';
 import {
@@ -121,6 +127,8 @@ export default function ConsolidatedReportPage({ perfil }) {
   const [hasSearched, setHasSearched] = useState(false);
   const [dateError, setDateError] = useState(false);
   const [reportBlocks, setReportBlocks] = useState([]); // só guardador (agregação em memória)
+  // Só guardador: uma linha por associação selecionada (nome + valor), ver buildAgentAssociationTotalLines.
+  const [associationTotalLines, setAssociationTotalLines] = useState([]);
 
   const consorcios = buildReportConsorcioOptions({ selectedField: selected, includeGtu: true });
 
@@ -226,6 +234,10 @@ export default function ConsolidatedReportPage({ perfil }) {
 
   const totalValue = isGuardador ? guardadorTotal : (reportList.valor ?? 0);
 
+  // Linhas de associação nos exports do Guardador (mesmo texto da tela).
+  const associationExportLabel = (line) => `Associação: ${line.nome} (${line.label})`;
+  const associationExportRows = associationTotalLines.map((line) => [associationExportLabel(line), formatter.format(line.valor)]);
+
   // ---- Export CSV ----
   const currentDateRange = getValues('dateRange');
   const csvFilenamePrefix = isGuardador ? 'relatorio_agentes' : 'relatorio';
@@ -243,7 +255,10 @@ export default function ConsolidatedReportPage({ perfil }) {
   const csvData = useMemo(() => {
     if (!hasRows) return [];
     if (isGuardador) {
-      return guardadorDisplayRows.map((row) => ({ Nome: row.nome, Valor: formatter.format(row.valor) }));
+      return [
+        ...guardadorDisplayRows.map((row) => ({ Nome: row.nome, Valor: formatter.format(row.valor) })),
+        ...associationTotalLines.map((line) => ({ Nome: associationExportLabel(line), Valor: formatter.format(line.valor) })),
+      ];
     }
     if (showStucColumns) {
       const toCsvRow = (values) => Object.fromEntries(STUC_EXPORT_HEADER.map((column, index) => [column, values[index] ?? '']));
@@ -264,7 +279,7 @@ export default function ConsolidatedReportPage({ perfil }) {
       { Nome: "Valor Total", Valor: "", Status: formatter.format(reportList?.valor) },
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasRows, isGuardador, guardadorDisplayRows, reportList, formatter, showStucColumns]);
+  }, [hasRows, isGuardador, guardadorDisplayRows, associationTotalLines, reportList, formatter, showStucColumns]);
 
   const exportPDF = () => {
     if (!hasRows) return;
@@ -273,7 +288,7 @@ export default function ConsolidatedReportPage({ perfil }) {
     const dateInicio = selectedDateRange?.[0];
     const dateFim = selectedDateRange?.[1];
     const rows = isGuardador
-      ? guardadorDisplayRows.map((row) => [row.nome, formatter.format(row.valor)])
+      ? [...guardadorDisplayRows.map((row) => [row.nome, formatter.format(row.valor)]), ...associationExportRows]
       : showStucColumns
         ? stucExportRows
         : reportList.data.map((report) => [report.nomefavorecido, formatter.format(report.valor ?? 0)]);
@@ -336,6 +351,7 @@ export default function ConsolidatedReportPage({ perfil }) {
       header,
       ...rows,
       [totalLabel, ...padding, formatter.format(totalValue ?? 0)],
+      ...(isGuardador ? associationExportRows : []),
     ];
 
     // sheetData é sempre array de arrays (não de objetos) nos dois perfis - json_to_sheet
@@ -448,6 +464,7 @@ export default function ConsolidatedReportPage({ perfil }) {
       setSelectedStatusOptions([]);
       setDateError(false);
       setReportBlocks([]);
+      setAssociationTotalLines([]);
       setGuardadorPage(0);
     } else {
       setValue('name', []);
@@ -550,18 +567,25 @@ export default function ConsolidatedReportPage({ perfil }) {
 
     setDateError(false);
     setReportBlocks([]);
+    setAssociationTotalLines([]);
     setIsLoading(true);
     setGuardadorPage(0);
     let cancelada = false;
     try {
-      const responseBlocks = await dispatch(fetchAgentConsolidatedReport(data));
+      const [responseBlocks, totalLines] = await Promise.all([
+        dispatch(fetchAgentConsolidatedReport(data)),
+        // A linha da associação é complementar: se a rota falhar, o relatório sai sem ela.
+        dispatch(fetchAgentConsolidatedAssociationTotals(data)).catch(() => []),
+      ]);
       setReportBlocks(responseBlocks);
+      setAssociationTotalLines(totalLines);
       setHasSearched(true);
     } catch (error) {
       const message = reportErrorMessage(error, "Erro na busca do relatório de agentes. Verifique os filtros e tente novamente.");
       cancelada = message === null;
       if (!cancelada) {
         setReportBlocks([]);
+        setAssociationTotalLines([]);
         dispatch(showMessage({ message }));
       }
     } finally {
@@ -951,6 +975,7 @@ export default function ConsolidatedReportPage({ perfil }) {
             <span>Valor Total</span>
             <span>{formatter.format(totalValue ?? 0)}</span>
           </Box>
+          {isGuardador && <AssociationTotals lines={associationTotalLines} formatValue={(valor) => formatter.format(valor ?? 0)} />}
           {!isGuardador && reportList.valorSemFavorecido > 0 && (
             <Box
               sx={{ display: "flex", justifyContent: "space-between", width: "100%", gap: 2, mt: 1 }}

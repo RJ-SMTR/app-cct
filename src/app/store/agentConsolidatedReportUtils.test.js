@@ -16,6 +16,10 @@ import {
   shouldShowAgentEffectivePaymentDateColumn,
   getSelectedBothAssociationsNames,
   normalizeSelectAllAutocompleteValue,
+  AGENT_ASSOCIATION_GUARDADORES_LABEL,
+  AGENT_ASSOCIATION_OWN_PAYMENT_LABEL,
+  buildAgentAssociationTotalLines,
+  hasAgentAssociationFilter,
 } from "./agentConsolidatedReportUtils";
 
 describe("agentConsolidatedReportUtils", () => {
@@ -368,5 +372,52 @@ describe("agentConsolidatedReportUtils", () => {
       { label: "Em processamento", value: "Em processamento" },
       { label: "A pagar", value: "A pagar" },
     ]);
+  });
+});
+
+describe("association total lines", () => {
+  const ANGLAE = "ASSOCIACAO NACIONAL DOS GUARDADORES E LAVADORES DE AUTOMOVEIS CONGENERES E AFINS";
+  const SINGAERJ = "SINDICATO DOS GUARDADORES DE AUTOMOVEIS NO ESTADO DO RIO DE JANEIRO E REGIAO - SINGAERJ";
+  const totals = [
+    { nome: ANGLAE, valorAssociacao: 100, valorGuardadores: 1000 },
+    { nome: SINGAERJ, valorAssociacao: 200, valorGuardadores: 2000 },
+  ];
+
+  it("needs an association filter", () => {
+    expect(hasAgentAssociationFilter({ consorcioNome: ANGLAE })).toBe(true);
+    expect(hasAgentAssociationFilter({ todosConsorcios: true })).toBe(true);
+    expect(hasAgentAssociationFilter({ todosGuardadores: true })).toBe(false);
+    expect(hasAgentAssociationFilter()).toBe(false);
+  });
+
+  it("only the association selected: the association's own payment, with the short name", () => {
+    expect(buildAgentAssociationTotalLines([totals[0]], { consorcioNome: ANGLAE })).toEqual([
+      { nome: "ANGLAE", label: AGENT_ASSOCIATION_OWN_PAYMENT_LABEL, valor: 100 },
+    ]);
+  });
+
+  it("Todos os guardadores + association: the guardadores linked to it", () => {
+    expect(buildAgentAssociationTotalLines([totals[1]], { consorcioNome: SINGAERJ, todosGuardadores: true })).toEqual([
+      { nome: "SINGAERJ", label: AGENT_ASSOCIATION_GUARDADORES_LABEL, valor: 2000 },
+    ]);
+  });
+
+  it("Todos os guardadores + Todas as associações: one line per association", () => {
+    expect(buildAgentAssociationTotalLines(totals, { todosConsorcios: true, todosGuardadores: true })).toEqual([
+      { nome: "ANGLAE", label: AGENT_ASSOCIATION_GUARDADORES_LABEL, valor: 1000 },
+      { nome: "SINGAERJ", label: AGENT_ASSOCIATION_GUARDADORES_LABEL, valor: 2000 },
+    ]);
+  });
+
+  it("specific guardadores or ANGLAE/SINGAERJ (ambas) use the guardadores value", () => {
+    expect(buildAgentAssociationTotalLines([totals[0]], { consorcioNome: ANGLAE, userIds: "7" })[0].valor).toBe(1000);
+    expect(
+      buildAgentAssociationTotalLines(totals, { consorcioNome: `${ANGLAE},${SINGAERJ}`, exigirTodasAssociacoes: true }).map((l) => l.valor)
+    ).toEqual([1000, 2000]);
+  });
+
+  it("is empty without totals", () => {
+    expect(buildAgentAssociationTotalLines(undefined, { consorcioNome: ANGLAE })).toEqual([]);
+    expect(buildAgentAssociationTotalLines([], { consorcioNome: ANGLAE })).toEqual([]);
   });
 });
