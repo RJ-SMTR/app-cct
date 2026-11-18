@@ -127,12 +127,21 @@ export default function RoscaDoisAneis({ situacoes, motivos, metrica = 'valor', 
                 <text x={CENTRO} y={CENTRO + 24} fontSize="12">{pct(f.fracao)}</text>
               </>
             ) : (
-              <>
-                <text x={CENTRO} y={CENTRO - 16} fontSize="10" opacity="0.7">Pagos</text>
-                <text x={CENTRO} y={CENTRO - 2} fontSize="13" fontWeight="600">{formatMetrica(totalPagos, metrica)}</text>
-                <text x={CENTRO} y={CENTRO + 16} fontSize="10" opacity="0.7">Não pagos / aguardando</text>
-                <text x={CENTRO} y={CENTRO + 30} fontSize="13" fontWeight="600">{formatMetrica(totalPendentes, metrica)}</text>
-              </>
+              // Totais zerados não são exibidos.
+              [
+                { rotulo: 'Pagos', total: totalPagos },
+                { rotulo: 'Não pagos / aguardando', total: totalPendentes },
+              ]
+                .filter((t) => t.total > 0)
+                .map((t, i, lista) => {
+                  const topo = CENTRO - (lista.length === 2 ? 16 : 6) + i * 32;
+                  return (
+                    <g key={t.rotulo}>
+                      <text x={CENTRO} y={topo} fontSize="10" opacity="0.7">{t.rotulo}</text>
+                      <text x={CENTRO} y={topo + 14} fontSize="13" fontWeight="600">{formatMetrica(t.total, metrica)}</text>
+                    </g>
+                  );
+                })
             )}
           </g>
         </svg>

@@ -50,10 +50,14 @@ describe('dashboardPagamentosUtils', () => {
       ['emAberto', 'pendente'],
     ]);
     expect(g.series[2].name).toBe('Aguardando pagamento');
+    // valores zerados não aparecem: viram null (sem barra e sem tooltip "R$ 0,00")
     expect(g.series[0].data).toEqual([1000, 500]);
-    expect(g.series[1].data).toEqual([50, 0]);
-    expect(g.series[2].data).toEqual([0, 20]);
-    expect(montarGraficoGruposDuplo(conta, 'qtd').series[2].data).toEqual([0, 2]);
+    expect(g.series[1].data).toEqual([50, null]);
+    expect(g.series[2].data).toEqual([null, 20]);
+    expect(montarGraficoGruposDuplo(conta, 'qtd').series[2].data).toEqual([null, 2]);
+    // consórcio/modal sem nenhum valor fica fora do gráfico
+    const comVazio = { grupos: [...conta.grupos, { grupo: 'GTU', pago: { qtd: 0, valor: 0 }, naoPago: { qtd: 0, valor: 0 }, emAberto: { qtd: 0, valor: 0 } }] };
+    expect(montarGraficoGruposDuplo(comVazio, 'valor').categorias).toEqual(['VLT', 'STPL']);
     expect(montarGraficoGruposDuplo(undefined, 'qtd').categorias).toEqual([]);
   });
 

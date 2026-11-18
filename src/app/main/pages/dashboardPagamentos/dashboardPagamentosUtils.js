@@ -64,15 +64,17 @@ export function montarGraficoGrupos(conta, metrica) {
 /**
  * Barras duplas: duas barras por consórcio/modal. A primeira é a de "Pago"; a segunda empilha "Não pago" e
  * "Aguardando pagamento" (em aberto). O nome do consórcio aparece uma vez no eixo X; as duas barras saem de séries
- * com `group` (barras agrupadas e empilhadas do ApexCharts).
+ * com `group` (barras agrupadas e empilhadas do ApexCharts). Valores zerados não são exibidos: ponto zerado vira
+ * `null` (sem barra nem tooltip) e consórcio/modal sem nenhum valor na métrica fica fora do gráfico.
  */
 export function montarGraficoGruposDuplo(conta, metrica) {
-  const grupos = conta?.grupos ?? [];
+  const valorDe = (g, situacao) => Number(metrica === 'valor' ? g[situacao].valor : g[situacao].qtd) || 0;
+  const grupos = (conta?.grupos ?? []).filter((g) => SITUACOES.some((s) => valorDe(g, s.key) > 0));
   const serie = (situacao, group) => ({
     key: situacao,
     name: ROTULO_SITUACAO[situacao],
     group,
-    data: grupos.map((g) => Number(metrica === 'valor' ? g[situacao].valor : g[situacao].qtd) || 0),
+    data: grupos.map((g) => (valorDe(g, situacao) > 0 ? valorDe(g, situacao) : null)),
   });
   return {
     categorias: grupos.map((g) => g.grupo),
