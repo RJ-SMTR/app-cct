@@ -30,7 +30,7 @@ import {
 import { showMessage } from 'app/store/fuse/messageSlice';
 import { beginReportSearch, REPORT_TIMEOUT_MESSAGE, reportErrorMessage } from 'app/store/reportRequestControl';
 import {
-  flattenAgentConsolidatedReportBlocks,
+  buildAgentConsolidatedDisplayRows,
   getAgentConsolidatedReportTotal,
   normalizeAgentStatusSelection,
   normalizeSelectAllAutocompleteValue,
@@ -148,20 +148,13 @@ export default function ConsolidatedReportPage({ perfil }) {
   const formatter = useMemo(() => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }), []);
 
   // ---- Dados agregados (guardador) ----
-  const flattenedRows = useMemo(
-    () => (isGuardador ? flattenAgentConsolidatedReportBlocks(reportBlocks) : []),
+  // Uma linha por favorecido e status: com "Pago" vem também o bloco "Abatimento por duplicidade", então o mesmo nome
+  // pode aparecer duas vezes - a coluna Status diz qual é qual (buildAgentConsolidatedDisplayRows).
+  const guardadorDisplayRows = useMemo(
+    () => (isGuardador ? buildAgentConsolidatedDisplayRows(reportBlocks) : []),
     [isGuardador, reportBlocks],
   );
-  const guardadorDisplayRows = useMemo(() => {
-    if (!isGuardador) return [];
-    const allStatusBlock = reportBlocks.find((block) => block.rawStatus === "todos");
-    if (allStatusBlock) {
-      return [...allStatusBlock.data].sort((a, b) => a.nome.localeCompare(b.nome));
-    }
-    return [...flattenedRows]
-      .map((row) => ({ nome: row.nome, valor: row.valor }))
-      .sort((a, b) => a.nome.localeCompare(b.nome));
-  }, [isGuardador, flattenedRows, reportBlocks]);
+  const showGuardadorStatus = guardadorDisplayRows.some((row) => row.status);
   const guardadorTotal = useMemo(
     () => (isGuardador ? getAgentConsolidatedReportTotal(reportBlocks) : 0),
     [isGuardador, reportBlocks],
@@ -199,7 +192,7 @@ export default function ConsolidatedReportPage({ perfil }) {
 
   // ---- Grid rows/columns ----
   const gridRows = isGuardador
-    ? guardadorDisplayRows.map((row) => ({ id: row.nome, ...row }))
+    ? guardadorDisplayRows.map((row, index) => ({ id: `${index}-${row.status ?? ''}-${row.nome}`, ...row }))
     : showStucColumns
       ? stucExplodedRows
       : (Array.isArray(reportList.data) ? reportList.data.map((report, index) => ({ id: `${index}-${report.nomefavorecido}`, ...report })) : []);
@@ -207,6 +200,7 @@ export default function ConsolidatedReportPage({ perfil }) {
   const gridColumns = isGuardador
     ? [
         { field: 'nome', headerName: 'Nome', flex: 1, minWidth: 260 },
+        ...(showGuardadorStatus ? [{ field: 'status', headerName: 'Status', width: 240 }] : []),
         { field: 'valor', headerName: 'Valor Total', width: 180, valueFormatter: (params) => formatter.format(params.value ?? 0) },
       ]
     : showStucColumns
@@ -236,7 +230,18 @@ export default function ConsolidatedReportPage({ perfil }) {
 
   // Linhas de associação nos exports do Guardador (mesmo texto da tela).
   const associationExportLabel = (line) => `Associação: ${line.nome} (${line.label})`;
-  const associationExportRows = associationTotalLines.map((line) => [associationExportLabel(line), formatter.format(line.valor)]);
+  const associationExportRows = associationTotalLines.map((line) => [
+    associationExportLabel(line),
+    ...(showGuardadorStatus ? [""] : []),
+    formatter.format(line.valor),
+  ]);
+  // Linhas do Guardador nos exports: Nome, Status (quando há mais de um status) e Valor, como na grade.
+  const guardadorExportRows = guardadorDisplayRows.map((row) => [
+    row.nome,
+    ...(showGuardadorStatus ? [row.status] : []),
+    formatter.format(row.valor),
+  ]);
+  const guardadorExportHeader = (valorLabel) => ["Nome", ...(showGuardadorStatus ? ["Status"] : []), valorLabel];
 
   // ---- Export CSV ----
   const currentDateRange = getValues('dateRange');
@@ -255,10 +260,8 @@ export default function ConsolidatedReportPage({ perfil }) {
   const csvData = useMemo(() => {
     if (!hasRows) return [];
     if (isGuardador) {
-      return [
-        ...guardadorDisplayRows.map((row) => ({ Nome: row.nome, Valor: formatter.format(row.valor) })),
-        ...associationTotalLines.map((line) => ({ Nome: associationExportLabel(line), Valor: formatter.format(line.valor) })),
-      ];
+      const toCsvRow = (values) => Object.fromEntries(guardadorExportHeader("Valor").map((column, index) => [column, values[index] ?? ""]));
+      return [...guardadorExportRows.map(toCsvRow), ...associationExportRows.map(toCsvRow)];
     }
     if (showStucColumns) {
       const toCsvRow = (values) => Object.fromEntries(STUC_EXPORT_HEADER.map((column, index) => [column, values[index] ?? '']));
@@ -279,7 +282,7 @@ export default function ConsolidatedReportPage({ perfil }) {
       { Nome: "Valor Total", Valor: "", Status: formatter.format(reportList?.valor) },
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasRows, isGuardador, guardadorDisplayRows, associationTotalLines, reportList, formatter, showStucColumns]);
+  }, [hasRows, isGuardador, guardadorDisplayRows, showGuardadorStatus, associationTotalLines, reportList, formatter, showStucColumns]);
 
   const exportPDF = () => {
     if (!hasRows) return;
@@ -288,11 +291,12 @@ export default function ConsolidatedReportPage({ perfil }) {
     const dateInicio = selectedDateRange?.[0];
     const dateFim = selectedDateRange?.[1];
     const rows = isGuardador
-      ? [...guardadorDisplayRows.map((row) => [row.nome, formatter.format(row.valor)]), ...associationExportRows]
+      ? [...guardadorExportRows, ...associationExportRows]
       : showStucColumns
         ? stucExportRows
         : reportList.data.map((report) => [report.nomefavorecido, formatter.format(report.valor ?? 0)]);
-    const head = showStucColumns ? STUC_EXPORT_HEADER : ["Nome", "Valor Total"];
+    const permissionarioHead = showStucColumns ? STUC_EXPORT_HEADER : ["Nome", "Valor Total"];
+    const head = isGuardador ? guardadorExportHeader("Valor Total") : permissionarioHead;
 
     doc.autoTable({
       head: [head],
@@ -333,13 +337,13 @@ export default function ConsolidatedReportPage({ perfil }) {
     if (!hasRows) return;
     const selectedDateRange = getValues('dateRange');
     const rows = isGuardador
-      ? guardadorDisplayRows.map((row) => [row.nome, formatter.format(row.valor)])
+      ? guardadorExportRows
       : showStucColumns
         ? stucExportRows
         : reportList.data.map((report) => [report.nomefavorecido, formatter.format(report.valor ?? 0)]);
     const totalLabel = isGuardador ? "Total geral" : "Valor Total";
     const header = isGuardador
-      ? ["Nome", "Valor"]
+      ? guardadorExportHeader("Valor")
       : showStucColumns
         ? STUC_EXPORT_HEADER
         : ["Nome", "Valor"];

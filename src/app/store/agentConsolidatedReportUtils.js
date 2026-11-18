@@ -293,6 +293,27 @@ export function flattenAgentConsolidatedReportBlocks(blocks = []) {
   );
 }
 
+// Rows of the Guardador Consolidado grid and exports. One row per favorecido and status block: with "Pago" the API also
+// answers the "Abatimento por duplicidade" block, so the same name can show twice, each with its own status (Rayanne's
+// choice, 2026-11-18: Status column instead of summing). The "todos" block has no status. Sorted by name, then by the
+// order of the status blocks.
+export function buildAgentConsolidatedDisplayRows(blocks = []) {
+  const allStatusBlock = blocks.find((block) => block.rawStatus === "todos");
+  const sourceBlocks = allStatusBlock ? [allStatusBlock] : blocks;
+
+  return sourceBlocks
+    .flatMap((block, blockIndex) =>
+      (block.data || []).map((row) => ({
+        nome: row.nome,
+        status: allStatusBlock ? null : block.statusLabel,
+        valor: row.valor,
+        blockIndex,
+      }))
+    )
+    .sort((first, second) => first.nome.localeCompare(second.nome) || first.blockIndex - second.blockIndex)
+    .map(({ blockIndex, ...row }) => row);
+}
+
 export function getAgentConsolidatedReportTotal(blocks = []) {
   const allBlock = blocks.find((block) => block.rawStatus === "todos");
 
