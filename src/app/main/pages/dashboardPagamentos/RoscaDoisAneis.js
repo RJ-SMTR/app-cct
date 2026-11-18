@@ -42,12 +42,11 @@ function fatiasPagos(situacoes, motivos, campo) {
 }
 
 /**
- * Anel interno: não pagos separados por motivo (cada motivo com a sua cor) e aguardando pagamento (em aberto) com a cor
- * da situação. O que a situação tem a mais que seus motivos vira uma fatia da própria situação.
+ * Anel interno: apenas os não pagos, separados por motivo (cada motivo com a sua cor).
  */
 function fatiasPendentes(situacoes, motivos, campo) {
   const fatias = [];
-  situacoes.filter((s) => s.key !== 'pago').forEach((s) => {
+  situacoes.filter((s) => s.key === 'naoPago').forEach((s) => {
     const dela = motivos.filter((m) => m.situacao === s.key && numero(m[campo]) > 0);
     dela.forEach((m, i) => {
       const cor = s.key === 'naoPago' ? CORES_MOTIVOS_NAO_PAGO[i % CORES_MOTIVOS_NAO_PAGO.length] : clarear(s.color, Math.min(i * 0.22, 0.66));
@@ -62,8 +61,7 @@ function fatiasPendentes(situacoes, motivos, campo) {
 }
 
 /**
- * Monta os dois anéis. Anel externo: só os pagos com motivo "Pendência paga". Anel interno: os não pagos separados por motivo e
- * os aguardando pagamento (em aberto). Cada anel fecha o seu próprio total (100%). Função pura, exportada para teste.
+ * Monta os dois anéis. Anel externo: só os pagos com motivo "Pendência paga". Anel interno: os não pagos separados por motivo (aguardando pagamento fica fora). Cada anel fecha o seu próprio total (100%). Função pura, exportada para teste.
  */
 export function montarAneis(situacoes, motivos, metrica) {
   const campo = metrica === 'valor' ? 'valor' : 'qtd';
@@ -119,7 +117,7 @@ function Anel({ raio, fatias, ativo, onAtivar, onSelecionar, nomeAnel }) {
 }
 
 /**
- * Rosca dupla: anel externo com os pagos e anel interno com os não pagos e aguardando pagamento (em aberto), ambos por motivo.
+ * Rosca dupla: anel externo com a pendência paga e anel interno com os não pagos por motivo (aguardando pagamento não entra).
  * `situacoes`: [{ key, label, color, valor, qtd }]; `motivos`: [{ situacao, codigo, descricao, valor, qtd }].
  */
 export default function RoscaDoisAneis({ situacoes, motivos, metrica = 'valor', onSelecionarSituacao, onSelecionarMotivo }) {
@@ -136,9 +134,9 @@ export default function RoscaDoisAneis({ situacoes, motivos, metrica = 'valor', 
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-        <svg viewBox={`0 0 ${TAMANHO} ${TAMANHO}`} width="100%" style={{ maxWidth: 340 }} role="group" aria-label="Pagamentos: anel externo com a pendência paga, anel interno com os não pagos e aguardando pagamento">
+        <svg viewBox={`0 0 ${TAMANHO} ${TAMANHO}`} width="100%" style={{ maxWidth: 340 }} role="group" aria-label="Pagamentos: anel externo com a pendência paga, anel interno com os não pagos por motivo">
           <Anel raio={RAIO_EXTERNO} fatias={externo} ativo={ativo} onAtivar={setAtivo} onSelecionar={selecionar} nomeAnel="Pendência paga" />
-          <Anel raio={RAIO_INTERNO} fatias={interno} ativo={ativo} onAtivar={setAtivo} onSelecionar={selecionar} nomeAnel="Não pagos e aguardando pagamento" />
+          <Anel raio={RAIO_INTERNO} fatias={interno} ativo={ativo} onAtivar={setAtivo} onSelecionar={selecionar} nomeAnel="Não pagos" />
           <g textAnchor="middle" fill="currentColor" style={{ pointerEvents: 'none' }}>
             {f ? (
               <>
@@ -150,7 +148,7 @@ export default function RoscaDoisAneis({ situacoes, motivos, metrica = 'valor', 
               // Totais zerados não são exibidos.
               [
                 { rotulo: 'Pendência paga', total: totalPagos },
-                { rotulo: 'Não pagos / aguardando', total: totalPendentes },
+                { rotulo: 'Não pagos', total: totalPendentes },
               ]
                 .filter((t) => t.total > 0)
                 .map((t, i, lista) => {
@@ -168,7 +166,7 @@ export default function RoscaDoisAneis({ situacoes, motivos, metrica = 'valor', 
       </Box>
 
       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 1 }}>
-        Anel externo: pendência paga · Anel interno: não pagos e aguardando pagamento (clique para ver o detalhe)
+        Anel externo: pendência paga · Anel interno: não pagos por motivo (clique para ver o detalhe)
       </Typography>
     </Box>
   );
