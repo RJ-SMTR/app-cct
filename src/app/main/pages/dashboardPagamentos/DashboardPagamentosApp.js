@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import Chart from 'react-apexcharts';
-import RoscaDoisAneis from './RoscaDoisAneis';
+import RoscaSimples from './RoscaSimples';
 import {
   Alert,
   Box,
@@ -32,6 +32,7 @@ import {
   formatQtd,
   agruparMotivosEmAberto,
   montarGraficoGruposDuplo,
+  montarRoscasPendencias,
   montarUrlDetalhe,
   periodoDaUrl,
   toIsoDate,
@@ -77,7 +78,8 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
   // "Aguardando pagamento" não aparece neste gráfico.
   const motivosExibidos = useMemo(() => agruparMotivosEmAberto(conta.motivos), [conta]);
   const grafico = useMemo(() => montarGraficoGruposDuplo(conta, metrica), [conta, metrica]);
-  const situacoesRosca = useMemo(() => SITUACOES.map((s) => ({ ...s, valor: conta[s.key].valor, qtd: conta[s.key].qtd })), [conta]);
+  // Roscas de "Situação e motivos": pendência paga x pendência de pagamento e, do não pago, rejeitado x estorno.
+  const roscas = useMemo(() => montarRoscasPendencias(conta), [conta]);
   const vazio = SITUACOES.every((s) => conta[s.key].qtd === 0);
   // Escalas do eixo Y: "dupla" (Pago no eixo esquerdo, Não pago no direito), "log" ou "linear". Com valores pequenos
   // (um pagamento não pago) ao lado de milhões, a linear esconde as barras menores.
@@ -126,11 +128,8 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
     states: { active: { filter: { type: 'none' } } },
   };
 
-  const abrirSituacao = (situacao) => onAbrirDetalhe({ conta: conta.conta, situacao });
-  // Clicar numa fatia do anel interno (ou na legenda) abre o detalhe dos pagamentos com aquele motivo.
-  const abrirMotivo = (motivo) => {
-    if (motivo) onAbrirDetalhe({ conta: conta.conta, situacao: motivo.situacao, motivo: motivo.codigo });
-  };
+  // Clicar numa fatia (ou na legenda) abre o detalhe com a situação/motivo daquela fatia.
+  const abrirFatia = (fatia) => onAbrirDetalhe({ conta: conta.conta, ...fatia.detalhe });
 
   return (
     <Card sx={{ p: 3, mb: 3 }}>
@@ -162,10 +161,8 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
             <Chart options={opcoesBarras} series={grafico.series} type="bar" height={380} />
           </Grid>
           <Grid item xs={12} lg={4}>
-            <Typography variant="subtitle2" color="text.secondary">
-              Situação e motivos
-            </Typography>
-            <RoscaDoisAneis situacoes={situacoesRosca} motivos={motivosExibidos} metrica={metrica} onSelecionarSituacao={abrirSituacao} onSelecionarMotivo={abrirMotivo} />
+            <RoscaSimples titulo="Pendência paga x pendência de pagamento" fatias={roscas.pendencias.fatias} total={roscas.pendencias.total} onSelecionar={abrirFatia} />
+            <RoscaSimples titulo="Não pagos: rejeitado x estorno" fatias={roscas.erros.fatias} total={roscas.erros.total} mostrarQtd onSelecionar={abrirFatia} />
           </Grid>
         </Grid>
       )}
