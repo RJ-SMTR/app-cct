@@ -9,6 +9,7 @@ import {
   agruparMotivosEmAberto,
   montarGraficoGruposDuplo,
   montarGraficoMotivos,
+  montarRoscasPendencias,
   montarUrlDetalhe,
   periodoDaUrl,
   periodoPadrao,
@@ -73,6 +74,34 @@ describe('dashboardPagamentosUtils', () => {
     ]);
     expect(agruparMotivosEmAberto(motivos.slice(0, 1))).toEqual(motivos.slice(0, 1));
     expect(agruparMotivosEmAberto(undefined)).toEqual([]);
+  });
+
+  it('roscas: pendência paga x pendência de pagamento (% sobre a soma) e rejeitado x estorno', () => {
+    const c = {
+      naoPago: { qtd: 4, valor: 300 },
+      motivos: [
+        { situacao: 'pago', codigo: 'EFETIVADO', qtd: 10, valor: 5000 },
+        { situacao: 'pago', codigo: 'PENDENCIA_PAGA', qtd: 2, valor: 900 },
+        { situacao: 'naoPago', codigo: '02', qtd: 1, valor: 100 },
+        { situacao: 'naoPago', codigo: 'AB', qtd: 3, valor: 200 },
+        { situacao: 'emAberto', codigo: undefined, qtd: 7, valor: 700 },
+      ],
+    };
+    const { pendencias, erros } = montarRoscasPendencias(c);
+    expect(pendencias.fatias.map((f) => [f.rotulo, f.valor, f.qtd, f.fracao])).toEqual([
+      ['Pendência paga', 900, 2, 0.75],
+      ['Pendência de pagamento', 300, 4, 0.25],
+    ]);
+    expect(pendencias.total).toEqual({ valor: 1200, qtd: 6 });
+    expect(erros.fatias.map((f) => [f.rotulo, f.valor, f.qtd])).toEqual([
+      ['Rejeitado', 200, 3],
+      ['Estorno', 100, 1],
+    ]);
+    expect(erros.fatias[1].detalhe).toEqual({ situacao: 'naoPago', motivo: '02' });
+    // sem dados: tudo zerado, sem dividir por zero
+    const vazio = montarRoscasPendencias(undefined);
+    expect(vazio.pendencias.total).toEqual({ valor: 0, qtd: 0 });
+    expect(vazio.erros.fatias.every((f) => f.fracao === 0)).toBe(true);
   });
 
   it('não quebra com conta ausente', () => {
