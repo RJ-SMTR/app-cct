@@ -443,10 +443,12 @@ export function hasAgentAssociationFilter(requestParams = {}) {
   return Boolean(requestParams.consorcioNome || requestParams.todosConsorcios);
 }
 
-// One line per association in the result (Rayanne's rule, 2026-11-18), from GET guardador/associacoes:
+// Lines per association in the result, from GET guardador/associacoes (Rayanne's rules, 2026-11-18 and 2026-11-19):
 // - only the association selected (no guardador): the association's own payment;
-// - "Todos os guardadores" (or specific guardadores) + association: the guardadores linked to that association;
-// - "ANGLAE/SINGAERJ (ambas)": the guardadores of both, since the association's own payment never enters there.
+// - "Todos os guardadores" + association (specific or "Todas"): the association's own payment and the value of the
+//   guardadores linked to it, two lines per association;
+// - specific guardadores + association, or "ANGLAE/SINGAERJ (ambas)": only the guardadores' value, since the
+//   association's own payment is not part of that result (the line would always be zero).
 export function buildAgentAssociationTotalLines(totals, requestParams = {}) {
   if (!Array.isArray(totals) || totals.length === 0) {
     return [];
@@ -455,10 +457,17 @@ export function buildAgentAssociationTotalLines(totals, requestParams = {}) {
   const showGuardadores = Boolean(
     requestParams.todosGuardadores || requestParams.userIds || requestParams.exigirTodasAssociacoes
   );
+  const showOwnPayment = !requestParams.userIds && !requestParams.exigirTodasAssociacoes;
 
-  return totals.map((total) => ({
-    nome: getAssociationDisplayName(total?.nome) || "-",
-    label: showGuardadores ? AGENT_ASSOCIATION_GUARDADORES_LABEL : AGENT_ASSOCIATION_OWN_PAYMENT_LABEL,
-    valor: Number(showGuardadores ? total?.valorGuardadores : total?.valorAssociacao) || 0,
-  }));
+  return totals.flatMap((total) => {
+    const nome = getAssociationDisplayName(total?.nome) || "-";
+    const lines = [];
+    if (showOwnPayment) {
+      lines.push({ nome, label: AGENT_ASSOCIATION_OWN_PAYMENT_LABEL, valor: Number(total?.valorAssociacao) || 0 });
+    }
+    if (showGuardadores) {
+      lines.push({ nome, label: AGENT_ASSOCIATION_GUARDADORES_LABEL, valor: Number(total?.valorGuardadores) || 0 });
+    }
+    return lines;
+  });
 }
