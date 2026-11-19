@@ -411,23 +411,36 @@ describe("association total lines", () => {
     ]);
   });
 
-  it("Todos os guardadores + association: the guardadores linked to it", () => {
+  it("Todos os guardadores + association: the association's own payment and the guardadores linked to it", () => {
     expect(buildAgentAssociationTotalLines([totals[1]], { consorcioNome: SINGAERJ, todosGuardadores: true })).toEqual([
+      { nome: "SINGAERJ", label: AGENT_ASSOCIATION_OWN_PAYMENT_LABEL, valor: 200 },
       { nome: "SINGAERJ", label: AGENT_ASSOCIATION_GUARDADORES_LABEL, valor: 2000 },
     ]);
   });
 
-  it("Todos os guardadores + Todas as associações: one line per association", () => {
+  it("Todos os guardadores + Todas as associações: own payment and guardadores of each association", () => {
     expect(buildAgentAssociationTotalLines(totals, { todosConsorcios: true, todosGuardadores: true })).toEqual([
+      { nome: "ANGLAE", label: AGENT_ASSOCIATION_OWN_PAYMENT_LABEL, valor: 100 },
       { nome: "ANGLAE", label: AGENT_ASSOCIATION_GUARDADORES_LABEL, valor: 1000 },
+      { nome: "SINGAERJ", label: AGENT_ASSOCIATION_OWN_PAYMENT_LABEL, valor: 200 },
       { nome: "SINGAERJ", label: AGENT_ASSOCIATION_GUARDADORES_LABEL, valor: 2000 },
     ]);
   });
 
-  it("specific guardadores or ANGLAE/SINGAERJ (ambas) use the guardadores value", () => {
-    expect(buildAgentAssociationTotalLines([totals[0]], { consorcioNome: ANGLAE, userIds: "7" })[0].valor).toBe(1000);
+  it("specific guardadores or ANGLAE/SINGAERJ (ambas) use only the guardadores value (own payment is not in the result)", () => {
+    expect(buildAgentAssociationTotalLines([totals[0]], { consorcioNome: ANGLAE, userIds: "7" })).toEqual([
+      { nome: "ANGLAE", label: AGENT_ASSOCIATION_GUARDADORES_LABEL, valor: 1000 },
+    ]);
+    expect(buildAgentAssociationTotalLines(totals, { todosConsorcios: true, userIds: "7" }).map((l) => l.label)).toEqual([
+      AGENT_ASSOCIATION_GUARDADORES_LABEL,
+      AGENT_ASSOCIATION_GUARDADORES_LABEL,
+    ]);
     expect(
-      buildAgentAssociationTotalLines(totals, { consorcioNome: `${ANGLAE},${SINGAERJ}`, exigirTodasAssociacoes: true }).map((l) => l.valor)
+      buildAgentAssociationTotalLines(totals, {
+        consorcioNome: `${ANGLAE},${SINGAERJ}`,
+        exigirTodasAssociacoes: true,
+        todosGuardadores: true,
+      }).map((l) => l.valor)
     ).toEqual([1000, 2000]);
   });
 
