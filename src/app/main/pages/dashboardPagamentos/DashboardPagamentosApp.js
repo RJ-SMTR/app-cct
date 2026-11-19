@@ -73,12 +73,13 @@ function Indicador({ situacao, totais, onClick }) {
 }
 
 function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
-  // Barras duplas: duas barras por consórcio/modal (Pago | Não pago + Aguardando pagamento), em duas escalas (eixo esquerdo e direito).
+  // Barras duplas: duas barras por consórcio/modal (Pago | Não pago), em duas escalas (eixo esquerdo e direito).
+  // "Aguardando pagamento" não aparece neste gráfico.
   const motivosExibidos = useMemo(() => agruparMotivosEmAberto(conta.motivos), [conta]);
   const grafico = useMemo(() => montarGraficoGruposDuplo(conta, metrica), [conta, metrica]);
   const situacoesRosca = useMemo(() => SITUACOES.map((s) => ({ ...s, valor: conta[s.key].valor, qtd: conta[s.key].qtd })), [conta]);
   const vazio = SITUACOES.every((s) => conta[s.key].qtd === 0);
-  // Escalas do eixo Y: "dupla" (Pago no eixo esquerdo, Pendente no direito), "log" ou "linear". Com valores pequenos
+  // Escalas do eixo Y: "dupla" (Pago no eixo esquerdo, Não pago no direito), "log" ou "linear". Com valores pequenos
   // (um pagamento não pago) ao lado de milhões, a linear esconde as barras menores.
   // O seletor de escala foi retirado da tela: o gráfico usa sempre "dupla". As opções "log" e "linear" continuam
   // suportadas abaixo para reativação futura (basta trocar o valor aqui ou voltar a expor o seletor).
@@ -92,9 +93,8 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
       ? [
           // Eixo esquerdo: barra de Pago (valores altos).
           { seriesName: grafico.series[0].name, min: 0, title: { text: `Pago – ${nomeMetrica}`, style: { color: COR_SITUACAO.pago } }, labels: { ...rotulosY, style: { colors: COR_SITUACAO.pago } } },
-          // Eixo direito: barra de Pendente (Não pago + Aguardando pagamento), escala própria e menor.
-          { seriesName: grafico.series[1].name, opposite: true, min: 0, title: { text: `Pendente – ${nomeMetrica}`, style: { color: COR_SITUACAO.naoPago } }, labels: { ...rotulosY, style: { colors: COR_SITUACAO.naoPago } } },
-          { seriesName: grafico.series[1].name, opposite: true, show: false },
+          // Eixo direito: barra de Não pago, escala própria e menor.
+          { seriesName: grafico.series[1].name, opposite: true, min: 0, title: { text: `Não pago – ${nomeMetrica}`, style: { color: COR_SITUACAO.naoPago } }, labels: { ...rotulosY, style: { colors: COR_SITUACAO.naoPago } } },
         ]
       : {
           title: { text: `${nomeMetrica}${escalaLog ? ' – escala logarítmica' : ''}` },
