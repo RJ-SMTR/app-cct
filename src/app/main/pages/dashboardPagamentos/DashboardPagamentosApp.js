@@ -73,14 +73,16 @@ function Indicador({ situacao, totais, onClick }) {
 }
 
 function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
-  // Barras duplas: duas barras por consórcio/modal (Pago | Não pago + Aguardando pagamento), na escala escolhida no seletor.
+  // Barras duplas: duas barras por consórcio/modal (Pago | Não pago + Aguardando pagamento), em duas escalas (eixo esquerdo e direito).
   const motivosExibidos = useMemo(() => agruparMotivosEmAberto(conta.motivos), [conta]);
   const grafico = useMemo(() => montarGraficoGruposDuplo(conta, metrica), [conta, metrica]);
   const situacoesRosca = useMemo(() => SITUACOES.map((s) => ({ ...s, valor: conta[s.key].valor, qtd: conta[s.key].qtd })), [conta]);
   const vazio = SITUACOES.every((s) => conta[s.key].qtd === 0);
   // Escalas do eixo Y: "dupla" (Pago no eixo esquerdo, Pendente no direito), "log" ou "linear". Com valores pequenos
   // (um pagamento não pago) ao lado de milhões, a linear esconde as barras menores.
-  const [escala, setEscala] = useState('dupla');
+  // O seletor de escala foi retirado da tela: o gráfico usa sempre "dupla". As opções "log" e "linear" continuam
+  // suportadas abaixo para reativação futura (basta trocar o valor aqui ou voltar a expor o seletor).
+  const escala = 'dupla';
   const escalaLog = escala === 'log';
 
   const nomeMetrica = metrica === 'valor' ? 'Valor (R$)' : 'Quantidade de pagamentos';
@@ -154,16 +156,9 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
       ) : (
         <Grid container spacing={2}>
           <Grid item xs={12} lg={8}>
-            <Box className="flex flex-wrap items-center justify-between">
-              <Typography variant="subtitle2" color="text.secondary">
-                {conta.grupos.length > 1 ? 'Por consórcio / modal' : 'Por situação'} (clique numa barra para ver o detalhe)
-              </Typography>
-              <ToggleButtonGroup exclusive size="small" value={escala} onChange={(_e, v) => v && setEscala(v)} aria-label="Escala do eixo Y">
-                <ToggleButton value="dupla">Duas escalas</ToggleButton>
-                <ToggleButton value="log">Logarítmica</ToggleButton>
-                <ToggleButton value="linear">Linear</ToggleButton>
-              </ToggleButtonGroup>
-            </Box>
+            <Typography variant="subtitle2" color="text.secondary">
+              {conta.grupos.length > 1 ? 'Por consórcio / modal' : 'Por situação'} (clique numa barra para ver o detalhe)
+            </Typography>
             <Chart options={opcoesBarras} series={grafico.series} type="bar" height={380} />
           </Grid>
           <Grid item xs={12} lg={4}>
