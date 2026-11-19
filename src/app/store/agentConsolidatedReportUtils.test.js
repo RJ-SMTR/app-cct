@@ -1,4 +1,5 @@
 import {
+  buildAgentConsolidatedDisplayRows,
   AGENT_FINANCIAL_MOVEMENT_DATE_FORMAT,
   AGENT_FINANCIAL_MOVEMENT_DATE_SEPARATOR,
   AGENT_REPORT_ERROR_STATUS_VALUE,
@@ -14,6 +15,12 @@ import {
   normalizeAgentStatusSelection,
   normalizeAgentConsolidatedReportBlocks,
   shouldShowAgentEffectivePaymentDateColumn,
+  getSelectedBothAssociationsNames,
+  normalizeSelectAllAutocompleteValue,
+  AGENT_ASSOCIATION_GUARDADORES_LABEL,
+  AGENT_ASSOCIATION_OWN_PAYMENT_LABEL,
+  buildAgentAssociationTotalLines,
+  hasAgentAssociationFilter,
 } from "./agentConsolidatedReportUtils";
 
 describe("agentConsolidatedReportUtils", () => {
@@ -58,6 +65,19 @@ describe("agentConsolidatedReportUtils", () => {
       dataInicio: "2026-07-01",
       dataFim: "2026-07-31",
       pendenciaPaga: true,
+    });
+  });
+
+  it("serializes the abatimentoDuplicidade filter when Abatimento por duplicidade is selected", () => {
+    const params = buildAgentConsolidatedReportParams({
+      dateRange: [julyStartDate, julyEndDate],
+      status: ["Abatimento por duplicidade"],
+    });
+
+    expect(params).toEqual({
+      dataInicio: "2026-07-01",
+      dataFim: "2026-07-31",
+      abatimentoDuplicidade: true,
     });
   });
 
@@ -135,7 +155,7 @@ describe("agentConsolidatedReportUtils", () => {
     });
   });
 
-  it("sends no userIds for Todos guardadores and preserves Todos for associacoes", () => {
+  it("sends todosGuardadores (no userIds) for Todos guardadores and preserves Todos for associacoes", () => {
     const params = buildAgentConsolidatedReportParams({
       dateRange: [julyStartDate, julyEndDate],
       agentNames: [AGENT_REPORT_SELECT_ALL_VALUE],
@@ -145,6 +165,7 @@ describe("agentConsolidatedReportUtils", () => {
     expect(params).toEqual({
       dataInicio: "2026-07-01",
       dataFim: "2026-07-31",
+      todosGuardadores: true,
       consorcioNome: "Todos",
     });
   });
@@ -300,9 +321,55 @@ describe("agentConsolidatedReportUtils", () => {
 
       expect(options).toEqual([
         { label: "Todos", value: "Todos" },
+        { label: "ANGLAE/SINGAERJ (ambas)", value: `AMBAS::${anglae} / ${singaerj}` },
         { label: "ANGLAE", value: anglae },
         { label: "SINGAERJ", value: singaerj },
       ]);
+    });
+
+    describe("ANGLAE/SINGAERJ (ambas)", () => {
+      const bothValue = `AMBAS::${anglae} / ${singaerj}`;
+
+      it("is offered only when both associations exist", () => {
+        const options = buildAssociationAutocompleteOptions([
+          { fullName: "Maria", associacoes: [{ label: singaerj }] },
+        ]);
+
+        expect(options.map((option) => option.label)).toEqual(["Todos", "SINGAERJ"]);
+      });
+
+      it("sends both names with exigirTodasAssociacoes in the consolidated report", () => {
+        const params = buildAgentConsolidatedReportParams({ associations: [bothValue] });
+
+        expect(params.consorcioNome).toBe(`${anglae},${singaerj}`);
+        expect(params.exigirTodasAssociacoes).toBe(true);
+        expect(getSelectedBothAssociationsNames([{ value: bothValue }])).toEqual([anglae, singaerj]);
+      });
+
+      it("combines with ANGLAE or SINGAERJ; only Todos replaces the selection", () => {
+        const both = { label: "ANGLAE/SINGAERJ (ambas)", value: bothValue };
+        const single = { label: "SINGAERJ", value: singaerj };
+
+        expect(normalizeSelectAllAutocompleteValue([single, both])).toEqual([single, both]);
+        expect(normalizeSelectAllAutocompleteValue([both, single])).toEqual([both, single]);
+        expect(
+          normalizeSelectAllAutocompleteValue([both, { label: "Todos", value: "Todos" }])
+        ).toEqual([{ label: "Todos", value: "Todos" }]);
+      });
+
+      it("combined with a single association sends only the single names, without exigirTodasAssociacoes", () => {
+        const comAnglae = buildAgentConsolidatedReportParams({
+          associations: [bothValue, anglae],
+        });
+        expect(comAnglae.consorcioNome).toBe(anglae);
+        expect(comAnglae.exigirTodasAssociacoes).toBeUndefined();
+
+        const comSingaerj = buildAgentConsolidatedReportParams({ associations: [singaerj, bothValue] });
+        expect(comSingaerj.consorcioNome).toBe(singaerj);
+        expect(comSingaerj.exigirTodasAssociacoes).toBeUndefined();
+
+        expect(getSelectedBothAssociationsNames([bothValue, anglae])).toBeNull();
+      });
     });
   });
 
@@ -320,5 +387,96 @@ describe("agentConsolidatedReportUtils", () => {
       { label: "Em processamento", value: "Em processamento" },
       { label: "A pagar", value: "A pagar" },
     ]);
+  });
+});
+
+describe("association total lines", () => {
+  const ANGLAE = "ASSOCIACAO NACIONAL DOS GUARDADORES E LAVADORES DE AUTOMOVEIS CONGENERES E AFINS";
+  const SINGAERJ = "SINDICATO DOS GUARDADORES DE AUTOMOVEIS NO ESTADO DO RIO DE JANEIRO E REGIAO - SINGAERJ";
+  const totals = [
+    { nome: ANGLAE, valorAssociacao: 100, valorGuardadores: 1000 },
+    { nome: SINGAERJ, valorAssociacao: 200, valorGuardadores: 2000 },
+  ];
+
+  it("needs an association filter", () => {
+    expect(hasAgentAssociationFilter({ consorcioNome: ANGLAE })).toBe(true);
+    expect(hasAgentAssociationFilter({ todosConsorcios: true })).toBe(true);
+    expect(hasAgentAssociationFilter({ todosGuardadores: true })).toBe(false);
+    expect(hasAgentAssociationFilter()).toBe(false);
+  });
+
+  it("only the association selected: the association's own payment, with the short name", () => {
+    expect(buildAgentAssociationTotalLines([totals[0]], { consorcioNome: ANGLAE })).toEqual([
+      { nome: "ANGLAE", label: AGENT_ASSOCIATION_OWN_PAYMENT_LABEL, valor: 100 },
+    ]);
+  });
+
+  it("Todos os guardadores + association: the guardadores linked to it", () => {
+    expect(buildAgentAssociationTotalLines([totals[1]], { consorcioNome: SINGAERJ, todosGuardadores: true })).toEqual([
+      { nome: "SINGAERJ", label: AGENT_ASSOCIATION_GUARDADORES_LABEL, valor: 2000 },
+    ]);
+  });
+
+  it("Todos os guardadores + Todas as associações: one line per association", () => {
+    expect(buildAgentAssociationTotalLines(totals, { todosConsorcios: true, todosGuardadores: true })).toEqual([
+      { nome: "ANGLAE", label: AGENT_ASSOCIATION_GUARDADORES_LABEL, valor: 1000 },
+      { nome: "SINGAERJ", label: AGENT_ASSOCIATION_GUARDADORES_LABEL, valor: 2000 },
+    ]);
+  });
+
+  it("specific guardadores or ANGLAE/SINGAERJ (ambas) use the guardadores value", () => {
+    expect(buildAgentAssociationTotalLines([totals[0]], { consorcioNome: ANGLAE, userIds: "7" })[0].valor).toBe(1000);
+    expect(
+      buildAgentAssociationTotalLines(totals, { consorcioNome: `${ANGLAE},${SINGAERJ}`, exigirTodasAssociacoes: true }).map((l) => l.valor)
+    ).toEqual([1000, 2000]);
+  });
+
+  it("is empty without totals", () => {
+    expect(buildAgentAssociationTotalLines(undefined, { consorcioNome: ANGLAE })).toEqual([]);
+    expect(buildAgentAssociationTotalLines([], { consorcioNome: ANGLAE })).toEqual([]);
+  });
+});
+
+describe("buildAgentConsolidatedDisplayRows", () => {
+  const pago = {
+    rawStatus: "pago",
+    statusLabel: "Pago",
+    data: [
+      { nome: "ALEXANDRE JOSÉ PINHEIRO", valor: 2685.2 },
+      { nome: "ADEMAIR BASILIO", valor: 3962 },
+    ],
+  };
+  const abatimento = {
+    rawStatus: "abatimentoDuplicidade",
+    statusLabel: "Abatimento por duplicidade",
+    data: [{ nome: "ALEXANDRE JOSÉ PINHEIRO", valor: 137.2 }],
+  };
+
+  it("keeps one row per status, so a name in Pago and Abatimento shows twice with its status", () => {
+    expect(buildAgentConsolidatedDisplayRows([pago, abatimento])).toEqual([
+      { nome: "ADEMAIR BASILIO", status: "Pago", valor: 3962 },
+      { nome: "ALEXANDRE JOSÉ PINHEIRO", status: "Pago", valor: 2685.2 },
+      { nome: "ALEXANDRE JOSÉ PINHEIRO", status: "Abatimento por duplicidade", valor: 137.2 },
+    ]);
+  });
+
+  it("the same name follows the order of the status blocks", () => {
+    const rows = buildAgentConsolidatedDisplayRows([abatimento, pago]);
+    expect(rows.filter((row) => row.nome === "ALEXANDRE JOSÉ PINHEIRO").map((row) => row.status)).toEqual([
+      "Abatimento por duplicidade",
+      "Pago",
+    ]);
+  });
+
+  it("the 'todos' block has no status", () => {
+    const todos = { rawStatus: "todos", statusLabel: "Todos", data: [{ nome: "B", valor: 2 }, { nome: "A", valor: 1 }] };
+    expect(buildAgentConsolidatedDisplayRows([todos, pago])).toEqual([
+      { nome: "A", status: null, valor: 1 },
+      { nome: "B", status: null, valor: 2 },
+    ]);
+  });
+
+  it("is empty without blocks", () => {
+    expect(buildAgentConsolidatedDisplayRows()).toEqual([]);
   });
 });

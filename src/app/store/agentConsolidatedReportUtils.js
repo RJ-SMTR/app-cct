@@ -15,6 +15,7 @@ export const AGENT_REPORT_STATUS_LABELS = {
   pendenciaPaga: "Pendência paga",
   rejeitado: "Rejeitado",
   estorno: "Estorno",
+  abatimentoDuplicidade: "Abatimento por duplicidade",
 };
 
 function getOptionValue(option) {
@@ -50,6 +51,64 @@ function matchKnownAssociation(normalizedName) {
 
 function getSingleAssociationDisplayName(name) {
   return matchKnownAssociation(normalizeAssociationName(name)) ?? name;
+}
+
+// "ANGLAE/SINGAERJ (ambas)": only the guardadores linked to both associations at the same time.
+// The value carries the two full names, sent to the API with exigirTodasAssociacoes.
+export const AGENT_REPORT_BOTH_ASSOCIATIONS_LABEL = "ANGLAE/SINGAERJ (ambas)";
+const BOTH_ASSOCIATIONS_PREFIX = "AMBAS::";
+
+export function isBothAssociationsValue(value) {
+  return typeof value === "string" && value.startsWith(BOTH_ASSOCIATIONS_PREFIX);
+}
+
+// Full names of the both-associations option when it is the only association selected; null otherwise.
+// Combined with ANGLAE or SINGAERJ it adds nothing to the result: a single association already brings
+// the guardadores linked to both, so only the single names are sent ("any of them").
+export function getSelectedBothAssociationsNames(values) {
+  if (!Array.isArray(values)) {
+    return null;
+  }
+
+  const selectedValues = values.map(getOptionValue).filter(Boolean);
+  if (selectedValues.length !== 1 || !isBothAssociationsValue(selectedValues[0])) {
+    return null;
+  }
+
+  return selectedValues[0].slice(BOTH_ASSOCIATIONS_PREFIX.length).split(ASSOCIATION_SEPARATOR);
+}
+
+// The selection without the both-associations option (used when it is combined with single associations).
+export function withoutBothAssociations(values) {
+  if (!Array.isArray(values)) {
+    return values;
+  }
+
+  return values.filter((value) => !isBothAssociationsValue(getOptionValue(value)));
+}
+
+function buildBothAssociationsOption(associationNames) {
+  const fullNameByKnown = new Map();
+
+  associationNames
+    .flatMap((name) => String(name).split(ASSOCIATION_SEPARATOR))
+    .forEach((name) => {
+      const known = matchKnownAssociation(normalizeAssociationName(name));
+      if (known && !fullNameByKnown.has(known)) {
+        fullNameByKnown.set(known, name.trim());
+      }
+    });
+
+  const anglae = fullNameByKnown.get("ANGLAE");
+  const singaerj = fullNameByKnown.get("SINGAERJ");
+  if (!anglae || !singaerj) {
+    return null;
+  }
+
+  return {
+    label: AGENT_REPORT_BOTH_ASSOCIATIONS_LABEL,
+    value: `${BOTH_ASSOCIATIONS_PREFIX}${anglae}${ASSOCIATION_SEPARATOR}${singaerj}`,
+  };
 }
 
 // Purely visual: the full names of these two associations are too long for the tables.
@@ -146,9 +205,21 @@ export function buildAgentConsolidatedReportParams(filters = {}) {
     params.userIds = userIds;
   }
 
-  const consorcioNome = buildCommaSeparatedFilter(filters.associations);
-  if (consorcioNome) {
-    params.consorcioNome = consorcioNome;
+  // "Todos os guardadores": with an association filter the API sums both (every guardador + the association's
+  // own payment), so it must know Todos was selected, not just that no id was sent.
+  if (Array.isArray(filters.agentNames) && filters.agentNames.includes(AGENT_REPORT_SELECT_ALL_VALUE)) {
+    params.todosGuardadores = true;
+  }
+
+  const bothAssociations = getSelectedBothAssociationsNames(filters.associations);
+  if (bothAssociations) {
+    params.consorcioNome = bothAssociations.join(",");
+    params.exigirTodasAssociacoes = true;
+  } else {
+    const consorcioNome = buildCommaSeparatedFilter(withoutBothAssociations(filters.associations));
+    if (consorcioNome) {
+      params.consorcioNome = consorcioNome;
+    }
   }
 
   const valorMin = normalizeCurrencyFilterValue(filters.valorMin);
@@ -178,6 +249,9 @@ export function buildAgentConsolidatedReportParams(filters = {}) {
   }
   if (selectedStatuses.has("Pendencia Paga")) {
     params.pendenciaPaga = true;
+  }
+  if (selectedStatuses.has("Abatimento por duplicidade")) {
+    params.abatimentoDuplicidade = true;
   }
 
   if (hasErrorStatus) {
@@ -230,6 +304,27 @@ export function flattenAgentConsolidatedReportBlocks(blocks = []) {
       valor: row.valor,
     }))
   );
+}
+
+// Rows of the Guardador Consolidado grid and exports. One row per favorecido and status block: with "Pago" the API also
+// answers the "Abatimento por duplicidade" block, so the same name can show twice, each with its own status (Rayanne's
+// choice, 2026-11-18: Status column instead of summing). The "todos" block has no status. Sorted by name, then by the
+// order of the status blocks.
+export function buildAgentConsolidatedDisplayRows(blocks = []) {
+  const allStatusBlock = blocks.find((block) => block.rawStatus === "todos");
+  const sourceBlocks = allStatusBlock ? [allStatusBlock] : blocks;
+
+  return sourceBlocks
+    .flatMap((block, blockIndex) =>
+      (block.data || []).map((row) => ({
+        nome: row.nome,
+        status: allStatusBlock ? null : block.statusLabel,
+        valor: row.valor,
+        blockIndex,
+      }))
+    )
+    .sort((first, second) => first.nome.localeCompare(second.nome) || first.blockIndex - second.blockIndex)
+    .map(({ blockIndex, ...row }) => row);
 }
 
 export function getAgentConsolidatedReportTotal(blocks = []) {
@@ -299,8 +394,11 @@ export function buildAssociationAutocompleteOptions(agentUsers = []) {
     firstAssociation.localeCompare(secondAssociation)
   );
 
+  const bothAssociationsOption = buildBothAssociationsOption(uniqueAssociations);
+
   return [
     { label: AGENT_REPORT_SELECT_ALL_VALUE, value: AGENT_REPORT_SELECT_ALL_VALUE },
+    ...(bothAssociationsOption ? [bothAssociationsOption] : []),
     ...uniqueAssociations.map((association) => ({
       label: getAssociationDisplayName(association),
       value: association,
@@ -317,11 +415,11 @@ export function normalizeSelectAllAutocompleteValue(options = []) {
     (option) => option?.value === AGENT_REPORT_SELECT_ALL_VALUE
   );
 
-  if (!selectedAllOption) {
-    return options;
+  if (selectedAllOption) {
+    return [selectedAllOption];
   }
 
-  return [selectedAllOption];
+  return options;
 }
 
 export function normalizeAgentStatusSelection(options = []) {
@@ -333,5 +431,34 @@ export function normalizeAgentStatusSelection(options = []) {
     ...option,
     value: getOptionValue(option),
     label: option?.label ?? getOptionValue(option),
+  }));
+}
+
+export const AGENT_ASSOCIATION_OWN_PAYMENT_LABEL = "Valor pago à associação";
+export const AGENT_ASSOCIATION_GUARDADORES_LABEL = "Valor dos guardadores da associação";
+
+// Request params (Consolidado or Movimentação) carry an association filter: only then the result shows one line
+// per association.
+export function hasAgentAssociationFilter(requestParams = {}) {
+  return Boolean(requestParams.consorcioNome || requestParams.todosConsorcios);
+}
+
+// One line per association in the result (Rayanne's rule, 2026-11-18), from GET guardador/associacoes:
+// - only the association selected (no guardador): the association's own payment;
+// - "Todos os guardadores" (or specific guardadores) + association: the guardadores linked to that association;
+// - "ANGLAE/SINGAERJ (ambas)": the guardadores of both, since the association's own payment never enters there.
+export function buildAgentAssociationTotalLines(totals, requestParams = {}) {
+  if (!Array.isArray(totals) || totals.length === 0) {
+    return [];
+  }
+
+  const showGuardadores = Boolean(
+    requestParams.todosGuardadores || requestParams.userIds || requestParams.exigirTodasAssociacoes
+  );
+
+  return totals.map((total) => ({
+    nome: getAssociationDisplayName(total?.nome) || "-",
+    label: showGuardadores ? AGENT_ASSOCIATION_GUARDADORES_LABEL : AGENT_ASSOCIATION_OWN_PAYMENT_LABEL,
+    valor: Number(showGuardadores ? total?.valorGuardadores : total?.valorAssociacao) || 0,
   }));
 }

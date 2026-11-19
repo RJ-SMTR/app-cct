@@ -16,8 +16,14 @@ describe('toApiV2Url', () => {
 });
 
 describe('buildAgentConsolidadoV2Params', () => {
-  it('drops the "Todos" association, which is not a filter', () => {
-    expect(buildAgentConsolidadoV2Params({ dataInicio: 'x', consorcioNome: 'Todos' })).toEqual({ dataInicio: 'x' });
+  // "Todas as associações" is the guardadores linked to an association, not the total: it must reach the API
+  // as todosConsorcios, as the Movimentação Financeira sends it, or both filters show the same total.
+  it('sends the "Todos" association as todosConsorcios', () => {
+    expect(buildAgentConsolidadoV2Params({ dataInicio: 'x', consorcioNome: 'Todos' })).toEqual({ dataInicio: 'x', todosConsorcios: true });
+  });
+
+  it('sends no association filter when no association is selected', () => {
+    expect(buildAgentConsolidadoV2Params({ dataInicio: 'x' })).toEqual({ dataInicio: 'x' });
   });
 
   it('keeps a specific association and guardador', () => {
@@ -35,9 +41,28 @@ describe('paginateConsolidadoV2', () => {
 
 describe('splitAgentParamsByStatus', () => {
   it('creates one request per selected status', () => {
-    expect(splitAgentParamsByStatus({ dataInicio: 'x', pago: true, estorno: true })).toEqual([
-      { status: 'pago', params: { dataInicio: 'x', pago: true } },
+    expect(splitAgentParamsByStatus({ dataInicio: 'x', aPagar: true, estorno: true })).toEqual([
+      { status: 'aPagar', params: { dataInicio: 'x', aPagar: true } },
       { status: 'estorno', params: { dataInicio: 'x', estorno: true } },
+    ]);
+  });
+
+  it('"Pago" brings the abatimento por duplicidade as its own block', () => {
+    expect(splitAgentParamsByStatus({ dataInicio: 'x', pago: true })).toEqual([
+      { status: 'pago', params: { dataInicio: 'x', pago: true } },
+      { status: 'abatimentoDuplicidade', params: { dataInicio: 'x', abatimentoDuplicidade: true } },
+    ]);
+    expect(splitAgentParamsByStatus({ dataInicio: 'x', pago: true, estorno: true }).map(({ status }) => status)).toEqual([
+      'pago',
+      'estorno',
+      'abatimentoDuplicidade',
+    ]);
+  });
+
+  it('creates its own request for the abatimento por duplicidade', () => {
+    expect(splitAgentParamsByStatus({ dataInicio: 'x', pago: true, abatimentoDuplicidade: true })).toEqual([
+      { status: 'pago', params: { dataInicio: 'x', pago: true } },
+      { status: 'abatimentoDuplicidade', params: { dataInicio: 'x', abatimentoDuplicidade: true } },
     ]);
   });
 
@@ -70,6 +95,14 @@ describe('toAgentConsolidadoBlocksPorStatus', () => {
       { status: 'pago', count: 1, valor: 9, data: [{ nome: 'A', valor: 9 }] },
       { status: 'emProcessamento', count: 0, valor: 0, data: [] },
       { status: 'estorno', count: 1, valor: 2, data: [{ nome: 'B', valor: 2 }] },
+    ]);
+  });
+
+  it('maps the "Abatimento por duplicidade" block to its flag', () => {
+    const resposta = [{ status: 'Abatimento por duplicidade', count: 1, valor: 40, data: [{ nomefavorecido: 'A', valor: 40 }] }];
+
+    expect(toAgentConsolidadoBlocksPorStatus(resposta)).toEqual([
+      { status: 'abatimentoDuplicidade', count: 1, valor: 40, data: [{ nome: 'A', valor: 40 }] },
     ]);
   });
 

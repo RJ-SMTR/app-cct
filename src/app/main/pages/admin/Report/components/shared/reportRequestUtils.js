@@ -1,3 +1,13 @@
+export const MOTIVO_OBRIGATORIO_MENSAGEM = "Selecione um motivo para a Pendência de Pagamento.";
+
+// Pendência de Pagamento sem motivo não pode ser pesquisada: sem motivo o filtro não vira
+// Estorno/Rejeitado/OPs atrasadas (applyPendenciaDePagamentoErro abaixo) e a busca saía com outro
+// status. showErroStatus é verdadeiro exatamente quando o status de pendência está selecionado
+// (Permissionário e Guardador, Consolidado e Movimentação Financeira).
+export function motivoObrigatorioFaltando({ showErroStatus, selectedErroStatus }) {
+  return Boolean(showErroStatus) && (selectedErroStatus?.length ?? 0) === 0;
+}
+
 // Tradução do filtro "Pendência de Pagamento" + motivo selecionado (Todos/Estorno/Rejeitado/OPs
 // atrasadas) em flags booleanas (erro/estorno/rejeitado) que o backend espera. Essa lógica era
 // duplicada (quase byte a byte) entre ConsolidatedReportPage.js e FinancialMovementReport.js.

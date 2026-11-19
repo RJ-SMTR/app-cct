@@ -11,6 +11,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { api } from "app/configs/api/api";
 import JwtService from "src/app/auth/services/jwtService";
 import { format, isValid, parseISO } from "date-fns";
+import { useSelector } from "react-redux";
+import { selectUser } from "app/store/userSlice";
 import { getBankDataDateInfo } from "../../../profile/formCards/bankDataDateInfo";
 
 
@@ -29,6 +31,9 @@ const style = {
 
 
 export function PersonalInfo({ user }) {
+    const loggedUser = useSelector(selectUser);
+    // Só master (0) e master_ti (7) alteram o código de permissão.
+    const canEditPermitCode = [0, 7].includes(Number(loggedUser?.role?.id ?? loggedUser?.role));
     const [isEditable, setIsEditable] = useState(false)
     const [saved, setSaved] = useState(false)
     const [open, setOpen] = useState(false);
@@ -39,10 +44,20 @@ export function PersonalInfo({ user }) {
     const { handleSubmit, control, formState, setError, clearErrors } = useForm({
         defaultValues: {
             email: user.email,
-
+            permitCode: user.permitCode ?? '',
         },
     });
     const { isValid, errors } = formState;
+    const [permitCodeHistory, setPermitCodeHistory] = useState([]);
+
+    function loadPermitCodeHistory() {
+        const token = window.localStorage.getItem('jwt_access_token');
+        api.get(`users/${user.id}/permit-code-history`, { headers: { "Authorization": `Bearer ${token}` } })
+            .then((response) => setPermitCodeHistory(Array.isArray(response.data) ? response.data : []))
+            .catch(() => setPermitCodeHistory([]));
+    }
+
+    useEffect(() => { loadPermitCodeHistory(); }, [user.id]);
     
     function onSubmit(formData) {
         const token = window.localStorage.getItem('jwt_access_token');
@@ -56,16 +71,25 @@ export function PersonalInfo({ user }) {
                     .then((response) => {
                         resolve(response.data)
                         setIsEditable(false)
+                        loadPermitCodeHistory()
                     })
                     .catch((error) => {
-                        reject(error.response.data.errors)
-                        const errorMessage =
-                            error.response.data.errors.email === "email must be an email"
-                                ? "E-mail incorreto, verifique e tente novamente."
-                                : "E-mail já está sendo usado.";
-                        setError('email', {
-                            message: errorMessage,
-                        });
+                        const errors = error?.response?.data?.errors ?? {}
+                        reject(errors)
+                        if (errors.permitCode) {
+                            setError('permitCode', {
+                                message: "Código de permissão já está sendo usado por outro permissionário.",
+                            });
+                        }
+                        if (errors.email) {
+                            const errorMessage =
+                                errors.email === "email must be an email"
+                                    ? "E-mail incorreto, verifique e tente novamente."
+                                    : "E-mail já está sendo usado.";
+                            setError('email', {
+                                message: errorMessage,
+                            });
+                        }
                     })
 
             })
@@ -150,15 +174,28 @@ export function PersonalInfo({ user }) {
                     <div className='absolute right-24 top-24'>
                         {renderButton()}
                     </div>
-                    <TextField
-                        className="mb-24"
-                        label="Código de Permissão"
-                        type="string"
-                        variant="outlined"
-                        disabled
-                        value={user.permitCode}
-                        fullWidth
+                    <Controller
+                        name="permitCode"
+                        control={control}
+                        render={({ field }) => (
+                            <TextField
+                                {...field}
+                                className="mb-24"
+                                label="Código de Permissão"
+                                type="string"
+                                variant="outlined"
+                                disabled={!isEditable || !canEditPermitCode}
+                                fullWidth
+                                error={!!errors.permitCode}
+                                helperText={errors?.permitCode?.message || (isEditable && canEditPermitCode ?'Ao alterar, o código atual é guardado no histórico e continua vinculado a este usuário.' : undefined)}
+                            />
+                        )}
                     />
+                    {permitCodeHistory.length > 0 && (
+                        <Typography variant="caption" className="mb-24" color="text.secondary">
+                            Códigos anteriores: {permitCodeHistory.map((h) => `${h.permitCode} (até ${format(parseISO(String(h.createdAt)), 'dd/MM/yyyy')})`).join(', ')}
+                        </Typography>
+                    )}
                     <TextField
                         className="mb-24"
                         label="Nome"

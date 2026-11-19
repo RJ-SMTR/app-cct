@@ -21,11 +21,16 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { utils, writeFile as writeFileXLSX } from 'xlsx';
 
-import { handleConsolidadoPage, fetchAgentConsolidatedReport, setReportList } from 'app/store/reportSlice';
+import {
+  handleConsolidadoPage,
+  fetchAgentConsolidatedAssociationTotals,
+  fetchAgentConsolidatedReport,
+  setReportList,
+} from 'app/store/reportSlice';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import { beginReportSearch, REPORT_TIMEOUT_MESSAGE, reportErrorMessage } from 'app/store/reportRequestControl';
 import {
-  flattenAgentConsolidatedReportBlocks,
+  buildAgentConsolidatedDisplayRows,
   getAgentConsolidatedReportTotal,
   normalizeAgentStatusSelection,
   normalizeSelectAllAutocompleteValue,
@@ -33,9 +38,15 @@ import {
 import { normalizeErroStatusSelection } from './reportUtils';
 import { buildReportConsorcioOptions } from './consorcioOptions';
 import ValorRangeFilter from './shared/ValorRangeFilter';
+import AssociationTotals from './shared/AssociationTotals';
 import ReportPeriodFilter from './shared/ReportPeriodFilter';
 import useFavorecidoGuardadorOptions from './shared/useFavorecidoGuardadorOptions';
-import { applyPendenciaDePagamentoErro, applyEspecificosFlags } from './shared/reportRequestUtils';
+import {
+  applyPendenciaDePagamentoErro,
+  applyEspecificosFlags,
+  MOTIVO_OBRIGATORIO_MENSAGEM,
+  motivoObrigatorioFaltando,
+} from './shared/reportRequestUtils';
 import { explodeStucGratuidadeRows, formatStucCpf } from './shared/StucGratuidadeTable';
 import {
   STATUS_OPTIONS,
@@ -56,6 +67,8 @@ const GUARDADOR_STATUS_OPTIONS = [
   { label: "Pago", value: "Pago" },
   { label: "Pendência de pagamento", value: "Erros" },
   { label: "Pendência paga", value: "Pendencia Paga" },
+  // Pagamento com abatimento do pagamento indevido, como na tela de Agentes.
+  { label: "Abatimento por duplicidade", value: "Abatimento por duplicidade" },
 ];
 
 const GUARDADOR_ERRO_STATUS_OPTIONS = [
@@ -114,6 +127,8 @@ export default function ConsolidatedReportPage({ perfil }) {
   const [hasSearched, setHasSearched] = useState(false);
   const [dateError, setDateError] = useState(false);
   const [reportBlocks, setReportBlocks] = useState([]); // só guardador (agregação em memória)
+  // Só guardador: uma linha por associação selecionada (nome + valor), ver buildAgentAssociationTotalLines.
+  const [associationTotalLines, setAssociationTotalLines] = useState([]);
 
   const consorcios = buildReportConsorcioOptions({ selectedField: selected, includeGtu: true });
 
@@ -133,20 +148,13 @@ export default function ConsolidatedReportPage({ perfil }) {
   const formatter = useMemo(() => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }), []);
 
   // ---- Dados agregados (guardador) ----
-  const flattenedRows = useMemo(
-    () => (isGuardador ? flattenAgentConsolidatedReportBlocks(reportBlocks) : []),
+  // Uma linha por favorecido e status: com "Pago" vem também o bloco "Abatimento por duplicidade", então o mesmo nome
+  // pode aparecer duas vezes - a coluna Status diz qual é qual (buildAgentConsolidatedDisplayRows).
+  const guardadorDisplayRows = useMemo(
+    () => (isGuardador ? buildAgentConsolidatedDisplayRows(reportBlocks) : []),
     [isGuardador, reportBlocks],
   );
-  const guardadorDisplayRows = useMemo(() => {
-    if (!isGuardador) return [];
-    const allStatusBlock = reportBlocks.find((block) => block.rawStatus === "todos");
-    if (allStatusBlock) {
-      return [...allStatusBlock.data].sort((a, b) => a.nome.localeCompare(b.nome));
-    }
-    return [...flattenedRows]
-      .map((row) => ({ nome: row.nome, valor: row.valor }))
-      .sort((a, b) => a.nome.localeCompare(b.nome));
-  }, [isGuardador, flattenedRows, reportBlocks]);
+  const showGuardadorStatus = guardadorDisplayRows.some((row) => row.status);
   const guardadorTotal = useMemo(
     () => (isGuardador ? getAgentConsolidatedReportTotal(reportBlocks) : 0),
     [isGuardador, reportBlocks],
@@ -157,6 +165,10 @@ export default function ConsolidatedReportPage({ perfil }) {
   // dos dois selecionado o backend assume "Todos" (ADR 0014, api-cct) - bloqueia o botão
   // Pesquisar e mostra a mensagem de campo obrigatório em vez de deixar a busca ambígua passar.
   const missingFavorecidoOrConsorcio = !isGuardador && selectedFavorecidos.length === 0 && selectedConsorcios.length === 0;
+  // Guardador: o status é obrigatório para pesquisar.
+  const missingGuardadorStatus = isGuardador && selectedStatusOptions.length === 0;
+  // Pendência de Pagamento sem motivo não pode ser pesquisada (Permissionário e Guardador).
+  const missingMotivo = motivoObrigatorioFaltando({ showErroStatus, selectedErroStatus });
 
   // STUC - Gratuidade: a API devolve uma linha por janela de pagamento (ate 4 dias) e a tela, o CSV,
   // o PDF e o XLSX mostram um dia por linha com o valor do dia, como a Movimentacao Financeira
@@ -180,7 +192,7 @@ export default function ConsolidatedReportPage({ perfil }) {
 
   // ---- Grid rows/columns ----
   const gridRows = isGuardador
-    ? guardadorDisplayRows.map((row) => ({ id: row.nome, ...row }))
+    ? guardadorDisplayRows.map((row, index) => ({ id: `${index}-${row.status ?? ''}-${row.nome}`, ...row }))
     : showStucColumns
       ? stucExplodedRows
       : (Array.isArray(reportList.data) ? reportList.data.map((report, index) => ({ id: `${index}-${report.nomefavorecido}`, ...report })) : []);
@@ -188,6 +200,7 @@ export default function ConsolidatedReportPage({ perfil }) {
   const gridColumns = isGuardador
     ? [
         { field: 'nome', headerName: 'Nome', flex: 1, minWidth: 260 },
+        ...(showGuardadorStatus ? [{ field: 'status', headerName: 'Status', width: 240 }] : []),
         { field: 'valor', headerName: 'Valor Total', width: 180, valueFormatter: (params) => formatter.format(params.value ?? 0) },
       ]
     : showStucColumns
@@ -215,6 +228,21 @@ export default function ConsolidatedReportPage({ perfil }) {
 
   const totalValue = isGuardador ? guardadorTotal : (reportList.valor ?? 0);
 
+  // Linhas de associação nos exports do Guardador (mesmo texto da tela).
+  const associationExportLabel = (line) => `Associação: ${line.nome} (${line.label})`;
+  const associationExportRows = associationTotalLines.map((line) => [
+    associationExportLabel(line),
+    ...(showGuardadorStatus ? [""] : []),
+    formatter.format(line.valor),
+  ]);
+  // Linhas do Guardador nos exports: Nome, Status (quando há mais de um status) e Valor, como na grade.
+  const guardadorExportRows = guardadorDisplayRows.map((row) => [
+    row.nome,
+    ...(showGuardadorStatus ? [row.status] : []),
+    formatter.format(row.valor),
+  ]);
+  const guardadorExportHeader = (valorLabel) => ["Nome", ...(showGuardadorStatus ? ["Status"] : []), valorLabel];
+
   // ---- Export CSV ----
   const currentDateRange = getValues('dateRange');
   const csvFilenamePrefix = isGuardador ? 'relatorio_agentes' : 'relatorio';
@@ -232,7 +260,8 @@ export default function ConsolidatedReportPage({ perfil }) {
   const csvData = useMemo(() => {
     if (!hasRows) return [];
     if (isGuardador) {
-      return guardadorDisplayRows.map((row) => ({ Nome: row.nome, Valor: formatter.format(row.valor) }));
+      const toCsvRow = (values) => Object.fromEntries(guardadorExportHeader("Valor").map((column, index) => [column, values[index] ?? ""]));
+      return [...guardadorExportRows.map(toCsvRow), ...associationExportRows.map(toCsvRow)];
     }
     if (showStucColumns) {
       const toCsvRow = (values) => Object.fromEntries(STUC_EXPORT_HEADER.map((column, index) => [column, values[index] ?? '']));
@@ -253,7 +282,7 @@ export default function ConsolidatedReportPage({ perfil }) {
       { Nome: "Valor Total", Valor: "", Status: formatter.format(reportList?.valor) },
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasRows, isGuardador, guardadorDisplayRows, reportList, formatter, showStucColumns]);
+  }, [hasRows, isGuardador, guardadorDisplayRows, showGuardadorStatus, associationTotalLines, reportList, formatter, showStucColumns]);
 
   const exportPDF = () => {
     if (!hasRows) return;
@@ -262,11 +291,12 @@ export default function ConsolidatedReportPage({ perfil }) {
     const dateInicio = selectedDateRange?.[0];
     const dateFim = selectedDateRange?.[1];
     const rows = isGuardador
-      ? guardadorDisplayRows.map((row) => [row.nome, formatter.format(row.valor)])
+      ? [...guardadorExportRows, ...associationExportRows]
       : showStucColumns
         ? stucExportRows
         : reportList.data.map((report) => [report.nomefavorecido, formatter.format(report.valor ?? 0)]);
-    const head = showStucColumns ? STUC_EXPORT_HEADER : ["Nome", "Valor Total"];
+    const permissionarioHead = showStucColumns ? STUC_EXPORT_HEADER : ["Nome", "Valor Total"];
+    const head = isGuardador ? guardadorExportHeader("Valor Total") : permissionarioHead;
 
     doc.autoTable({
       head: [head],
@@ -307,13 +337,13 @@ export default function ConsolidatedReportPage({ perfil }) {
     if (!hasRows) return;
     const selectedDateRange = getValues('dateRange');
     const rows = isGuardador
-      ? guardadorDisplayRows.map((row) => [row.nome, formatter.format(row.valor)])
+      ? guardadorExportRows
       : showStucColumns
         ? stucExportRows
         : reportList.data.map((report) => [report.nomefavorecido, formatter.format(report.valor ?? 0)]);
     const totalLabel = isGuardador ? "Total geral" : "Valor Total";
     const header = isGuardador
-      ? ["Nome", "Valor"]
+      ? guardadorExportHeader("Valor")
       : showStucColumns
         ? STUC_EXPORT_HEADER
         : ["Nome", "Valor"];
@@ -325,6 +355,7 @@ export default function ConsolidatedReportPage({ perfil }) {
       header,
       ...rows,
       [totalLabel, ...padding, formatter.format(totalValue ?? 0)],
+      ...(isGuardador ? associationExportRows : []),
     ];
 
     // sheetData é sempre array de arrays (não de objetos) nos dois perfis - json_to_sheet
@@ -437,6 +468,7 @@ export default function ConsolidatedReportPage({ perfil }) {
       setSelectedStatusOptions([]);
       setDateError(false);
       setReportBlocks([]);
+      setAssociationTotalLines([]);
       setGuardadorPage(0);
     } else {
       setValue('name', []);
@@ -477,8 +509,8 @@ export default function ConsolidatedReportPage({ perfil }) {
   };
 
   const submitPagePermissionario = (data, pageIndex, currentPageSize, { isNewSearch = false } = {}) => {
-    if (whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus.length === 0) {
-      dispatch(showMessage({ message: "Selecione um motivo para a Pendência de Pagamento." }));
+    if (missingMotivo) {
+      dispatch(showMessage({ message: MOTIVO_OBRIGATORIO_MENSAGEM }));
       return;
     }
 
@@ -527,25 +559,37 @@ export default function ConsolidatedReportPage({ perfil }) {
       return;
     }
 
-    if (data.status.includes("Erros") && selectedErroStatus.length === 0) {
-      dispatch(showMessage({ message: "Selecione um motivo para Pendência de pagamento." }));
+    if (!data.status || data.status.length === 0) {
+      dispatch(showMessage({ message: "Selecione um status para pesquisar." }));
+      return;
+    }
+
+    if (missingMotivo) {
+      dispatch(showMessage({ message: MOTIVO_OBRIGATORIO_MENSAGEM }));
       return;
     }
 
     setDateError(false);
     setReportBlocks([]);
+    setAssociationTotalLines([]);
     setIsLoading(true);
     setGuardadorPage(0);
     let cancelada = false;
     try {
-      const responseBlocks = await dispatch(fetchAgentConsolidatedReport(data));
+      const [responseBlocks, totalLines] = await Promise.all([
+        dispatch(fetchAgentConsolidatedReport(data)),
+        // A linha da associação é complementar: se a rota falhar, o relatório sai sem ela.
+        dispatch(fetchAgentConsolidatedAssociationTotals(data)).catch(() => []),
+      ]);
       setReportBlocks(responseBlocks);
+      setAssociationTotalLines(totalLines);
       setHasSearched(true);
     } catch (error) {
       const message = reportErrorMessage(error, "Erro na busca do relatório de agentes. Verifique os filtros e tente novamente.");
       cancelada = message === null;
       if (!cancelada) {
         setReportBlocks([]);
+        setAssociationTotalLines([]);
         dispatch(showMessage({ message }));
       }
     } finally {
@@ -620,7 +664,15 @@ export default function ConsolidatedReportPage({ perfil }) {
                     isOptionEqualToValue={isGuardador ? (option, value) => option.value === value.value : undefined}
                     filterSelectedOptions={!isGuardador}
                     onChange={(_, newValue) => handleAutocompleteChange('status', newValue)}
-                    renderInput={(params) => <TextField {...params} label="Selecionar Status" variant="outlined" />}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label={isGuardador ? "Selecionar Status *" : "Selecionar Status"}
+                        variant="outlined"
+                        error={missingGuardadorStatus}
+                        helperText={missingGuardadorStatus ? "Selecione um status para pesquisar." : ""}
+                      />
+                    )}
                   />
                 </Grid>
               )}
@@ -647,7 +699,16 @@ export default function ConsolidatedReportPage({ perfil }) {
                       setSelectedErroStatus(normalizedValue);
                       setValue("erroStatus", normalizedValue.map((option) => (isGuardador ? option.value : option.label)));
                     }}
-                    renderInput={(params) => <TextField {...params} label="Motivos" variant="outlined" />}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Motivos"
+                        variant="outlined"
+                        required
+                        error={missingMotivo}
+                        helperText={missingMotivo ? MOTIVO_OBRIGATORIO_MENSAGEM : ''}
+                      />
+                    )}
                   />
                 </Grid>
               )}
@@ -811,7 +872,7 @@ export default function ConsolidatedReportPage({ perfil }) {
                 aria-label="Pesquisar"
                 type="submit"
                 size="medium"
-                disabled={missingFavorecidoOrConsorcio}
+                disabled={missingFavorecidoOrConsorcio || missingGuardadorStatus || missingMotivo}
               >
                 Pesquisar
               </Button>
@@ -918,6 +979,7 @@ export default function ConsolidatedReportPage({ perfil }) {
             <span>Valor Total</span>
             <span>{formatter.format(totalValue ?? 0)}</span>
           </Box>
+          {isGuardador && <AssociationTotals lines={associationTotalLines} formatValue={(valor) => formatter.format(valor ?? 0)} />}
           {!isGuardador && reportList.valorSemFavorecido > 0 && (
             <Box
               sx={{ display: "flex", justifyContent: "space-between", width: "100%", gap: 2, mt: 1 }}

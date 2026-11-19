@@ -2,9 +2,14 @@ export function toApiV2Url(baseURL, path) {
   return `${baseURL.replace(/\/v1\/?$/, '/v2/')}${path.replace(/^\/+/, '')}`;
 }
 
+// "Todas as associações" is the guardadores linked to an association (todosConsorcios), as the Movimentação
+// Financeira sends it; dropping it made the Consolidado show the same total for guardadores and associações.
 export function buildAgentConsolidadoV2Params(params = {}) {
   const { consorcioNome, ...v2Params } = params;
-  return consorcioNome && consorcioNome !== 'Todos' ? { ...v2Params, consorcioNome } : v2Params;
+  if (!consorcioNome) {
+    return v2Params;
+  }
+  return consorcioNome === 'Todos' ? { ...v2Params, todosConsorcios: true } : { ...v2Params, consorcioNome };
 }
 
 // The v2 Consolidado returns every row at once; the screen expects one page at a time.
@@ -17,12 +22,17 @@ export function paginateConsolidadoV2(response, page, pageSize) {
   return { ...response, data: rows.slice(start, start + pageSize) };
 }
 
-const AGENT_STATUS_FLAGS = ['pago', 'aPagar', 'emProcessamento', 'pendenciaPaga', 'rejeitado', 'estorno'];
+const AGENT_STATUS_FLAGS = ['pago', 'aPagar', 'emProcessamento', 'pendenciaPaga', 'rejeitado', 'estorno', 'abatimentoDuplicidade'];
 
 // The Guardador screen shows one block per status, and the v2 route answers one total per
 // favorecido, so each selected status gets its own request.
+// "Pago" traz junto o "Abatimento por duplicidade" (api-cct), com bloco e total próprios: o abatimento entra
+// como mais um status, para a tela pedir os blocos por status em vez de somar o abatimento no Pago.
 export function splitAgentParamsByStatus(params = {}) {
   const selected = AGENT_STATUS_FLAGS.filter((flag) => params[flag]);
+  if (params.pago && !params.abatimentoDuplicidade) {
+    selected.push('abatimentoDuplicidade');
+  }
   const base = Object.fromEntries(Object.entries(params).filter(([key]) => !AGENT_STATUS_FLAGS.includes(key)));
 
   if (selected.length === 0) {
@@ -49,6 +59,7 @@ const STATUS_TO_AGENT_FLAG = {
   'Pendencia Paga': 'pendenciaPaga',
   Rejeitado: 'rejeitado',
   Estorno: 'estorno',
+  'Abatimento por duplicidade': 'abatimentoDuplicidade',
 };
 
 // ADR 0023 da api-cct (T11): with porStatus=true the API answers one block per status from a single query.

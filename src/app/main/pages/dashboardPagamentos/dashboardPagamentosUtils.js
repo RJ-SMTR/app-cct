@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 export const SITUACOES = [
   { key: 'pago', label: 'Pago', color: '#2e7d32' },
   { key: 'naoPago', label: 'Não pago', color: '#d32f2f' },
-  { key: 'emAberto', label: 'Em aberto', color: '#ed6c02' },
+  { key: 'emAberto', label: 'Aguardando pagamento', color: '#ed6c02' },
 ];
 
 export const CONTAS = ['bilhetagem', 'rotativo', 'cett'];
@@ -59,6 +59,45 @@ export function montarGraficoGrupos(conta, metrica) {
       data: grupos.map((g) => Number(metrica === 'valor' ? g[s.key].valor : g[s.key].qtd) || 0),
     })),
   };
+}
+
+/**
+ * Barras duplas: duas barras por consórcio/modal. A primeira é a de "Pago"; a segunda empilha "Não pago" e
+ * "Aguardando pagamento" (em aberto). O nome do consórcio aparece uma vez no eixo X; as duas barras saem de séries
+ * com `group` (barras agrupadas e empilhadas do ApexCharts). Valores zerados não são exibidos: ponto zerado vira
+ * `null` (sem barra nem tooltip) e consórcio/modal sem nenhum valor na métrica fica fora do gráfico.
+ */
+export function montarGraficoGruposDuplo(conta, metrica) {
+  const valorDe = (g, situacao) => Number(metrica === 'valor' ? g[situacao].valor : g[situacao].qtd) || 0;
+  const grupos = (conta?.grupos ?? []).filter((g) => SITUACOES.some((s) => valorDe(g, s.key) > 0));
+  const serie = (situacao, group) => ({
+    key: situacao,
+    name: ROTULO_SITUACAO[situacao],
+    group,
+    data: grupos.map((g) => (valorDe(g, situacao) > 0 ? valorDe(g, situacao) : null)),
+  });
+  return {
+    categorias: grupos.map((g) => g.grupo),
+    series: [serie('pago', 'pago'), serie('naoPago', 'pendente'), serie('emAberto', 'pendente')],
+  };
+}
+
+/**
+ * Tudo que está em aberto aparece como "Aguardando pagamento": os motivos de "em aberto" viram uma linha só (sem código,
+ * então o clique abre a situação inteira). Os demais motivos ficam como vieram.
+ */
+export function agruparMotivosEmAberto(motivos) {
+  const lista = motivos ?? [];
+  const abertos = lista.filter((m) => m.situacao === 'emAberto');
+  if (abertos.length === 0) return lista;
+  const unico = {
+    situacao: 'emAberto',
+    codigo: undefined,
+    descricao: ROTULO_SITUACAO.emAberto,
+    qtd: abertos.reduce((s, m) => s + (Number(m.qtd) || 0), 0),
+    valor: abertos.reduce((s, m) => s + (Number(m.valor) || 0), 0),
+  };
+  return [...lista.filter((m) => m.situacao !== 'emAberto'), unico];
 }
 
 /** Rosca dos motivos de uma situação (por padrão "não pago"). */
