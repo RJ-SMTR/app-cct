@@ -22,6 +22,13 @@ describe('handleAgentFinancialData status flags', () => {
     expect(requestData.aPagar).toBeUndefined();
   });
 
+  it('sends abatimentoDuplicidade for the "Abatimento por duplicidade" option', () => {
+    const requestData = handleAgentFinancialData({ dateRange, status: ['Pago', 'Abatimento por duplicidade'] });
+
+    expect(requestData.abatimentoDuplicidade).toBe(true);
+    expect(requestData.pago).toBe(true);
+  });
+
   it('keeps sending only the selected flags', () => {
     const requestData = handleAgentFinancialData({
       dateRange,
@@ -39,10 +46,18 @@ describe('handleAgentFinancialData status flags', () => {
       expect(requestData.userIds).toBe('2,5');
     });
 
-    it('sends no userIds when Todos is selected', () => {
+    // "Todos os guardadores" + an association filter is a union in the API (regra de Rayanne, 2026-11-13).
+    it('sends todosGuardadores and no userIds when Todos is selected', () => {
       const requestData = handleAgentFinancialData({ dateRange, agentNames: ['Todos'] });
 
       expect(requestData.userIds).toBeUndefined();
+      expect(requestData.todosGuardadores).toBe(true);
+    });
+
+    it('sends no todosGuardadores for specific guardadores', () => {
+      const requestData = handleAgentFinancialData({ dateRange, agentNames: [2, 5] });
+
+      expect(requestData.todosGuardadores).toBeUndefined();
     });
   });
 

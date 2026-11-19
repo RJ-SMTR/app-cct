@@ -22,6 +22,7 @@ import {
   handleFinancialMovementPage,
   handleAgentFinancialMovementExport,
   handleAgentFinancialMovementPage,
+  fetchAgentFinancialMovementAssociationTotals,
   setReportList,
 } from "app/store/reportSlice";
 import { showMessage } from "app/store/fuse/messageSlice";
@@ -36,12 +37,20 @@ import {
 import { normalizeErroStatusSelection } from "./reportUtils";
 import { buildReportConsorcioOptions } from "./consorcioOptions";
 import ValorRangeFilter from "./shared/ValorRangeFilter";
+import AssociationTotals from "./shared/AssociationTotals";
 import ReportPeriodFilter from "./shared/ReportPeriodFilter";
 import useFavorecidoGuardadorOptions from "./shared/useFavorecidoGuardadorOptions";
-import { applyPendenciaDePagamentoErro, applyEspecificosFlags } from "./shared/reportRequestUtils";
+import {
+  applyPendenciaDePagamentoErro,
+  applyEspecificosFlags,
+  MOTIVO_OBRIGATORIO_MENSAGEM,
+  motivoObrigatorioFaltando,
+} from "./shared/reportRequestUtils";
 import { explodeStucGratuidadeRows, formatStucCpf } from "./shared/StucGratuidadeTable";
 import {
   STATUS_OPTIONS,
+  GUARDADOR_FINANCIAL_STATUS_OPTIONS,
+  ABATIMENTO_DUPLICIDADE_STATUS,
   ERRO_STATUS_OPTIONS,
   MIN_SELECTABLE_DATE_GUARDADOR,
   MIN_SELECTABLE_DATE_PERMISSIONARIO,
@@ -76,6 +85,9 @@ export default function FinancialMovementReport({ perfil }) {
   });
   const [selectedAgentOptions, setSelectedAgentOptions] = useState([]);
   const [selectedAssociationOptions, setSelectedAssociationOptions] = useState([]);
+  // Só guardador: uma linha por associação selecionada (nome + valor), ver buildAgentAssociationTotalLines.
+  // Vem só na pesquisa nova; a paginação não muda os filtros, então as linhas continuam valendo.
+  const [associationTotalLines, setAssociationTotalLines] = useState([]);
   const [selectedStatusOptions, setSelectedStatusOptions] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const [whichStatusShow, setWhichStatus] = useState([]);
@@ -97,7 +109,8 @@ export default function FinancialMovementReport({ perfil }) {
   // (não somando) as colunas normais da Movimentação Financeira. Só Permissionário.
   const showStucColumns = !isGuardador && selectedEspecificos.includes('STUC - Gratuidade');
 
-  const statusBase = STATUS_OPTIONS.filter((option) => option.label !== "Todos");
+  // Guardador tem também o "Abatimento por duplicidade" (desconto do pagamento indevido).
+  const statusBase = (isGuardador ? GUARDADOR_FINANCIAL_STATUS_OPTIONS : STATUS_OPTIONS).filter((option) => option.label !== "Todos");
   const erroStatus = ERRO_STATUS_OPTIONS;
   const consorcios = buildReportConsorcioOptions({ selectedField: selected, includeGtu: true });
   const especificos = [{ label: 'Eleição' }, { label: 'Desativados' }, { label: 'STUC - Gratuidade' }];
@@ -116,11 +129,12 @@ export default function FinancialMovementReport({ perfil }) {
     setValue("dateRange", []);
   }, [perfil, setValue]);
 
-  const hasMissingErroStatusSelection =
-    whichStatusShow.includes("Pendência de Pagamento") && selectedErroStatus.length === 0;
+  // Pendência de Pagamento sem motivo não pode ser pesquisada (Permissionário e Guardador): o botão
+  // Pesquisar fica desabilitado e o campo Motivos mostra o erro.
+  const hasMissingErroStatusSelection = motivoObrigatorioFaltando({ showErroStatus, selectedErroStatus });
 
-  // Permissionário: pesquisar sem status não é permitido (o guardador continua opcional).
-  const hasMissingStatusSelection = !isGuardador && whichStatusShow.length === 0;
+  // Pesquisar sem status não é permitido, no Permissionário e no Guardador.
+  const hasMissingStatusSelection = whichStatusShow.length === 0;
 
   // Permissionário: Favorecido e Consórcio são mutuamente exclusivos (handleSelection acima),
   // mas sem nenhum dos dois selecionado o backend assume "Todos" (ADR 0014, api-cct) - exigir
@@ -136,7 +150,7 @@ export default function FinancialMovementReport({ perfil }) {
 
   const validateErroStatusSelection = () => {
     if (!hasMissingErroStatusSelection) return true;
-    dispatch(showMessage({ message: "Selecione um motivo para a Pendência de Pagamento." }));
+    dispatch(showMessage({ message: MOTIVO_OBRIGATORIO_MENSAGEM }));
     return false;
   };
 
@@ -309,7 +323,7 @@ export default function FinancialMovementReport({ perfil }) {
   };
 
   const submitReportGuardador = async (data, pageIndex, pageSize, { isNewSearch = false } = {}) => {
-    if (!validateErroStatusSelection()) return;
+    if (!validateStatusSelection() || !validateErroStatusSelection()) return;
     const pageRequestData = buildRequestData(data, pageIndex, pageSize, { includePagination: true });
 
     // Só no clique em Pesquisar (não na paginação, que também passa por aqui) - limpa o
@@ -317,6 +331,7 @@ export default function FinancialMovementReport({ perfil }) {
     // a nova carrega.
     if (isNewSearch) {
       dispatch(setReportList([]));
+      setAssociationTotalLines([]);
     }
 
     setIsLoading(true);
@@ -324,7 +339,12 @@ export default function FinancialMovementReport({ perfil }) {
     try {
       // A primeira página (sem cursor) já traz o resumo, e as seguintes trazem só as linhas: o resumo não é
       // recalculado a cada clique de página (ADR 0023 da api-cct).
-      const pageResponse = await dispatch(handleAgentFinancialMovementPage(pageRequestData));
+      const [pageResponse, totalLines] = await Promise.all([
+        dispatch(handleAgentFinancialMovementPage(pageRequestData)),
+        // A linha da associação é complementar: se a rota falhar, o relatório sai sem ela.
+        isNewSearch ? dispatch(fetchAgentFinancialMovementAssociationTotals(pageRequestData)).catch(() => []) : null,
+      ]);
+      if (isNewSearch) setAssociationTotalLines(totalLines);
       const newNextCursor = pageResponse?.nextCursor ?? null;
 
       setPageCursors((prevCursors) => {
@@ -337,7 +357,10 @@ export default function FinancialMovementReport({ perfil }) {
     } catch (error) {
       const message = reportErrorMessage(error, "Erro na busca do relatório de guardadores. Verifique os filtros.");
       cancelada = message === null;
-      if (message === REPORT_TIMEOUT_MESSAGE) dispatch(setReportList([]));
+      if (message === REPORT_TIMEOUT_MESSAGE) {
+        dispatch(setReportList([]));
+        setAssociationTotalLines([]);
+      }
       if (message) dispatch(showMessage({ message }));
     } finally {
       if (!cancelada) setIsLoading(false);
@@ -417,6 +440,7 @@ export default function FinancialMovementReport({ perfil }) {
     }
 
     dispatch(setReportList([]));
+    setAssociationTotalLines([]);
     setSelectedErroStatus([]);
     setShowErroStatus(false);
     setWhichStatus([]);
@@ -578,6 +602,9 @@ export default function FinancialMovementReport({ perfil }) {
         return "bg-blue-400 text-black";
       case "A Pagar":
         return "bg-gray-400 text-black";
+      // Mesma cor roxa do badge da tela de Agentes.
+      case ABATIMENTO_DUPLICIDADE_STATUS:
+        return "bg-purple-300 text-black";
       default:
         return "bg-red-300 text-black";
     }
@@ -679,7 +706,7 @@ export default function FinancialMovementReport({ perfil }) {
           : []),
         { field: 'valor', headerName: 'Valor', width: 140, valueFormatter: (params) => formatCurrency(params.value) },
         { field: 'status', headerName: 'Status', width: 150, renderCell: (params) => statusBadge(params.value) },
-        { field: 'descricaoErro', headerName: 'Descrição do Erro', flex: 1, minWidth: 200, valueGetter: (params) => params.value || '-' },
+        { field: 'descricaoErro', headerName: isGuardador ? 'Motivo' : 'Descrição do Erro', flex: 1, minWidth: 200, valueGetter: (params) => params.value || '-' },
       ];
 
   return (
@@ -713,10 +740,10 @@ export default function FinancialMovementReport({ perfil }) {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label={isGuardador ? "Selecionar Status" : "Selecionar Status *"}
+                      label="Selecionar Status *"
                       variant="outlined"
-                      error={hasSearched && hasMissingStatusSelection}
-                      helperText={hasSearched && hasMissingStatusSelection ? "Selecione um status para pesquisar." : ""}
+                      error={(isGuardador || hasSearched) && hasMissingStatusSelection}
+                      helperText={(isGuardador || hasSearched) && hasMissingStatusSelection ? "Selecione um status para pesquisar." : ""}
                     />
                   )}
                 />
@@ -742,12 +769,9 @@ export default function FinancialMovementReport({ perfil }) {
                         {...params}
                         label={isGuardador ? "Motivo da Pendência" : "Motivos"}
                         variant="outlined"
-                        error={isGuardador ? hasMissingErroStatusSelection : undefined}
-                        helperText={
-                          isGuardador && hasMissingErroStatusSelection
-                            ? "Selecione um motivo para a Pendência de Pagamento."
-                            : ""
-                        }
+                        required
+                        error={hasMissingErroStatusSelection}
+                        helperText={hasMissingErroStatusSelection ? MOTIVO_OBRIGATORIO_MENSAGEM : ""}
                       />
                     )}
                   />
@@ -926,7 +950,7 @@ export default function FinancialMovementReport({ perfil }) {
                 aria-label="Pesquisar"
                 type="submit"
                 size="medium"
-                disabled={hasMissingFavorecidoOuConsorcioSelection}
+                disabled={hasMissingFavorecidoOuConsorcioSelection || (isGuardador && hasMissingStatusSelection) || hasMissingErroStatusSelection}
               >
                 Pesquisar
               </Button>
@@ -1007,6 +1031,7 @@ export default function FinancialMovementReport({ perfil }) {
               reportList?.valorPendente > 0 ||
               reportList?.valorPendenciaPaga > 0 ||
               reportList?.valorAPagar > 0 ||
+              reportList?.valorAbatimentoDuplicidade > 0 ||
               showErroStatus) && (
               <Box className="py-8 text-black" style={{ width: "100%" }}>
                 {(() => {
@@ -1016,6 +1041,7 @@ export default function FinancialMovementReport({ perfil }) {
                   const valorPendenciaPaga = toNumber(reportList?.valorPendenciaPaga);
                   const valorEstornado = toNumber(reportList?.valorEstornado);
                   const valorRejeitado = toNumber(reportList?.valorRejeitado);
+                  const valorAbatimentoDuplicidade = toNumber(reportList?.valorAbatimentoDuplicidade);
                   const totalGeral = toNumber(reportList?.valorTotal);
                   const rows = [];
 
@@ -1025,6 +1051,7 @@ export default function FinancialMovementReport({ perfil }) {
                   if (valorPendenciaPaga > 0) rows.push(["Pendência Paga", valorPendenciaPaga]);
                   if (valorEstornado > 0) rows.push(["Estorno", valorEstornado]);
                   if (valorRejeitado > 0) rows.push(["Rejeitado", valorRejeitado]);
+                  if (valorAbatimentoDuplicidade > 0) rows.push([ABATIMENTO_DUPLICIDADE_STATUS, valorAbatimentoDuplicidade]);
 
                   return renderStatusTotals(rows, ["Total Geral", totalGeral]);
                 })()}
@@ -1066,6 +1093,7 @@ export default function FinancialMovementReport({ perfil }) {
               </Box>
             )
           )}
+          {isGuardador && <AssociationTotals lines={associationTotalLines} formatValue={formatCurrency} />}
         </Box>
       </Paper>
     </>

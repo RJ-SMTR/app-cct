@@ -6,9 +6,11 @@ import dayjs from 'dayjs';
 import JwtService from '../auth/services/jwtService';
 import { withReportRequestControl } from './reportRequestControl';
 import {
+  buildAgentAssociationTotalLines,
   buildAgentConsolidatedReportParams,
   getSelectedBothAssociationsNames,
   withoutBothAssociations,
+  hasAgentAssociationFilter,
   normalizeAgentConsolidatedReportBlocks,
 } from './agentConsolidatedReportUtils';
 import {
@@ -365,6 +367,29 @@ export const fetchAgentConsolidatedReport = (data) => async () => {
   return normalizeAgentConsolidatedReportBlocks(blocks);
 };
 
+// Linha de cada associação no resultado do Guardador (Consolidado e Movimentação Financeira): GET
+// guardador/associacoes com os mesmos filtros da pesquisa. Sem filtro de associação não há linha nem requisição.
+const requestAgentAssociationTotalLines = async (requestParams) => {
+  const token = window.localStorage.getItem('jwt_access_token');
+
+  if (!JwtService.isAuthTokenValid(token)) {
+    return Promise.reject(new Error('Sessão inválida. Faça login novamente.'));
+  }
+  if (!hasAgentAssociationFilter(requestParams)) {
+    return [];
+  }
+
+  const url = toApiV2Url(api.defaults.baseURL, `${jwtServiceConfig.guardadorFinancialMovement}/associacoes`);
+  const totals = await requestReport(url, requestParams, token);
+  return buildAgentAssociationTotalLines(totals, requestParams);
+};
+
+export const fetchAgentConsolidatedAssociationTotals = (data) => async () =>
+  requestAgentAssociationTotalLines(buildAgentConsolidadoV2Params(buildAgentConsolidatedReportParams(data)));
+
+export const fetchAgentFinancialMovementAssociationTotals = (data) => async () =>
+  requestAgentAssociationTotalLines(handleAgentFinancialData(data));
+
 export const handleFinancialMovementSummary = (data, options = {}) => async (dispatch) => {
   const token = window.localStorage.getItem('jwt_access_token');
 
@@ -469,7 +494,11 @@ export function handleAgentFinancialData(data) {
     const userIds = data.agentNames
       .map((i) => (typeof i === 'object' ? (i.id || i.userId || i.value) : i))
       .filter((id) => id && id !== 'Todos');
-    if (userIds.length > 0 && !data.agentNames.some((i) => (typeof i === 'object' ? (i.value || i.label) : i) === 'Todos')) {
+    const todosGuardadores = data.agentNames.some((i) => (typeof i === 'object' ? (i.value || i.label) : i) === 'Todos');
+    if (todosGuardadores) {
+      // With an association filter the API sums every guardador and the association's own payment.
+      requestData.todosGuardadores = true;
+    } else if (userIds.length > 0) {
       requestData.userIds = userIds.join(',');
     }
   } else if (data.name && data.name.length > 0) {
@@ -543,6 +572,9 @@ export function handleAgentFinancialData(data) {
         case 'A pagar':
         case 'A Pagar':
           requestData.aPagar = true;
+          break;
+        case 'Abatimento por duplicidade':
+          requestData.abatimentoDuplicidade = true;
           break;
         default:
           break;

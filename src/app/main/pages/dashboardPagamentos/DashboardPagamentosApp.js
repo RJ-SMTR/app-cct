@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import Chart from 'react-apexcharts';
+import RoscaDoisAneis from './RoscaDoisAneis';
 import {
   Alert,
   Box,
@@ -29,8 +30,8 @@ import {
   formatBRL,
   formatMetrica,
   formatQtd,
-  montarGraficoGrupos,
-  montarGraficoMotivos,
+  agruparMotivosEmAberto,
+  montarGraficoGruposDuplo,
   montarUrlDetalhe,
   periodoDaUrl,
   toIsoDate,
@@ -41,7 +42,7 @@ function authHeaders() {
   return { Authorization: `Bearer ${token}` };
 }
 
-/** Quadro de um total clicável (Pago / Não pago / Em aberto) de uma conta. */
+/** Quadro de um total clicável (Pago / Não pago / Aguardando pagamento) de uma conta. */
 function Indicador({ situacao, totais, onClick }) {
   return (
     <Box
@@ -72,9 +73,32 @@ function Indicador({ situacao, totais, onClick }) {
 }
 
 function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
-  const grafico = useMemo(() => montarGraficoGrupos(conta, metrica), [conta, metrica]);
-  const rosca = useMemo(() => montarGraficoMotivos(conta, 'naoPago', metrica), [conta, metrica]);
+  // Barras duplas: duas barras por consórcio/modal (Pago | Não pago + Aguardando pagamento), na escala escolhida no seletor.
+  const motivosExibidos = useMemo(() => agruparMotivosEmAberto(conta.motivos), [conta]);
+  const grafico = useMemo(() => montarGraficoGruposDuplo(conta, metrica), [conta, metrica]);
+  const situacoesRosca = useMemo(() => SITUACOES.map((s) => ({ ...s, valor: conta[s.key].valor, qtd: conta[s.key].qtd })), [conta]);
   const vazio = SITUACOES.every((s) => conta[s.key].qtd === 0);
+  // Escalas do eixo Y: "dupla" (Pago no eixo esquerdo, Pendente no direito), "log" ou "linear". Com valores pequenos
+  // (um pagamento não pago) ao lado de milhões, a linear esconde as barras menores.
+  const [escala, setEscala] = useState('dupla');
+  const escalaLog = escala === 'log';
+
+  const nomeMetrica = metrica === 'valor' ? 'Valor (R$)' : 'Quantidade de pagamentos';
+  const rotulosY = { formatter: (v) => formatMetrica(v, metrica) };
+  const yaxisBarras =
+    escala === 'dupla'
+      ? [
+          // Eixo esquerdo: barra de Pago (valores altos).
+          { seriesName: grafico.series[0].name, min: 0, title: { text: `Pago – ${nomeMetrica}`, style: { color: COR_SITUACAO.pago } }, labels: { ...rotulosY, style: { colors: COR_SITUACAO.pago } } },
+          // Eixo direito: barra de Pendente (Não pago + Aguardando pagamento), escala própria e menor.
+          { seriesName: grafico.series[1].name, opposite: true, min: 0, title: { text: `Pendente – ${nomeMetrica}`, style: { color: COR_SITUACAO.naoPago } }, labels: { ...rotulosY, style: { colors: COR_SITUACAO.naoPago } } },
+          { seriesName: grafico.series[1].name, opposite: true, show: false },
+        ]
+      : {
+          title: { text: `${nomeMetrica}${escalaLog ? ' – escala logarítmica' : ''}` },
+          labels: rotulosY,
+          ...(escalaLog ? { logarithmic: true, logBase: 10, min: 1 } : {}),
+        };
 
   const opcoesBarras = {
     chart: {
@@ -85,35 +109,25 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
         // Clicar numa barra abre o detalhe daquele consórcio/modal naquela situação.
         dataPointSelection: (_event, _ctx, { seriesIndex, dataPointIndex }) => {
           if (seriesIndex < 0 || dataPointIndex < 0) return;
-          onAbrirDetalhe({ conta: conta.conta, grupo: grafico.categorias[dataPointIndex], situacao: SITUACOES[seriesIndex].key });
+          onAbrirDetalhe({ conta: conta.conta, grupo: grafico.categorias[dataPointIndex], situacao: grafico.series[seriesIndex].key });
         },
       },
     },
-    colors: SITUACOES.map((s) => s.color),
-    plotOptions: { bar: { columnWidth: '60%' } },
+    colors: grafico.series.map((s) => COR_SITUACAO[s.key]),
+    plotOptions: { bar: { columnWidth: '70%' } },
     xaxis: { categories: grafico.categorias, labels: { rotate: -45, trim: true } },
-    yaxis: { labels: { formatter: (v) => formatMetrica(v, metrica) } },
+    yaxis: yaxisBarras,
     dataLabels: { enabled: false },
-    tooltip: { y: { formatter: (v) => formatMetrica(v, metrica) } },
+    // Tooltip só da barra sob o mouse (cada barra tem séries diferentes).
+    tooltip: { shared: false, y: { formatter: (v) => formatMetrica(v, metrica) } },
     legend: { position: 'top' },
     states: { active: { filter: { type: 'none' } } },
   };
 
-  const opcoesRosca = {
-    chart: {
-      type: 'donut',
-      events: {
-        // Clicar numa fatia abre o detalhe dos pagamentos com aquele motivo.
-        dataPointSelection: (_event, _ctx, { dataPointIndex }) => {
-          const motivo = rosca.motivos[dataPointIndex];
-          if (motivo) onAbrirDetalhe({ conta: conta.conta, situacao: 'naoPago', motivo: motivo.codigo });
-        },
-      },
-    },
-    labels: rosca.rotulos,
-    legend: { position: 'bottom' },
-    dataLabels: { enabled: false },
-    tooltip: { y: { formatter: (v) => formatMetrica(v, metrica) } },
+  const abrirSituacao = (situacao) => onAbrirDetalhe({ conta: conta.conta, situacao });
+  // Clicar numa fatia do anel interno (ou na legenda) abre o detalhe dos pagamentos com aquele motivo.
+  const abrirMotivo = (motivo) => {
+    if (motivo) onAbrirDetalhe({ conta: conta.conta, situacao: motivo.situacao, motivo: motivo.codigo });
   };
 
   return (
@@ -139,28 +153,29 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
         <Alert severity="info">Nenhum pagamento com vencimento entre {periodo.dataInicio} e {periodo.dataFim} nesta conta.</Alert>
       ) : (
         <Grid container spacing={2}>
-          <Grid item xs={12} lg={conta.grupos.length > 1 ? 8 : 5}>
-            <Typography variant="subtitle2" color="text.secondary">
-              {conta.grupos.length > 1 ? 'Por consórcio / modal' : 'Por situação'} (clique numa barra para ver o detalhe)
-            </Typography>
-            <Chart options={opcoesBarras} series={grafico.series} type="bar" height={340} />
+          <Grid item xs={12} lg={8}>
+            <Box className="flex flex-wrap items-center justify-between">
+              <Typography variant="subtitle2" color="text.secondary">
+                {conta.grupos.length > 1 ? 'Por consórcio / modal' : 'Por situação'} (clique numa barra para ver o detalhe)
+              </Typography>
+              <ToggleButtonGroup exclusive size="small" value={escala} onChange={(_e, v) => v && setEscala(v)} aria-label="Escala do eixo Y">
+                <ToggleButton value="dupla">Duas escalas</ToggleButton>
+                <ToggleButton value="log">Logarítmica</ToggleButton>
+                <ToggleButton value="linear">Linear</ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
+            <Chart options={opcoesBarras} series={grafico.series} type="bar" height={380} />
           </Grid>
-          <Grid item xs={12} lg={conta.grupos.length > 1 ? 4 : 7}>
+          <Grid item xs={12} lg={4}>
             <Typography variant="subtitle2" color="text.secondary">
-              Motivos dos não pagos (clique numa fatia)
+              Situação e motivos
             </Typography>
-            {rosca.valores.length ? (
-              <Chart options={opcoesRosca} series={rosca.valores} type="donut" height={340} />
-            ) : (
-              <Alert severity="success" sx={{ mt: 2 }}>
-                Nenhum pagamento não efetivado no período.
-              </Alert>
-            )}
+            <RoscaDoisAneis situacoes={situacoesRosca} motivos={motivosExibidos} metrica={metrica} onSelecionarSituacao={abrirSituacao} onSelecionarMotivo={abrirMotivo} />
           </Grid>
         </Grid>
       )}
 
-      {conta.motivos.length > 0 && (
+      {motivosExibidos.length > 0 && (
         <Box sx={{ mt: 2, overflowX: 'auto' }}>
           <Table size="small">
             <TableHead>
@@ -172,10 +187,10 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
               </TableRow>
             </TableHead>
             <TableBody>
-              {conta.motivos.map((m) => (
+              {motivosExibidos.map((m) => (
                 <TableRow
                   hover
-                  key={`${m.situacao}-${m.codigo}`}
+                  key={`${m.situacao}-${m.codigo ?? 'todos'}`}
                   sx={{ cursor: 'pointer' }}
                   onClick={() => onAbrirDetalhe({ conta: conta.conta, situacao: m.situacao, motivo: m.codigo })}
                 >
