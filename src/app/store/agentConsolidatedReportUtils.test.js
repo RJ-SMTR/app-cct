@@ -346,15 +346,29 @@ describe("agentConsolidatedReportUtils", () => {
         expect(getSelectedBothAssociationsNames([{ value: bothValue }])).toEqual([anglae, singaerj]);
       });
 
-      it("does not combine with single associations: the last one picked wins", () => {
+      it("combines with ANGLAE or SINGAERJ; only Todos replaces the selection", () => {
         const both = { label: "ANGLAE/SINGAERJ (ambas)", value: bothValue };
         const single = { label: "SINGAERJ", value: singaerj };
 
-        expect(normalizeSelectAllAutocompleteValue([single, both])).toEqual([both]);
-        expect(normalizeSelectAllAutocompleteValue([both, single])).toEqual([single]);
+        expect(normalizeSelectAllAutocompleteValue([single, both])).toEqual([single, both]);
+        expect(normalizeSelectAllAutocompleteValue([both, single])).toEqual([both, single]);
         expect(
           normalizeSelectAllAutocompleteValue([both, { label: "Todos", value: "Todos" }])
         ).toEqual([{ label: "Todos", value: "Todos" }]);
+      });
+
+      it("combined with a single association sends only the single names, without exigirTodasAssociacoes", () => {
+        const comAnglae = buildAgentConsolidatedReportParams({
+          associations: [bothValue, anglae],
+        });
+        expect(comAnglae.consorcioNome).toBe(anglae);
+        expect(comAnglae.exigirTodasAssociacoes).toBeUndefined();
+
+        const comSingaerj = buildAgentConsolidatedReportParams({ associations: [singaerj, bothValue] });
+        expect(comSingaerj.consorcioNome).toBe(singaerj);
+        expect(comSingaerj.exigirTodasAssociacoes).toBeUndefined();
+
+        expect(getSelectedBothAssociationsNames([bothValue, anglae])).toBeNull();
       });
     });
   });

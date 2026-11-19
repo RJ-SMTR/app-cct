@@ -80,6 +80,16 @@ describe('handleAgentFinancialData status flags', () => {
       expect(requestData.todosConsorcios).toBeUndefined();
     });
 
+    it('sends only the single association when ANGLAE/SINGAERJ (ambas) is combined with it', () => {
+      const requestData = handleAgentFinancialData({
+        dateRange,
+        associations: [{ value: 'AMBAS::ANGLAE X / SINGAERJ Y' }, { value: 'ANGLAE X' }],
+      });
+
+      expect(requestData.consorcioNome).toBe('ANGLAE X');
+      expect(requestData.exigirTodasAssociacoes).toBeUndefined();
+    });
+
     it('sends todosConsorcios instead of consorcioNome when Todos is selected', () => {
       const requestData = handleAgentFinancialData({ dateRange, associations: ['Todos'] });
 

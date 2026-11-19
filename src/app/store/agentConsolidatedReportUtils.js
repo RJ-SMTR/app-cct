@@ -62,16 +62,29 @@ export function isBothAssociationsValue(value) {
   return typeof value === "string" && value.startsWith(BOTH_ASSOCIATIONS_PREFIX);
 }
 
-// Full names of the both-associations option, when it is selected; null otherwise.
+// Full names of the both-associations option when it is the only association selected; null otherwise.
+// Combined with ANGLAE or SINGAERJ it adds nothing to the result: a single association already brings
+// the guardadores linked to both, so only the single names are sent ("any of them").
 export function getSelectedBothAssociationsNames(values) {
   if (!Array.isArray(values)) {
     return null;
   }
 
-  const selected = values.map(getOptionValue).find(isBothAssociationsValue);
-  return selected
-    ? selected.slice(BOTH_ASSOCIATIONS_PREFIX.length).split(ASSOCIATION_SEPARATOR)
-    : null;
+  const selectedValues = values.map(getOptionValue).filter(Boolean);
+  if (selectedValues.length !== 1 || !isBothAssociationsValue(selectedValues[0])) {
+    return null;
+  }
+
+  return selectedValues[0].slice(BOTH_ASSOCIATIONS_PREFIX.length).split(ASSOCIATION_SEPARATOR);
+}
+
+// The selection without the both-associations option (used when it is combined with single associations).
+export function withoutBothAssociations(values) {
+  if (!Array.isArray(values)) {
+    return values;
+  }
+
+  return values.filter((value) => !isBothAssociationsValue(getOptionValue(value)));
 }
 
 function buildBothAssociationsOption(associationNames) {
@@ -203,7 +216,7 @@ export function buildAgentConsolidatedReportParams(filters = {}) {
     params.consorcioNome = bothAssociations.join(",");
     params.exigirTodasAssociacoes = true;
   } else {
-    const consorcioNome = buildCommaSeparatedFilter(filters.associations);
+    const consorcioNome = buildCommaSeparatedFilter(withoutBothAssociations(filters.associations));
     if (consorcioNome) {
       params.consorcioNome = consorcioNome;
     }
@@ -406,13 +419,7 @@ export function normalizeSelectAllAutocompleteValue(options = []) {
     return [selectedAllOption];
   }
 
-  // The both-associations option does not combine with single associations: the last one picked wins.
-  const lastOption = options[options.length - 1];
-  if (isBothAssociationsValue(lastOption?.value)) {
-    return [lastOption];
-  }
-
-  return options.filter((option) => !isBothAssociationsValue(option?.value));
+  return options;
 }
 
 export function normalizeAgentStatusSelection(options = []) {
