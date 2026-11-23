@@ -150,7 +150,8 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
       },
     },
     colors: [COR_SITUACAO.emAberto],
-    plotOptions: { bar: { columnWidth: '50%' } },
+    // Com poucos consórcios/modais a barra não ocupa a largura toda do gráfico.
+    plotOptions: { bar: { columnWidth: graficoAguardando.categorias.length <= 2 ? '15%' : '50%' } },
     xaxis: { categories: graficoAguardando.categorias, labels: { rotate: -45, trim: true } },
     yaxis: { min: 0, title: { text: `Aguardando pagamento – ${nomeMetrica}` }, labels: rotulosY },
     dataLabels: { enabled: false },
