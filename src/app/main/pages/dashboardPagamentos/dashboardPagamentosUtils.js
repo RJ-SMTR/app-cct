@@ -84,6 +84,30 @@ export function montarGraficoGruposDuplo(conta, metrica) {
 }
 
 /**
+ * Gráfico de "Aguardando pagamento" (em aberto): uma barra por consórcio/modal, separado do gráfico Pago | Não pago.
+ * Consórcio/modal sem valor aguardando na métrica fica fora do gráfico.
+ */
+export function montarGraficoAguardando(conta, metrica) {
+  const valorDe = (g) => Number(metrica === 'valor' ? g.emAberto?.valor : g.emAberto?.qtd) || 0;
+  const grupos = (conta?.grupos ?? []).filter((g) => valorDe(g) > 0);
+  return {
+    categorias: grupos.map((g) => g.grupo),
+    series: [{ key: 'emAberto', name: ROTULO_SITUACAO.emAberto, data: grupos.map(valorDe) }],
+  };
+}
+
+/**
+ * Abas do gráfico de barras: "pagos" (Pago | Não pago) quando há dado pago ou não pago no período e "aguardando"
+ * quando há dado aguardando pagamento. Com só uma das duas a tela mostra só aquele gráfico, sem abas.
+ */
+export function abasGraficoBarras(graficoPagos, graficoAguardando) {
+  const abas = [];
+  if (graficoPagos?.categorias?.length > 0) abas.push({ id: 'pagos', rotulo: 'Pago / Não pago' });
+  if (graficoAguardando?.categorias?.length > 0) abas.push({ id: 'aguardando', rotulo: ROTULO_SITUACAO.emAberto });
+  return abas;
+}
+
+/**
  * Tudo que está em aberto aparece como "Aguardando pagamento": os motivos de "em aberto" viram uma linha só (sem código,
  * então o clique abre a situação inteira). Os demais motivos ficam como vieram.
  */

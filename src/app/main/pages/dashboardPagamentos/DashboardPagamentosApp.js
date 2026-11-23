@@ -15,6 +15,8 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  Tab,
+  Tabs,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
@@ -30,7 +32,9 @@ import {
   formatBRL,
   formatMetrica,
   formatQtd,
+  abasGraficoBarras,
   agruparMotivosEmAberto,
+  montarGraficoAguardando,
   montarGraficoGruposDuplo,
   montarRoscasPendencias,
   montarUrlDetalhe,
@@ -75,9 +79,14 @@ function Indicador({ situacao, totais, onClick }) {
 
 function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
   // Barras duplas: duas barras por consórcio/modal (Pago | Não pago), em duas escalas (eixo esquerdo e direito).
-  // "Aguardando pagamento" não aparece neste gráfico.
+  // "Aguardando pagamento" fica num gráfico próprio; com os dois no período, cada gráfico vai numa aba.
   const motivosExibidos = useMemo(() => agruparMotivosEmAberto(conta.motivos), [conta]);
   const grafico = useMemo(() => montarGraficoGruposDuplo(conta, metrica), [conta, metrica]);
+  const graficoAguardando = useMemo(() => montarGraficoAguardando(conta, metrica), [conta, metrica]);
+  const abas = useMemo(() => abasGraficoBarras(grafico, graficoAguardando), [grafico, graficoAguardando]);
+  const [abaEscolhida, setAbaEscolhida] = useState('pagos');
+  // Se a aba escolhida não existe no período (ex.: só há aguardando), usa a primeira disponível.
+  const aba = abas.some((a) => a.id === abaEscolhida) ? abaEscolhida : abas[0]?.id;
   // Roscas de "Situação e motivos": pendência paga x pendência de pagamento e, do não pago, rejeitado x estorno.
   const roscas = useMemo(() => montarRoscasPendencias(conta), [conta]);
   const vazio = SITUACOES.every((s) => conta[s.key].qtd === 0);
@@ -128,6 +137,29 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
     states: { active: { filter: { type: 'none' } } },
   };
 
+  const opcoesAguardando = {
+    chart: {
+      type: 'bar',
+      toolbar: { show: false },
+      events: {
+        // Clicar numa barra abre o detalhe daquele consórcio/modal em "Aguardando pagamento".
+        dataPointSelection: (_event, _ctx, { dataPointIndex }) => {
+          if (dataPointIndex < 0) return;
+          onAbrirDetalhe({ conta: conta.conta, grupo: graficoAguardando.categorias[dataPointIndex], situacao: 'emAberto' });
+        },
+      },
+    },
+    colors: [COR_SITUACAO.emAberto],
+    // Com poucos consórcios/modais a barra não ocupa a largura toda do gráfico.
+    plotOptions: { bar: { columnWidth: graficoAguardando.categorias.length <= 2 ? '15%' : '50%' } },
+    xaxis: { categories: graficoAguardando.categorias, labels: { rotate: -45, trim: true } },
+    yaxis: { min: 0, title: { text: `Aguardando pagamento – ${nomeMetrica}` }, labels: rotulosY },
+    dataLabels: { enabled: false },
+    tooltip: { y: { formatter: (v) => formatMetrica(v, metrica) } },
+    legend: { show: true, showForSingleSeries: true, position: 'top' },
+    states: { active: { filter: { type: 'none' } } },
+  };
+
   // Clicar numa fatia (ou na legenda) abre o detalhe com a situação/motivo daquela fatia.
   const abrirFatia = (fatia) => onAbrirDetalhe({ conta: conta.conta, ...fatia.detalhe });
 
@@ -155,10 +187,21 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
       ) : (
         <Grid container spacing={2}>
           <Grid item xs={12}>
+            {abas.length > 1 && (
+              <Tabs value={aba} onChange={(_e, v) => setAbaEscolhida(v)} sx={{ mb: 1 }} aria-label="Gráficos de barras">
+                {abas.map((a) => (
+                  <Tab key={a.id} value={a.id} label={a.rotulo} />
+                ))}
+              </Tabs>
+            )}
             <Typography variant="subtitle2" color="text.secondary">
               {conta.grupos.length > 1 ? 'Por consórcio / modal' : 'Por situação'} (clique numa barra para ver o detalhe)
             </Typography>
-            <Chart options={opcoesBarras} series={grafico.series} type="bar" height={380} />
+            {aba === 'aguardando' ? (
+              <Chart key="aguardando" options={opcoesAguardando} series={graficoAguardando.series} type="bar" height={380} />
+            ) : (
+              <Chart key="pagos" options={opcoesBarras} series={grafico.series} type="bar" height={380} />
+            )}
           </Grid>
           {/* Roscas lado a lado: pendência paga x pendência de pagamento e, do não pago, rejeitado x estorno. */}
           <Grid item xs={12} md={6}>
