@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import Chart from 'react-apexcharts';
-import RoscaDoisAneis from './RoscaDoisAneis';
+import RoscaSimples from './RoscaSimples';
 import {
   Alert,
   Box,
@@ -32,6 +32,7 @@ import {
   formatQtd,
   agruparMotivosEmAberto,
   montarGraficoGruposDuplo,
+  montarRoscasPendencias,
   montarUrlDetalhe,
   periodoDaUrl,
   toIsoDate,
@@ -73,14 +74,18 @@ function Indicador({ situacao, totais, onClick }) {
 }
 
 function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
-  // Barras duplas: duas barras por consórcio/modal (Pago | Não pago + Aguardando pagamento), na escala escolhida no seletor.
+  // Barras duplas: duas barras por consórcio/modal (Pago | Não pago), em duas escalas (eixo esquerdo e direito).
+  // "Aguardando pagamento" não aparece neste gráfico.
   const motivosExibidos = useMemo(() => agruparMotivosEmAberto(conta.motivos), [conta]);
   const grafico = useMemo(() => montarGraficoGruposDuplo(conta, metrica), [conta, metrica]);
-  const situacoesRosca = useMemo(() => SITUACOES.map((s) => ({ ...s, valor: conta[s.key].valor, qtd: conta[s.key].qtd })), [conta]);
+  // Roscas de "Situação e motivos": pendência paga x pendência de pagamento e, do não pago, rejeitado x estorno.
+  const roscas = useMemo(() => montarRoscasPendencias(conta), [conta]);
   const vazio = SITUACOES.every((s) => conta[s.key].qtd === 0);
-  // Escalas do eixo Y: "dupla" (Pago no eixo esquerdo, Pendente no direito), "log" ou "linear". Com valores pequenos
+  // Escalas do eixo Y: "dupla" (Pago no eixo esquerdo, Não pago no direito), "log" ou "linear". Com valores pequenos
   // (um pagamento não pago) ao lado de milhões, a linear esconde as barras menores.
-  const [escala, setEscala] = useState('dupla');
+  // O seletor de escala foi retirado da tela: o gráfico usa sempre "dupla". As opções "log" e "linear" continuam
+  // suportadas abaixo para reativação futura (basta trocar o valor aqui ou voltar a expor o seletor).
+  const escala = 'dupla';
   const escalaLog = escala === 'log';
 
   const nomeMetrica = metrica === 'valor' ? 'Valor (R$)' : 'Quantidade de pagamentos';
@@ -90,9 +95,8 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
       ? [
           // Eixo esquerdo: barra de Pago (valores altos).
           { seriesName: grafico.series[0].name, min: 0, title: { text: `Pago – ${nomeMetrica}`, style: { color: COR_SITUACAO.pago } }, labels: { ...rotulosY, style: { colors: COR_SITUACAO.pago } } },
-          // Eixo direito: barra de Pendente (Não pago + Aguardando pagamento), escala própria e menor.
-          { seriesName: grafico.series[1].name, opposite: true, min: 0, title: { text: `Pendente – ${nomeMetrica}`, style: { color: COR_SITUACAO.naoPago } }, labels: { ...rotulosY, style: { colors: COR_SITUACAO.naoPago } } },
-          { seriesName: grafico.series[1].name, opposite: true, show: false },
+          // Eixo direito: barra de Não pago, escala própria e menor.
+          { seriesName: grafico.series[1].name, opposite: true, min: 0, title: { text: `Não pago – ${nomeMetrica}`, style: { color: COR_SITUACAO.naoPago } }, labels: { ...rotulosY, style: { colors: COR_SITUACAO.naoPago } } },
         ]
       : {
           title: { text: `${nomeMetrica}${escalaLog ? ' – escala logarítmica' : ''}` },
@@ -124,11 +128,8 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
     states: { active: { filter: { type: 'none' } } },
   };
 
-  const abrirSituacao = (situacao) => onAbrirDetalhe({ conta: conta.conta, situacao });
-  // Clicar numa fatia do anel interno (ou na legenda) abre o detalhe dos pagamentos com aquele motivo.
-  const abrirMotivo = (motivo) => {
-    if (motivo) onAbrirDetalhe({ conta: conta.conta, situacao: motivo.situacao, motivo: motivo.codigo });
-  };
+  // Clicar numa fatia (ou na legenda) abre o detalhe com a situação/motivo daquela fatia.
+  const abrirFatia = (fatia) => onAbrirDetalhe({ conta: conta.conta, ...fatia.detalhe });
 
   return (
     <Card sx={{ p: 3, mb: 3 }}>
@@ -154,23 +155,14 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
       ) : (
         <Grid container spacing={2}>
           <Grid item xs={12} lg={8}>
-            <Box className="flex flex-wrap items-center justify-between">
-              <Typography variant="subtitle2" color="text.secondary">
-                {conta.grupos.length > 1 ? 'Por consórcio / modal' : 'Por situação'} (clique numa barra para ver o detalhe)
-              </Typography>
-              <ToggleButtonGroup exclusive size="small" value={escala} onChange={(_e, v) => v && setEscala(v)} aria-label="Escala do eixo Y">
-                <ToggleButton value="dupla">Duas escalas</ToggleButton>
-                <ToggleButton value="log">Logarítmica</ToggleButton>
-                <ToggleButton value="linear">Linear</ToggleButton>
-              </ToggleButtonGroup>
-            </Box>
+            <Typography variant="subtitle2" color="text.secondary">
+              {conta.grupos.length > 1 ? 'Por consórcio / modal' : 'Por situação'} (clique numa barra para ver o detalhe)
+            </Typography>
             <Chart options={opcoesBarras} series={grafico.series} type="bar" height={380} />
           </Grid>
           <Grid item xs={12} lg={4}>
-            <Typography variant="subtitle2" color="text.secondary">
-              Situação e motivos
-            </Typography>
-            <RoscaDoisAneis situacoes={situacoesRosca} motivos={motivosExibidos} metrica={metrica} onSelecionarSituacao={abrirSituacao} onSelecionarMotivo={abrirMotivo} />
+            <RoscaSimples titulo="Pendência paga x pendência de pagamento" fatias={roscas.pendencias.fatias} total={roscas.pendencias.total} onSelecionar={abrirFatia} />
+            <RoscaSimples titulo="Não pagos: rejeitado x estorno" fatias={roscas.erros.fatias} total={roscas.erros.total} mostrarQtd onSelecionar={abrirFatia} />
           </Grid>
         </Grid>
       )}

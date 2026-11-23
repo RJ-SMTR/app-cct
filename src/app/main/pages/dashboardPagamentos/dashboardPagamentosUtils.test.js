@@ -9,6 +9,7 @@ import {
   agruparMotivosEmAberto,
   montarGraficoGruposDuplo,
   montarGraficoMotivos,
+  montarRoscasPendencias,
   montarUrlDetalhe,
   periodoDaUrl,
   periodoPadrao,
@@ -41,20 +42,20 @@ describe('dashboardPagamentosUtils', () => {
     expect(montarGraficoGrupos(conta, 'valor').series[1].data).toEqual([50, 0]);
   });
 
-  it('barras duplas: uma categoria por consórcio e duas barras (Pago e Não pago + Aguardando pagamento)', () => {
+  it('barras duplas: uma categoria por consórcio e duas barras (Pago e Não pago), sem Aguardando pagamento', () => {
     const g = montarGraficoGruposDuplo(conta, 'valor');
     expect(g.categorias).toEqual(['VLT', 'STPL']);
     expect(g.series.map((x) => [x.key, x.group])).toEqual([
       ['pago', 'pago'],
-      ['naoPago', 'pendente'],
-      ['emAberto', 'pendente'],
+      ['naoPago', 'naoPago'],
     ]);
-    expect(g.series[2].name).toBe('Aguardando pagamento');
+    expect(g.series.map((x) => x.name)).not.toContain('Aguardando pagamento');
     // valores zerados não aparecem: viram null (sem barra e sem tooltip "R$ 0,00")
     expect(g.series[0].data).toEqual([1000, 500]);
     expect(g.series[1].data).toEqual([50, null]);
-    expect(g.series[2].data).toEqual([null, 20]);
-    expect(montarGraficoGruposDuplo(conta, 'qtd').series[2].data).toEqual([null, 2]);
+    // consórcio/modal só com Aguardando pagamento fica fora do gráfico
+    const soEmAberto = { grupos: [...conta.grupos, { grupo: 'BRT', pago: { qtd: 0, valor: 0 }, naoPago: { qtd: 0, valor: 0 }, emAberto: { qtd: 3, valor: 30 } }] };
+    expect(montarGraficoGruposDuplo(soEmAberto, 'valor').categorias).toEqual(['VLT', 'STPL']);
     // consórcio/modal sem nenhum valor fica fora do gráfico
     const comVazio = { grupos: [...conta.grupos, { grupo: 'GTU', pago: { qtd: 0, valor: 0 }, naoPago: { qtd: 0, valor: 0 }, emAberto: { qtd: 0, valor: 0 } }] };
     expect(montarGraficoGruposDuplo(comVazio, 'valor').categorias).toEqual(['VLT', 'STPL']);
@@ -73,6 +74,34 @@ describe('dashboardPagamentosUtils', () => {
     ]);
     expect(agruparMotivosEmAberto(motivos.slice(0, 1))).toEqual(motivos.slice(0, 1));
     expect(agruparMotivosEmAberto(undefined)).toEqual([]);
+  });
+
+  it('roscas: pendência paga x pendência de pagamento (% sobre a soma) e rejeitado x estorno', () => {
+    const c = {
+      naoPago: { qtd: 4, valor: 300 },
+      motivos: [
+        { situacao: 'pago', codigo: 'EFETIVADO', qtd: 10, valor: 5000 },
+        { situacao: 'pago', codigo: 'PENDENCIA_PAGA', qtd: 2, valor: 900 },
+        { situacao: 'naoPago', codigo: '02', qtd: 1, valor: 100 },
+        { situacao: 'naoPago', codigo: 'AB', qtd: 3, valor: 200 },
+        { situacao: 'emAberto', codigo: undefined, qtd: 7, valor: 700 },
+      ],
+    };
+    const { pendencias, erros } = montarRoscasPendencias(c);
+    expect(pendencias.fatias.map((f) => [f.rotulo, f.valor, f.qtd, f.fracao])).toEqual([
+      ['Pendência paga', 900, 2, 0.75],
+      ['Pendência de pagamento', 300, 4, 0.25],
+    ]);
+    expect(pendencias.total).toEqual({ valor: 1200, qtd: 6 });
+    expect(erros.fatias.map((f) => [f.rotulo, f.valor, f.qtd])).toEqual([
+      ['Rejeitado', 200, 3],
+      ['Estorno', 100, 1],
+    ]);
+    expect(erros.fatias[1].detalhe).toEqual({ situacao: 'naoPago', motivo: '02' });
+    // sem dados: tudo zerado, sem dividir por zero
+    const vazio = montarRoscasPendencias(undefined);
+    expect(vazio.pendencias.total).toEqual({ valor: 0, qtd: 0 });
+    expect(vazio.erros.fatias.every((f) => f.fracao === 0)).toBe(true);
   });
 
   it('não quebra com conta ausente', () => {

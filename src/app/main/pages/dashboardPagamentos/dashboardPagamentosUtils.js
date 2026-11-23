@@ -62,14 +62,15 @@ export function montarGraficoGrupos(conta, metrica) {
 }
 
 /**
- * Barras duplas: duas barras por consórcio/modal. A primeira é a de "Pago"; a segunda empilha "Não pago" e
- * "Aguardando pagamento" (em aberto). O nome do consórcio aparece uma vez no eixo X; as duas barras saem de séries
- * com `group` (barras agrupadas e empilhadas do ApexCharts). Valores zerados não são exibidos: ponto zerado vira
- * `null` (sem barra nem tooltip) e consórcio/modal sem nenhum valor na métrica fica fora do gráfico.
+ * Barras duplas: duas barras por consórcio/modal, "Pago" e "Não pago". "Aguardando pagamento" (em aberto) nunca
+ * entra neste gráfico. O nome do consórcio aparece uma vez no eixo X; as duas barras saem de séries com `group`
+ * (barras agrupadas do ApexCharts). Valores zerados não são exibidos: ponto zerado vira `null` (sem barra nem
+ * tooltip) e consórcio/modal sem pago nem não pago na métrica fica fora do gráfico.
  */
 export function montarGraficoGruposDuplo(conta, metrica) {
   const valorDe = (g, situacao) => Number(metrica === 'valor' ? g[situacao].valor : g[situacao].qtd) || 0;
-  const grupos = (conta?.grupos ?? []).filter((g) => SITUACOES.some((s) => valorDe(g, s.key) > 0));
+  const situacoesGrafico = ['pago', 'naoPago'];
+  const grupos = (conta?.grupos ?? []).filter((g) => situacoesGrafico.some((situacao) => valorDe(g, situacao) > 0));
   const serie = (situacao, group) => ({
     key: situacao,
     name: ROTULO_SITUACAO[situacao],
@@ -78,7 +79,7 @@ export function montarGraficoGruposDuplo(conta, metrica) {
   });
   return {
     categorias: grupos.map((g) => g.grupo),
-    series: [serie('pago', 'pago'), serie('naoPago', 'pendente'), serie('emAberto', 'pendente')],
+    series: [serie('pago', 'pago'), serie('naoPago', 'naoPago')],
   };
 }
 
@@ -98,6 +99,45 @@ export function agruparMotivosEmAberto(motivos) {
     valor: abertos.reduce((s, m) => s + (Number(m.valor) || 0), 0),
   };
   return [...lista.filter((m) => m.situacao !== 'emAberto'), unico];
+}
+
+/** Código CNAB do banco que indica estorno; os demais motivos de "não pago" contam como rejeitado. */
+export const MOTIVO_ESTORNO = '02';
+/** Motivo dos pagos que foram pagos depois de uma pendência. */
+export const MOTIVO_PENDENCIA_PAGA = 'PENDENCIA_PAGA';
+
+const somaMotivos = (motivos, filtro) =>
+  motivos.filter(filtro).reduce((t, m) => ({ valor: t.valor + (Number(m.valor) || 0), qtd: t.qtd + (Number(m.qtd) || 0) }), { valor: 0, qtd: 0 });
+
+const comFracoes = (fatias) => {
+  const total = fatias.reduce((t, f) => ({ valor: t.valor + f.valor, qtd: t.qtd + f.qtd }), { valor: 0, qtd: 0 });
+  return { total, fatias: fatias.map((f) => ({ ...f, fracao: total.valor > 0 ? f.valor / total.valor : 0 })) };
+};
+
+/**
+ * Dados das duas roscas de "Situação e motivos" (sempre por valor; a quantidade vem junto para exibição).
+ * - `pendencias`: "Pendência paga" (pagos com motivo PENDENCIA_PAGA) x "Pendência de pagamento" (total não pago).
+ *   A porcentagem de cada fatia é sobre a soma das duas.
+ * - `erros`: o não pago dividido em "Estorno" (motivo 02) e "Rejeitado" (demais motivos), como no status dos relatórios.
+ *   O rejeitado é o total não pago menos o estorno, então as duas fatias somam o não pago.
+ * "Aguardando pagamento" não entra em nenhuma das duas. `detalhe` são os filtros da tela de detalhe ao clicar.
+ */
+export function montarRoscasPendencias(conta) {
+  const motivos = conta?.motivos ?? [];
+  const naoPago = { valor: Number(conta?.naoPago?.valor) || 0, qtd: Number(conta?.naoPago?.qtd) || 0 };
+  const pendenciaPaga = somaMotivos(motivos, (m) => m.situacao === 'pago' && m.codigo === MOTIVO_PENDENCIA_PAGA);
+  const estorno = somaMotivos(motivos, (m) => m.situacao === 'naoPago' && m.codigo === MOTIVO_ESTORNO);
+  const rejeitado = { valor: Math.max(naoPago.valor - estorno.valor, 0), qtd: Math.max(naoPago.qtd - estorno.qtd, 0) };
+  return {
+    pendencias: comFracoes([
+      { id: 'pendenciaPaga', rotulo: 'Pendência paga', cor: COR_SITUACAO.pago, ...pendenciaPaga, detalhe: { situacao: 'pago', motivo: MOTIVO_PENDENCIA_PAGA } },
+      { id: 'pendenciaPagamento', rotulo: 'Pendência de pagamento', cor: COR_SITUACAO.naoPago, ...naoPago, detalhe: { situacao: 'naoPago' } },
+    ]),
+    erros: comFracoes([
+      { id: 'rejeitado', rotulo: 'Rejeitado', cor: '#c62828', ...rejeitado, detalhe: { situacao: 'naoPago' } },
+      { id: 'estorno', rotulo: 'Estorno', cor: '#7b1fa2', ...estorno, detalhe: { situacao: 'naoPago', motivo: MOTIVO_ESTORNO } },
+    ]),
+  };
 }
 
 /** Rosca dos motivos de uma situação (por padrão "não pago"). */
