@@ -149,7 +149,7 @@ export default function PagamentoRemessaPage({
   const [renovarNsaDialog, setRenovarNsaDialog] = useState(null); // { nsa }
   // Remessa reaberta pelo Renovar NSA: os pagamentos já estão preparados no servidor, mas esta tela (que só lista o que preparou nesta
   // visita) pode estar vazia; sem isso o "Gerar Remessa" ficava desabilitado e a remessa renovada não podia ser gerada.
-  const [remessaReaberta, setRemessaReaberta] = useState(false);
+  const [, setRemessaReaberta] = useState(false);
   const [isRenovandoNsa, setIsRenovandoNsa] = useState(false);
 
   const pollingTimeoutRef = useRef(null);
@@ -718,7 +718,7 @@ export default function PagamentoRemessaPage({
           <Button
             variant="contained"
             startIcon={<DescriptionIcon />}
-            disabled={((paginaNoServidor ? rowCount === 0 : rows.length === 0) && !remessaReaberta) || isGerandoRemessa || isPreparing}
+            disabled={isGerandoRemessa || isPreparing}
             onClick={handleGerarRemessa}
           >
             {isGerandoRemessa ? 'Gerando...' : 'Gerar Remessa'}
