@@ -154,14 +154,17 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
         <Alert severity="info">Nenhum pagamento com vencimento entre {periodo.dataInicio} e {periodo.dataFim} nesta conta.</Alert>
       ) : (
         <Grid container spacing={2}>
-          <Grid item xs={12} lg={8}>
+          <Grid item xs={12}>
             <Typography variant="subtitle2" color="text.secondary">
               {conta.grupos.length > 1 ? 'Por consórcio / modal' : 'Por situação'} (clique numa barra para ver o detalhe)
             </Typography>
             <Chart options={opcoesBarras} series={grafico.series} type="bar" height={380} />
           </Grid>
-          <Grid item xs={12} lg={4}>
+          {/* Roscas lado a lado: pendência paga x pendência de pagamento e, do não pago, rejeitado x estorno. */}
+          <Grid item xs={12} md={6}>
             <RoscaSimples titulo="Pendência paga x pendência de pagamento" fatias={roscas.pendencias.fatias} total={roscas.pendencias.total} onSelecionar={abrirFatia} />
+          </Grid>
+          <Grid item xs={12} md={6}>
             <RoscaSimples titulo="Não pagos: rejeitado x estorno" fatias={roscas.erros.fatias} total={roscas.erros.total} mostrarQtd onSelecionar={abrirFatia} />
           </Grid>
         </Grid>
