@@ -236,6 +236,10 @@ export function CustomTable(data) {
               {
                 (() => {
                   // Data efetiva aparece para ordens pagas (3) e pendências pagas (5)
+                  // Semana: a API só devolve a data efetiva para ordens pagas
+                  if (searchingWeek) {
+                    return data.dataPagamento !== '-' ? data.dataPagamento : <></>;
+                  }
                   return [3, 5].includes(data.data.statusRemessa) ? data.dataPagamento : <></>;
                 })()
               }
