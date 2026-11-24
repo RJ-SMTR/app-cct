@@ -7,6 +7,8 @@ import {
   lerFiltrosDetalhe,
   montarGraficoGrupos,
   agruparMotivosEmAberto,
+  abasGraficoBarras,
+  montarGraficoAguardando,
   montarGraficoGruposDuplo,
   montarGraficoMotivos,
   montarRoscasPendencias,
@@ -60,6 +62,24 @@ describe('dashboardPagamentosUtils', () => {
     const comVazio = { grupos: [...conta.grupos, { grupo: 'GTU', pago: { qtd: 0, valor: 0 }, naoPago: { qtd: 0, valor: 0 }, emAberto: { qtd: 0, valor: 0 } }] };
     expect(montarGraficoGruposDuplo(comVazio, 'valor').categorias).toEqual(['VLT', 'STPL']);
     expect(montarGraficoGruposDuplo(undefined, 'qtd').categorias).toEqual([]);
+  });
+
+  it('monta o gráfico de "Aguardando pagamento" só com os consórcios/modais que têm valor aguardando', () => {
+    const g = montarGraficoAguardando(conta, 'valor');
+    expect(g.categorias).toEqual(['STPL']);
+    expect(g.series).toEqual([{ key: 'emAberto', name: 'Aguardando pagamento', data: [20] }]);
+    expect(montarGraficoAguardando(conta, 'qtd').series[0].data).toEqual([2]);
+    expect(montarGraficoAguardando(undefined, 'qtd').categorias).toEqual([]);
+  });
+
+  it('abas do gráfico de barras: duas com pago e aguardando, uma só quando há apenas um deles', () => {
+    const pagos = montarGraficoGruposDuplo(conta, 'valor');
+    const aguardando = montarGraficoAguardando(conta, 'valor');
+    const vazio = { categorias: [], series: [] };
+    expect(abasGraficoBarras(pagos, aguardando).map((a) => a.id)).toEqual(['pagos', 'aguardando']);
+    expect(abasGraficoBarras(vazio, aguardando)).toEqual([{ id: 'aguardando', rotulo: 'Aguardando pagamento' }]);
+    expect(abasGraficoBarras(pagos, vazio).map((a) => a.id)).toEqual(['pagos']);
+    expect(abasGraficoBarras(vazio, vazio)).toEqual([]);
   });
 
   it('motivos em aberto viram uma linha só, "Aguardando pagamento", sem código', () => {
