@@ -591,12 +591,11 @@ function TableTransactions({ id, userRoleId, hideGratuidadeMensal = false }) {
                     const idOrdem = searchingWeek ? i.ids : i.ordemPagamentoAgrupadoIds;
 
                     let dataPagamento = '-';
-                    const rawEffectiveDate = i.dataEfetivaPagamento ?? i.dataPagamento;
+                    const rawEffectiveDate = i.dataEfetivaPagamento; // vem do Detalhe A (dataEfetivacao)
                     if (rawEffectiveDate) {
                       const zonedEffectiveDate = utcToZonedTime(parseISO(rawEffectiveDate), tz);
                       const formattedEffectiveDate = format(zonedEffectiveDate, 'dd/MM/yyyy');
-                      dataPagamento =
-                        formattedEffectiveDate === formattedDate ? '-' : formattedEffectiveDate;
+                      dataPagamento = formattedEffectiveDate;
                     }
 
                     const valorDia = i.valorTotal ?? i.valorTotalPago ?? i.valor;
