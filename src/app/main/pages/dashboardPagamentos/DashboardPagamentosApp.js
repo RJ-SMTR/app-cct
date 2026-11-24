@@ -89,6 +89,8 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
   const aba = abas.some((a) => a.id === abaEscolhida) ? abaEscolhida : abas[0]?.id;
   // Roscas de "Situação e motivos": pendência paga x pendência de pagamento e, do não pago, rejeitado x estorno.
   const roscas = useMemo(() => montarRoscasPendencias(conta), [conta]);
+  // Com as duas abas, as roscas ficam só na aba de pago/não pago (na de aguardando pagamento não aparecem).
+  const mostrarRoscas = !(abas.length > 1 && aba === 'aguardando');
   const vazio = SITUACOES.every((s) => conta[s.key].qtd === 0);
   // Escalas do eixo Y: "dupla" (Pago no eixo esquerdo, Não pago no direito), "log" ou "linear". Com valores pequenos
   // (um pagamento não pago) ao lado de milhões, a linear esconde as barras menores.
@@ -204,12 +206,16 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
             )}
           </Grid>
           {/* Roscas lado a lado: pendência paga x pendência de pagamento e, do não pago, rejeitado x estorno. */}
-          <Grid item xs={12} md={6}>
-            <RoscaSimples titulo="Pendência paga x pendência de pagamento" fatias={roscas.pendencias.fatias} total={roscas.pendencias.total} onSelecionar={abrirFatia} />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <RoscaSimples titulo="Não pagos: rejeitado x estorno" fatias={roscas.erros.fatias} total={roscas.erros.total} mostrarQtd onSelecionar={abrirFatia} />
-          </Grid>
+          {mostrarRoscas && (
+            <>
+              <Grid item xs={12} md={6}>
+                <RoscaSimples titulo="Pendência paga x pendência de pagamento" fatias={roscas.pendencias.fatias} total={roscas.pendencias.total} onSelecionar={abrirFatia} />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <RoscaSimples titulo="Não pagos: rejeitado x estorno" fatias={roscas.erros.fatias} total={roscas.erros.total} mostrarQtd onSelecionar={abrirFatia} />
+              </Grid>
+            </>
+          )}
         </Grid>
       )}
 
