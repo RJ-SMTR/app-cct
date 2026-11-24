@@ -12,6 +12,7 @@ import {
   montarGraficoGruposDuplo,
   montarGraficoMotivos,
   montarRoscasPendencias,
+  COR_STATUS_RELATORIO,
   montarUrlDetalhe,
   periodoDaUrl,
   periodoPadrao,
@@ -118,6 +119,10 @@ describe('dashboardPagamentosUtils', () => {
       ['Estorno', 100, 1],
     ]);
     expect(erros.fatias[1].detalhe).toEqual({ situacao: 'naoPago', motivo: '02' });
+    // mesmas cores dos badges de status dos relatórios
+    expect(pendencias.fatias.map((f) => f.cor)).toEqual(['#42A5F5', '#E57373']);
+    expect(erros.fatias.map((f) => f.cor)).toEqual(['#E57373', '#FFEE58']);
+    expect(COR_STATUS_RELATORIO.estorno).toBe('#FFEE58');
     // sem dados: tudo zerado, sem dividir por zero
     const vazio = montarRoscasPendencias(undefined);
     expect(vazio.pendencias.total).toEqual({ valor: 0, qtd: 0 });
