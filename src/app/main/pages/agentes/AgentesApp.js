@@ -371,8 +371,10 @@ function renderEffectivePaymentDate(payment) {
   const effectiveDate =
     shouldShowEffectivePaymentDate(payment.statusRemessa) &&
     payment.dataEfetivaPagamento &&
-    !areSameCalendarDay(payment.dataTentativaPagamento, payment.dataEfetivaPagamento)
-      ? formatDateLabel(payment.dataEfetivaPagamento)
+    // Pendência Paga (5) mantém sempre a data efetiva, mesmo igual à tentativa
+    (Number(payment.statusRemessa) === 5 ||
+      !areSameCalendarDay(payment.dataTentativaPagamento, payment.dataEfetivaPagamento))
+      ?formatDateLabel(payment.dataEfetivaPagamento)
       : null;
 
   return effectiveDate || "-";

@@ -598,7 +598,9 @@ function TableTransactions({ id, userRoleId, hideGratuidadeMensal = false }) {
                       // Só exibe a data efetiva quando difere da Data Tentativa Pagamento
                       // (na visão semanal, a tentativa é a data da linha mensal clicada)
                       const tentativaRef = searchingWeek ? dataOrderDay : formattedDate;
-                      dataPagamento = formattedEffectiveDate === tentativaRef ? '-' : formattedEffectiveDate;
+                      // Pendência Paga (5) mantém sempre a data efetiva
+                      const mantemData = Number(i.statusRemessa) === 5;
+                      dataPagamento = !mantemData && formattedEffectiveDate === tentativaRef ? '-' : formattedEffectiveDate;
                     }
 
                     const valorDia = i.valorTotal ?? i.valorTotalPago ?? i.valor;
