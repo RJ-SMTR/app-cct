@@ -133,6 +133,13 @@ function formatDateLabel(date) {
   return format(parsedDate, "dd/MM/yyyy");
 }
 
+function areSameCalendarDay(firstDate, secondDate) {
+  const firstDateLabel = normalizeDateValue(firstDate).slice(0, 10);
+  const secondDateLabel = normalizeDateValue(secondDate).slice(0, 10);
+
+  return Boolean(firstDateLabel && secondDateLabel && firstDateLabel === secondDateLabel);
+}
+
 function normalizeDateValue(dateValue) {
   if (typeof dateValue !== "string") {
     return "";
@@ -363,7 +370,8 @@ function renderEffectivePaymentDate(payment) {
 
   const effectiveDate =
     shouldShowEffectivePaymentDate(payment.statusRemessa) &&
-    payment.dataEfetivaPagamento
+    payment.dataEfetivaPagamento &&
+    !areSameCalendarDay(payment.dataTentativaPagamento, payment.dataEfetivaPagamento)
       ? formatDateLabel(payment.dataEfetivaPagamento)
       : null;
 

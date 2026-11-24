@@ -595,7 +595,10 @@ function TableTransactions({ id, userRoleId, hideGratuidadeMensal = false }) {
                     if (rawEffectiveDate) {
                       const zonedEffectiveDate = utcToZonedTime(parseISO(rawEffectiveDate), tz);
                       const formattedEffectiveDate = format(zonedEffectiveDate, 'dd/MM/yyyy');
-                      dataPagamento = formattedEffectiveDate;
+                      // Só exibe a data efetiva quando difere da Data Tentativa Pagamento
+                      // (na visão semanal, a tentativa é a data da linha mensal clicada)
+                      const tentativaRef = searchingWeek ? dataOrderDay : formattedDate;
+                      dataPagamento = formattedEffectiveDate === tentativaRef ? '-' : formattedEffectiveDate;
                     }
 
                     const valorDia = i.valorTotal ?? i.valorTotalPago ?? i.valor;
