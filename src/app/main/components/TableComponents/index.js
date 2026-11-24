@@ -235,7 +235,8 @@ export function CustomTable(data) {
             <Typography className="whitespace-nowrap">
               {
                 (() => {
-                  return data.data.statusRemessa === 5 ? data.dataPagamento : <></>;
+                  // Data efetiva aparece para ordens pagas (3) e pendências pagas (5)
+                  return [3, 5].includes(data.data.statusRemessa) ? data.dataPagamento : <></>;
                 })()
               }
             </Typography>

@@ -130,6 +130,19 @@ export const MOTIVO_ESTORNO = '02';
 /** Motivo dos pagos que foram pagos depois de uma pendência. */
 export const MOTIVO_PENDENCIA_PAGA = 'PENDENCIA_PAGA';
 
+/**
+ * Cores das fatias das roscas iguais às dos badges de status dos relatórios
+ * (getStatusStyles em FinancialMovementReport.js / ReportApp.js, paleta do tailwind.config.js):
+ * Pendência Paga = blue-400, Estorno = yellow-400, Rejeitado e demais erros = red-300.
+ * "Pendência de pagamento" é o filtro "Erros" dos relatórios (estorno + rejeitado), que aparece em vermelho.
+ */
+export const COR_STATUS_RELATORIO = {
+  pendenciaPaga: '#42A5F5',
+  pendenciaPagamento: '#E57373',
+  rejeitado: '#E57373',
+  estorno: '#FFEE58',
+};
+
 const somaMotivos = (motivos, filtro) =>
   motivos.filter(filtro).reduce((t, m) => ({ valor: t.valor + (Number(m.valor) || 0), qtd: t.qtd + (Number(m.qtd) || 0) }), { valor: 0, qtd: 0 });
 
@@ -154,12 +167,12 @@ export function montarRoscasPendencias(conta) {
   const rejeitado = { valor: Math.max(naoPago.valor - estorno.valor, 0), qtd: Math.max(naoPago.qtd - estorno.qtd, 0) };
   return {
     pendencias: comFracoes([
-      { id: 'pendenciaPaga', rotulo: 'Pendência paga', cor: COR_SITUACAO.pago, ...pendenciaPaga, detalhe: { situacao: 'pago', motivo: MOTIVO_PENDENCIA_PAGA } },
-      { id: 'pendenciaPagamento', rotulo: 'Pendência de pagamento', cor: COR_SITUACAO.naoPago, ...naoPago, detalhe: { situacao: 'naoPago' } },
+      { id: 'pendenciaPaga', rotulo: 'Pendência paga', cor: COR_STATUS_RELATORIO.pendenciaPaga, ...pendenciaPaga, detalhe: { situacao: 'pago', motivo: MOTIVO_PENDENCIA_PAGA } },
+      { id: 'pendenciaPagamento', rotulo: 'Pendência de pagamento', cor: COR_STATUS_RELATORIO.pendenciaPagamento, ...naoPago, detalhe: { situacao: 'naoPago' } },
     ]),
     erros: comFracoes([
-      { id: 'rejeitado', rotulo: 'Rejeitado', cor: '#c62828', ...rejeitado, detalhe: { situacao: 'naoPago' } },
-      { id: 'estorno', rotulo: 'Estorno', cor: '#7b1fa2', ...estorno, detalhe: { situacao: 'naoPago', motivo: MOTIVO_ESTORNO } },
+      { id: 'rejeitado', rotulo: 'Rejeitado', cor: COR_STATUS_RELATORIO.rejeitado, ...rejeitado, detalhe: { situacao: 'naoPago' } },
+      { id: 'estorno', rotulo: 'Estorno', cor: COR_STATUS_RELATORIO.estorno, ...estorno, detalhe: { situacao: 'naoPago', motivo: MOTIVO_ESTORNO } },
     ]),
   };
 }
