@@ -414,6 +414,54 @@ export function markDuplicateOffsetPayments(monthlyPayments, pagamentoIndevido) 
   });
 }
 
+/**
+ * Preenche em cada linha da visão mensal o abatimento do indevido (`offsetAmount`) e o valor pago (`paidAmount`), com base no
+ * quadro "Valor indevido a pagar" da mesma data. `null` = nada a mostrar. `awaitingBank`: valor enviado, ainda sem retorno do banco.
+ */
+export function withPaidAndOffsetAmounts(monthlyPayments, pagamentoIndevido) {
+  const payments = Array.isArray(monthlyPayments) ? monthlyPayments : [];
+  const totalsByDate = new Map();
+
+  (pagamentoIndevido?.items || [])
+    .filter((item) => item.difference < 0 && item.date && (item.status === "Pago" || item.status === "Aguardando Pagamento"))
+    .forEach((item) => {
+      const totals = totalsByDate.get(item.date) || { paid: 0, offset: 0 };
+      totalsByDate.set(item.date, {
+        paid: totals.paid + item.amountPaid,
+        offset: totals.offset - item.difference,
+      });
+    });
+
+  const usedDates = new Set();
+
+  return payments.map((payment) => {
+    const status = Number(payment.statusRemessa);
+    const paid = isPaidRemittanceStatus(status);
+    const awaitingBank = status === 1 || status === 2;
+    const date = payment.dataRemanejada || payment.dataTentativaPagamento || payment.paymentDate;
+    const totals = totalsByDate.get(date);
+
+    if (totals && (paid || awaitingBank || payment.duplicateOffset)) {
+      // O quadro é por pagamento: com mais de uma ordem na data, os valores saem só na primeira linha.
+      if (usedDates.has(date)) {
+        return { ...payment, paidAmount: null, offsetAmount: null, awaitingBank: false };
+      }
+      usedDates.add(date);
+      return { ...payment, paidAmount: totals.paid, offsetAmount: totals.offset, awaitingBank };
+    }
+
+    // Pendência paga dentro de um pagamento que teve abatimento: o valor pago desta linha não é separável.
+    const lumped = status === 5 && totalsByDate.has(payment.dataEfetivaPagamento);
+
+    return {
+      ...payment,
+      paidAmount: paid && !lumped ? payment.totalPaymentValue : null,
+      offsetAmount: null,
+      awaitingBank: false,
+    };
+  });
+}
+
 export async function getAgentePagamentoIndevido(userId) {
   const token = window.localStorage.getItem("jwt_access_token");
 

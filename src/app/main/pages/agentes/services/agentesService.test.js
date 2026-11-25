@@ -21,6 +21,7 @@ import {
   buildDifferenceExplanation,
   buildMonthlyPaymentRowKey,
   buildMonthlyPaymentRows,
+  withPaidAndOffsetAmounts,
   buildPagamentoIndevido,
   getPaymentStatus,
   markDuplicateOffsetPayments,
@@ -389,5 +390,79 @@ describe('Abatimento por duplicidade', () => {
 
     expect(markDuplicateOffsetPayments(payments, null)).toBe(payments);
     expect(markDuplicateOffsetPayments(payments, { items: [{ date: '2026-10-16', difference: 0 }] })).toBe(payments);
+  });
+});
+
+describe('Valor pago e abatimento na visão mensal', () => {
+  const linha = (dia, status, valor, extra = {}) => ({
+    paymentDate: dia,
+    dataTentativaPagamento: dia,
+    dataEfetivaPagamento: dia,
+    statusRemessa: status,
+    totalPaymentValue: valor,
+    ...extra,
+  });
+  const indevido = (lancamentos) =>
+    buildPagamentoIndevido({
+      totais: { quantidade: 1, devendo: 1, valorIndevido: '200.00', valorDebitado: '100.00', saldoDevedor: '100.00' },
+      lancamentos,
+    });
+  const lancamento = (data, devido, pago, status) => ({
+    data,
+    valorDevido: String(devido),
+    valorPago: String(pago),
+    diferenca: String(pago - devido),
+    statusRemessa: status,
+  });
+  const valores = ({ paidAmount, offsetAmount, awaitingBank }) => [paidAmount, offsetAmount, awaitingBank];
+
+  it('mostra o pago e o abatido, achando a ordem exibida em outro dia pela data original', () => {
+    const [r] = withPaidAndOffsetAmounts(
+      [linha('2026-11-20', 3, 105, { dataRemanejada: '2026-11-23' })],
+      indevido([lancamento('2026-11-23', 105, 5, 3)])
+    );
+
+    expect(valores(r)).toEqual([5, 100, false]);
+  });
+
+  it('aguardando o banco: mostra o valor enviado, sinalizado', () => {
+    const [r] = withPaidAndOffsetAmounts([linha('2026-11-17', 2, 112)], indevido([lancamento('2026-11-17', 112, 12, 2)]));
+
+    expect(valores(r)).toEqual([12, 100, true]);
+  });
+
+  it('sem abatimento: pago mostra o valor cheio; não pago ou rejeitado não mostra', () => {
+    const rows = withPaidAndOffsetAmounts(
+      [linha('2026-11-17', 3, 112), linha('2026-11-13', null, 0), linha('2026-11-10', 4, 50)],
+      indevido([lancamento('2026-11-10', 50, 10, 4)])
+    );
+
+    expect(rows.map(valores)).toEqual([
+      [112, null, false],
+      [null, null, false],
+      [null, null, false],
+    ]);
+  });
+
+  it('abatimento total (valor enviado zerado): pago zero', () => {
+    const [r] = withPaidAndOffsetAmounts(
+      [linha('2026-10-30', 4, 86.8, { duplicateOffset: {} })],
+      indevido([lancamento('2026-10-30', 86.8, 0, 4)])
+    );
+
+    expect(r.paidAmount).toBe(0);
+    expect(r.offsetAmount).toBeCloseTo(86.8);
+  });
+
+  it('duas ordens na mesma data não repetem os valores do pagamento', () => {
+    const rows = withPaidAndOffsetAmounts(
+      [linha('2026-11-17', 3, 60), linha('2026-11-17', 3, 52)],
+      indevido([lancamento('2026-11-17', 112, 12, 3)])
+    );
+
+    expect(rows.map(valores)).toEqual([
+      [12, 100, false],
+      [null, null, false],
+    ]);
   });
 });
