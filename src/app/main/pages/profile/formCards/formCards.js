@@ -18,6 +18,7 @@ import { format, isValid, parseISO } from 'date-fns';
 import { createPersonalInfoSchema } from "./personalInfoValidation";
 import { getEmailErrorMessage } from "./personalInfoEmailError";
 import { getBankDataDateInfo } from "./bankDataDateInfo";
+import { ExtratoBancarioButton } from "src/app/main/components/ExtratoBancario";
 
 const style = {
   position: 'absolute',
@@ -503,7 +504,10 @@ export function BankInfo({
     <>
       <Card className="w-full md:mx-9 p-24 relative mt-24 md:mt-0">
         <header className="flex justify-between items-center">
-          <h1 className="font-semibold">Dados Bancários</h1>
+          <div className="flex items-center gap-16">
+            <h1 className="font-semibold">Dados Bancários</h1>
+            <ExtratoBancarioButton user={user} />
+          </div>
         </header>
         <form name="Bank" noValidate className="flex flex-col justify-center w-full mt-32" onSubmit={handleSubmit(onSubmit)}>
           <div className='absolute right-24 top-24'>
