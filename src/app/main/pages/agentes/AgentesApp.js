@@ -46,6 +46,7 @@ import {
   buildMonthlyPaymentRowKey,
   getAgentesDashboard,
   markDuplicateOffsetPayments,
+  withPaidAndOffsetAmounts,
 } from "./services/agentesService";
 import {
   MIN_AGENTES_SELECTABLE_MONTH_DATE,
@@ -368,6 +369,11 @@ function renderEffectivePaymentDate(payment) {
     );
   }
 
+  // Ordem exibida em outro dia (ex.: após feriado) e ainda aguardando retorno do banco: já mostra o dia em que saiu.
+  if (payment.dataRemanejada && [1, 2].includes(Number(payment.statusRemessa))) {
+    return formatDateLabel(payment.dataRemanejada);
+  }
+
   const effectiveDate =
     shouldShowEffectivePaymentDate(payment.statusRemessa) &&
     payment.dataEfetivaPagamento &&
@@ -378,6 +384,37 @@ function renderEffectivePaymentDate(payment) {
       : null;
 
   return effectiveDate || "-";
+}
+
+function renderOffsetAmount(payment) {
+  if (!(payment.offsetAmount > 0)) {
+    return "-";
+  }
+
+  return (
+    <Typography component="span" variant="body2" sx={{ color: DUPLICATE_OFFSET_BADGE_COLOR, whiteSpace: "nowrap" }}>
+      - {formatCurrency(payment.offsetAmount)}
+    </Typography>
+  );
+}
+
+function renderPaidAmount(payment) {
+  if (payment.paidAmount === null || payment.paidAmount === undefined) {
+    return "-";
+  }
+
+  return (
+    <>
+      <Typography component="span" variant="body2" sx={{ whiteSpace: "nowrap" }}>
+        {formatCurrency(payment.paidAmount)}
+      </Typography>
+      {payment.awaitingBank ? (
+        <Typography variant="caption" display="block" color="text.secondary">
+          aguardando banco
+        </Typography>
+      ) : null}
+    </>
+  );
 }
 
 function ValidPhotosStatusBadge({ status, paymentStatus, duplicateOffset }) {
@@ -585,7 +622,11 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
 }) {
   const dispatch = useDispatch();
   const monthlyPayments = useMemo(
-    () => markDuplicateOffsetPayments(rawMonthlyPayments, pagamentoIndevido),
+    () =>
+      withPaidAndOffsetAmounts(
+        markDuplicateOffsetPayments(rawMonthlyPayments, pagamentoIndevido),
+        pagamentoIndevido
+      ),
     [rawMonthlyPayments, pagamentoIndevido]
   );
   const [selectedPaymentDate, setSelectedPaymentDate] = useState("");
@@ -718,14 +759,14 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
   let monthlyPaymentsRows = (
     <EmptyState
       message="Não há pagamentos para o mês selecionado."
-      colSpan={5}
+      colSpan={7}
     />
   );
 
   if (monthlyLoading) {
     monthlyPaymentsRows = [...Array(4)].map((_, index) => (
       <TableRow key={`loading-payment-cycle-${index}`}>
-        <TableCell colSpan={5}>
+        <TableCell colSpan={7}>
           <Skeleton variant="text" height={28} />
         </TableCell>
       </TableRow>
@@ -745,6 +786,8 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           {/* <TableCell>{getTotalPhotosCount(payment.validPhotosCount, payment.rejectedPhotosCount)}</TableCell> */}
           {/* <TableCell>{payment.validPhotosCount}</TableCell> */}
           <TableCell>{formatCurrency(payment.totalPaymentValue)}</TableCell>
+          <TableCell>{renderOffsetAmount(payment)}</TableCell>
+          <TableCell>{renderPaidAmount(payment)}</TableCell>
           <TableCell>{renderEffectivePaymentDate(payment)}</TableCell>
 
           <TableCell
@@ -858,6 +901,8 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           {/* <TableCell>Total fotos</TableCell> */}
           {/* <TableCell>Fotos Válidas</TableCell> */}
           <TableCell>Valor Fotos Válidas</TableCell>
+          <TableCell>Abatimento Indevido</TableCell>
+          <TableCell>Valor Pago</TableCell>
           <TableCell>Data Efetiva Pagamento</TableCell>
           <TableCell align="center">Status Fotos Válidas</TableCell>
           <TableCell align="center">Motivo</TableCell>
