@@ -14,6 +14,7 @@ import { format, isValid, parseISO } from "date-fns";
 import { useSelector } from "react-redux";
 import { selectUser } from "app/store/userSlice";
 import { getBankDataDateInfo } from "../../../profile/formCards/bankDataDateInfo";
+import { ExtratoBancarioButton } from "src/app/main/components/ExtratoBancario";
 
 
 
@@ -303,7 +304,7 @@ export function BankInfo({user}) {
                     <h1 className="font-semibold">
                         Dados Bancários
                     </h1>
-
+                    <ExtratoBancarioButton user={user} />
                 </header>
                 <form name="Bank"
                     noValidate
