@@ -584,7 +584,8 @@ export default function FinancialMovementReport({ perfil }) {
     }
   };
 
-  const isConsorcio = (report, value) => (CNPJS_CONSORCIO.includes(report?.cpfCnpj) ? '' : value);
+  // Consórcio não tem e-mail/banco (fica em branco); os demais mostram "-" quando o dado não existe.
+  const valorOuTraco = (report, value) => (CNPJS_CONSORCIO.includes(report?.cpfCnpj) ? '' : value || '-');
 
   const getStatusStyles = (status) => {
     switch (status) {
@@ -672,19 +673,19 @@ export default function FinancialMovementReport({ perfil }) {
           valueGetter: (params) =>
             isGuardador
               ? (isKnownAssociationName(params.row.nomes) ? '-' : params.value || '-')
-              : isConsorcio(params.row, params.value),
+              : valorOuTraco(params.row, params.value),
         },
         {
           field: 'codBanco',
           headerName: 'Cód. Banco',
           width: 110,
-          valueGetter: (params) => (isGuardador ? params.value || '-' : isConsorcio(params.row, params.value)),
+          valueGetter: (params) => (isGuardador ? params.value || '-' : valorOuTraco(params.row, params.value)),
         },
         {
           field: 'nomeBanco',
           headerName: 'Banco',
           width: 160,
-          valueGetter: (params) => (isGuardador ? params.value || '-' : isConsorcio(params.row, params.value)),
+          valueGetter: (params) => (isGuardador ? params.value || '-' : valorOuTraco(params.row, params.value)),
         },
         { field: 'cpfCnpj', headerName: 'CPF/CNPJ', width: 160, valueFormatter: (params) => formatCpfCnpj(params.value) },
         {
@@ -701,7 +702,7 @@ export default function FinancialMovementReport({ perfil }) {
               valueGetter: (params) =>
                 isGuardador
                   ? getAgentEffectivePaymentDateLabel(params.row)
-                  : (params.row.status === 'Pendencia Paga' ? params.row.dataPagamento : '-'),
+                  : (params.row.dataPagamento || '-'), // a API já devolve só quando é pendência paga ou difere da tentativa
             }]
           : []),
         { field: 'valor', headerName: 'Valor', width: 140, valueFormatter: (params) => formatCurrency(params.value) },
