@@ -179,6 +179,8 @@ export function buildMonthlyPaymentRows(monthlyResponse) {
     dataEfetivaPagamento: toDateOnly(
       order?.dataEfetivaPagamento || order?.dataPagamento
     ),
+    // Data original da ordem, quando ela é exibida em outro dia (ex.: pagamento após feriado).
+    dataRemanejada: toDateOnly(order?.dataRemanejada),
     paymentDayType: "",
     validPhotosCount: 0,
     rejectedPhotosCount: 0,
@@ -398,7 +400,8 @@ export function markDuplicateOffsetPayments(monthlyPayments, pagamentoIndevido) 
   const defaultReason = buildDuplicateOffsetReason(pagamentoIndevido?.duplicateDates);
 
   return payments.map((payment) => {
-    const paymentDate = payment.dataTentativaPagamento || payment.paymentDate;
+    // Ordem exibida em outro dia: o abatimento está lançado na data original.
+    const paymentDate = payment.dataRemanejada || payment.dataTentativaPagamento || payment.paymentDate;
 
     const paid = isPaidRemittanceStatus(payment.statusRemessa);
     const zeroedAndRejected = Number(payment.statusRemessa) === 4 && zeroedDates.has(paymentDate);

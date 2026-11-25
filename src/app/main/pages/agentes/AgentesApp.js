@@ -363,7 +363,7 @@ function renderEffectivePaymentDate(payment) {
   if (payment.duplicateOffset) {
     return (
       <Typography component="span" variant="body2" color="text.secondary" title="Data da ordem (tentativa de pagamento)">
-        {formatDateLabel(payment.dataTentativaPagamento || payment.paymentDate)}
+        {formatDateLabel(payment.dataRemanejada || payment.dataTentativaPagamento || payment.paymentDate)}
       </Typography>
     );
   }
