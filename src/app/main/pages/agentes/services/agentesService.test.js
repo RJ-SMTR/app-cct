@@ -358,6 +358,32 @@ describe('Abatimento por duplicidade', () => {
     markDuplicateOffsetPayments(payments, indevido).forEach((p) => expect(p.duplicateOffset).toBeUndefined());
   });
 
+  it('ordem exibida em outro dia (feriado) acha o abatimento pela data original', () => {
+    const rows = buildMonthlyPaymentRows({
+      ordens: [
+        {
+          data: '2026-11-20T00:00:00.000Z',
+          dataTentativaPagamento: '2026-11-20T00:00:00.000Z',
+          dataEfetivaPagamento: '2026-11-23T00:00:00.000Z',
+          dataRemanejada: '2026-11-23',
+          statusRemessa: 3,
+          valorTotal: 105,
+        },
+      ],
+    });
+    const abatimento = buildPagamentoIndevido({
+      totais: { quantidade: 1, devendo: 1, valorIndevido: '200.00', valorDebitado: '100.00', saldoDevedor: '100.00' },
+      lancamentos: [{ data: '2026-11-23', valorDevido: '105.00', valorPago: '5.00', diferenca: '-100.00', statusRemessa: 3 }],
+    });
+
+    const [linha] = markDuplicateOffsetPayments(rows, abatimento);
+
+    expect(linha.paymentDate).toBe('2026-11-20');
+    expect(linha.dataEfetivaPagamento).toBe('2026-11-23');
+    expect(linha.dataRemanejada).toBe('2026-11-23');
+    expect(linha.duplicateOffset).toBeDefined();
+  });
+
   it('sem abatimento (ou sem indevido) devolve os pagamentos como vieram', () => {
     const payments = [pagamento('2026-10-16', 3)];
 
