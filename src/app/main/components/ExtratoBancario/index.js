@@ -30,8 +30,11 @@ import {
   resolveBankName,
 } from './extratoExport';
 
-/** Chave de exibição do botão "Extrato bancário" (Dados Bancários). Oculto por enquanto. */
-export const EXTRATO_BANCARIO_VISIVEL = false;
+/** Chave de exibição do botão "Extrato bancário" (Dados Bancários). */
+export const EXTRATO_BANCARIO_VISIVEL = true;
+
+/** O extrato é exibido somente para favorecidos com perfil de permissionário (role "User"). */
+const ROLE_PERMISSIONARIO = 2;
 
 function toIsoDate(date) {
   const pad = (n) => String(n).padStart(2, '0');
@@ -115,8 +118,8 @@ function LancamentoRow({ lancamento: l }) {
  * abre a pré-visualização, de onde também é possível exportar para o Excel.
  */
 export function ExtratoBancarioButton({ user, className }) {
-  // Funcionalidade pronta, porém oculta por enquanto: mude EXTRATO_BANCARIO_VISIVEL para true para exibir o botão.
-  if (!EXTRATO_BANCARIO_VISIVEL) return null;
+  const roleId = Number(user?.role?.id ?? user?.roleId);
+  if (!EXTRATO_BANCARIO_VISIVEL || roleId !== ROLE_PERMISSIONARIO) return null;
   return <ExtratoBancarioButtonConteudo user={user} className={className} />;
 }
 

@@ -108,6 +108,89 @@ export function abasGraficoBarras(graficoPagos, graficoAguardando) {
 }
 
 /**
+ * Conta Rotativo tem um grupo só (Guardador): no lugar das barras por consórcio/modal ela mostra barras
+ * horizontais por situação, nas abas "Pago / Não pago" e "Aguardando pagamento".
+ */
+export const usaGraficosRotativo = (conta) => conta?.conta === 'rotativo';
+
+const valorSituacao = (conta, situacao, metrica) =>
+  Number(metrica === 'valor' ? conta?.[situacao]?.valor : conta?.[situacao]?.qtd) || 0;
+
+/**
+ * Abas da Conta Rotativo, com a mesma regra das demais contas: "Pago / Não pago" só com pago ou não pago no
+ * período e "Aguardando pagamento" só com valor aguardando (na métrica escolhida). Com uma aba só, a tela não
+ * mostra a barra de abas.
+ */
+export function abasRotativo(conta, metrica) {
+  const abas = [];
+  if (valorSituacao(conta, 'pago', metrica) > 0 || valorSituacao(conta, 'naoPago', metrica) > 0) {
+    abas.push({ id: 'pagos', rotulo: 'Pago / Não pago' });
+  }
+  if (valorSituacao(conta, 'emAberto', metrica) > 0) abas.push({ id: 'aguardando', rotulo: ROTULO_SITUACAO.emAberto });
+  return abas;
+}
+
+/** Eixo dos gráficos em formato curto ("50 mil", "1,2 mi"). */
+const compacto = new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 });
+export const formatCompacto = (valor) => compacto.format(Number(valor) || 0);
+
+/**
+ * Comprimento mínimo da barra de uma situação com valor (fração do maior valor): um valor muito pequeno perto
+ * de outro muito grande (ex.: R$ 1 mil não pago ao lado de R$ 377 mil pagos) continua aparecendo como um traço.
+ */
+export const FRACAO_MINIMA_BARRA = 0.004;
+
+/** Folga do eixo depois da maior barra, para o texto "valor • %" caber à direita dela. */
+export const FOLGA_ROTULO = 1.45;
+
+/**
+ * Escala do eixo das barras horizontais, com marcas redondas (1, 2, 2,5 ou 5 × 10^n): o máximo cobre o maior
+ * valor mais a folga do rótulo. Com `passoInteiro` (quantidade de pagamentos) o passo nunca é fracionário.
+ */
+export function escalaEixo(maior, { folga = FOLGA_ROTULO, marcas = 8, passoInteiro = false } = {}) {
+  const alvo = (Number(maior) || 0) * folga;
+  if (!(alvo > 0)) return { max: 0, passo: 0, ticks: [0] };
+  const bruto = alvo / marcas;
+  const magnitude = 10 ** Math.floor(Math.log10(bruto));
+  const normalizado = bruto / magnitude;
+  const fator = [1, 2, 2.5, 5, 10].find((f) => normalizado <= f);
+  const passo = passoInteiro ? Math.max(1, Math.ceil(fator * magnitude)) : fator * magnitude;
+  const quantidade = Math.ceil(alvo / passo - 1e-9);
+  const ticks = Array.from({ length: quantidade + 1 }, (_v, i) => Math.round(i * passo * 1e6) / 1e6);
+  return { max: ticks[ticks.length - 1], passo, ticks };
+}
+
+/**
+ * Barras horizontais da aba "Pago / Não pago": uma linha para Pago e outra para Não pago, numa escala só.
+ * "Aguardando pagamento" fica num gráfico próprio (`montarGraficoAguardandoRotativo`), noutra aba.
+ * `fracao` é a parte de cada um em Pago + Não pago (as duas linhas somam 100%). `desenhado` é o comprimento da
+ * barra: o valor, ou o mínimo visível quando o valor é pequeno demais; o rótulo e o tooltip usam sempre `valor`.
+ */
+export function montarGraficoSituacoes(conta, metrica) {
+  const exibidas = SITUACOES.filter((s) => s.key !== 'emAberto');
+  const valorDe = (situacao) => valorSituacao(conta, situacao, metrica);
+  const total = exibidas.reduce((t, s) => t + valorDe(s.key), 0);
+  const maior = Math.max(0, ...exibidas.map((s) => valorDe(s.key)));
+  const linhas = exibidas.map((s) => {
+    const valor = valorDe(s.key);
+    return {
+      key: s.key,
+      rotulo: s.label,
+      valor,
+      fracao: total > 0 ? valor / total : 0,
+      desenhado: valor > 0 ? Math.max(valor, maior * FRACAO_MINIMA_BARRA) : 0,
+    };
+  });
+  return { total, maior, linhas };
+}
+
+/** Barra horizontal da aba "Aguardando pagamento" da Conta Rotativo: uma linha com o valor aguardando. */
+export function montarGraficoAguardandoRotativo(conta, metrica) {
+  const valor = valorSituacao(conta, 'emAberto', metrica);
+  return { maior: valor, linhas: [{ key: 'emAberto', rotulo: ROTULO_SITUACAO.emAberto, valor, desenhado: valor }] };
+}
+
+/**
  * Tudo que está em aberto aparece como "Aguardando pagamento": os motivos de "em aberto" viram uma linha só (sem código,
  * então o clique abre a situação inteira). Os demais motivos ficam como vieram.
  */
@@ -187,13 +270,30 @@ export function montarGraficoMotivos(conta, situacao, metrica) {
   };
 }
 
-/** Endereço da tela de detalhe de um ponto do gráfico. Parâmetros vazios são omitidos. */
-export function montarUrlDetalhe({ conta, grupo, situacao, motivo, busca, dataInicio, dataFim }) {
+/**
+ * Endereço da tela de detalhe de um ponto do gráfico. Parâmetros vazios são omitidos.
+ * `voltarInicio`/`voltarFim`: período do dashboard quando o detalhe abre num período menor que o
+ * do dashboard, para o "Voltar" devolver o dashboard no período em que estava. Não vão para a API.
+ */
+export function montarUrlDetalhe({ conta, grupo, situacao, motivo, busca, dataInicio, dataFim, voltarInicio, voltarFim }) {
   const params = new URLSearchParams();
-  Object.entries({ conta, grupo, situacao, motivo, busca, dataInicio, dataFim }).forEach(([chave, valor]) => {
+  Object.entries({ conta, grupo, situacao, motivo, busca, dataInicio, dataFim, voltarInicio, voltarFim }).forEach(([chave, valor]) => {
     if (valor !== undefined && valor !== null && valor !== '') params.set(chave, valor);
   });
   return `${ROTA_DETALHE}?${params.toString()}`;
+}
+
+/** Parâmetros do "Voltar" que o detalhe preserva ao regravar a URL (vazios quando não vieram). */
+export const paramsVoltar = (searchParams) => ({
+  voltarInicio: searchParams.get('voltarInicio') || undefined,
+  voltarFim: searchParams.get('voltarFim') || undefined,
+});
+
+/** Endereço do "Voltar" do detalhe: o período original do dashboard, se veio na URL, senão o período do detalhe. */
+export function urlVoltarDashboard(searchParams) {
+  const inicio = searchParams.get('voltarInicio') || searchParams.get('dataInicio') || '';
+  const fim = searchParams.get('voltarFim') || searchParams.get('dataFim') || '';
+  return `${ROTA_DASHBOARD}?dataInicio=${inicio}&dataFim=${fim}`;
 }
 
 export function lerFiltrosDetalhe(searchParams) {

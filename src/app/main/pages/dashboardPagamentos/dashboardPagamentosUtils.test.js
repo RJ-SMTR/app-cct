@@ -17,6 +17,14 @@ import {
   periodoDaUrl,
   periodoPadrao,
   toIsoDate,
+  usaGraficosRotativo,
+  montarGraficoSituacoes,
+  montarGraficoAguardandoRotativo,
+  abasRotativo,
+  formatCompacto,
+  escalaEixo,
+  paramsVoltar,
+  urlVoltarDashboard,
 } from './dashboardPagamentosUtils';
 
 const conta = {
@@ -214,5 +222,130 @@ describe('dashboardPagamentosUtils', () => {
     expect(gruposDoFiltro(' GTU, VLT ,,')).toEqual(['GTU', 'VLT']);
     expect(gruposDoFiltro(undefined)).toEqual([]);
     expect(nomeArquivoExportacao({ conta: 'bilhetagem', grupo: 'Santa Cruz', dataInicio: '2026-10-01', dataFim: '2026-10-31' })).toBe('detalhe-pagamentos_bilhetagem_Santa-Cruz_2026-10-01_2026-10-31.xlsx');
+  });
+});
+
+describe('Conta Rotativo: abas Pago / Não pago e Aguardando pagamento', () => {
+  const rotativo = {
+    conta: 'rotativo',
+    pago: { qtd: 30, valor: 900 },
+    naoPago: { qtd: 2, valor: 100 },
+    emAberto: { qtd: 0, valor: 0 },
+  };
+
+  it('só a Conta Rotativo usa os gráficos de barras horizontais por situação', () => {
+    expect(usaGraficosRotativo(rotativo)).toBe(true);
+    expect(usaGraficosRotativo({ conta: 'bilhetagem' })).toBe(false);
+    expect(usaGraficosRotativo({ conta: 'cett' })).toBe(false);
+    expect(usaGraficosRotativo(undefined)).toBe(false);
+  });
+
+  it('abas: sem valor aguardando, só "Pago / Não pago" (sem "Por dia")', () => {
+    expect(abasRotativo(rotativo, 'valor')).toEqual([{ id: 'pagos', rotulo: 'Pago / Não pago' }]);
+  });
+
+  it('abas: com valor aguardando, "Pago / Não pago" e "Aguardando pagamento"', () => {
+    const c = { ...rotativo, emAberto: { qtd: 3, valor: 15800 } };
+    expect(abasRotativo(c, 'valor').map((a) => a.id)).toEqual(['pagos', 'aguardando']);
+    expect(abasRotativo(c, 'qtd').map((a) => a.rotulo)).toEqual(['Pago / Não pago', 'Aguardando pagamento']);
+  });
+
+  it('abas: só aguardando no período mostra só a aba de aguardando', () => {
+    const c = { conta: 'rotativo', pago: { qtd: 0, valor: 0 }, naoPago: { qtd: 0, valor: 0 }, emAberto: { qtd: 1, valor: 10 } };
+    expect(abasRotativo(c, 'valor')).toEqual([{ id: 'aguardando', rotulo: 'Aguardando pagamento' }]);
+  });
+
+  it('Pago / Não pago: uma linha para cada, com a fração de Pago + Não pago (aguardando fica de fora)', () => {
+    const g = montarGraficoSituacoes({ ...rotativo, emAberto: { qtd: 9, valor: 5000 } }, 'valor');
+    expect(g.total).toBe(1000);
+    expect(g.maior).toBe(900);
+    expect(g.linhas).toEqual([
+      { key: 'pago', rotulo: 'Pago', valor: 900, fracao: 0.9, desenhado: 900 },
+      { key: 'naoPago', rotulo: 'Não pago', valor: 100, fracao: 0.1, desenhado: 100 },
+    ]);
+  });
+
+  it('Pago / Não pago: por quantidade usa qtd', () => {
+    const g = montarGraficoSituacoes(rotativo, 'qtd');
+    expect(g.linhas.map((l) => [l.key, l.valor, l.fracao])).toEqual([
+      ['pago', 30, 30 / 32],
+      ['naoPago', 2, 2 / 32],
+    ]);
+  });
+
+  it('Pago / Não pago: valor muito pequeno ganha o comprimento mínimo visível, mas o valor e a fração são os reais', () => {
+    const g = montarGraficoSituacoes({ conta: 'rotativo', pago: { valor: 377067.58 }, naoPago: { valor: 1246 } }, 'valor');
+    const [pago, naoPago] = g.linhas;
+    expect(pago.desenhado).toBe(377067.58);
+    expect(naoPago.desenhado).toBe(1508.27032); // 0,4% do maior > 1.246
+    expect(naoPago.valor).toBe(1246);
+    expect(pago.fracao).toBeCloseTo(0.997, 3);
+    expect(naoPago.fracao).toBeCloseTo(0.0033, 4);
+  });
+
+  it('Pago / Não pago: conta sem pagamento fica com os dois zerados', () => {
+    const g = montarGraficoSituacoes({ conta: 'rotativo' }, 'valor');
+    expect(g.total).toBe(0);
+    expect(g.linhas.map((l) => [l.key, l.valor, l.fracao, l.desenhado])).toEqual([
+      ['pago', 0, 0, 0],
+      ['naoPago', 0, 0, 0],
+    ]);
+  });
+
+  it('Aguardando pagamento: uma linha com o valor aguardando na métrica', () => {
+    const c = { ...rotativo, emAberto: { qtd: 3, valor: 15800 } };
+    expect(montarGraficoAguardandoRotativo(c, 'valor')).toEqual({
+      maior: 15800,
+      linhas: [{ key: 'emAberto', rotulo: 'Aguardando pagamento', valor: 15800, desenhado: 15800 }],
+    });
+    expect(montarGraficoAguardandoRotativo(c, 'qtd').linhas[0].valor).toBe(3);
+  });
+
+  it('escalaEixo: marcas redondas cobrindo o maior valor com a folga do rótulo', () => {
+    expect(escalaEixo(377067.58)).toEqual({ max: 600000, passo: 100000, ticks: [0, 100000, 200000, 300000, 400000, 500000, 600000] });
+    const e = escalaEixo(1000);
+    expect(e.max).toBeGreaterThanOrEqual(1450);
+    expect(e.ticks[0]).toBe(0);
+    expect(e.ticks.every((t, i) => i === 0 || t > e.ticks[i - 1])).toBe(true);
+  });
+
+  it('escalaEixo: quantidade sem passo fracionário e zero sem escala', () => {
+    expect(escalaEixo(3, { passoInteiro: true }).ticks).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(escalaEixo(0)).toEqual({ max: 0, passo: 0, ticks: [0] });
+  });
+
+  it('formatCompacto: eixo em "mil" e "mi"', () => {
+    // O Intl usa espaço não separável entre o número e "mil"/"mi".
+    const semNbsp = (v) => formatCompacto(v).split(String.fromCharCode(160)).join(' ');
+    expect(semNbsp(50000)).toBe('50 mil');
+    expect(semNbsp(1200000)).toBe('1,2 mi');
+    expect(formatCompacto(0)).toBe('0');
+  });
+});
+
+describe('Voltar do detalhe aberto num período menor que o do dashboard', () => {
+  const url = montarUrlDetalhe({
+    conta: 'rotativo', situacao: 'naoPago', dataInicio: '2026-11-03', dataFim: '2026-11-03', voltarInicio: '2026-11-01', voltarFim: '2026-11-26',
+  });
+  const params = new URLSearchParams(url.split('?')[1]);
+
+  it('o detalhe abre no período menor, e o período do dashboard vai junto', () => {
+    expect(url).toBe(
+      '/dashboard-pagamentos/detalhe?conta=rotativo&situacao=naoPago&dataInicio=2026-11-03&dataFim=2026-11-03&voltarInicio=2026-11-01&voltarFim=2026-11-26',
+    );
+    expect(lerFiltrosDetalhe(params)).toMatchObject({ dataInicio: '2026-11-03', dataFim: '2026-11-03' });
+  });
+
+  it('os parâmetros do Voltar não entram nos filtros enviados à API', () => {
+    expect(Object.keys(lerFiltrosDetalhe(params))).not.toContain('voltarInicio');
+    expect(Object.keys(lerFiltrosDetalhe(params))).not.toContain('voltarFim');
+    expect(paramsVoltar(params)).toEqual({ voltarInicio: '2026-11-01', voltarFim: '2026-11-26' });
+  });
+
+  it('o Voltar devolve o dashboard no período original; sem ele, no período do detalhe', () => {
+    expect(urlVoltarDashboard(params)).toBe('/dashboard-pagamentos?dataInicio=2026-11-01&dataFim=2026-11-26');
+    const semVoltar = new URLSearchParams('conta=rotativo&dataInicio=2026-09-01&dataFim=2026-09-30');
+    expect(urlVoltarDashboard(semVoltar)).toBe('/dashboard-pagamentos?dataInicio=2026-09-01&dataFim=2026-09-30');
+    expect(paramsVoltar(semVoltar)).toEqual({ voltarInicio: undefined, voltarFim: undefined });
   });
 });
