@@ -241,8 +241,11 @@ const comFracoes = (fatias) => {
  * - `erros`: o não pago dividido em "Estorno" (motivo 02) e "Rejeitado" (demais motivos), como no status dos relatórios.
  *   O rejeitado é o total não pago menos o estorno, então as duas fatias somam o não pago.
  * "Aguardando pagamento" não entra em nenhuma das duas. `detalhe` são os filtros da tela de detalhe ao clicar.
+ * `abatimentos` (Conta Rotativo) acrescenta à rosca de `pendencias` uma fatia por status do abatimento por duplicidade, pelo
+ * valor abatido, em qualquer status (inclusive aguardando o banco); elas entram no total e nas porcentagens da rosca e
+ * não têm detalhe (`semDetalhe`).
  */
-export function montarRoscasPendencias(conta) {
+export function montarRoscasPendencias(conta, abatimentos) {
   const motivos = conta?.motivos ?? [];
   const naoPago = { valor: Number(conta?.naoPago?.valor) || 0, qtd: Number(conta?.naoPago?.qtd) || 0 };
   const pendenciaPaga = somaMotivos(motivos, (m) => m.situacao === 'pago' && m.codigo === MOTIVO_PENDENCIA_PAGA);
@@ -252,6 +255,7 @@ export function montarRoscasPendencias(conta) {
     pendencias: comFracoes([
       { id: 'pendenciaPaga', rotulo: 'Pendência paga', cor: COR_STATUS_RELATORIO.pendenciaPaga, ...pendenciaPaga, detalhe: { situacao: 'pago', motivo: MOTIVO_PENDENCIA_PAGA } },
       { id: 'pendenciaPagamento', rotulo: 'Pendência de pagamento', cor: COR_STATUS_RELATORIO.pendenciaPagamento, ...naoPago, detalhe: { situacao: 'naoPago' } },
+      ...montarFatiasAbatimento(abatimentos),
     ]),
     erros: comFracoes([
       { id: 'rejeitado', rotulo: 'Rejeitado', cor: COR_STATUS_RELATORIO.rejeitado, ...rejeitado, detalhe: { situacao: 'naoPago' } },
@@ -345,4 +349,26 @@ export function nomeArquivoExportacao(filtros) {
     .filter(Boolean)
     .map((parte) => String(parte).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9-]+/g, '-'));
   return `${partes.join('_')}.xlsx`;
+}
+
+/**
+ * Status dos pagamentos com abatimento por duplicidade (API `pagamentos-indevidos/guardadores/abatimentos`), na ordem em
+ * que aparecem na rosca de pendências da Conta Rotativo.
+ */
+export const SITUACOES_ABATIMENTO = [
+  { key: 'pago', label: 'Pago', color: '#7b1fa2' },
+  { key: 'quitado', label: 'Quitado pelo abatimento', color: '#ba68c8' },
+  { key: 'aguardando', label: 'Aguardando banco', color: '#5e35b1' },
+  { key: 'rejeitado', label: 'Rejeitado', color: '#ad1457' },
+  { key: 'aPagar', label: 'A pagar', color: '#78909c' },
+];
+
+/** Uma fatia por status com pagamento no período; o valor é o abatido (descontado). */
+function montarFatiasAbatimento(itens) {
+  return SITUACOES_ABATIMENTO.map((s) => {
+    const doStatus = (itens ?? []).filter((i) => i.situacao === s.key);
+    // Soma em centavos para não acumular erro de ponto flutuante.
+    const valor = doStatus.reduce((t, i) => t + Math.round((Number(i.valorAbatido) || 0) * 100), 0) / 100;
+    return { id: `abatimento-${s.key}`, rotulo: `Abatimento – ${s.label}`, cor: s.color, valor, qtd: doStatus.length, semDetalhe: true };
+  }).filter((f) => f.qtd > 0);
 }

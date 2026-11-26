@@ -349,3 +349,36 @@ describe('Voltar do detalhe aberto num período menor que o do dashboard', () =>
     expect(paramsVoltar(semVoltar)).toEqual({ voltarInicio: undefined, voltarFim: undefined });
   });
 });
+
+describe('rosca de pendências com abatimento por duplicidade', () => {
+  const contaRotativo = {
+    conta: 'rotativo',
+    naoPago: { qtd: 1, valor: 100 },
+    motivos: [{ situacao: 'pago', codigo: 'PENDENCIA_PAGA', qtd: 1, valor: 200 }],
+  };
+
+  it('acrescenta uma fatia por status, pelo valor abatido, e soma no total', () => {
+    const { pendencias, erros } = montarRoscasPendencias(contaRotativo, [
+      { situacao: 'pago', valorAbatido: 60 },
+      { situacao: 'quitado', valorAbatido: 40 },
+      { situacao: 'aguardando', valorAbatido: 100 },
+    ]);
+
+    expect(pendencias.fatias.map((f) => [f.rotulo, f.valor, f.qtd, f.fracao])).toEqual([
+      ['Pendência paga', 200, 1, 0.4],
+      ['Pendência de pagamento', 100, 1, 0.2],
+      ['Abatimento – Pago', 60, 1, 0.12],
+      ['Abatimento – Quitado pelo abatimento', 40, 1, 0.08],
+      ['Abatimento – Aguardando banco', 100, 1, 0.2],
+    ]);
+    expect(pendencias.total).toEqual({ valor: 500, qtd: 5 });
+    expect(pendencias.fatias.filter((f) => f.semDetalhe)).toHaveLength(3);
+    // a rosca de rejeitado x estorno não muda
+    expect(erros.fatias.map((f) => f.rotulo)).toEqual(['Rejeitado', 'Estorno']);
+  });
+
+  it('sem abatimento a rosca continua com as duas fatias', () => {
+    expect(montarRoscasPendencias(contaRotativo, []).pendencias.fatias).toHaveLength(2);
+    expect(montarRoscasPendencias(contaRotativo).pendencias.fatias).toHaveLength(2);
+  });
+});

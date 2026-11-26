@@ -47,3 +47,17 @@ describe('RoscaSimples', () => {
     expect(html).not.toContain(COR_ROSCA_VAZIA);
   });
 });
+
+describe('RoscaSimples: fatia sem detalhe', () => {
+  it('aparece na rosca e na legenda, mas não é um botão', () => {
+    const fatias = [
+      { id: 'a', rotulo: 'A', cor: '#42A5F5', valor: 75, qtd: 1, fracao: 0.75 },
+      { id: 'b', rotulo: 'Abatimento – Pago', cor: '#7b1fa2', valor: 25, qtd: 1, fracao: 0.25, semDetalhe: true },
+    ];
+    const html = renderToStaticMarkup(<RoscaSimples titulo="T" fatias={fatias} total={{ valor: 100, qtd: 2 }} />);
+
+    expect(html.match(/role="button"/g)).toHaveLength(1);
+    expect(html).toContain('stroke="#7b1fa2"');
+    expect(html).toContain('Abatimento – Pago');
+  });
+});

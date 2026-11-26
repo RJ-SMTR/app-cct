@@ -26,7 +26,7 @@ import { api } from 'app/configs/api/api';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import PeriodDatePicker, { periodRequiredRules } from 'app/shared-components/PeriodDatePicker';
 import GraficosRotativo from './GraficosRotativo';
-import AbatimentosDuplicidade from './AbatimentosDuplicidade';
+import useAbatimentosDuplicidade from './useAbatimentosDuplicidade';
 import {
   COR_SITUACAO,
   ROTULO_SITUACAO,
@@ -81,7 +81,7 @@ function Indicador({ situacao, totais, onClick }) {
   );
 }
 
-function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
+function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe, abatimentos }) {
   // Barras duplas: duas barras por consórcio/modal (Pago | Não pago), em duas escalas (eixo esquerdo e direito).
   // "Aguardando pagamento" fica num gráfico próprio; com os dois no período, cada gráfico vai numa aba.
   const motivosExibidos = useMemo(() => agruparMotivosEmAberto(conta.motivos), [conta]);
@@ -98,7 +98,7 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
   // Se a aba escolhida não existe no período (ex.: só há aguardando), usa a primeira disponível.
   const aba = abas.some((a) => a.id === abaEscolhida) ? abaEscolhida : abas[0]?.id;
   // Roscas de "Situação e motivos": pendência paga x pendência de pagamento e, do não pago, rejeitado x estorno.
-  const roscas = useMemo(() => montarRoscasPendencias(conta), [conta]);
+  const roscas = useMemo(() => montarRoscasPendencias(conta, abatimentos), [conta, abatimentos]);
   // Com as duas abas, as roscas ficam só na aba de pago/não pago (na de aguardando pagamento não aparecem).
   const mostrarRoscas = !(abas.length > 1 && aba === 'aguardando');
   const vazio = SITUACOES.every((s) => conta[s.key].qtd === 0);
@@ -232,7 +232,12 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
           {mostrarRoscas && (
             <>
               <Grid item xs={12} md={6}>
-                <RoscaSimples titulo="Pendência paga x pendência de pagamento" fatias={roscas.pendencias.fatias} total={roscas.pendencias.total} onSelecionar={abrirFatia} />
+                <RoscaSimples
+                  titulo={`Pendência paga x pendência de pagamento${abatimentos?.length ? ' x abatimento por duplicidade' : ''}`}
+                  fatias={roscas.pendencias.fatias}
+                  total={roscas.pendencias.total}
+                  onSelecionar={abrirFatia}
+                />
               </Grid>
               <Grid item xs={12} md={6}>
                 <RoscaSimples titulo="Não pagos: rejeitado x estorno" fatias={roscas.erros.fatias} total={roscas.erros.total} mostrarQtd onSelecionar={abrirFatia} />
@@ -286,6 +291,8 @@ export default function DashboardPagamentosApp() {
   const [metrica, setMetrica] = useState('valor');
   const [carregando, setCarregando] = useState(false);
   const [dados, setDados] = useState(null);
+  // Abatimento por duplicidade do período consultado, mostrado na rosca de pendências da Conta Rotativo.
+  const abatimentos = useAbatimentosDuplicidade(dados?.periodo);
 
   const consultar = useCallback(
     (intervalo) => {
@@ -363,10 +370,15 @@ export default function DashboardPagamentosApp() {
 
       {!carregando &&
         dados?.contas?.map((conta) => (
-          <QuadroConta key={conta.conta} conta={conta} metrica={metrica} periodo={dados.periodo} onAbrirDetalhe={abrirDetalhe} />
+          <QuadroConta
+            key={conta.conta}
+            conta={conta}
+            metrica={metrica}
+            periodo={dados.periodo}
+            onAbrirDetalhe={abrirDetalhe}
+            abatimentos={usaGraficosRotativo(conta) ? abatimentos : undefined}
+          />
         ))}
-
-      {!carregando && dados?.periodo && <AbatimentosDuplicidade periodo={dados.periodo} />}
     </Box>
   );
 }

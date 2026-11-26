@@ -16,6 +16,7 @@ export const COR_ROSCA_VAZIA = 'rgba(128,128,128,0.35)';
  * Rosca de um anel só. As fatias vêm prontas (`montarRoscasPendencias`): { id, rotulo, cor, valor, qtd, fracao }.
  * O tamanho de cada fatia é o valor (R$); a % é sobre a soma das fatias. `mostrarQtd` exibe também a quantidade.
  * Sem valores no período (total zero), a rosca aparece sem cor (anel cinza) e com tudo zerado, sem clique.
+ * Fatia com `semDetalhe` é só informativa: destaca ao passar o mouse, mas não abre nada ao clicar.
  */
 export default function RoscaSimples({ titulo, fatias, total, mostrarQtd = false, onSelecionar }) {
   const [ativo, setAtivo] = useState(null);
@@ -50,17 +51,17 @@ export default function RoscaSimples({ titulo, fatias, total, mostrarQtd = false
                   strokeDasharray={`${comprimento} ${perimetro - comprimento}`}
                   strokeDashoffset={-inicio}
                   opacity={ativo !== null && ativo !== fatia.id ? 0.35 : 1}
-                  style={{ cursor: 'pointer', transition: 'opacity .15s, stroke-width .15s' }}
+                  style={{ cursor: fatia.semDetalhe ? 'default' : 'pointer', transition: 'opacity .15s, stroke-width .15s' }}
                   tabIndex={0}
-                  role="button"
+                  role={fatia.semDetalhe ? 'img' : 'button'}
                   aria-label={`${fatia.rotulo}: ${formatBRL(fatia.valor)}, ${pct(fatia.fracao)}`}
                   onMouseEnter={() => setAtivo(fatia.id)}
                   onMouseLeave={() => setAtivo(null)}
                   onFocus={() => setAtivo(fatia.id)}
                   onBlur={() => setAtivo(null)}
-                  onClick={() => onSelecionar?.(fatia)}
+                  onClick={() => !fatia.semDetalhe && onSelecionar?.(fatia)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
+                    if (!fatia.semDetalhe && (e.key === 'Enter' || e.key === ' ')) {
                       e.preventDefault();
                       onSelecionar?.(fatia);
                     }
@@ -88,10 +89,10 @@ export default function RoscaSimples({ titulo, fatias, total, mostrarQtd = false
           <Box
             key={fatia.id}
             className="flex items-center justify-between"
-            sx={{ py: 0.5, px: 1, borderRadius: 1, ...(vazia ? {} : { cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }) }}
+            sx={{ py: 0.5, px: 1, borderRadius: 1, ...(vazia || fatia.semDetalhe ? {} : { cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }) }}
             onMouseEnter={vazia ? undefined : () => setAtivo(fatia.id)}
             onMouseLeave={vazia ? undefined : () => setAtivo(null)}
-            onClick={vazia ? undefined : () => onSelecionar?.(fatia)}
+            onClick={vazia || fatia.semDetalhe ? undefined : () => onSelecionar?.(fatia)}
           >
             <Box className="flex items-center" sx={{ gap: 1 }}>
               <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: vazia ? COR_ROSCA_VAZIA : fatia.cor, flexShrink: 0 }} />
