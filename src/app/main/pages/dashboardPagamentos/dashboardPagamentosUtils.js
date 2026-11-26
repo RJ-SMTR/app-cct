@@ -108,6 +108,58 @@ export function abasGraficoBarras(graficoPagos, graficoAguardando) {
 }
 
 /**
+ * Conta Rotativo tem um grupo só (Guardador): no lugar das barras por consórcio/modal ela mostra as abas
+ * "Proporção" e "Por dia".
+ */
+export const usaGraficosRotativo = (conta) => conta?.conta === 'rotativo';
+
+export const ABAS_ROTATIVO = [
+  { id: 'proporcao', rotulo: 'Proporção' },
+  { id: 'porDia', rotulo: 'Por dia' },
+];
+
+/**
+ * Barra horizontal 100% empilhada: Pago, Não pago e Aguardando pagamento da conta, numa escala só.
+ * Situação zerada na métrica fica fora (nem barra nem legenda). `fracao` é a parte de cada situação no total.
+ */
+export function montarGraficoProporcao(conta, metrica) {
+  const valorDe = (situacao) => Number(metrica === 'valor' ? conta?.[situacao]?.valor : conta?.[situacao]?.qtd) || 0;
+  const total = SITUACOES.reduce((t, s) => t + valorDe(s.key), 0);
+  const series = SITUACOES.filter((s) => valorDe(s.key) > 0).map((s) => ({
+    key: s.key,
+    name: s.label,
+    data: [valorDe(s.key)],
+    fracao: valorDe(s.key) / total,
+  }));
+  return { total, series };
+}
+
+/** Dias (YYYY-MM-DD) de dataInicio a dataFim, inclusive. */
+export function diasDoPeriodo(dataInicio, dataFim) {
+  const dias = [];
+  const fim = dayjs(dataFim);
+  for (let d = dayjs(dataInicio); !d.isAfter(fim, 'day'); d = d.add(1, 'day')) dias.push(d.format('YYYY-MM-DD'));
+  return dias;
+}
+
+/**
+ * Colunas empilhadas por dia de vencimento (Pago, Não pago, Aguardando pagamento). Todos os dias do período
+ * aparecem, mesmo sem pagamento (coluna vazia), para o eixo X ser contínuo. Situação zerada no período inteiro
+ * fica fora do gráfico. `dias` (YYYY-MM-DD) acompanha as categorias (DD/MM) para o clique abrir o detalhe do dia.
+ */
+export function montarGraficoPorDia(conta, metrica, periodo) {
+  const porData = new Map((conta?.porDia ?? []).map((d) => [d.data, d]));
+  const dias =
+    periodo?.dataInicio && periodo?.dataFim ? diasDoPeriodo(periodo.dataInicio, periodo.dataFim) : Array.from(porData.keys()).sort();
+  const valorDe = (dia, situacao) =>
+    Number(metrica === 'valor' ? porData.get(dia)?.[situacao]?.valor : porData.get(dia)?.[situacao]?.qtd) || 0;
+  const series = SITUACOES.map((s) => ({ key: s.key, name: s.label, data: dias.map((dia) => valorDe(dia, s.key)) })).filter((s) =>
+    s.data.some((v) => v > 0),
+  );
+  return { dias, categorias: dias.map((dia) => dayjs(dia).format('DD/MM')), series };
+}
+
+/**
  * Tudo que está em aberto aparece como "Aguardando pagamento": os motivos de "em aberto" viram uma linha só (sem código,
  * então o clique abre a situação inteira). Os demais motivos ficam como vieram.
  */
@@ -187,13 +239,30 @@ export function montarGraficoMotivos(conta, situacao, metrica) {
   };
 }
 
-/** Endereço da tela de detalhe de um ponto do gráfico. Parâmetros vazios são omitidos. */
-export function montarUrlDetalhe({ conta, grupo, situacao, motivo, busca, dataInicio, dataFim }) {
+/**
+ * Endereço da tela de detalhe de um ponto do gráfico. Parâmetros vazios são omitidos.
+ * `voltarInicio`/`voltarFim`: período do dashboard quando o detalhe abre num período menor (um dia do gráfico
+ * "Por dia"), para o "Voltar" devolver o dashboard no período em que estava. Não vão para a API.
+ */
+export function montarUrlDetalhe({ conta, grupo, situacao, motivo, busca, dataInicio, dataFim, voltarInicio, voltarFim }) {
   const params = new URLSearchParams();
-  Object.entries({ conta, grupo, situacao, motivo, busca, dataInicio, dataFim }).forEach(([chave, valor]) => {
+  Object.entries({ conta, grupo, situacao, motivo, busca, dataInicio, dataFim, voltarInicio, voltarFim }).forEach(([chave, valor]) => {
     if (valor !== undefined && valor !== null && valor !== '') params.set(chave, valor);
   });
   return `${ROTA_DETALHE}?${params.toString()}`;
+}
+
+/** Parâmetros do "Voltar" que o detalhe preserva ao regravar a URL (vazios quando não vieram). */
+export const paramsVoltar = (searchParams) => ({
+  voltarInicio: searchParams.get('voltarInicio') || undefined,
+  voltarFim: searchParams.get('voltarFim') || undefined,
+});
+
+/** Endereço do "Voltar" do detalhe: o período original do dashboard, se veio na URL, senão o período do detalhe. */
+export function urlVoltarDashboard(searchParams) {
+  const inicio = searchParams.get('voltarInicio') || searchParams.get('dataInicio') || '';
+  const fim = searchParams.get('voltarFim') || searchParams.get('dataFim') || '';
+  return `${ROTA_DASHBOARD}?dataInicio=${inicio}&dataFim=${fim}`;
 }
 
 export function lerFiltrosDetalhe(searchParams) {
