@@ -26,6 +26,7 @@ import { api } from 'app/configs/api/api';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import PeriodDatePicker, { periodRequiredRules } from 'app/shared-components/PeriodDatePicker';
 import GraficosRotativo from './GraficosRotativo';
+import AbatimentosDuplicidade from './AbatimentosDuplicidade';
 import {
   COR_SITUACAO,
   ROTULO_SITUACAO,
@@ -364,6 +365,8 @@ export default function DashboardPagamentosApp() {
         dados?.contas?.map((conta) => (
           <QuadroConta key={conta.conta} conta={conta} metrica={metrica} periodo={dados.periodo} onAbrirDetalhe={abrirDetalhe} />
         ))}
+
+      {!carregando && dados?.periodo && <AbatimentosDuplicidade periodo={dados.periodo} />}
     </Box>
   );
 }
