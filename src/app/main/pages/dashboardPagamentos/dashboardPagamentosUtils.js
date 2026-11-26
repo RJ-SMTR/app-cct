@@ -118,20 +118,56 @@ export const ABAS_ROTATIVO = [
   { id: 'porDia', rotulo: 'Por dia' },
 ];
 
+/** Eixo dos gráficos em formato curto ("50 mil", "1,2 mi"). */
+const compacto = new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 });
+export const formatCompacto = (valor) => compacto.format(Number(valor) || 0);
+
 /**
- * Barra horizontal 100% empilhada: Pago, Não pago e Aguardando pagamento da conta, numa escala só.
- * Situação zerada na métrica fica fora (nem barra nem legenda). `fracao` é a parte de cada situação no total.
+ * Comprimento mínimo da barra de uma situação com valor (fração do maior valor): um valor muito pequeno perto
+ * de outro muito grande (ex.: R$ 1 mil não pago ao lado de R$ 377 mil pagos) continua aparecendo como um traço.
  */
-export function montarGraficoProporcao(conta, metrica) {
+export const FRACAO_MINIMA_BARRA = 0.004;
+
+/** Folga do eixo depois da maior barra, para o texto "valor • %" caber à direita dela. */
+export const FOLGA_ROTULO = 1.45;
+
+/**
+ * Escala do eixo das barras horizontais, com marcas redondas (1, 2, 2,5 ou 5 × 10^n): o máximo cobre o maior
+ * valor mais a folga do rótulo. Com `passoInteiro` (quantidade de pagamentos) o passo nunca é fracionário.
+ */
+export function escalaEixo(maior, { folga = FOLGA_ROTULO, marcas = 8, passoInteiro = false } = {}) {
+  const alvo = (Number(maior) || 0) * folga;
+  if (!(alvo > 0)) return { max: 0, passo: 0, ticks: [0] };
+  const bruto = alvo / marcas;
+  const magnitude = 10 ** Math.floor(Math.log10(bruto));
+  const normalizado = bruto / magnitude;
+  const fator = [1, 2, 2.5, 5, 10].find((f) => normalizado <= f);
+  const passo = passoInteiro ? Math.max(1, Math.ceil(fator * magnitude)) : fator * magnitude;
+  const quantidade = Math.ceil(alvo / passo - 1e-9);
+  const ticks = Array.from({ length: quantidade + 1 }, (_v, i) => Math.round(i * passo * 1e6) / 1e6);
+  return { max: ticks[ticks.length - 1], passo, ticks };
+}
+
+/**
+ * Barras horizontais, uma linha por situação (Pago, Não pago e, embaixo, Aguardando pagamento), numa escala só.
+ * `fracao` é a parte de cada situação no total das três (as linhas somam 100%). `desenhado` é o comprimento da
+ * barra: o valor, ou o mínimo visível quando o valor é pequeno demais; o rótulo e o tooltip usam sempre `valor`.
+ */
+export function montarGraficoSituacoes(conta, metrica) {
   const valorDe = (situacao) => Number(metrica === 'valor' ? conta?.[situacao]?.valor : conta?.[situacao]?.qtd) || 0;
   const total = SITUACOES.reduce((t, s) => t + valorDe(s.key), 0);
-  const series = SITUACOES.filter((s) => valorDe(s.key) > 0).map((s) => ({
-    key: s.key,
-    name: s.label,
-    data: [valorDe(s.key)],
-    fracao: valorDe(s.key) / total,
-  }));
-  return { total, series };
+  const maior = Math.max(0, ...SITUACOES.map((s) => valorDe(s.key)));
+  const linhas = SITUACOES.map((s) => {
+    const valor = valorDe(s.key);
+    return {
+      key: s.key,
+      rotulo: s.label,
+      valor,
+      fracao: total > 0 ? valor / total : 0,
+      desenhado: valor > 0 ? Math.max(valor, maior * FRACAO_MINIMA_BARRA) : 0,
+    };
+  });
+  return { total, maior, linhas };
 }
 
 /** Dias (YYYY-MM-DD) de dataInicio a dataFim, inclusive. */
@@ -143,20 +179,26 @@ export function diasDoPeriodo(dataInicio, dataFim) {
 }
 
 /**
- * Colunas empilhadas por dia de vencimento (Pago, Não pago, Aguardando pagamento). Todos os dias do período
- * aparecem, mesmo sem pagamento (coluna vazia), para o eixo X ser contínuo. Situação zerada no período inteiro
- * fica fora do gráfico. `dias` (YYYY-MM-DD) acompanha as categorias (DD/MM) para o clique abrir o detalhe do dia.
+ * Barras horizontais por dia de vencimento: uma linha por dia, com uma barra por situação (Pago, Não pago,
+ * Aguardando pagamento). Situação zerada no período inteiro fica fora do gráfico. Por padrão todos os dias do
+ * período aparecem; com `somenteDiasComPagamento` ficam só os dias com algum pagamento (lista mais curta).
+ * `data` são os valores reais (rótulo e tooltip); `desenhado` é o comprimento da barra, com o mínimo visível
+ * (`FRACAO_MINIMA_BARRA` do maior valor) para valores muito pequenos. `dias` (YYYY-MM-DD) acompanha as
+ * categorias (DD/MM) para o clique abrir o detalhe do dia.
  */
-export function montarGraficoPorDia(conta, metrica, periodo) {
+export function montarGraficoPorDia(conta, metrica, periodo, { somenteDiasComPagamento = false } = {}) {
   const porData = new Map((conta?.porDia ?? []).map((d) => [d.data, d]));
-  const dias =
-    periodo?.dataInicio && periodo?.dataFim ? diasDoPeriodo(periodo.dataInicio, periodo.dataFim) : Array.from(porData.keys()).sort();
   const valorDe = (dia, situacao) =>
     Number(metrica === 'valor' ? porData.get(dia)?.[situacao]?.valor : porData.get(dia)?.[situacao]?.qtd) || 0;
-  const series = SITUACOES.map((s) => ({ key: s.key, name: s.label, data: dias.map((dia) => valorDe(dia, s.key)) })).filter((s) =>
+  const todosOsDias =
+    periodo?.dataInicio && periodo?.dataFim ? diasDoPeriodo(periodo.dataInicio, periodo.dataFim) : Array.from(porData.keys()).sort();
+  const dias = somenteDiasComPagamento ? todosOsDias.filter((dia) => SITUACOES.some((s) => valorDe(dia, s.key) > 0)) : todosOsDias;
+  const comValores = SITUACOES.map((s) => ({ key: s.key, name: s.label, data: dias.map((dia) => valorDe(dia, s.key)) })).filter((s) =>
     s.data.some((v) => v > 0),
   );
-  return { dias, categorias: dias.map((dia) => dayjs(dia).format('DD/MM')), series };
+  const maior = Math.max(0, ...comValores.flatMap((s) => s.data));
+  const series = comValores.map((s) => ({ ...s, desenhado: s.data.map((v) => (v > 0 ? Math.max(v, maior * FRACAO_MINIMA_BARRA) : 0)) }));
+  return { dias, categorias: dias.map((dia) => dayjs(dia).format('DD/MM')), series, maior };
 }
 
 /**

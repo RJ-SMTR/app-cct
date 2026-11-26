@@ -1,87 +1,75 @@
 import { useMemo, useState } from 'react';
-import Chart from 'react-apexcharts';
-import { Tab, Tabs, Typography } from '@mui/material';
-import { ABAS_ROTATIVO, COR_SITUACAO, formatMetrica, montarGraficoPorDia, montarGraficoProporcao } from './dashboardPagamentosUtils';
+import { Box, Tab, Tabs, Typography } from '@mui/material';
+import BarrasHorizontais from './BarrasHorizontais';
+import {
+  ABAS_ROTATIVO,
+  COR_SITUACAO,
+  escalaEixo,
+  formatCompacto,
+  formatMetrica,
+  montarGraficoPorDia,
+  montarGraficoSituacoes,
+} from './dashboardPagamentosUtils';
 
 const pct = (fracao) => `${(fracao * 100).toFixed(1).replace('.', ',')}%`;
 
-/** Abaixo disso o rótulo não cabe dentro do segmento; o valor continua no tooltip. */
-const FRACAO_MINIMA_ROTULO = 0.05;
-
-/** Acima disso o eixo X mostra só parte das datas, para os rótulos não se sobreporem. */
-const MAX_ROTULOS_DIAS = 31;
+/** Acima disso a lista "Por dia" rola dentro do quadro. */
+const ALTURA_MAXIMA_POR_DIA = 640;
 
 /**
- * Gráficos da Conta Rotativo (um grupo só, Guardador), em duas abas:
- * - "Proporção": barra horizontal 100% empilhada com Pago, Não pago e Aguardando pagamento, numa escala só.
- * - "Por dia": colunas empilhadas por dia de vencimento.
- * Clicar num segmento abre o detalhe daquela situação (no "Por dia", só daquele dia).
+ * Gráficos da Conta Rotativo (um grupo só, Guardador), em duas abas, ambos em barras horizontais numa escala só
+ * com o valor escrito logo depois da ponta de cada barra:
+ * - "Proporção": uma linha por situação (Pago, Não pago e, embaixo, Aguardando pagamento), com valor e % do total.
+ * - "Por dia": uma linha por dia de vencimento com pagamento, com uma barra por situação que teve valor no dia.
+ * Clicar numa barra abre o detalhe daquela situação (no "Por dia", só daquele dia).
  */
-export default function GraficosRotativo({ conta, metrica, periodo, onAbrirDetalhe }) {
-  const [aba, setAba] = useState('proporcao');
-  const proporcao = useMemo(() => montarGraficoProporcao(conta, metrica), [conta, metrica]);
-  const porDia = useMemo(() => montarGraficoPorDia(conta, metrica, periodo), [conta, metrica, periodo]);
+export default function GraficosRotativo({ conta, metrica, periodo, onAbrirDetalhe, abaInicial = 'proporcao' }) {
+  const [aba, setAba] = useState(abaInicial);
   const nomeMetrica = metrica === 'valor' ? 'Valor (R$)' : 'Quantidade de pagamentos';
+  const inteiro = metrica !== 'valor';
 
-  const opcoesProporcao = {
-    chart: {
-      type: 'bar',
-      stacked: true,
-      stackType: '100%',
-      toolbar: { show: false },
-      events: {
-        dataPointSelection: (_event, _ctx, { seriesIndex }) => {
-          if (seriesIndex < 0) return;
-          onAbrirDetalhe({ conta: conta.conta, situacao: proporcao.series[seriesIndex].key });
-        },
-      },
-    },
-    colors: proporcao.series.map((s) => COR_SITUACAO[s.key]),
-    plotOptions: { bar: { horizontal: true, barHeight: '55%' } },
-    xaxis: { categories: [conta.nome], labels: { formatter: (v) => `${v}%` } },
-    yaxis: { labels: { show: false } },
-    dataLabels: {
-      enabled: true,
-      formatter: (_v, { seriesIndex }) => {
-        const fracao = proporcao.series[seriesIndex]?.fracao ?? 0;
-        return fracao >= FRACAO_MINIMA_ROTULO ? pct(fracao) : '';
-      },
-    },
-    tooltip: {
-      y: { formatter: (v, { seriesIndex }) => `${formatMetrica(v, metrica)} (${pct(proporcao.series[seriesIndex]?.fracao ?? 0)})` },
-    },
-    legend: { position: 'top' },
-    grid: { padding: { left: 8, right: 8 } },
-    states: { active: { filter: { type: 'none' } } },
-  };
+  const situacoes = useMemo(() => {
+    const g = montarGraficoSituacoes(conta, metrica);
+    return {
+      escala: escalaEixo(g.maior, { passoInteiro: inteiro }),
+      linhas: g.linhas.map((l) => ({
+        id: l.key,
+        rotulo: l.rotulo,
+        barras: [
+          {
+            key: l.key,
+            cor: COR_SITUACAO[l.key],
+            desenhado: l.desenhado,
+            texto: `${formatMetrica(l.valor, metrica)} • ${pct(l.fracao)}`,
+            dica: `${l.rotulo}: ${formatMetrica(l.valor, metrica)} (${pct(l.fracao)}) – clique para ver o detalhe`,
+            onClick: () => onAbrirDetalhe({ conta: conta.conta, situacao: l.key }),
+          },
+        ],
+      })),
+    };
+  }, [conta, metrica, inteiro, onAbrirDetalhe]);
 
-  const opcoesPorDia = {
-    chart: {
-      type: 'bar',
-      stacked: true,
-      toolbar: { show: false },
-      events: {
-        dataPointSelection: (_event, _ctx, { seriesIndex, dataPointIndex }) => {
-          if (seriesIndex < 0 || dataPointIndex < 0) return;
-          const dia = porDia.dias[dataPointIndex];
-          onAbrirDetalhe({ conta: conta.conta, situacao: porDia.series[seriesIndex].key, dataInicio: dia, dataFim: dia });
-        },
-      },
-    },
-    colors: porDia.series.map((s) => COR_SITUACAO[s.key]),
-    plotOptions: { bar: { columnWidth: porDia.dias.length <= 7 ? '35%' : '70%' } },
-    xaxis: {
-      categories: porDia.categorias,
-      tickAmount: porDia.dias.length > MAX_ROTULOS_DIAS ? MAX_ROTULOS_DIAS : undefined,
-      labels: { rotate: -45, hideOverlappingLabels: true },
-    },
-    yaxis: { min: 0, forceNiceScale: true, title: { text: nomeMetrica }, labels: { formatter: (v) => formatMetrica(v, metrica) } },
-    dataLabels: { enabled: false },
-    // Tooltip só do segmento sob o mouse: o clique abre o detalhe daquela situação naquele dia.
-    tooltip: { shared: false, y: { formatter: (v) => formatMetrica(v, metrica) } },
-    legend: { position: 'top', showForSingleSeries: true },
-    states: { active: { filter: { type: 'none' } } },
-  };
+  const porDia = useMemo(() => {
+    const g = montarGraficoPorDia(conta, metrica, periodo, { somenteDiasComPagamento: true });
+    return {
+      escala: escalaEixo(g.maior, { folga: 1.3, passoInteiro: inteiro }),
+      linhas: g.dias.map((dia, i) => ({
+        id: dia,
+        rotulo: g.categorias[i],
+        barras: g.series
+          .filter((s) => s.data[i] > 0)
+          .map((s) => ({
+            key: s.key,
+            cor: COR_SITUACAO[s.key],
+            desenhado: s.desenhado[i],
+            texto: formatMetrica(s.data[i], metrica),
+            dica: `${g.categorias[i]} – ${s.name}: ${formatMetrica(s.data[i], metrica)} – clique para ver o detalhe do dia`,
+            onClick: () => onAbrirDetalhe({ conta: conta.conta, situacao: s.key, dataInicio: dia, dataFim: dia }),
+          })),
+      })),
+      situacoes: g.series.map((s) => ({ key: s.key, name: s.name })),
+    };
+  }, [conta, metrica, periodo, inteiro, onAbrirDetalhe]);
 
   return (
     <>
@@ -92,17 +80,51 @@ export default function GraficosRotativo({ conta, metrica, periodo, onAbrirDetal
       </Tabs>
       {aba === 'proporcao' ? (
         <>
-          <Typography variant="subtitle2" color="text.secondary">
-            Proporção por situação – {nomeMetrica} (clique num segmento para ver o detalhe)
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+            {nomeMetrica} por situação – {conta.nome} (clique numa barra para ver o detalhe)
           </Typography>
-          <Chart key="proporcao" options={opcoesProporcao} series={proporcao.series} type="bar" height={170} />
+          <BarrasHorizontais
+            ariaLabel={`${nomeMetrica} por situação`}
+            linhas={situacoes.linhas}
+            escala={situacoes.escala}
+            formatarEixo={formatCompacto}
+            tituloEixo={nomeMetrica}
+          />
         </>
       ) : (
         <>
           <Typography variant="subtitle2" color="text.secondary">
-            Por dia de vencimento (clique numa coluna para ver o detalhe do dia)
+            {nomeMetrica} por dia de vencimento (clique numa barra para ver o detalhe do dia)
           </Typography>
-          <Chart key="porDia" options={opcoesPorDia} series={porDia.series} type="bar" height={380} />
+          {porDia.linhas.length === 0 ? (
+            <Typography variant="body2" color="text.secondary" sx={{ py: 3 }}>
+              Nenhum pagamento por dia para exibir no período.
+            </Typography>
+          ) : (
+            <>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center', my: 1 }}>
+                {porDia.situacoes.map((s) => (
+                  <Box key={s.key} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                    <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: COR_SITUACAO[s.key] }} />
+                    <Typography variant="caption">{s.name}</Typography>
+                  </Box>
+                ))}
+              </Box>
+              <Box sx={{ maxHeight: ALTURA_MAXIMA_POR_DIA, overflowY: 'auto' }}>
+                <BarrasHorizontais
+                  ariaLabel={`${nomeMetrica} por dia de vencimento`}
+                  linhas={porDia.linhas}
+                  escala={porDia.escala}
+                  formatarEixo={formatCompacto}
+                  tituloEixo={nomeMetrica}
+                  larguraRotulo={60}
+                  alturaBarra={16}
+                  tamanhoTexto={12}
+                  espacoLinha={0.75}
+                />
+              </Box>
+            </>
+          )}
         </>
       )}
     </>

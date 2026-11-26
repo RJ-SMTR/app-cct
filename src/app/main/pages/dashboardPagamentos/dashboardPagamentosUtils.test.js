@@ -18,7 +18,9 @@ import {
   periodoPadrao,
   toIsoDate,
   usaGraficosRotativo,
-  montarGraficoProporcao,
+  montarGraficoSituacoes,
+  formatCompacto,
+  escalaEixo,
   montarGraficoPorDia,
   diasDoPeriodo,
   paramsVoltar,
@@ -242,27 +244,63 @@ describe('Conta Rotativo: abas Proporção e Por dia', () => {
     expect(usaGraficosRotativo(undefined)).toBe(false);
   });
 
-  it('proporção: uma série por situação com valor, com a fração do total, sem a situação zerada', () => {
-    const g = montarGraficoProporcao(rotativo, 'valor');
+  it('situações: uma linha por situação, na ordem Pago, Não pago, Aguardando, com a fração do total', () => {
+    const g = montarGraficoSituacoes(rotativo, 'valor');
     expect(g.total).toBe(1000);
-    expect(g.series).toEqual([
-      { key: 'pago', name: 'Pago', data: [900], fracao: 0.9 },
-      { key: 'naoPago', name: 'Não pago', data: [100], fracao: 0.1 },
+    expect(g.maior).toBe(900);
+    expect(g.linhas).toEqual([
+      { key: 'pago', rotulo: 'Pago', valor: 900, fracao: 0.9, desenhado: 900 },
+      { key: 'naoPago', rotulo: 'Não pago', valor: 100, fracao: 0.1, desenhado: 100 },
+      { key: 'emAberto', rotulo: 'Aguardando pagamento', valor: 0, fracao: 0, desenhado: 0 },
     ]);
   });
 
-  it('proporção: por quantidade usa qtd', () => {
-    const g = montarGraficoProporcao({ ...rotativo, emAberto: { qtd: 8, valor: 80 } }, 'qtd');
+  it('situações: por quantidade usa qtd e as frações somam 1', () => {
+    const g = montarGraficoSituacoes({ ...rotativo, emAberto: { qtd: 8, valor: 80 } }, 'qtd');
     expect(g.total).toBe(40);
-    expect(g.series.map((s) => [s.key, s.data[0], s.fracao])).toEqual([
+    expect(g.linhas.map((l) => [l.key, l.valor, l.fracao])).toEqual([
       ['pago', 30, 0.75],
       ['naoPago', 2, 0.05],
       ['emAberto', 8, 0.2],
     ]);
   });
 
-  it('proporção: conta sem pagamento não tem séries', () => {
-    expect(montarGraficoProporcao({ conta: 'rotativo' }, 'valor')).toEqual({ total: 0, series: [] });
+  it('situações: valor muito pequeno ganha o comprimento mínimo visível, mas o valor e a fração são os reais', () => {
+    const g = montarGraficoSituacoes({ conta: 'rotativo', pago: { valor: 377067.58 }, naoPago: { valor: 1246 }, emAberto: { valor: 10 } }, 'valor');
+    const [pago, naoPago, emAberto] = g.linhas;
+    expect(pago.desenhado).toBe(377067.58);
+    expect(naoPago.desenhado).toBe(1508.27032); // 0,4% do maior > 1.246
+    expect(naoPago.valor).toBe(1246);
+    expect(emAberto.desenhado).toBeCloseTo(1508.27032);
+    expect(emAberto.valor).toBe(10);
+    expect(pago.fracao + naoPago.fracao + emAberto.fracao).toBeCloseTo(1);
+  });
+
+  it('situações: conta sem pagamento fica com tudo zerado', () => {
+    const g = montarGraficoSituacoes({ conta: 'rotativo' }, 'valor');
+    expect(g.total).toBe(0);
+    expect(g.linhas.map((l) => [l.valor, l.fracao, l.desenhado])).toEqual([[0, 0, 0], [0, 0, 0], [0, 0, 0]]);
+  });
+
+  it('escalaEixo: marcas redondas cobrindo o maior valor com a folga do rótulo', () => {
+    expect(escalaEixo(377067.58)).toEqual({ max: 600000, passo: 100000, ticks: [0, 100000, 200000, 300000, 400000, 500000, 600000] });
+    const e = escalaEixo(1000);
+    expect(e.max).toBeGreaterThanOrEqual(1450);
+    expect(e.ticks[0]).toBe(0);
+    expect(e.ticks.every((t, i) => i === 0 || t > e.ticks[i - 1])).toBe(true);
+  });
+
+  it('escalaEixo: quantidade sem passo fracionário e zero sem escala', () => {
+    expect(escalaEixo(3, { passoInteiro: true }).ticks).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(escalaEixo(0)).toEqual({ max: 0, passo: 0, ticks: [0] });
+  });
+
+  it('formatCompacto: eixo em "mil" e "mi"', () => {
+    // O Intl usa espaço não separável entre o número e "mil"/"mi".
+    const semNbsp = (v) => formatCompacto(v).split(String.fromCharCode(160)).join(' ');
+    expect(semNbsp(50000)).toBe('50 mil');
+    expect(semNbsp(1200000)).toBe('1,2 mi');
+    expect(formatCompacto(0)).toBe('0');
   });
 
   it('diasDoPeriodo lista todos os dias, inclusive, atravessando o mês', () => {
@@ -275,9 +313,24 @@ describe('Conta Rotativo: abas Proporção e Por dia', () => {
     expect(g.dias).toEqual(['2026-11-01', '2026-11-02', '2026-11-03', '2026-11-04']);
     expect(g.categorias).toEqual(['01/11', '02/11', '03/11', '04/11']);
     expect(g.series).toEqual([
-      { key: 'pago', name: 'Pago', data: [0, 300, 0, 600] },
-      { key: 'naoPago', name: 'Não pago', data: [0, 100, 0, 0] },
+      { key: 'pago', name: 'Pago', data: [0, 300, 0, 600], desenhado: [0, 300, 0, 600] },
+      { key: 'naoPago', name: 'Não pago', data: [0, 100, 0, 0], desenhado: [0, 100, 0, 0] },
     ]);
+    expect(g.maior).toBe(600);
+  });
+
+  it('por dia: com somenteDiasComPagamento ficam só os dias com algum pagamento', () => {
+    const g = montarGraficoPorDia(rotativo, 'valor', { dataInicio: '2026-11-01', dataFim: '2026-11-04' }, { somenteDiasComPagamento: true });
+    expect(g.dias).toEqual(['2026-11-02', '2026-11-04']);
+    expect(g.categorias).toEqual(['02/11', '04/11']);
+    expect(g.series.map((s) => s.data)).toEqual([[300, 600], [100, 0]]);
+  });
+
+  it('por dia: valor muito pequeno ganha o comprimento mínimo visível, sem mudar o valor real', () => {
+    const comPequeno = { porDia: [{ data: '2026-11-02', pago: { valor: 100000 }, naoPago: { valor: 5 }, emAberto: { valor: 0 } }] };
+    const g = montarGraficoPorDia(comPequeno, 'valor', undefined, { somenteDiasComPagamento: true });
+    expect(g.series[1].data).toEqual([5]);
+    expect(g.series[1].desenhado).toEqual([400]);
   });
 
   it('por dia: por quantidade e, sem período, só os dias que vieram da API', () => {
