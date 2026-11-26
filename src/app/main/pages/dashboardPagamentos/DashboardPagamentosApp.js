@@ -42,6 +42,7 @@ import {
   periodoDaUrl,
   toIsoDate,
   usaGraficosRotativo,
+  abasRotativo,
 } from './dashboardPagamentosUtils';
 
 function authHeaders() {
@@ -85,17 +86,20 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
   const motivosExibidos = useMemo(() => agruparMotivosEmAberto(conta.motivos), [conta]);
   const grafico = useMemo(() => montarGraficoGruposDuplo(conta, metrica), [conta, metrica]);
   const graficoAguardando = useMemo(() => montarGraficoAguardando(conta, metrica), [conta, metrica]);
-  const abas = useMemo(() => abasGraficoBarras(grafico, graficoAguardando), [grafico, graficoAguardando]);
+  // Conta Rotativo (só o grupo Guardador): barras horizontais por situação no lugar das barras por consórcio/modal,
+  // com a mesma regra de abas (Pago / Não pago e, só com valor aguardando, Aguardando pagamento).
+  const rotativo = usaGraficosRotativo(conta);
+  const abas = useMemo(
+    () => (rotativo ? abasRotativo(conta, metrica) : abasGraficoBarras(grafico, graficoAguardando)),
+    [rotativo, conta, metrica, grafico, graficoAguardando],
+  );
   const [abaEscolhida, setAbaEscolhida] = useState('pagos');
   // Se a aba escolhida não existe no período (ex.: só há aguardando), usa a primeira disponível.
   const aba = abas.some((a) => a.id === abaEscolhida) ? abaEscolhida : abas[0]?.id;
   // Roscas de "Situação e motivos": pendência paga x pendência de pagamento e, do não pago, rejeitado x estorno.
   const roscas = useMemo(() => montarRoscasPendencias(conta), [conta]);
-  // Conta Rotativo (só o grupo Guardador): abas "Proporção" e "Por dia" no lugar das barras por consórcio/modal.
-  const rotativo = usaGraficosRotativo(conta);
   // Com as duas abas, as roscas ficam só na aba de pago/não pago (na de aguardando pagamento não aparecem).
-  // Na Conta Rotativo as roscas aparecem nas duas abas.
-  const mostrarRoscas = rotativo || !(abas.length > 1 && aba === 'aguardando');
+  const mostrarRoscas = !(abas.length > 1 && aba === 'aguardando');
   const vazio = SITUACOES.every((s) => conta[s.key].qtd === 0);
   // Escalas do eixo Y: "dupla" (Pago no eixo esquerdo, Não pago no direito), "log" ou "linear". Com valores pequenos
   // (um pagamento não pago) ao lado de milhões, a linear esconde as barras menores.
@@ -195,7 +199,14 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
         <Grid container spacing={2}>
           {rotativo ? (
             <Grid item xs={12}>
-              <GraficosRotativo conta={conta} metrica={metrica} periodo={periodo} onAbrirDetalhe={onAbrirDetalhe} />
+              <GraficosRotativo
+                conta={conta}
+                metrica={metrica}
+                onAbrirDetalhe={onAbrirDetalhe}
+                abas={abas}
+                aba={aba}
+                onMudarAba={setAbaEscolhida}
+              />
             </Grid>
           ) : (
             <Grid item xs={12}>
@@ -307,8 +318,8 @@ export default function DashboardPagamentosApp() {
 
   const abrirDetalhe = (filtro) => {
     const intervalo = dados?.periodo ?? { dataInicio: toIsoDate(periodo[0]), dataFim: toIsoDate(periodo[1]) };
-    // O filtro pode trazer um dia específico (gráfico "Por dia"), que vale sobre o período do dashboard; o período
-    // do dashboard vai junto para o "Voltar" do detalhe.
+    // Se o filtro trouxer um período próprio, ele vale sobre o do dashboard; o período do dashboard vai junto para o
+    // "Voltar" do detalhe.
     const voltar = filtro.dataInicio ? { voltarInicio: intervalo.dataInicio, voltarFim: intervalo.dataFim } : {};
     navigate(montarUrlDetalhe({ ...intervalo, ...filtro, ...voltar }));
   };

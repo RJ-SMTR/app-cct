@@ -19,10 +19,10 @@ import {
   toIsoDate,
   usaGraficosRotativo,
   montarGraficoSituacoes,
+  montarGraficoAguardandoRotativo,
+  abasRotativo,
   formatCompacto,
   escalaEixo,
-  montarGraficoPorDia,
-  diasDoPeriodo,
   paramsVoltar,
   urlVoltarDashboard,
 } from './dashboardPagamentosUtils';
@@ -225,61 +225,80 @@ describe('dashboardPagamentosUtils', () => {
   });
 });
 
-describe('Conta Rotativo: abas Proporção e Por dia', () => {
+describe('Conta Rotativo: abas Pago / Não pago e Aguardando pagamento', () => {
   const rotativo = {
     conta: 'rotativo',
     pago: { qtd: 30, valor: 900 },
     naoPago: { qtd: 2, valor: 100 },
     emAberto: { qtd: 0, valor: 0 },
-    porDia: [
-      { data: '2026-11-02', pago: { qtd: 10, valor: 300 }, naoPago: { qtd: 2, valor: 100 }, emAberto: { qtd: 0, valor: 0 } },
-      { data: '2026-11-04', pago: { qtd: 20, valor: 600 }, naoPago: { qtd: 0, valor: 0 }, emAberto: { qtd: 0, valor: 0 } },
-    ],
   };
 
-  it('só a Conta Rotativo usa as abas Proporção e Por dia', () => {
+  it('só a Conta Rotativo usa os gráficos de barras horizontais por situação', () => {
     expect(usaGraficosRotativo(rotativo)).toBe(true);
     expect(usaGraficosRotativo({ conta: 'bilhetagem' })).toBe(false);
     expect(usaGraficosRotativo({ conta: 'cett' })).toBe(false);
     expect(usaGraficosRotativo(undefined)).toBe(false);
   });
 
-  it('situações: uma linha por situação, na ordem Pago, Não pago, Aguardando, com a fração do total', () => {
-    const g = montarGraficoSituacoes(rotativo, 'valor');
+  it('abas: sem valor aguardando, só "Pago / Não pago" (sem "Por dia")', () => {
+    expect(abasRotativo(rotativo, 'valor')).toEqual([{ id: 'pagos', rotulo: 'Pago / Não pago' }]);
+  });
+
+  it('abas: com valor aguardando, "Pago / Não pago" e "Aguardando pagamento"', () => {
+    const c = { ...rotativo, emAberto: { qtd: 3, valor: 15800 } };
+    expect(abasRotativo(c, 'valor').map((a) => a.id)).toEqual(['pagos', 'aguardando']);
+    expect(abasRotativo(c, 'qtd').map((a) => a.rotulo)).toEqual(['Pago / Não pago', 'Aguardando pagamento']);
+  });
+
+  it('abas: só aguardando no período mostra só a aba de aguardando', () => {
+    const c = { conta: 'rotativo', pago: { qtd: 0, valor: 0 }, naoPago: { qtd: 0, valor: 0 }, emAberto: { qtd: 1, valor: 10 } };
+    expect(abasRotativo(c, 'valor')).toEqual([{ id: 'aguardando', rotulo: 'Aguardando pagamento' }]);
+  });
+
+  it('Pago / Não pago: uma linha para cada, com a fração de Pago + Não pago (aguardando fica de fora)', () => {
+    const g = montarGraficoSituacoes({ ...rotativo, emAberto: { qtd: 9, valor: 5000 } }, 'valor');
     expect(g.total).toBe(1000);
     expect(g.maior).toBe(900);
     expect(g.linhas).toEqual([
       { key: 'pago', rotulo: 'Pago', valor: 900, fracao: 0.9, desenhado: 900 },
       { key: 'naoPago', rotulo: 'Não pago', valor: 100, fracao: 0.1, desenhado: 100 },
-      { key: 'emAberto', rotulo: 'Aguardando pagamento', valor: 0, fracao: 0, desenhado: 0 },
     ]);
   });
 
-  it('situações: por quantidade usa qtd e as frações somam 1', () => {
-    const g = montarGraficoSituacoes({ ...rotativo, emAberto: { qtd: 8, valor: 80 } }, 'qtd');
-    expect(g.total).toBe(40);
+  it('Pago / Não pago: por quantidade usa qtd', () => {
+    const g = montarGraficoSituacoes(rotativo, 'qtd');
     expect(g.linhas.map((l) => [l.key, l.valor, l.fracao])).toEqual([
-      ['pago', 30, 0.75],
-      ['naoPago', 2, 0.05],
-      ['emAberto', 8, 0.2],
+      ['pago', 30, 30 / 32],
+      ['naoPago', 2, 2 / 32],
     ]);
   });
 
-  it('situações: valor muito pequeno ganha o comprimento mínimo visível, mas o valor e a fração são os reais', () => {
-    const g = montarGraficoSituacoes({ conta: 'rotativo', pago: { valor: 377067.58 }, naoPago: { valor: 1246 }, emAberto: { valor: 10 } }, 'valor');
-    const [pago, naoPago, emAberto] = g.linhas;
+  it('Pago / Não pago: valor muito pequeno ganha o comprimento mínimo visível, mas o valor e a fração são os reais', () => {
+    const g = montarGraficoSituacoes({ conta: 'rotativo', pago: { valor: 377067.58 }, naoPago: { valor: 1246 } }, 'valor');
+    const [pago, naoPago] = g.linhas;
     expect(pago.desenhado).toBe(377067.58);
     expect(naoPago.desenhado).toBe(1508.27032); // 0,4% do maior > 1.246
     expect(naoPago.valor).toBe(1246);
-    expect(emAberto.desenhado).toBeCloseTo(1508.27032);
-    expect(emAberto.valor).toBe(10);
-    expect(pago.fracao + naoPago.fracao + emAberto.fracao).toBeCloseTo(1);
+    expect(pago.fracao).toBeCloseTo(0.997, 3);
+    expect(naoPago.fracao).toBeCloseTo(0.0033, 4);
   });
 
-  it('situações: conta sem pagamento fica com tudo zerado', () => {
+  it('Pago / Não pago: conta sem pagamento fica com os dois zerados', () => {
     const g = montarGraficoSituacoes({ conta: 'rotativo' }, 'valor');
     expect(g.total).toBe(0);
-    expect(g.linhas.map((l) => [l.valor, l.fracao, l.desenhado])).toEqual([[0, 0, 0], [0, 0, 0], [0, 0, 0]]);
+    expect(g.linhas.map((l) => [l.key, l.valor, l.fracao, l.desenhado])).toEqual([
+      ['pago', 0, 0, 0],
+      ['naoPago', 0, 0, 0],
+    ]);
+  });
+
+  it('Aguardando pagamento: uma linha com o valor aguardando na métrica', () => {
+    const c = { ...rotativo, emAberto: { qtd: 3, valor: 15800 } };
+    expect(montarGraficoAguardandoRotativo(c, 'valor')).toEqual({
+      maior: 15800,
+      linhas: [{ key: 'emAberto', rotulo: 'Aguardando pagamento', valor: 15800, desenhado: 15800 }],
+    });
+    expect(montarGraficoAguardandoRotativo(c, 'qtd').linhas[0].valor).toBe(3);
   });
 
   it('escalaEixo: marcas redondas cobrindo o maior valor com a folga do rótulo', () => {
@@ -302,57 +321,15 @@ describe('Conta Rotativo: abas Proporção e Por dia', () => {
     expect(semNbsp(1200000)).toBe('1,2 mi');
     expect(formatCompacto(0)).toBe('0');
   });
-
-  it('diasDoPeriodo lista todos os dias, inclusive, atravessando o mês', () => {
-    expect(diasDoPeriodo('2026-10-30', '2026-11-02')).toEqual(['2026-10-30', '2026-10-31', '2026-11-01', '2026-11-02']);
-    expect(diasDoPeriodo('2026-11-05', '2026-11-05')).toEqual(['2026-11-05']);
-  });
-
-  it('por dia: preenche os dias sem pagamento com zero e tira a situação zerada no período', () => {
-    const g = montarGraficoPorDia(rotativo, 'valor', { dataInicio: '2026-11-01', dataFim: '2026-11-04' });
-    expect(g.dias).toEqual(['2026-11-01', '2026-11-02', '2026-11-03', '2026-11-04']);
-    expect(g.categorias).toEqual(['01/11', '02/11', '03/11', '04/11']);
-    expect(g.series).toEqual([
-      { key: 'pago', name: 'Pago', data: [0, 300, 0, 600], desenhado: [0, 300, 0, 600] },
-      { key: 'naoPago', name: 'Não pago', data: [0, 100, 0, 0], desenhado: [0, 100, 0, 0] },
-    ]);
-    expect(g.maior).toBe(600);
-  });
-
-  it('por dia: com somenteDiasComPagamento ficam só os dias com algum pagamento', () => {
-    const g = montarGraficoPorDia(rotativo, 'valor', { dataInicio: '2026-11-01', dataFim: '2026-11-04' }, { somenteDiasComPagamento: true });
-    expect(g.dias).toEqual(['2026-11-02', '2026-11-04']);
-    expect(g.categorias).toEqual(['02/11', '04/11']);
-    expect(g.series.map((s) => s.data)).toEqual([[300, 600], [100, 0]]);
-  });
-
-  it('por dia: valor muito pequeno ganha o comprimento mínimo visível, sem mudar o valor real', () => {
-    const comPequeno = { porDia: [{ data: '2026-11-02', pago: { valor: 100000 }, naoPago: { valor: 5 }, emAberto: { valor: 0 } }] };
-    const g = montarGraficoPorDia(comPequeno, 'valor', undefined, { somenteDiasComPagamento: true });
-    expect(g.series[1].data).toEqual([5]);
-    expect(g.series[1].desenhado).toEqual([400]);
-  });
-
-  it('por dia: por quantidade e, sem período, só os dias que vieram da API', () => {
-    const g = montarGraficoPorDia(rotativo, 'qtd');
-    expect(g.dias).toEqual(['2026-11-02', '2026-11-04']);
-    expect(g.series[0].data).toEqual([10, 20]);
-  });
-
-  it('por dia: resposta antiga da API, sem porDia, não quebra', () => {
-    const g = montarGraficoPorDia({ conta: 'rotativo' }, 'valor', { dataInicio: '2026-11-01', dataFim: '2026-11-02' });
-    expect(g.dias).toHaveLength(2);
-    expect(g.series).toEqual([]);
-  });
 });
 
-describe('Voltar do detalhe aberto num dia do gráfico "Por dia"', () => {
+describe('Voltar do detalhe aberto num período menor que o do dashboard', () => {
   const url = montarUrlDetalhe({
     conta: 'rotativo', situacao: 'naoPago', dataInicio: '2026-11-03', dataFim: '2026-11-03', voltarInicio: '2026-11-01', voltarFim: '2026-11-26',
   });
   const params = new URLSearchParams(url.split('?')[1]);
 
-  it('o detalhe abre só no dia, e o período do dashboard vai junto', () => {
+  it('o detalhe abre no período menor, e o período do dashboard vai junto', () => {
     expect(url).toBe(
       '/dashboard-pagamentos/detalhe?conta=rotativo&situacao=naoPago&dataInicio=2026-11-03&dataFim=2026-11-03&voltarInicio=2026-11-01&voltarFim=2026-11-26',
     );

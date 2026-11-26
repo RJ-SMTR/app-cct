@@ -108,15 +108,27 @@ export function abasGraficoBarras(graficoPagos, graficoAguardando) {
 }
 
 /**
- * Conta Rotativo tem um grupo só (Guardador): no lugar das barras por consórcio/modal ela mostra as abas
- * "Proporção" e "Por dia".
+ * Conta Rotativo tem um grupo só (Guardador): no lugar das barras por consórcio/modal ela mostra barras
+ * horizontais por situação, nas abas "Pago / Não pago" e "Aguardando pagamento".
  */
 export const usaGraficosRotativo = (conta) => conta?.conta === 'rotativo';
 
-export const ABAS_ROTATIVO = [
-  { id: 'proporcao', rotulo: 'Proporção' },
-  { id: 'porDia', rotulo: 'Por dia' },
-];
+const valorSituacao = (conta, situacao, metrica) =>
+  Number(metrica === 'valor' ? conta?.[situacao]?.valor : conta?.[situacao]?.qtd) || 0;
+
+/**
+ * Abas da Conta Rotativo, com a mesma regra das demais contas: "Pago / Não pago" só com pago ou não pago no
+ * período e "Aguardando pagamento" só com valor aguardando (na métrica escolhida). Com uma aba só, a tela não
+ * mostra a barra de abas.
+ */
+export function abasRotativo(conta, metrica) {
+  const abas = [];
+  if (valorSituacao(conta, 'pago', metrica) > 0 || valorSituacao(conta, 'naoPago', metrica) > 0) {
+    abas.push({ id: 'pagos', rotulo: 'Pago / Não pago' });
+  }
+  if (valorSituacao(conta, 'emAberto', metrica) > 0) abas.push({ id: 'aguardando', rotulo: ROTULO_SITUACAO.emAberto });
+  return abas;
+}
 
 /** Eixo dos gráficos em formato curto ("50 mil", "1,2 mi"). */
 const compacto = new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 });
@@ -149,15 +161,17 @@ export function escalaEixo(maior, { folga = FOLGA_ROTULO, marcas = 8, passoIntei
 }
 
 /**
- * Barras horizontais, uma linha por situação (Pago, Não pago e, embaixo, Aguardando pagamento), numa escala só.
- * `fracao` é a parte de cada situação no total das três (as linhas somam 100%). `desenhado` é o comprimento da
+ * Barras horizontais da aba "Pago / Não pago": uma linha para Pago e outra para Não pago, numa escala só.
+ * "Aguardando pagamento" fica num gráfico próprio (`montarGraficoAguardandoRotativo`), noutra aba.
+ * `fracao` é a parte de cada um em Pago + Não pago (as duas linhas somam 100%). `desenhado` é o comprimento da
  * barra: o valor, ou o mínimo visível quando o valor é pequeno demais; o rótulo e o tooltip usam sempre `valor`.
  */
 export function montarGraficoSituacoes(conta, metrica) {
-  const valorDe = (situacao) => Number(metrica === 'valor' ? conta?.[situacao]?.valor : conta?.[situacao]?.qtd) || 0;
-  const total = SITUACOES.reduce((t, s) => t + valorDe(s.key), 0);
-  const maior = Math.max(0, ...SITUACOES.map((s) => valorDe(s.key)));
-  const linhas = SITUACOES.map((s) => {
+  const exibidas = SITUACOES.filter((s) => s.key !== 'emAberto');
+  const valorDe = (situacao) => valorSituacao(conta, situacao, metrica);
+  const total = exibidas.reduce((t, s) => t + valorDe(s.key), 0);
+  const maior = Math.max(0, ...exibidas.map((s) => valorDe(s.key)));
+  const linhas = exibidas.map((s) => {
     const valor = valorDe(s.key);
     return {
       key: s.key,
@@ -170,35 +184,10 @@ export function montarGraficoSituacoes(conta, metrica) {
   return { total, maior, linhas };
 }
 
-/** Dias (YYYY-MM-DD) de dataInicio a dataFim, inclusive. */
-export function diasDoPeriodo(dataInicio, dataFim) {
-  const dias = [];
-  const fim = dayjs(dataFim);
-  for (let d = dayjs(dataInicio); !d.isAfter(fim, 'day'); d = d.add(1, 'day')) dias.push(d.format('YYYY-MM-DD'));
-  return dias;
-}
-
-/**
- * Barras horizontais por dia de vencimento: uma linha por dia, com uma barra por situação (Pago, Não pago,
- * Aguardando pagamento). Situação zerada no período inteiro fica fora do gráfico. Por padrão todos os dias do
- * período aparecem; com `somenteDiasComPagamento` ficam só os dias com algum pagamento (lista mais curta).
- * `data` são os valores reais (rótulo e tooltip); `desenhado` é o comprimento da barra, com o mínimo visível
- * (`FRACAO_MINIMA_BARRA` do maior valor) para valores muito pequenos. `dias` (YYYY-MM-DD) acompanha as
- * categorias (DD/MM) para o clique abrir o detalhe do dia.
- */
-export function montarGraficoPorDia(conta, metrica, periodo, { somenteDiasComPagamento = false } = {}) {
-  const porData = new Map((conta?.porDia ?? []).map((d) => [d.data, d]));
-  const valorDe = (dia, situacao) =>
-    Number(metrica === 'valor' ? porData.get(dia)?.[situacao]?.valor : porData.get(dia)?.[situacao]?.qtd) || 0;
-  const todosOsDias =
-    periodo?.dataInicio && periodo?.dataFim ? diasDoPeriodo(periodo.dataInicio, periodo.dataFim) : Array.from(porData.keys()).sort();
-  const dias = somenteDiasComPagamento ? todosOsDias.filter((dia) => SITUACOES.some((s) => valorDe(dia, s.key) > 0)) : todosOsDias;
-  const comValores = SITUACOES.map((s) => ({ key: s.key, name: s.label, data: dias.map((dia) => valorDe(dia, s.key)) })).filter((s) =>
-    s.data.some((v) => v > 0),
-  );
-  const maior = Math.max(0, ...comValores.flatMap((s) => s.data));
-  const series = comValores.map((s) => ({ ...s, desenhado: s.data.map((v) => (v > 0 ? Math.max(v, maior * FRACAO_MINIMA_BARRA) : 0)) }));
-  return { dias, categorias: dias.map((dia) => dayjs(dia).format('DD/MM')), series, maior };
+/** Barra horizontal da aba "Aguardando pagamento" da Conta Rotativo: uma linha com o valor aguardando. */
+export function montarGraficoAguardandoRotativo(conta, metrica) {
+  const valor = valorSituacao(conta, 'emAberto', metrica);
+  return { maior: valor, linhas: [{ key: 'emAberto', rotulo: ROTULO_SITUACAO.emAberto, valor, desenhado: valor }] };
 }
 
 /**
@@ -283,8 +272,8 @@ export function montarGraficoMotivos(conta, situacao, metrica) {
 
 /**
  * Endereço da tela de detalhe de um ponto do gráfico. Parâmetros vazios são omitidos.
- * `voltarInicio`/`voltarFim`: período do dashboard quando o detalhe abre num período menor (um dia do gráfico
- * "Por dia"), para o "Voltar" devolver o dashboard no período em que estava. Não vão para a API.
+ * `voltarInicio`/`voltarFim`: período do dashboard quando o detalhe abre num período menor que o
+ * do dashboard, para o "Voltar" devolver o dashboard no período em que estava. Não vão para a API.
  */
 export function montarUrlDetalhe({ conta, grupo, situacao, motivo, busca, dataInicio, dataFim, voltarInicio, voltarFim }) {
   const params = new URLSearchParams();
