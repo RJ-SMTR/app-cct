@@ -244,14 +244,30 @@ describe('Conta Rotativo: abas Proporção e Por dia', () => {
     expect(usaGraficosRotativo(undefined)).toBe(false);
   });
 
-  it('situações: uma linha por situação, na ordem Pago, Não pago, Aguardando, com a fração do total', () => {
+  it('situações: uma linha por situação com a fração do total; sem valor aguardando, a linha dele não aparece', () => {
     const g = montarGraficoSituacoes(rotativo, 'valor');
     expect(g.total).toBe(1000);
     expect(g.maior).toBe(900);
     expect(g.linhas).toEqual([
       { key: 'pago', rotulo: 'Pago', valor: 900, fracao: 0.9, desenhado: 900 },
       { key: 'naoPago', rotulo: 'Não pago', valor: 100, fracao: 0.1, desenhado: 100 },
-      { key: 'emAberto', rotulo: 'Aguardando pagamento', valor: 0, fracao: 0, desenhado: 0 },
+    ]);
+  });
+
+  it('situações: com valor aguardando, a linha dele aparece embaixo de Pago e Não pago', () => {
+    const g = montarGraficoSituacoes({ ...rotativo, emAberto: { qtd: 1, valor: 1000 } }, 'valor');
+    expect(g.linhas.map((l) => [l.key, l.rotulo, l.fracao])).toEqual([
+      ['pago', 'Pago', 0.45],
+      ['naoPago', 'Não pago', 0.05],
+      ['emAberto', 'Aguardando pagamento', 0.5],
+    ]);
+  });
+
+  it('situações: Pago e Não pago aparecem mesmo zerados', () => {
+    const g = montarGraficoSituacoes({ conta: 'rotativo', pago: { qtd: 3, valor: 30 } }, 'valor');
+    expect(g.linhas.map((l) => [l.key, l.valor])).toEqual([
+      ['pago', 30],
+      ['naoPago', 0],
     ]);
   });
 
@@ -276,10 +292,13 @@ describe('Conta Rotativo: abas Proporção e Por dia', () => {
     expect(pago.fracao + naoPago.fracao + emAberto.fracao).toBeCloseTo(1);
   });
 
-  it('situações: conta sem pagamento fica com tudo zerado', () => {
+  it('situações: conta sem pagamento fica com Pago e Não pago zerados, sem Aguardando', () => {
     const g = montarGraficoSituacoes({ conta: 'rotativo' }, 'valor');
     expect(g.total).toBe(0);
-    expect(g.linhas.map((l) => [l.valor, l.fracao, l.desenhado])).toEqual([[0, 0, 0], [0, 0, 0], [0, 0, 0]]);
+    expect(g.linhas.map((l) => [l.key, l.valor, l.fracao, l.desenhado])).toEqual([
+      ['pago', 0, 0, 0],
+      ['naoPago', 0, 0, 0],
+    ]);
   });
 
   it('escalaEixo: marcas redondas cobrindo o maior valor com a folga do rótulo', () => {

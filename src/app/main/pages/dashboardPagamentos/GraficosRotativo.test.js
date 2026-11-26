@@ -23,12 +23,20 @@ describe('GraficosRotativo', () => {
     const html = render();
     expect(html).toContain('Pago');
     expect(html).toContain('Não pago');
-    expect(html).toContain('Aguardando pagamento');
     expect(html).toContain('R$ 377.067,58 • 99,7%');
     expect(html).toContain('R$ 1.246,00 • 0,3%');
-    expect(html).toContain('R$ 0,00 • 0,0%');
     expect(html).toContain('600 mil');
-    // uma barra clicável por situação
+    // sem valor aguardando: a linha de Aguardando pagamento não aparece; uma barra clicável para Pago e Não pago
+    expect(html).not.toContain('Aguardando pagamento');
+    expect(html).not.toContain('R$ 0,00 • 0,0%');
+    expect(html.match(/role="button"/g)).toHaveLength(2);
+  });
+
+  it('Proporção: com valor aguardando, a linha de Aguardando pagamento aparece embaixo', () => {
+    const html = render({ conta: { ...conta, emAberto: { qtd: 1, valor: 15800 } } });
+    expect(html).toContain('Aguardando pagamento');
+    expect(html).toContain('R$ 15.800,00 • 4,0%');
+    expect(html.indexOf('Não pago')).toBeLessThan(html.indexOf('Aguardando pagamento'));
     expect(html.match(/role="button"/g)).toHaveLength(3);
   });
 

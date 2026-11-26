@@ -152,12 +152,15 @@ export function escalaEixo(maior, { folga = FOLGA_ROTULO, marcas = 8, passoIntei
  * Barras horizontais, uma linha por situação (Pago, Não pago e, embaixo, Aguardando pagamento), numa escala só.
  * `fracao` é a parte de cada situação no total das três (as linhas somam 100%). `desenhado` é o comprimento da
  * barra: o valor, ou o mínimo visível quando o valor é pequeno demais; o rótulo e o tooltip usam sempre `valor`.
+ * Sem valor aguardando pagamento a linha dele não aparece (mesma regra dos demais gráficos, onde "Aguardando
+ * pagamento" só aparece quando há valor); Pago e Não pago aparecem sempre, mesmo zerados.
  */
 export function montarGraficoSituacoes(conta, metrica) {
   const valorDe = (situacao) => Number(metrica === 'valor' ? conta?.[situacao]?.valor : conta?.[situacao]?.qtd) || 0;
   const total = SITUACOES.reduce((t, s) => t + valorDe(s.key), 0);
   const maior = Math.max(0, ...SITUACOES.map((s) => valorDe(s.key)));
-  const linhas = SITUACOES.map((s) => {
+  const exibidas = SITUACOES.filter((s) => s.key !== 'emAberto' || valorDe(s.key) > 0);
+  const linhas = exibidas.map((s) => {
     const valor = valorDe(s.key);
     return {
       key: s.key,
