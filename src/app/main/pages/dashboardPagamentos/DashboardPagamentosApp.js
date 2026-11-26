@@ -25,6 +25,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import { api } from 'app/configs/api/api';
 import { showMessage } from 'app/store/fuse/messageSlice';
 import PeriodDatePicker, { periodRequiredRules } from 'app/shared-components/PeriodDatePicker';
+import GraficosRotativo from './GraficosRotativo';
 import {
   COR_SITUACAO,
   ROTULO_SITUACAO,
@@ -40,6 +41,7 @@ import {
   montarUrlDetalhe,
   periodoDaUrl,
   toIsoDate,
+  usaGraficosRotativo,
 } from './dashboardPagamentosUtils';
 
 function authHeaders() {
@@ -89,8 +91,11 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
   const aba = abas.some((a) => a.id === abaEscolhida) ? abaEscolhida : abas[0]?.id;
   // Roscas de "Situação e motivos": pendência paga x pendência de pagamento e, do não pago, rejeitado x estorno.
   const roscas = useMemo(() => montarRoscasPendencias(conta), [conta]);
+  // Conta Rotativo (só o grupo Guardador): abas "Proporção" e "Por dia" no lugar das barras por consórcio/modal.
+  const rotativo = usaGraficosRotativo(conta);
   // Com as duas abas, as roscas ficam só na aba de pago/não pago (na de aguardando pagamento não aparecem).
-  const mostrarRoscas = !(abas.length > 1 && aba === 'aguardando');
+  // Na Conta Rotativo as roscas aparecem nas duas abas.
+  const mostrarRoscas = rotativo || !(abas.length > 1 && aba === 'aguardando');
   const vazio = SITUACOES.every((s) => conta[s.key].qtd === 0);
   // Escalas do eixo Y: "dupla" (Pago no eixo esquerdo, Não pago no direito), "log" ou "linear". Com valores pequenos
   // (um pagamento não pago) ao lado de milhões, a linear esconde as barras menores.
@@ -188,23 +193,29 @@ function QuadroConta({ conta, metrica, periodo, onAbrirDetalhe }) {
         <Alert severity="info">Nenhum pagamento com vencimento entre {periodo.dataInicio} e {periodo.dataFim} nesta conta.</Alert>
       ) : (
         <Grid container spacing={2}>
-          <Grid item xs={12}>
-            {abas.length > 1 && (
-              <Tabs value={aba} onChange={(_e, v) => setAbaEscolhida(v)} sx={{ mb: 1 }} aria-label="Gráficos de barras">
-                {abas.map((a) => (
-                  <Tab key={a.id} value={a.id} label={a.rotulo} />
-                ))}
-              </Tabs>
-            )}
-            <Typography variant="subtitle2" color="text.secondary">
-              {conta.grupos.length > 1 ? 'Por consórcio / modal' : 'Por situação'} (clique numa barra para ver o detalhe)
-            </Typography>
-            {aba === 'aguardando' ? (
-              <Chart key="aguardando" options={opcoesAguardando} series={graficoAguardando.series} type="bar" height={380} />
-            ) : (
-              <Chart key="pagos" options={opcoesBarras} series={grafico.series} type="bar" height={380} />
-            )}
-          </Grid>
+          {rotativo ? (
+            <Grid item xs={12}>
+              <GraficosRotativo conta={conta} metrica={metrica} periodo={periodo} onAbrirDetalhe={onAbrirDetalhe} />
+            </Grid>
+          ) : (
+            <Grid item xs={12}>
+              {abas.length > 1 && (
+                <Tabs value={aba} onChange={(_e, v) => setAbaEscolhida(v)} sx={{ mb: 1 }} aria-label="Gráficos de barras">
+                  {abas.map((a) => (
+                    <Tab key={a.id} value={a.id} label={a.rotulo} />
+                  ))}
+                </Tabs>
+              )}
+              <Typography variant="subtitle2" color="text.secondary">
+                {conta.grupos.length > 1 ? 'Por consórcio / modal' : 'Por situação'} (clique numa barra para ver o detalhe)
+              </Typography>
+              {aba === 'aguardando' ? (
+                <Chart key="aguardando" options={opcoesAguardando} series={graficoAguardando.series} type="bar" height={380} />
+              ) : (
+                <Chart key="pagos" options={opcoesBarras} series={grafico.series} type="bar" height={380} />
+              )}
+            </Grid>
+          )}
           {/* Roscas lado a lado: pendência paga x pendência de pagamento e, do não pago, rejeitado x estorno. */}
           {mostrarRoscas && (
             <>
@@ -296,7 +307,10 @@ export default function DashboardPagamentosApp() {
 
   const abrirDetalhe = (filtro) => {
     const intervalo = dados?.periodo ?? { dataInicio: toIsoDate(periodo[0]), dataFim: toIsoDate(periodo[1]) };
-    navigate(montarUrlDetalhe({ ...filtro, ...intervalo }));
+    // O filtro pode trazer um dia específico (gráfico "Por dia"), que vale sobre o período do dashboard; o período
+    // do dashboard vai junto para o "Voltar" do detalhe.
+    const voltar = filtro.dataInicio ? { voltarInicio: intervalo.dataInicio, voltarFim: intervalo.dataFim } : {};
+    navigate(montarUrlDetalhe({ ...intervalo, ...filtro, ...voltar }));
   };
 
   return (

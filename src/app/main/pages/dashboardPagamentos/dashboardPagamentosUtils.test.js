@@ -17,6 +17,12 @@ import {
   periodoDaUrl,
   periodoPadrao,
   toIsoDate,
+  usaGraficosRotativo,
+  montarGraficoProporcao,
+  montarGraficoPorDia,
+  diasDoPeriodo,
+  paramsVoltar,
+  urlVoltarDashboard,
 } from './dashboardPagamentosUtils';
 
 const conta = {
@@ -214,5 +220,102 @@ describe('dashboardPagamentosUtils', () => {
     expect(gruposDoFiltro(' GTU, VLT ,,')).toEqual(['GTU', 'VLT']);
     expect(gruposDoFiltro(undefined)).toEqual([]);
     expect(nomeArquivoExportacao({ conta: 'bilhetagem', grupo: 'Santa Cruz', dataInicio: '2026-10-01', dataFim: '2026-10-31' })).toBe('detalhe-pagamentos_bilhetagem_Santa-Cruz_2026-10-01_2026-10-31.xlsx');
+  });
+});
+
+describe('Conta Rotativo: abas Proporção e Por dia', () => {
+  const rotativo = {
+    conta: 'rotativo',
+    pago: { qtd: 30, valor: 900 },
+    naoPago: { qtd: 2, valor: 100 },
+    emAberto: { qtd: 0, valor: 0 },
+    porDia: [
+      { data: '2026-11-02', pago: { qtd: 10, valor: 300 }, naoPago: { qtd: 2, valor: 100 }, emAberto: { qtd: 0, valor: 0 } },
+      { data: '2026-11-04', pago: { qtd: 20, valor: 600 }, naoPago: { qtd: 0, valor: 0 }, emAberto: { qtd: 0, valor: 0 } },
+    ],
+  };
+
+  it('só a Conta Rotativo usa as abas Proporção e Por dia', () => {
+    expect(usaGraficosRotativo(rotativo)).toBe(true);
+    expect(usaGraficosRotativo({ conta: 'bilhetagem' })).toBe(false);
+    expect(usaGraficosRotativo({ conta: 'cett' })).toBe(false);
+    expect(usaGraficosRotativo(undefined)).toBe(false);
+  });
+
+  it('proporção: uma série por situação com valor, com a fração do total, sem a situação zerada', () => {
+    const g = montarGraficoProporcao(rotativo, 'valor');
+    expect(g.total).toBe(1000);
+    expect(g.series).toEqual([
+      { key: 'pago', name: 'Pago', data: [900], fracao: 0.9 },
+      { key: 'naoPago', name: 'Não pago', data: [100], fracao: 0.1 },
+    ]);
+  });
+
+  it('proporção: por quantidade usa qtd', () => {
+    const g = montarGraficoProporcao({ ...rotativo, emAberto: { qtd: 8, valor: 80 } }, 'qtd');
+    expect(g.total).toBe(40);
+    expect(g.series.map((s) => [s.key, s.data[0], s.fracao])).toEqual([
+      ['pago', 30, 0.75],
+      ['naoPago', 2, 0.05],
+      ['emAberto', 8, 0.2],
+    ]);
+  });
+
+  it('proporção: conta sem pagamento não tem séries', () => {
+    expect(montarGraficoProporcao({ conta: 'rotativo' }, 'valor')).toEqual({ total: 0, series: [] });
+  });
+
+  it('diasDoPeriodo lista todos os dias, inclusive, atravessando o mês', () => {
+    expect(diasDoPeriodo('2026-10-30', '2026-11-02')).toEqual(['2026-10-30', '2026-10-31', '2026-11-01', '2026-11-02']);
+    expect(diasDoPeriodo('2026-11-05', '2026-11-05')).toEqual(['2026-11-05']);
+  });
+
+  it('por dia: preenche os dias sem pagamento com zero e tira a situação zerada no período', () => {
+    const g = montarGraficoPorDia(rotativo, 'valor', { dataInicio: '2026-11-01', dataFim: '2026-11-04' });
+    expect(g.dias).toEqual(['2026-11-01', '2026-11-02', '2026-11-03', '2026-11-04']);
+    expect(g.categorias).toEqual(['01/11', '02/11', '03/11', '04/11']);
+    expect(g.series).toEqual([
+      { key: 'pago', name: 'Pago', data: [0, 300, 0, 600] },
+      { key: 'naoPago', name: 'Não pago', data: [0, 100, 0, 0] },
+    ]);
+  });
+
+  it('por dia: por quantidade e, sem período, só os dias que vieram da API', () => {
+    const g = montarGraficoPorDia(rotativo, 'qtd');
+    expect(g.dias).toEqual(['2026-11-02', '2026-11-04']);
+    expect(g.series[0].data).toEqual([10, 20]);
+  });
+
+  it('por dia: resposta antiga da API, sem porDia, não quebra', () => {
+    const g = montarGraficoPorDia({ conta: 'rotativo' }, 'valor', { dataInicio: '2026-11-01', dataFim: '2026-11-02' });
+    expect(g.dias).toHaveLength(2);
+    expect(g.series).toEqual([]);
+  });
+});
+
+describe('Voltar do detalhe aberto num dia do gráfico "Por dia"', () => {
+  const url = montarUrlDetalhe({
+    conta: 'rotativo', situacao: 'naoPago', dataInicio: '2026-11-03', dataFim: '2026-11-03', voltarInicio: '2026-11-01', voltarFim: '2026-11-26',
+  });
+  const params = new URLSearchParams(url.split('?')[1]);
+
+  it('o detalhe abre só no dia, e o período do dashboard vai junto', () => {
+    expect(url).toBe(
+      '/dashboard-pagamentos/detalhe?conta=rotativo&situacao=naoPago&dataInicio=2026-11-03&dataFim=2026-11-03&voltarInicio=2026-11-01&voltarFim=2026-11-26',
+    );
+    expect(lerFiltrosDetalhe(params)).toMatchObject({ dataInicio: '2026-11-03', dataFim: '2026-11-03' });
+  });
+
+  it('os parâmetros do Voltar não entram nos filtros enviados à API', () => {
+    expect(Object.keys(lerFiltrosDetalhe(params))).not.toContain('voltarInicio');
+    expect(Object.keys(lerFiltrosDetalhe(params))).not.toContain('voltarFim');
+    expect(paramsVoltar(params)).toEqual({ voltarInicio: '2026-11-01', voltarFim: '2026-11-26' });
+  });
+
+  it('o Voltar devolve o dashboard no período original; sem ele, no período do detalhe', () => {
+    expect(urlVoltarDashboard(params)).toBe('/dashboard-pagamentos?dataInicio=2026-11-01&dataFim=2026-11-26');
+    const semVoltar = new URLSearchParams('conta=rotativo&dataInicio=2026-09-01&dataFim=2026-09-30');
+    expect(urlVoltarDashboard(semVoltar)).toBe('/dashboard-pagamentos?dataInicio=2026-09-01&dataFim=2026-09-30');
+    expect(paramsVoltar(semVoltar)).toEqual({ voltarInicio: undefined, voltarFim: undefined });
   });
 });

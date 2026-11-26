@@ -20,6 +20,8 @@ import {
   formatQtd,
   gruposDoFiltro,
   lerFiltrosDetalhe,
+  paramsVoltar,
+  urlVoltarDashboard,
   montarLinhasDetalhado,
   nomeArquivoExportacao,
   toIsoDate,
@@ -98,7 +100,8 @@ export default function DashboardPagamentosDetalheApp() {
     }
     setErroPeriodo(null);
     setErroBusca(null);
-    const proximo = { ...filtros, grupo: grupos.length ? grupos.join(',') : undefined, busca: termo || undefined, dataInicio: toIsoDate(periodo[0]), dataFim: toIsoDate(periodo[1]) };
+    // Mantém o período original do dashboard para o "Voltar" (quando o detalhe abriu num dia do gráfico).
+    const proximo = { ...filtros, ...paramsVoltar(searchParams), grupo: grupos.length ? grupos.join(',') : undefined, busca: termo || undefined, dataInicio: toIsoDate(periodo[0]), dataFim: toIsoDate(periodo[1]) };
     setSearchParams(Object.fromEntries(Object.entries(proximo).filter(([, valor]) => valor)));
   };
 
@@ -154,7 +157,7 @@ export default function DashboardPagamentosDetalheApp() {
     }
   };
 
-  const voltar = () => navigate(`${ROTA_DASHBOARD}?dataInicio=${filtros.dataInicio ?? ''}&dataFim=${filtros.dataFim ?? ''}`);
+  const voltar = () => navigate(urlVoltarDashboard(searchParams));
 
   const chips = [
     ['Conta', ROTULO_CONTA[filtros.conta] ?? filtros.conta],
