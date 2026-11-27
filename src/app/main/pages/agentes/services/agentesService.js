@@ -418,6 +418,14 @@ export function markDuplicateOffsetPayments(monthlyPayments, pagamentoIndevido) 
  * Preenche em cada linha da visão mensal o abatimento do indevido (`offsetAmount`) e o valor pago (`paidAmount`), com base no
  * quadro "Valor indevido a pagar" da mesma data. `null` = nada a mostrar. `awaitingBank`: valor enviado, ainda sem retorno do banco.
  */
+/**
+ * Colunas "Abatimento Indevido" e "Valor Pago" da visão mensal: só para o guardador que ainda deve pagamento
+ * indevido (`hasBalance`). Quem não deve, quem já quitou e o indevido ainda não carregado ficam sem as colunas.
+ */
+export function shouldShowIndevidoColumns(pagamentoIndevido) {
+  return Boolean(pagamentoIndevido?.hasBalance);
+}
+
 export function withPaidAndOffsetAmounts(monthlyPayments, pagamentoIndevido) {
   const payments = Array.isArray(monthlyPayments) ? monthlyPayments : [];
   const totalsByDate = new Map();

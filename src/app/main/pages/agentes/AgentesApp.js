@@ -46,6 +46,7 @@ import {
   buildMonthlyPaymentRowKey,
   getAgentesDashboard,
   markDuplicateOffsetPayments,
+  shouldShowIndevidoColumns,
   withPaidAndOffsetAmounts,
 } from "./services/agentesService";
 import {
@@ -756,17 +757,20 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
     handleBackToMonthly();
   }, [handleBackToMonthly, handleBackToWeekly, selectedWorkDate]);
 
+  const showIndevidoColumns = shouldShowIndevidoColumns(pagamentoIndevido);
+  const monthlyColSpan = showIndevidoColumns ? 7 : 5;
+
   let monthlyPaymentsRows = (
     <EmptyState
       message="Não há pagamentos para o mês selecionado."
-      colSpan={7}
+      colSpan={monthlyColSpan}
     />
   );
 
   if (monthlyLoading) {
     monthlyPaymentsRows = [...Array(4)].map((_, index) => (
       <TableRow key={`loading-payment-cycle-${index}`}>
-        <TableCell colSpan={7}>
+        <TableCell colSpan={monthlyColSpan}>
           <Skeleton variant="text" height={28} />
         </TableCell>
       </TableRow>
@@ -786,8 +790,8 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           {/* <TableCell>{getTotalPhotosCount(payment.validPhotosCount, payment.rejectedPhotosCount)}</TableCell> */}
           {/* <TableCell>{payment.validPhotosCount}</TableCell> */}
           <TableCell>{formatCurrency(payment.totalPaymentValue)}</TableCell>
-          <TableCell>{renderOffsetAmount(payment)}</TableCell>
-          <TableCell>{renderPaidAmount(payment)}</TableCell>
+          {showIndevidoColumns ? <TableCell>{renderOffsetAmount(payment)}</TableCell> : null}
+          {showIndevidoColumns ? <TableCell>{renderPaidAmount(payment)}</TableCell> : null}
           <TableCell>{renderEffectivePaymentDate(payment)}</TableCell>
 
           <TableCell
@@ -901,8 +905,8 @@ const DashboardDrilldownCard = memo(function DashboardDrilldownCard({
           {/* <TableCell>Total fotos</TableCell> */}
           {/* <TableCell>Fotos Válidas</TableCell> */}
           <TableCell>Valor Fotos Válidas</TableCell>
-          <TableCell>Abatimento Indevido</TableCell>
-          <TableCell>Valor Pago</TableCell>
+          {showIndevidoColumns ? <TableCell>Abatimento Indevido</TableCell> : null}
+          {showIndevidoColumns ? <TableCell>Valor Pago</TableCell> : null}
           <TableCell>Data Efetiva Pagamento</TableCell>
           <TableCell align="center">Status Fotos Válidas</TableCell>
           <TableCell align="center">Motivo</TableCell>

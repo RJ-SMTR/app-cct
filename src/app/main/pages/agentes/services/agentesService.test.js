@@ -25,6 +25,7 @@ import {
   buildPagamentoIndevido,
   getPaymentStatus,
   markDuplicateOffsetPayments,
+  shouldShowIndevidoColumns,
 } from "./agentesService";
 
 describe("buildPagamentoIndevido", () => {
@@ -464,5 +465,21 @@ describe('Valor pago e abatimento na visão mensal', () => {
       [12, 100, false],
       [null, null, false],
     ]);
+  });
+});
+
+describe("shouldShowIndevidoColumns", () => {
+  it("mostra Abatimento Indevido e Valor Pago só para quem ainda deve pagamento indevido", () => {
+    expect(shouldShowIndevidoColumns({ hasBalance: true, items: [] })).toBe(true);
+  });
+
+  it("esconde as colunas para quem não deve, inclusive no mês em que quitou", () => {
+    expect(shouldShowIndevidoColumns({ hasBalance: false, items: [] })).toBe(false);
+    expect(shouldShowIndevidoColumns({ hasBalance: false, settledMonth: "2026-11", items: [{ id: 1 }] })).toBe(false);
+  });
+
+  it("esconde as colunas enquanto o indevido não carregou ou falhou", () => {
+    expect(shouldShowIndevidoColumns(null)).toBe(false);
+    expect(shouldShowIndevidoColumns(undefined)).toBe(false);
   });
 });
