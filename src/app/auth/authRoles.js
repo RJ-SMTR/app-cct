@@ -9,7 +9,7 @@ const authRoles = {
   agentes: ['Agente', 'agentes', 'Admin', 'admin', 'Admin Master', 'Admin Master TI'],
   admin: ['Admin', 'Admin Master', 'Admin Master TI', 'Agentes', 'agentes'],
   master: ['Admin Master', 'Admin Master TI'],
-  // Áreas restritas (Dashboard de Pagamentos, Ordens de Pagamento, Pagamentos, Auditoria): só a role TI.
+  // Áreas restritas (Ordens de Pagamento, Pagamentos, Auditoria): só a role TI. O Dashboard de Pagamentos usa `master`.
   masterTi: ['Admin Master TI'],
   staff: ['Admin', 'staff', 'Admin Master', 'Admin Master TI'],
   user: ['User'],

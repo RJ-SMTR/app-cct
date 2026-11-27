@@ -14,7 +14,8 @@ const DashboardPagamentosConfig = {
       },
     },
   },
-  auth: authRoles.masterTi,
+  // Admin Master (roleId 0) e Admin Master TI (roleId 7).
+  auth: authRoles.master,
   routes: [
     {
       path: 'dashboard-pagamentos',
